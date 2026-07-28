@@ -1,0 +1,922 @@
+From c3ba681c61689b42b7513184a41534c1bbf1e8c1 Mon Sep 17 00:00:00 2001
+From: dlgpdmsly2 <dlgpdmsly2@gmail.com>
+Date: Wed, 22 Jul 2026 18:10:29 +0900
+Subject: [PATCH 1/3] Restore selection range on docs undo/redo, not just the
+ caret
+
+Undo restored the caret but collapsed the selection: the docs Yorkie store recorded only activeCursorPos (never activeSelection) in the undo-history presence set, and the editor's undoFn/redoFn only moved the caret.
+
+Record activeSelection alongside activeCursorPos via a shared recordHistoryPresence helper (21 sites), flush the pre-edit selection into presence synchronously in setCursorForHistory so Yorkie's reverse captures it, add getPresenceSelection, and re-apply the restored range via selection.setRange in undo/redo. activeSelection defaults to a concrete collapsed range so the presence key is always tracked.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ .../20260722-docs-undo-selection-lessons.md   |  43 ++++
+ .../20260722-docs-undo-selection-todo.md      |  46 +++++
+ packages/docs/src/view/editor.ts              |  53 ++++-
+ .../frontend/src/app/docs/yorkie-doc-store.ts | 189 +++++++++---------
+ .../tests/app/docs/yorkie-doc-store.test.ts   |  70 +++++++
+ 5 files changed, 298 insertions(+), 103 deletions(-)
+ create mode 100644 docs/tasks/active/20260722-docs-undo-selection-lessons.md
+ create mode 100644 docs/tasks/active/20260722-docs-undo-selection-todo.md
+
+diff --git a/docs/tasks/active/20260722-docs-undo-selection-lessons.md b/docs/tasks/active/20260722-docs-undo-selection-lessons.md
+new file mode 100644
+index 000000000..5dc9946c8
+--- /dev/null
++++ b/docs/tasks/active/20260722-docs-undo-selection-lessons.md
+@@ -0,0 +1,43 @@
++# Lessons — Undo/redo selection restore (#340)
++
++## What broke
++
++Undo history recorded the caret (`activeCursorPos`) but not the selection
++(`activeSelection`), and the editor's undo/redo only moved the caret. So undo
++placed a bare caret and dropped the highlight.
++
++## Lessons
++
++- **Yorkie presence-with-history reverses only the keys you set.** `p.set(x,
++  { addToHistory: true })` records a reverse for exactly the keys in the
++  partial. `activeSelection` was never in the partial, so undo never restored
++  it. The fix is simply to include the key — the "restored value" is Yorkie's
++  reverse (the pre-edit presence), not something we stash.
++
++- **Set a concrete collapsed range, never `undefined`.** A key set to
++  `undefined` can be dropped during (esp. networked) presence serialization,
++  so its reverse may not be recorded. A collapsed range (`anchor === focus`)
++  guarantees the key is tracked and reads as "no selection" (`hasSelection()`
++  is false for it), which is the correct post-edit/redo state.
++
++- **The reverse is captured from *current* presence, so timing matters.** The
++  live cursor publish is throttled, so "select then immediately type" could
++  record a stale selection. `setCursorForHistory` now flushes the pre-edit
++  selection synchronously before the mutation. This was the non-obvious race
++  (R2) — the fix only works because the pre-edit selection is guaranteed to be
++  in presence at mutation time.
++
++- **Restoring presence ≠ restoring the view.** Undo puts the range back into
++  Yorkie presence, but the editor's `Selection` object (the visible
++  highlight) doesn't update itself — `undoFn`/`redoFn` must read it back and
++  call `selection.setRange`, exactly as they already did `cursor.moveTo` for
++  the caret.
++
++- **A shared helper turned 21 near-identical sites into one change** (same
++  pattern as the earlier baseline dedup): the selection support fell out for
++  free once every recording site routed through `recordHistoryPresence`.
++
++- **Type-over is two undo units, and that's fine.** `deleteText` +
++  `insertText` are separate `doc.update`s; the delete unit carries the
++  pre-edit selection, so the original highlight returns on the second undo —
++  matching Google Docs. Don't fight the unit boundary; test it.
+diff --git a/docs/tasks/active/20260722-docs-undo-selection-todo.md b/docs/tasks/active/20260722-docs-undo-selection-todo.md
+new file mode 100644
+index 000000000..9b44a4b0e
+--- /dev/null
++++ b/docs/tasks/active/20260722-docs-undo-selection-todo.md
+@@ -0,0 +1,46 @@
++# Docs — Undo/redo restores the selection range, not just the caret (#340)
++
++## Context
++
++Undo restored the caret but collapsed the selection: after undo you got a
++bare caret, losing the highlight (Google Docs restores the selection). Two
++causes: (1) the docs Yorkie store recorded only `activeCursorPos` in the
++undo-history presence set — never `activeSelection`; (2) the editor's
++`undoFn`/`redoFn` only moved the caret, never re-applied a range.
++
++## Work
++
++- [x] Store (`packages/frontend/src/app/docs/yorkie-doc-store.ts`):
++  - `DocsSelection` type = `NonNullable<DocsPresence['activeSelection']>`.
++  - `setCursorForHistory(pos, selection?)` widened; flushes the pre-edit
++    selection to presence synchronously via `updateCursorPos` (defeats the
++    throttle race — Yorkie captures the *current* presence as the reverse).
++  - New private `recordHistoryPresence(p, cursor, selection?)` — sets both
++    `activeCursorPos` and `activeSelection` (defaulting to a **concrete
++    collapsed range** at the caret, never `undefined`, so the key is tracked)
++    with `{ addToHistory: true }`. Replaced all 21 recording sites with it.
++  - New `getPresenceSelection()` reader mirroring `getPresenceCursorPos()`
++    (with the `getPresenceForTest` offline/test fallback).
++- [x] Editor (`packages/docs/src/view/editor.ts`):
++  - Both `setCursorForHistory` call sites now pass
++    `selection.hasSelection() && selection.range ? selection.range : null`.
++  - `undoFn`/`redoFn` call a shared `restoreSelectionFromPresence()` that
++    reads `getPresenceSelection()`, guards block existence + clamps offsets
++    (mirroring the caret restore), then `selection.setRange(...)`; collapsed
++    / missing / stale-block → `setRange(null)`.
++- [x] Tests (`packages/frontend/tests/app/docs/yorkie-doc-store.test.ts`):
++  undo restores range, redo collapses, applyStyle undo restores range,
++  two-unit type-over restores on the second undo. Existing caret tests stay
++  green.
++- [x] docs typecheck + 1105 tests, frontend typecheck + 862 tests — all green.
++
++## Notes / follow-ups
++
++- Type-over (`deleteText` + `insertText`) is **two undo units** by design
++  (see the IME comment in `text-editor.ts`), so the real editor restores the
++  original selection on the *second* undo — matches Google Docs.
++- R4 (deferred): redo of a style op shows a caret (collapsed default) rather
++  than re-highlighting; optional upgrade = pass the styled range as the
++  helper's `selection` arg in `applyStyle`/`applyCellStyle`.
++- Manual in-app repro needs the full stack (not runnable locally under the
++  corporate EDR); covered by store unit tests instead.
+diff --git a/packages/docs/src/view/editor.ts b/packages/docs/src/view/editor.ts
+index 84c8a3423..947d81274 100644
+--- a/packages/docs/src/view/editor.ts
++++ b/packages/docs/src/view/editor.ts
+@@ -1861,8 +1861,15 @@ export function initialize(
+   ruler.onIndentChange((style) => {
+     docStore.snapshot();
+     if ('setCursorForHistory' in docStore) {
+-      (docStore as { setCursorForHistory(pos: { blockId: string; offset: number }): void })
+-        .setCursorForHistory(cursor.position);
++      (docStore as {
++        setCursorForHistory(
++          pos: { blockId: string; offset: number },
++          selection?: DocRange | null,
++        ): void;
++      }).setCursorForHistory(
++        cursor.position,
++        selection.hasSelection() && selection.range ? selection.range : null,
++      );
+     }
+     doc.applyBlockStyle(cursor.position.blockId, style);
+     markDirty(cursor.position.blockId);
+@@ -1874,6 +1881,35 @@ export function initialize(
+     renderPaintOnly();
+   });
+ 
++  // Restore the selection range that undo/redo put back into Yorkie presence
++  // (mirrors the caret restore below). Guards against blocks that no longer
++  // exist and clamps offsets, matching the caret restore; a collapsed /
++  // missing / stale-block range clears the highlight.
++  const restoreSelectionFromPresence = () => {
++    const restoredSel = 'getPresenceSelection' in docStore
++      ? (docStore as { getPresenceSelection(): DocRange | undefined }).getPresenceSelection()
++      : undefined;
++    const clampPos = (pos: DocPosition): DocPosition => {
++      const b = doc.getBlock(pos.blockId);
++      const maxOffset = b.inlines.reduce((sum, i) => sum + i.text.length, 0);
++      return { blockId: pos.blockId, offset: Math.min(pos.offset, maxOffset) };
++    };
++    const blocksExist = restoredSel
++      ? restoredSel.tableCellRange
++        ? !!doc.findBlock(restoredSel.tableCellRange.blockId)
++        : !!doc.findBlock(restoredSel.anchor.blockId) &&
++          !!doc.findBlock(restoredSel.focus.blockId)
++      : false;
++    if (restoredSel && blocksExist) {
++      const range: DocRange = restoredSel.tableCellRange
++        ? restoredSel
++        : { anchor: clampPos(restoredSel.anchor), focus: clampPos(restoredSel.focus) };
++      selection.setRange(range);
++    } else {
++      selection.setRange(null);
++    }
++  };
++
+   // Wire up text editor
+   const undoFn = () => {
+     if (docStore.canUndo()) {
+@@ -1895,6 +1931,7 @@ export function initialize(
+       } else if (doc.document.blocks.length > 0) {
+         cursor.moveTo({ blockId: doc.document.blocks[0].id, offset: 0 });
+       }
++      restoreSelectionFromPresence();
+ 
+       needsScrollIntoView = true;
+       render();
+@@ -1920,6 +1957,7 @@ export function initialize(
+       } else if (doc.document.blocks.length > 0) {
+         cursor.moveTo({ blockId: doc.document.blocks[0].id, offset: 0 });
+       }
++      restoreSelectionFromPresence();
+ 
+       needsScrollIntoView = true;
+       render();
+@@ -2003,8 +2041,15 @@ export function initialize(
+     () => {
+       docStore.snapshot();
+       if ('setCursorForHistory' in docStore) {
+-        (docStore as { setCursorForHistory(pos: { blockId: string; offset: number }): void })
+-          .setCursorForHistory(cursor.position);
++        (docStore as {
++          setCursorForHistory(
++            pos: { blockId: string; offset: number },
++            selection?: DocRange | null,
++          ): void;
++        }).setCursorForHistory(
++          cursor.position,
++          selection.hasSelection() && selection.range ? selection.range : null,
++        );
+       }
+     },
+     undoFn,
+diff --git a/packages/frontend/src/app/docs/yorkie-doc-store.ts b/packages/frontend/src/app/docs/yorkie-doc-store.ts
+index 8f6cb263b..2e02b94b2 100644
+--- a/packages/frontend/src/app/docs/yorkie-doc-store.ts
++++ b/packages/frontend/src/app/docs/yorkie-doc-store.ts
+@@ -41,6 +41,10 @@ import {
+ import type { YorkieDocsRoot } from '@/types/docs-document';
+ import type { DocsPresence } from '@/types/users';
+ 
++/** Plain-object selection range mirror of the engine `DocRange`, as stored
++ *  in `DocsPresence.activeSelection`. */
++type DocsSelection = NonNullable<DocsPresence['activeSelection']>;
++
+ type DocRegion = 'body' | 'header' | 'footer';
+ type TreePosRange = ReturnType<YorkieDocsRoot['content']['indexRangeToPosRange']>;
+ 
+@@ -1352,10 +1356,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1410,10 +1411,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1476,10 +1474,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1501,10 +1496,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: { blockId, offset: offset + 1 } } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, { blockId, offset: offset + 1 });
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1581,10 +1573,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: { blockId, offset: offset + text.length } } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, { blockId, offset: offset + text.length });
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1663,10 +1652,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: { blockId, offset } } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, { blockId, offset });
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1723,10 +1709,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1853,10 +1836,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1879,10 +1859,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1907,10 +1884,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1931,10 +1905,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -1967,10 +1938,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: { blockId: newBlockId, offset: 0 } } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, { blockId: newBlockId, offset: 0 });
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -2142,10 +2110,7 @@ export class YorkieDocStore implements DocStore {
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+         const mergeOffset = firstBlock.inlines.reduce((sum, i) => sum + i.text.length, 0);
+-        p.set(
+-          { activeCursorPos: { blockId, offset: mergeOffset } } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, { blockId, offset: mergeOffset });
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -2273,10 +2238,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       root.content.editByPath([...tablePath, atIndex], [...tablePath, atIndex], rowNode);
+     });
+@@ -2292,10 +2254,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       root.content.editByPath([...tablePath, rowIndex], [...tablePath, rowIndex + 1]);
+     });
+@@ -2311,10 +2270,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       for (let r = 0; r < cells.length; r++) {
+@@ -2343,10 +2299,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       for (let r = 0; r < rowCount; r++) {
+@@ -2368,10 +2321,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       root.content.editByPath(
+         [...tablePath, rowIndex, colIndex],
+@@ -2402,10 +2352,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -2450,10 +2397,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -2497,10 +2441,7 @@ export class YorkieDocStore implements DocStore {
+     const cursorForHistory = this.consumePendingCursor();
+     this.doc.update((root, p) => {
+       if (cursorForHistory) {
+-        p.set(
+-          { activeCursorPos: cursorForHistory } as Partial<DocsPresence>,
+-          { addToHistory: true },
+-        );
++        this.recordHistoryPresence(p, cursorForHistory);
+       }
+       const tree = root.content;
+       if (!tree || typeof tree.getRootTreeNode !== 'function') return;
+@@ -2712,11 +2653,45 @@ export class YorkieDocStore implements DocStore {
+   }
+ 
+   /**
+-   * Save the current cursor position so the next mutation includes it in
+-   * Yorkie's undo history. Called by the editor before each mutation.
++   * Save the current cursor position (and, optionally, the active selection
++   * range) so the next mutation includes them in Yorkie's undo history.
++   * Called by the editor before each mutation.
++   *
++   * The selection is flushed to presence synchronously here (via
++   * `updateCursorPos`) rather than relying on the throttled live cursor
++   * publish: Yorkie captures the *current* presence as the reverse of the
++   * mutation's `addToHistory` set, so the pre-edit selection must already be
++   * in presence when the mutation runs. Without this flush, select-then-
++   * immediately-type could record a stale/collapsed selection as the reverse.
+    */
+-  setCursorForHistory(pos: { blockId: string; offset: number }): void {
++  setCursorForHistory(
++    pos: { blockId: string; offset: number },
++    selection?: DocsSelection | null,
++  ): void {
+     this.pendingCursorPos = pos;
++    this.updateCursorPos(pos, selection ?? null);
++  }
++
++  /**
++   * Record the caret + selection into Yorkie's undo history for the current
++   * mutation. Yorkie reverses BOTH keys to their pre-edit presence values on
++   * undo, and re-applies these post-edit values on redo. `selection` is the
++   * post-edit selection; it defaults to a concrete collapsed range at the
++   * caret (never `undefined`) so `activeSelection` is always a tracked key
++   * whose reverse is recorded, and a collapsed range reads as "no selection".
++   */
++  private recordHistoryPresence(
++    p: { set(presence: Partial<DocsPresence>, option?: { addToHistory?: boolean }): void },
++    cursor: { blockId: string; offset: number },
++    selection?: DocsSelection | null,
++  ): void {
++    p.set(
++      {
++        activeCursorPos: cursor,
++        activeSelection: selection ?? { anchor: cursor, focus: cursor },
++      },
++      { addToHistory: true },
++    );
+   }
+ 
+   /**
+@@ -2743,11 +2718,35 @@ export class YorkieDocStore implements DocStore {
+     return undefined;
+   }
+ 
++  /**
++   * Read the selection range from Yorkie presence. After undo/redo, this
++   * returns the restored selection range (mirrors `getPresenceCursorPos`,
++   * including the offline/test fallback).
++   */
++  getPresenceSelection(): DocsSelection | undefined {
++    const presence = this.doc.getMyPresence();
++    const fromPublic = (presence as Record<string, unknown>)?.activeSelection as
++      | DocsSelection
++      | undefined;
++    if (fromPublic) return fromPublic;
++
++    const actorId = this.doc.getChangeID().getActorID();
++    if (actorId) {
++      const testPresence = this.doc.getPresenceForTest(actorId);
++      return (testPresence as Record<string, unknown>)?.activeSelection as
++        | DocsSelection
++        | undefined;
++    }
++    return undefined;
++  }
++
+   /**
+    * Consume the pending cursor position, returning it (or null).
+-   * The caller includes it in the mutation's `doc.update()` via
+-   * `p.set({ activeCursorPos: postCursor }, { addToHistory: true })`.
+-   * Yorkie automatically saves the pre-mutation presence as the reverse.
++   * The caller passes it to `recordHistoryPresence(p, postCursor)` inside
++   * the mutation's `doc.update()`, which records caret + selection with
++   * `{ addToHistory: true }`. Yorkie saves the pre-mutation presence as the
++   * reverse, so undo restores the caret and selection that were active
++   * before the edit.
+    */
+   private consumePendingCursor(): { blockId: string; offset: number } | null {
+     const cursor = this.pendingCursorPos;
+@@ -2761,15 +2760,7 @@ export class YorkieDocStore implements DocStore {
+    */
+   updateCursorPos(
+     pos: { blockId: string; offset: number } | null,
+-    selection?: {
+-      anchor: { blockId: string; offset: number };
+-      focus: { blockId: string; offset: number };
+-      tableCellRange?: {
+-        blockId: string;
+-        start: { rowIndex: number; colIndex: number };
+-        end: { rowIndex: number; colIndex: number };
+-      };
+-    } | null,
++    selection?: DocsSelection | null,
+   ): void {
+     // Clamp to the model before publishing so an out-of-model offset (e.g.
+     // the caret sitting after view-local IME composing text) never leaks
+diff --git a/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts b/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
+index 5130a99fb..b38df0943 100644
+--- a/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
++++ b/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
+@@ -365,6 +365,76 @@ describe('YorkieDocStore', () => {
+       expect(restored).toEqual({ blockId: block.id, offset: 5 });
+     });
+ 
++    // --- selection-range restore (issue #340) ---
++
++    it('undo should restore the active selection range via presence', () => {
++      const block = makeBlock('Hello World');
++      store.setDocument({ blocks: [block] });
++      const sel = {
++        anchor: { blockId: block.id, offset: 0 },
++        focus: { blockId: block.id, offset: 5 },
++      };
++      // Editor flow: caret at focus, pre-edit selection published, then the
++      // mutation (typing over the selection).
++      store.updateCursorPos({ blockId: block.id, offset: 5 }, sel);
++      store.setCursorForHistory({ blockId: block.id, offset: 5 }, sel);
++      store.insertText(block.id, 5, 'X');
++      store.undo();
++      expect(store.getPresenceSelection()).toEqual(sel);
++    });
++
++    it('redo should collapse the selection (post-edit caret only)', () => {
++      const block = makeBlock('Hello World');
++      store.setDocument({ blocks: [block] });
++      const sel = {
++        anchor: { blockId: block.id, offset: 0 },
++        focus: { blockId: block.id, offset: 5 },
++      };
++      store.updateCursorPos({ blockId: block.id, offset: 5 }, sel);
++      store.setCursorForHistory({ blockId: block.id, offset: 5 }, sel);
++      store.insertText(block.id, 5, 'X');
++      store.undo();
++      store.redo();
++      const restored = store.getPresenceSelection();
++      // A collapsed range (anchor === focus) reads as "no selection".
++      expect(restored?.anchor).toEqual(restored?.focus);
++    });
++
++    it('undo applyStyle should restore the styled selection range', () => {
++      const block = makeBlock('Hello');
++      store.setDocument({ blocks: [block] });
++      const sel = {
++        anchor: { blockId: block.id, offset: 0 },
++        focus: { blockId: block.id, offset: 5 },
++      };
++      store.updateCursorPos({ blockId: block.id, offset: 5 }, sel);
++      store.setCursorForHistory({ blockId: block.id, offset: 5 }, sel);
++      store.applyStyle(block.id, 0, 5, { bold: true });
++      store.undo();
++      expect(store.getPresenceSelection()).toEqual(sel);
++    });
++
++    it('type-over (delete + insert = two units) restores the selection on the second undo', () => {
++      const block = makeBlock('Hello World');
++      store.setDocument({ blocks: [block] });
++      const sel = {
++        anchor: { blockId: block.id, offset: 0 },
++        focus: { blockId: block.id, offset: 5 },
++      };
++      // Unit 1: delete the selected range (records the pre-edit selection).
++      store.updateCursorPos({ blockId: block.id, offset: 5 }, sel);
++      store.setCursorForHistory({ blockId: block.id, offset: 5 }, sel);
++      store.deleteText(block.id, 0, 5);
++      // Unit 2: insert the typed text (no selection, collapsed caret).
++      store.setCursorForHistory({ blockId: block.id, offset: 0 }, null);
++      store.insertText(block.id, 0, 'X');
++      store.undo(); // undo insert → post-delete state (collapsed)
++      const afterFirst = store.getPresenceSelection();
++      expect(afterFirst?.anchor).toEqual(afterFirst?.focus);
++      store.undo(); // undo delete → original selection restored
++      expect(store.getPresenceSelection()).toEqual(sel);
++    });
++
+     // --- IME composition undo (issue #318) ---
+     //
+     // The fixed IME path keeps interim composing text out of the model and
+
+From b7780e36b9ae7c70786598f901e4cb0cdae1ea2a Mon Sep 17 00:00:00 2001
+From: dlgpdmsly2 <dlgpdmsly2@gmail.com>
+Date: Thu, 23 Jul 2026 13:24:19 +0900
+Subject: [PATCH 2/3] Record selection in toolbar style path so undo restores
+ it
+
+applyStyleImpl (toolbar/Cmd-B) bypasses the text-editor saveSnapshot hook, so it recorded no reversible caret/selection presence - undo after formatting collapsed the selection. It now calls setCursorForHistory(cursor.position, selection.range) before doc.applyInlineStyle.
+
+Also harden restoreSelectionFromPresence: validate both anchor and focus blocks (not just the table-cell blockId) and clamp both endpoints for table selections too. Add an editor-level regression test driving applyStyle + undo through the public EditorAPI with YorkieDocStore.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ packages/docs/src/view/editor.ts              |  32 +++--
+ .../app/docs/editor-undo-selection.test.ts    | 110 ++++++++++++++++++
+ 2 files changed, 135 insertions(+), 7 deletions(-)
+ create mode 100644 packages/frontend/tests/app/docs/editor-undo-selection.test.ts
+
+diff --git a/packages/docs/src/view/editor.ts b/packages/docs/src/view/editor.ts
+index 947d81274..41d58f43f 100644
+--- a/packages/docs/src/view/editor.ts
++++ b/packages/docs/src/view/editor.ts
+@@ -1010,6 +1010,18 @@ export function initialize(
+       return;
+     }
+     docStore.snapshot();
++    // Record the caret + selection so undo restores them. This direct
++    // toolbar/⌘B style path bypasses the text-editor's saveSnapshot hook, so
++    // it must set history state itself — otherwise the style op records no
++    // reversible presence and undo collapses the selection.
++    if ('setCursorForHistory' in docStore) {
++      (docStore as {
++        setCursorForHistory(
++          pos: { blockId: string; offset: number },
++          selection?: DocRange | null,
++        ): void;
++      }).setCursorForHistory(cursor.position, selection.range ?? null);
++    }
+     const range = selection.range;
+ 
+     // Cell-range mode: apply to all cells in range
+@@ -1895,15 +1907,21 @@ export function initialize(
+       return { blockId: pos.blockId, offset: Math.min(pos.offset, maxOffset) };
+     };
+     const blocksExist = restoredSel
+-      ? restoredSel.tableCellRange
+-        ? !!doc.findBlock(restoredSel.tableCellRange.blockId)
+-        : !!doc.findBlock(restoredSel.anchor.blockId) &&
+-          !!doc.findBlock(restoredSel.focus.blockId)
++      ? !!doc.findBlock(restoredSel.anchor.blockId) &&
++        !!doc.findBlock(restoredSel.focus.blockId) &&
++        (!restoredSel.tableCellRange || !!doc.findBlock(restoredSel.tableCellRange.blockId))
+       : false;
+     if (restoredSel && blocksExist) {
+-      const range: DocRange = restoredSel.tableCellRange
+-        ? restoredSel
+-        : { anchor: clampPos(restoredSel.anchor), focus: clampPos(restoredSel.focus) };
++      // Clamp anchor + focus for every selection (table or not); carry the
++      // tableCellRange verbatim (its row/col indices are structural, and its
++      // blockId existence was validated above).
++      const range: DocRange = {
++        anchor: clampPos(restoredSel.anchor),
++        focus: clampPos(restoredSel.focus),
++        ...(restoredSel.tableCellRange
++          ? { tableCellRange: restoredSel.tableCellRange }
++          : {}),
++      };
+       selection.setRange(range);
+     } else {
+       selection.setRange(null);
+diff --git a/packages/frontend/tests/app/docs/editor-undo-selection.test.ts b/packages/frontend/tests/app/docs/editor-undo-selection.test.ts
+new file mode 100644
+index 000000000..89dc57c86
+--- /dev/null
++++ b/packages/frontend/tests/app/docs/editor-undo-selection.test.ts
+@@ -0,0 +1,110 @@
++// @vitest-environment jsdom
++import { describe, it, beforeEach, afterEach, expect } from 'vitest';
++import yorkie from '@yorkie-js/sdk';
++import { YorkieDocStore } from '../../../src/app/docs/yorkie-doc-store.ts';
++import {
++  initialize,
++  generateBlockId,
++  DEFAULT_BLOCK_STYLE,
++  type EditorAPI,
++  type Block,
++} from '@wafflebase/docs';
++
++/**
++ * Editor-level regression for issue #340 (toolbar/⌘B path). The store unit
++ * tests cover the recording/restore contract when `setCursorForHistory` is
++ * called with a selection; this test drives the *public editor API* end to
++ * end to guard that `applyStyleImpl` actually records the caret + selection
++ * before mutating — without it, undo restores nothing and this fails.
++ *
++ * jsdom has no real Canvas 2D context, so we shim `getContext` (mirrors the
++ * docs-package editor tests). The undo/selection logic runs independent of
++ * paint.
++ */
++function installCanvasShim(): void {
++  const ctxHandler: ProxyHandler<object> = {
++    get(_t, prop) {
++      if (prop === 'measureText') {
++        return (text: string) => ({
++          width: typeof text === 'string' ? text.length * 6 : 0,
++          actualBoundingBoxAscent: 8,
++          actualBoundingBoxDescent: 2,
++        });
++      }
++      if (prop === 'getImageData') {
++        return (_x: number, _y: number, w: number, h: number) => ({
++          data: new Uint8ClampedArray(Math.max(0, w) * Math.max(0, h) * 4),
++          width: w,
++          height: h,
++        });
++      }
++      if (
++        prop === 'createLinearGradient' ||
++        prop === 'createRadialGradient' ||
++        prop === 'createPattern'
++      ) {
++        return () => ({ addColorStop: () => {} });
++      }
++      if (prop === 'canvas') return null;
++      if (prop === 'font') return '12px sans-serif';
++      return () => {};
++    },
++    set() {
++      return true;
++    },
++  };
++  const fakeCtx = new Proxy({}, ctxHandler) as unknown as CanvasRenderingContext2D;
++  (HTMLCanvasElement.prototype as unknown as {
++    getContext: (kind: string) => unknown;
++  }).getContext = (kind: string) => (kind === '2d' ? fakeCtx : null);
++}
++
++function makeBlock(text: string): Block {
++  return {
++    id: generateBlockId(),
++    type: 'paragraph',
++    inlines: [{ text, style: {} }],
++    style: { ...DEFAULT_BLOCK_STYLE },
++  };
++}
++
++describe('editor undo restores the selection (issue #340, toolbar style path)', () => {
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  let doc: any;
++  let store: YorkieDocStore;
++  let editor: EditorAPI;
++  let container: HTMLDivElement;
++
++  beforeEach(() => {
++    installCanvasShim();
++    // eslint-disable-next-line @typescript-eslint/no-explicit-any
++    doc = new yorkie.Document<any>(`test-${Date.now()}-${Math.random()}`);
++    // eslint-disable-next-line @typescript-eslint/no-explicit-any
++    doc.update((root: any) => {
++      root.content = new yorkie.Tree({ type: 'doc', children: [] });
++    });
++    store = new YorkieDocStore(doc);
++    store.setDocument({ blocks: [makeBlock('Hello World')] });
++    container = document.createElement('div');
++    document.body.appendChild(container);
++    editor = initialize(container, store);
++  });
++
++  afterEach(() => {
++    container.remove();
++  });
++
++  it('applyStyle(bold) via the editor API, then undo, restores the selected range', () => {
++    const block = store.getDocument().blocks[0];
++    const range = {
++      anchor: { blockId: block.id, offset: 0 },
++      focus: { blockId: block.id, offset: 5 },
++    };
++    editor._setSelectionForTest(range);
++    editor.applyStyle({ bold: true });
++    editor.undo();
++    // Without applyStyleImpl calling setCursorForHistory(pos, selection), the
++    // style op records no reversible presence and this is null / collapsed.
++    expect(editor.getActiveSelection()).toEqual(range);
++  });
++});
+
+From ded8a7d31a98145a674b727bf4eed7606809ea0e Mon Sep 17 00:00:00 2001
+From: dlgpdmsly2 <dlgpdmsly2@gmail.com>
+Date: Thu, 23 Jul 2026 14:01:08 +0900
+Subject: [PATCH 3/3] Restore canvas getContext override after undo-selection
+ tests
+
+installCanvasShim overwrote HTMLCanvasElement.prototype.getContext
+globally and never restored it, leaking the shim into later tests in
+the same worker. Save the exact original method and restore it in
+afterEach via a returned closure.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ .../app/docs/editor-undo-selection.test.ts      | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/packages/frontend/tests/app/docs/editor-undo-selection.test.ts b/packages/frontend/tests/app/docs/editor-undo-selection.test.ts
+index 89dc57c86..b0229784d 100644
+--- a/packages/frontend/tests/app/docs/editor-undo-selection.test.ts
++++ b/packages/frontend/tests/app/docs/editor-undo-selection.test.ts
+@@ -21,7 +21,7 @@ import {
+  * docs-package editor tests). The undo/selection logic runs independent of
+  * paint.
+  */
+-function installCanvasShim(): void {
++function installCanvasShim(): () => void {
+   const ctxHandler: ProxyHandler<object> = {
+     get(_t, prop) {
+       if (prop === 'measureText') {
+@@ -54,9 +54,16 @@ function installCanvasShim(): void {
+     },
+   };
+   const fakeCtx = new Proxy({}, ctxHandler) as unknown as CanvasRenderingContext2D;
+-  (HTMLCanvasElement.prototype as unknown as {
++  const proto = HTMLCanvasElement.prototype as unknown as {
+     getContext: (kind: string) => unknown;
+-  }).getContext = (kind: string) => (kind === '2d' ? fakeCtx : null);
++  };
++  // Save the exact method before overriding so the shim can't leak into
++  // subsequent tests; the returned closure restores it in afterEach.
++  const original = proto.getContext;
++  proto.getContext = (kind: string) => (kind === '2d' ? fakeCtx : null);
++  return () => {
++    proto.getContext = original;
++  };
+ }
+ 
+ function makeBlock(text: string): Block {
+@@ -74,9 +81,10 @@ describe('editor undo restores the selection (issue #340, toolbar style path)',
+   let store: YorkieDocStore;
+   let editor: EditorAPI;
+   let container: HTMLDivElement;
++  let restoreCanvas: () => void;
+ 
+   beforeEach(() => {
+-    installCanvasShim();
++    restoreCanvas = installCanvasShim();
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     doc = new yorkie.Document<any>(`test-${Date.now()}-${Math.random()}`);
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+@@ -92,6 +100,7 @@ describe('editor undo restores the selection (issue #340, toolbar style path)',
+ 
+   afterEach(() => {
+     container.remove();
++    restoreCanvas();
+   });
+ 
+   it('applyStyle(bold) via the editor API, then undo, restores the selected range', () => {

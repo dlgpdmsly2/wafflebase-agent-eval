@@ -1,0 +1,370 @@
+From fc4d45cdcb06ddab794ee89a1b0456f3ff358c36 Mon Sep 17 00:00:00 2001
+From: semimikoh <ejffjeosms@gmail.com>
+Date: Thu, 23 Jul 2026 16:11:54 +0900
+Subject: [PATCH 1/2] Add design note: paste a table into a table cell
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Design note for issue #528. Pasting a table while the caret is inside a
+table cell does not nest it — the paste path (insertBlocks) uses the
+body-only getBlockIndex + insertBlockAt, and EditContext has no cell value,
+so a cell target is never resolved and nothing is inserted. The Insert
+Table command already handles this: it detects the cell via
+getActiveLayout().blockParentMap and routes to insertTableInCell (the
+cell-aware store.insertBlockAfter).
+
+The note proposes applying the same cell detection in insertBlocks' single-
+table branch — insert into the cell via insertBlockAfter when the caret is
+in a cell, keep the body path otherwise — and flags deep id regeneration for
+the pasted table's cell blocks (overlaps with #333). Design-note-first;
+implementation to follow on this branch.
+---
+ docs/design/README.md                         |  1 +
+ .../design/docs/docs-paste-table-into-cell.md | 94 +++++++++++++++++++
+ 2 files changed, 95 insertions(+)
+ create mode 100644 docs/design/docs/docs-paste-table-into-cell.md
+
+diff --git a/docs/design/README.md b/docs/design/README.md
+index a50f99c0b..a6d1041fe 100644
+--- a/docs/design/README.md
++++ b/docs/design/README.md
+@@ -55,6 +55,7 @@ Word processor engine — rich text, tables, pagination, collaboration.
+ | [docs-local-caret-anchoring.md](docs/docs-local-caret-anchoring.md)              | Local caret anchoring — Yorkie Tree-anchored caret/selection, resolves to DocPosition at render time (issue #237) |
+ | [docs-spell-check.md](docs/docs-spell-check.md)                                  | Docs spell check — red-squiggle decoration via the search/comment highlight path, pluggable `SpellChecker` (local nspell/en_US + wired-deferred backend), per-word script-based language routing, view-local session state, suggestions in the unified context menu |
+ | [docs-context-menu.md](docs/docs-context-menu.md)                                | Docs unified context menu — one Google-Docs-style body right-click menu (spell suggestions + clipboard + add link/comment) as a non-Radix positioned overlay; docs-package `EditorAPI` primitives, table menu kept separate |
++| [docs-paste-table-into-cell.md](docs/docs-paste-table-into-cell.md)              | Paste a table into a table cell — nest it via the cell-aware insert path (reuse `insertTable`'s `blockParentMap` cell detection) instead of the body-only paste insert (issue #528) |
+ 
+ ## Slides
+ 
+diff --git a/docs/design/docs/docs-paste-table-into-cell.md b/docs/design/docs/docs-paste-table-into-cell.md
+new file mode 100644
+index 000000000..2c1394a1a
+--- /dev/null
++++ b/docs/design/docs/docs-paste-table-into-cell.md
+@@ -0,0 +1,94 @@
++---
++title: docs-paste-table-into-cell
++target-version: 0.6.2
++---
++
++# Docs Paste Table Into Cell
++
++## Summary
++
++Pasting a table while the caret is **inside a table cell** should nest the table
++into that cell, matching the **Insert Table** command and Google Docs / Word.
++Today the paste path is body-only and does not nest — nothing is inserted into
++the cell.
++
++## Background
++
++Issue #528. The insert-a-table and paste-a-table paths diverge on cell handling:
++
++- **Insert Table** (`insertTable` in `packages/docs/src/view/editor.ts`) detects a
++  cell target via `getActiveLayout().blockParentMap` and routes to
++  `Doc.insertTableInCell`, which inserts through the **cell-aware**
++  `store.insertBlockAfter` (backed by `findBlockInAnyArray`). Nesting works.
++- **Paste** (`insertBlocks` in `packages/docs/src/view/text-editor.ts`) for a
++  single `table` block uses the **body-only** `getBlockIndex` + `insertBlockAt`.
++  `EditContext` is only `'body' | 'header' | 'footer'` (no cell value) and
++  `getContextBlocks()` returns only body/header/footer blocks, so a cell target
++  is never resolved and the table is not inserted.
++
++So the in-cell nesting capability already exists; the paste path just doesn't use
++it.
++
++## Goals
++
++- Pasting a single `table` block with the caret inside a cell nests the table
++  into that cell.
++- The caret lands in the first cell of the pasted table (matching `insertTable`
++  and the existing body-paste behavior).
++- Paste of a table into the body / header / footer is unchanged.
++
++## Non-Goals
++
++- Input being misrouted after pasting an already-nested table into the body
++  (#333) — a separate bug.
++- Multi-block paste that contains a table, dropped into a cell — this note
++  covers only the single-table paste branch.
++- Broad rework of `EditContext` to add a first-class `'cell'` value — the fix
++  reuses the existing `blockParentMap` cell signal, as `insertTable` does.
++
++## Proposal Details
++
++In `insertBlocks`'s single-table branch
++(`blocks.length === 1 && blocks[0].type === 'table'`):
++
++1. Detect whether `pos.blockId` is inside a table cell using the existing
++   `getActiveLayout().blockParentMap` — the same signal `insertTable` already
++   uses for its cell/body split.
++2. **Inside a cell:** insert the pasted table block after `pos.blockId` via the
++   cell-aware `store.insertBlockAfter` (exposed through a `Doc` method), so it
++   lands in that cell's block list. Move the caret into the pasted table's first
++   cell.
++3. **Otherwise:** keep the existing body path (`getBlockIndex` + `insertBlockAt`).
++
++This mirrors `insertTable`'s existing cell/body split and reuses the cell-aware
++insertion primitive rather than adding new machinery.
++
++### Fresh IDs
++
++The pasted table block already gets a fresh top-level id via `generateBlockId()`.
++Its **cell-internal** block ids must also be independent of the source, or a
++same-tab copy would share ids between the original and the paste. Whether the
++current clipboard clone already regenerates nested ids is verified during
++implementation; if not, a deep id refresh is applied to the pasted table here.
++This overlaps with #333 and is kept minimal.
++
++## Testing Strategy
++
++Unit tests (`packages/docs`, paste / text-editor path):
++
++- Paste a single `table` block with the caret **inside a cell** → the table
++  appears as a nested table in that cell (present in the cell's `blocks`), not at
++  the top level of the document.
++- The caret lands in the first cell of the pasted table.
++- Paste a table with the caret **in the body** → still inserted at the top level
++  (regression guard for the unchanged path).
++- The pasted table's cell block ids do not collide with the source table's ids.
++
++## Risks and Mitigation
++
++| Risk | Mitigation |
++|------|------------|
++| Pasted table shares cell ids with the source (same-tab copy) | Deep-regenerate ids for the pasted table's cell blocks; asserted by a no-collision test; overlaps with #333 |
++| `blockParentMap` is stale after a remote edit | Use `getActiveLayout()` (already refreshed for the active region), matching the existing table ops |
++| Header / footer cell paste | `store.insertBlockAfter` uses `findBlockInAnyArray`, so it resolves cells in any region uniformly |
++| Caret left in a stale position after nesting | Move the caret into the pasted table's first cell, mirroring `insertTable` |
+
+From be9ba8762245b90b1c12380e7088bd8952685e1e Mon Sep 17 00:00:00 2001
+From: semimikoh <ejffjeosms@gmail.com>
+Date: Thu, 23 Jul 2026 16:35:17 +0900
+Subject: [PATCH 2/2] Nest a pasted table into the table cell the caret is in
+
+Pasting a table while the caret was inside a cell did nothing (issue #528):
+insertBlocks used the body-only getBlockIndex + insertBlockAt, which can't
+reach a cell (EditContext has no cell value), so the cell target was never
+resolved. The Insert Table command already nests via isInCell + a cell-aware
+insert; this wires the paste path to the same primitives.
+
+- Doc.insertBlockAfter(siblingId, block): region/cell-aware insertion,
+  delegating to the store's findBlockInAnyArray-backed insertBlockAfter.
+- cloneBlockWithFreshIds(block): deep-clone a (possibly nested) table with
+  every block id regenerated, so a paste is independent of its source and
+  shares no cell ids (also mitigates the shared-id misroute in #333).
+- insertBlocks' single-table branch: when the caret is in a cell, nest via
+  insertBlockAfter; otherwise keep the body path. The pasted table always
+  gets fresh ids, and the caret lands in its first cell.
+
+Model-level unit tests cover the fresh-id clone and the cell-aware insert;
+the thin insertBlocks wiring mirrors insertTable (view-level, which the repo
+does not unit-test).
+---
+ packages/docs/src/model/document.ts           | 12 +++
+ packages/docs/src/store/block-helpers.ts      | 26 +++++-
+ packages/docs/src/view/text-editor.ts         | 19 +++-
+ .../test/model/paste-table-into-cell.test.ts  | 89 +++++++++++++++++++
+ 4 files changed, 141 insertions(+), 5 deletions(-)
+ create mode 100644 packages/docs/test/model/paste-table-into-cell.test.ts
+
+diff --git a/packages/docs/src/model/document.ts b/packages/docs/src/model/document.ts
+index 5d4d700e3..2b17fc3c7 100644
+--- a/packages/docs/src/model/document.ts
++++ b/packages/docs/src/model/document.ts
+@@ -468,6 +468,18 @@ export class Doc {
+     this.refresh();
+   }
+ 
++  /**
++   * Insert `block` immediately after the sibling identified by
++   * `siblingBlockId`, wherever that sibling lives — top-level body, header,
++   * footer, or inside a table cell. Region/cell-aware (the store resolves the
++   * sibling's containing array), unlike `insertBlockAt`, which is body-index
++   * based. Used by paste so a table dropped inside a cell nests into it.
++   */
++  insertBlockAfter(siblingBlockId: string, block: Block): void {
++    this.store.insertBlockAfter(siblingBlockId, block);
++    this.refresh();
++  }
++
+   /**
+    * Search for text matches across all blocks.
+    * Returns matches with block ID and character offsets.
+diff --git a/packages/docs/src/store/block-helpers.ts b/packages/docs/src/store/block-helpers.ts
+index cc95ab5a8..2a172eb48 100644
+--- a/packages/docs/src/store/block-helpers.ts
++++ b/packages/docs/src/store/block-helpers.ts
+@@ -1,6 +1,6 @@
+ // packages/docs/src/store/block-helpers.ts
+ import type { Block, Inline, InlineStyle, BlockType } from '../model/types.js';
+-import { inlineStylesEqual } from '../model/types.js';
++import { inlineStylesEqual, generateBlockId } from '../model/types.js';
+ 
+ export interface InlinePosition {
+   inlineIndex: number;
+@@ -144,6 +144,30 @@ export function cloneBlock(block: Block): Block {
+   return JSON.parse(JSON.stringify(block));
+ }
+ 
++/**
++ * Deep-clone a block and regenerate every block id it contains — the block
++ * itself, plus (for tables) every block inside every cell, recursively for
++ * nested tables. Used when pasting a block so the paste is independent of its
++ * source: the two share no ids, so editing / clicking one can't leak into the
++ * other. The source block is not mutated.
++ */
++export function cloneBlockWithFreshIds(block: Block): Block {
++  const clone = cloneBlock(block);
++  refreshBlockIds(clone);
++  return clone;
++}
++
++function refreshBlockIds(block: Block): void {
++  block.id = generateBlockId();
++  if (block.tableData) {
++    for (const row of block.tableData.rows) {
++      for (const cell of row.cells) {
++        for (const b of cell.blocks) refreshBlockIds(b);
++      }
++    }
++  }
++}
++
+ /**
+  * Resolve a style range [from, to) into per-inline segments.
+  */
+diff --git a/packages/docs/src/view/text-editor.ts b/packages/docs/src/view/text-editor.ts
+index 01d4cb767..2071356bb 100644
+--- a/packages/docs/src/view/text-editor.ts
++++ b/packages/docs/src/view/text-editor.ts
+@@ -1,6 +1,7 @@
+ import type { Block, BlockCellInfo, CellAddress, DocPosition, DocRange, Inline, InlineStyle, HeadingLevel, TableCell } from '../model/types.js';
+ import { generateBlockId, getBlockText, getBlockTextLength, DEFAULT_BLOCK_STYLE, createBlock, createTableBlock, normalizeTableMerges } from '../model/types.js';
+ import { Doc, type EditContext } from '../model/document.js';
++import { cloneBlockWithFreshIds } from '../store/block-helpers.js';
+ import { serializeClipboard, deserializeClipboard, cloneTableCells, parseHtmlToBlocks, parseHtmlTableToTableCells, parseMarkdownTableToTableCells, parseMarkdownWithTables, WAFFLEDOCS_MIME } from './clipboard.js';
+ import { Cursor } from './cursor.js';
+ import { Selection, expandCellRangeForMerges, findMergeTopLeft } from './selection.js';
+@@ -3405,11 +3406,21 @@ export class TextEditor {
+     this.ensureEditableBlock();
+     const pos = this.cursor.position;
+     if (blocks.length === 1 && blocks[0].type === 'table') {
+-      // Single table block: insert as a new block (cannot merge into current)
++      // Single table block: insert as a new block (cannot merge into current).
+       this.invalidateLayout();
+-      const blockIdx = this.doc.getBlockIndex(pos.blockId);
+-      const newBlock: Block = { ...blocks[0], id: generateBlockId() };
+-      this.doc.insertBlockAt(blockIdx + 1, newBlock);
++      // Fresh ids for the whole (possibly nested) table so the paste is
++      // independent of its source — no shared cell ids.
++      const newBlock = cloneBlockWithFreshIds(blocks[0]);
++      if (this.isInCell(pos.blockId)) {
++        // Caret is inside a table cell: nest the pasted table into that cell.
++        // `getBlockIndex`/`insertBlockAt` are body-index based and can't reach
++        // a cell, so use the cell-aware `insertBlockAfter` (same primitive the
++        // Insert Table command uses via `insertTableInCell`).
++        this.doc.insertBlockAfter(pos.blockId, newBlock);
++      } else {
++        const blockIdx = this.doc.getBlockIndex(pos.blockId);
++        this.doc.insertBlockAt(blockIdx + 1, newBlock);
++      }
+       const firstCellBlock = newBlock.tableData?.rows[0]?.cells[0]?.blocks[0];
+       if (firstCellBlock) {
+         this.cursor.moveTo({ blockId: firstCellBlock.id, offset: 0 }, 'forward');
+diff --git a/packages/docs/test/model/paste-table-into-cell.test.ts b/packages/docs/test/model/paste-table-into-cell.test.ts
+new file mode 100644
+index 000000000..83d371c31
+--- /dev/null
++++ b/packages/docs/test/model/paste-table-into-cell.test.ts
+@@ -0,0 +1,89 @@
++import { describe, it, expect } from 'vitest';
++import { Doc } from '../../src/model/document.js';
++import { createTableBlock } from '../../src/model/types.js';
++import type { Block } from '../../src/model/types.js';
++import { cloneBlockWithFreshIds } from '../../src/store/block-helpers.js';
++
++/** Collect every block id in a (possibly nested) table block. */
++function collectIds(block: Block): string[] {
++  const ids = [block.id];
++  if (block.tableData) {
++    for (const row of block.tableData.rows) {
++      for (const cell of row.cells) {
++        for (const b of cell.blocks) ids.push(...collectIds(b));
++      }
++    }
++  }
++  return ids;
++}
++
++describe('cloneBlockWithFreshIds', () => {
++  it('regenerates the table id and every nested cell block id', () => {
++    const table = createTableBlock(2, 2);
++    const origIds = collectIds(table);
++    const clone = cloneBlockWithFreshIds(table);
++    const cloneIds = collectIds(clone);
++
++    // Every id is new — no overlap with the source (so the paste is
++    // independent and editing one table can't leak into the other).
++    for (const id of cloneIds) {
++      expect(origIds).not.toContain(id);
++    }
++    // Same structure and count of ids.
++    expect(cloneIds.length).toBe(origIds.length);
++    expect(clone.type).toBe('table');
++    expect(clone.tableData!.rows.length).toBe(2);
++    expect(clone.tableData!.rows[0].cells.length).toBe(2);
++  });
++
++  it('regenerates ids recursively for a table nested inside a cell', () => {
++    const outer = createTableBlock(1, 1);
++    const inner = createTableBlock(1, 1);
++    outer.tableData!.rows[0].cells[0].blocks.push(inner);
++
++    const origIds = collectIds(outer);
++    const clone = cloneBlockWithFreshIds(outer);
++    const cloneIds = collectIds(clone);
++
++    for (const id of cloneIds) {
++      expect(origIds).not.toContain(id);
++    }
++    expect(cloneIds.length).toBe(origIds.length);
++  });
++
++  it('does not mutate the source block', () => {
++    const table = createTableBlock(1, 1);
++    const before = JSON.stringify(table);
++    cloneBlockWithFreshIds(table);
++    expect(JSON.stringify(table)).toBe(before);
++  });
++});
++
++describe('Doc.insertBlockAfter (cell-aware)', () => {
++  it('nests a table into a cell when the sibling block is inside that cell', () => {
++    const doc = Doc.create();
++    const outerId = doc.insertTable(0, 2, 2);
++    const cellBlockId = doc.getBlock(outerId).tableData!.rows[0].cells[0].blocks[0].id;
++
++    const inner = createTableBlock(2, 2);
++    doc.insertBlockAfter(cellBlockId, inner);
++
++    // The inner table now lives in cell (0,0) of the outer table, not at
++    // the top level of the document.
++    const cell = doc.getBlock(outerId).tableData!.rows[0].cells[0];
++    expect(cell.blocks.some((b) => b.id === inner.id && b.type === 'table')).toBe(true);
++    expect(doc.document.blocks.some((b) => b.id === inner.id)).toBe(false);
++  });
++
++  it('inserts after a top-level block for the body case', () => {
++    const doc = Doc.create();
++    const firstId = doc.document.blocks[0].id;
++    const table = createTableBlock(2, 2);
++
++    doc.insertBlockAfter(firstId, table);
++
++    const idx = doc.document.blocks.findIndex((b) => b.id === firstId);
++    expect(doc.document.blocks[idx + 1].id).toBe(table.id);
++    expect(doc.document.blocks[idx + 1].type).toBe('table');
++  });
++});

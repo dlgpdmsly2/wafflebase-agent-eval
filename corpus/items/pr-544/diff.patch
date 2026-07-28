@@ -1,0 +1,463 @@
+From b25d3fc9952de4c42cd38471798bc9222d88cecf Mon Sep 17 00:00:00 2001
+From: "claude[bot]" <41898282+claude[bot]@users.noreply.github.com>
+Date: Fri, 24 Jul 2026 10:46:10 +0000
+Subject: [PATCH] Support <details>/<summary> collapsible sections in Notes
+
+The notes markdown preview runs markdown-it with html: false because raw
+HTML in a collaborator's note is a stored-XSS vector. That also meant
+GitHub/MDN-style <details>/<summary> foldouts (issue #542) rendered as
+escaped text.
+
+Add a narrow allowlist markdown-it block plugin that recognizes only the
+two disclosure tags and emits safe <details>/<summary> elements (fixed
+class + boolean open only). The summary label and folded body are still
+parsed through the html: false pipeline, so nested markdown works while
+no arbitrary HTML is ever produced. <details open> renders expanded; a
+stray </details> falls through and is escaped.
+
+Assisted-by: Claude Code (autonomous)
+---
+ docs/design/notes/notes.md                    |  15 +++
+ ...0724-notes-collapsible-sections-lessons.md |  10 ++
+ ...0260724-notes-collapsible-sections-todo.md |  61 +++++++++
+ .../frontend/src/app/notes/notes-preview.css  |  59 +++++++++
+ packages/notes/src/view/details-plugin.ts     | 116 ++++++++++++++++++
+ packages/notes/src/view/preview.test.ts       |  82 ++++++++++++-
+ packages/notes/src/view/preview.ts            |   9 +-
+ 7 files changed, 347 insertions(+), 5 deletions(-)
+ create mode 100644 docs/tasks/active/20260724-notes-collapsible-sections-lessons.md
+ create mode 100644 docs/tasks/active/20260724-notes-collapsible-sections-todo.md
+ create mode 100644 packages/notes/src/view/details-plugin.ts
+
+diff --git a/docs/design/notes/notes.md b/docs/design/notes/notes.md
+index 69c4323c3..ca03f8913 100644
+--- a/docs/design/notes/notes.md
++++ b/docs/design/notes/notes.md
+@@ -258,6 +258,21 @@ tree readers/writers). The v1 `POST /documents` create path also learned to
+ accept `type: 'note'` (it previously downgraded unknown types to `sheet`).
+ See [cli.md](../cli.md).
+ 
++#### Collapsible sections (`<details>` / `<summary>`) — shipped (issue #542)
++
++The preview runs `markdown-it` with `html: false` (raw HTML in a
++collaborator's note is a stored-XSS vector). To support GitHub/MDN-style
++foldouts without weakening that posture, a narrow allowlist plugin
++(`packages/notes/src/view/details-plugin.ts`) recognizes **only** the
++`<details>` / `<summary>` disclosure tags as block tokens and emits safe
++`<details class="note-details" [open]>` / `<summary class="note-summary">`
++elements (fixed class + boolean `open` only). The summary label and the
++folded body are still parsed through the normal `html: false` pipeline, so
++nested markdown (including nested disclosures) works while no arbitrary HTML
++is ever produced. `<details open>` renders expanded by default; a stray
++`</details>` with no matching open falls through and is escaped as literal
++text. Styling lives in `packages/frontend/src/app/notes/notes-preview.css`.
++
+ ### P3 — CodePair → Wafflebase migration
+ 
+ Because note content lives **only in Yorkie** and the schema is identical:
+diff --git a/docs/tasks/active/20260724-notes-collapsible-sections-lessons.md b/docs/tasks/active/20260724-notes-collapsible-sections-lessons.md
+new file mode 100644
+index 000000000..530129193
+--- /dev/null
++++ b/docs/tasks/active/20260724-notes-collapsible-sections-lessons.md
+@@ -0,0 +1,10 @@
++# Notes collapsible sections — lessons (issue #542)
++
++## Context
++
++Add `<details>`/`<summary>` collapsible-section support to the Notes
++markdown preview without weakening its `html: false` XSS posture.
++
++## Lessons
++
++- (to fill in as work progresses / during review)
+diff --git a/docs/tasks/active/20260724-notes-collapsible-sections-todo.md b/docs/tasks/active/20260724-notes-collapsible-sections-todo.md
+new file mode 100644
+index 000000000..73bdb5462
+--- /dev/null
++++ b/docs/tasks/active/20260724-notes-collapsible-sections-todo.md
+@@ -0,0 +1,61 @@
++# Notes collapsible sections — `<details>`/`<summary>` (issue #542)
++
++PR: (to be filled after opening)
++
++## Goal
++
++Support GitHub/MDN-style collapsible sections in the Notes markdown
++preview: wrapping content in `<details>` / `<summary>` renders a
++folded-by-default disclosure that expands on clicking the summary label.
++`<details open>` renders expanded by default.
++
++## Constraint (load-bearing)
++
++The notes preview is built with `markdown-it` configured `html: false`
++on purpose — raw inline HTML in a collaborator's note is a stored-XSS
++vector (see the SECURITY note in `packages/notes/src/view/preview.ts`).
++We must NOT flip `html: true`. Instead we add a narrow, allowlisted
++markdown-it block plugin that recognizes ONLY `<details>`/`<summary>`/
++`</summary>`/`</details>` and emits safe `<details>`/`<summary>`
++elements (fixed class, only the boolean `open` attribute). All inner
++content and the summary label are still rendered through the normal
++`html: false` pipeline, so no arbitrary HTML is ever emitted.
++
++## Approach
++
++- New `packages/notes/src/view/details-plugin.ts`: a markdown-it block
++  rule registered before `paragraph` as a paragraph terminator
++  (`alt: ['paragraph', 'reference', 'blockquote', 'list']`). It matches:
++  - `<details>` / `<details open>` → `details_open` token (open attr)
++  - `<summary>…</summary>` (single line) → `summary_open` + inline + `summary_close`
++  - `</details>` → `details_close` (guarded by a depth counter so a
++    stray close with no open falls through and is escaped as text)
++  Content between the tags is parsed as normal markdown (nesting,
++  fences, lists, even nested `<details>` all work for free).
++- Custom renderers emit `<details class="note-details" [open]>` and
++  `<summary class="note-summary">`.
++- `preview.ts` uses the plugin via `md.use(detailsPlugin)`.
++- CSS in `packages/frontend/src/app/notes/notes-preview.css` styles the
++  disclosure (summary marker/cursor, light + dark).
++
++## Tasks (TDD)
++
++- [ ] `details-plugin.ts` block rule + renderers
++- [ ] `md.use(detailsPlugin)` wired in `preview.ts`
++- [ ] Tests in `preview.test.ts`:
++  - [ ] collapsed-by-default `<details>` renders `<details>`/`<summary>`
++  - [ ] `<details open>` sets the `open` attribute
++  - [ ] inner markdown is rendered (e.g. bold, code fence)
++  - [ ] summary label markdown is rendered
++  - [ ] nested `<details>` works
++  - [ ] stray `</details>` / `<script>` is NOT emitted as raw HTML (XSS guard)
++- [ ] preview CSS for `.note-details` / `.note-summary` (light + dark)
++- [ ] targeted unit test file green (`vitest run preview.test.ts`)
++
++## Out of scope
++
++- Editor-side (CodeMirror) affordance / toolbar button for inserting a
++  disclosure — this is a preview-render feature only.
++- Multi-line `<summary>` spanning several source lines (single-line
++  summary is the GitHub-common form and what the issue example uses).
++- Arbitrary raw HTML passthrough (explicitly rejected for security).
+diff --git a/packages/frontend/src/app/notes/notes-preview.css b/packages/frontend/src/app/notes/notes-preview.css
+index f9ac33c57..1278d85c6 100644
+--- a/packages/frontend/src/app/notes/notes-preview.css
++++ b/packages/frontend/src/app/notes/notes-preview.css
+@@ -228,3 +228,62 @@
+ .dark .note-preview .note-copy-btn:hover {
+   background: rgba(22, 27, 34, 1);
+ }
++
++/*
++ * Collapsible sections (`<details>`/`<summary>`). A lightweight bordered
++ * disclosure so folded content reads as a distinct, clickable region. The
++ * summary shows a pointer cursor and its own disclosure triangle; the default
++ * marker is suppressed so the padding stays consistent across browsers.
++ */
++.note-preview .note-details {
++  margin: 0.75rem 0;
++  padding: 0.25rem 0.75rem;
++  border: 1px solid #d0d7de;
++  border-radius: 6px;
++  background-color: #f6f8fa;
++}
++
++.note-preview .note-details[open] {
++  padding-bottom: 0.5rem;
++}
++
++.note-preview .note-summary {
++  margin: 0 -0.75rem;
++  padding: 0.25rem 0.75rem;
++  font-weight: 600;
++  cursor: pointer;
++  list-style: none;
++  outline-offset: 2px;
++}
++
++/* Custom disclosure triangle (WebKit hides the default via ::-webkit-details-marker). */
++.note-preview .note-summary::-webkit-details-marker {
++  display: none;
++}
++
++.note-preview .note-summary::before {
++  content: '▶';
++  display: inline-block;
++  margin-right: 0.5rem;
++  font-size: 0.7em;
++  color: #57606a;
++  transition: transform 0.15s ease;
++}
++
++.note-preview .note-details[open] > .note-summary::before {
++  transform: rotate(90deg);
++}
++
++/* Body sits below the summary; add breathing room from the summary row. */
++.note-preview .note-details[open] > .note-summary {
++  margin-bottom: 0.25rem;
++}
++
++.dark .note-preview .note-details {
++  border-color: #30363d;
++  background-color: #161b22;
++}
++
++.dark .note-preview .note-summary::before {
++  color: #8b949e;
++}
+diff --git a/packages/notes/src/view/details-plugin.ts b/packages/notes/src/view/details-plugin.ts
+new file mode 100644
+index 000000000..ac073b01d
+--- /dev/null
++++ b/packages/notes/src/view/details-plugin.ts
+@@ -0,0 +1,116 @@
++import type MarkdownIt from 'markdown-it';
++
++// `markdown-it`'s `export =` shape means its `MarkdownIt.StateBlock` /
++// `MarkdownIt.Token` namespace types aren't reachable through the default
++// import (see the same note in `preview.ts`). Derive the types we need from
++// the instance shape instead of naming the namespace.
++type StateBlock = InstanceType<MarkdownIt['block']['State']>;
++type RenderRule = NonNullable<MarkdownIt['renderer']['rules'][string]>;
++
++/**
++ * Collapsible sections (`<details>` / `<summary>`) for the notes preview.
++ *
++ * The preview runs markdown-it with `html: false` on purpose (raw HTML in a
++ * collaborator's note is a stored-XSS vector — see the SECURITY note in
++ * `preview.ts`). Rather than flip that safety off, this plugin allowlists ONLY
++ * the two disclosure tags and turns them into a pair of custom block tokens.
++ * Everything else — the summary label, the folded body — is still parsed and
++ * rendered through the normal `html: false` pipeline, so no arbitrary HTML is
++ * ever emitted. The only attributes we ever produce are a fixed class and the
++ * boolean `open`.
++ *
++ * Supported source shapes (each tag on its own line, GitHub/MDN style):
++ *
++ *   <details>            or   <details open>
++ *   <summary>label</summary>
++ *
++ *   any **markdown** here, including nested <details>
++ *
++ *   </details>
++ *
++ * The summary is optional and, when present, must sit on a single line. The
++ * body between the tags is ordinary markdown (fences, lists, nested
++ * disclosures all work for free because the normal block parser handles it).
++ */
++
++const DETAILS_OPEN_RE = /^<details(\s+open)?\s*>$/i;
++const DETAILS_CLOSE_RE = /^<\/details>$/i;
++const SUMMARY_RE = /^<summary>([\s\S]*)<\/summary>$/i;
++
++// Per-parse nesting depth so a stray `</details>` with no matching open falls
++// through to the paragraph rule and is escaped as literal text rather than
++// emitting an orphan close tag. Keyed on the block state's env object, which
++// is unique per `md.render()` call.
++const depths = new WeakMap<object, number>();
++
++function detailsRule(
++  state: StateBlock,
++  startLine: number,
++  _endLine: number,
++  silent: boolean,
++): boolean {
++  const start = state.bMarks[startLine] + state.tShift[startLine];
++  const max = state.eMarks[startLine];
++  const line = state.src.slice(start, max).trim();
++
++  const openMatch = DETAILS_OPEN_RE.exec(line);
++  if (openMatch) {
++    if (silent) return true;
++    const token = state.push('details_open', 'details', 1);
++    token.attrs = openMatch[1] ? [['open', '']] : [];
++    token.map = [startLine, startLine + 1];
++    token.block = true;
++    depths.set(state.env, (depths.get(state.env) ?? 0) + 1);
++    state.line = startLine + 1;
++    return true;
++  }
++
++  if (DETAILS_CLOSE_RE.test(line)) {
++    // Only close when we are actually inside a disclosure.
++    if ((depths.get(state.env) ?? 0) <= 0) return false;
++    if (silent) return true;
++    state.push('details_close', 'details', -1);
++    depths.set(state.env, (depths.get(state.env) ?? 0) - 1);
++    state.line = startLine + 1;
++    return true;
++  }
++
++  const summaryMatch = SUMMARY_RE.exec(line);
++  if (summaryMatch) {
++    if (silent) return true;
++    const open = state.push('summary_open', 'summary', 1);
++    open.map = [startLine, startLine + 1];
++    open.block = true;
++
++    const inline = state.push('inline', '', 0);
++    inline.content = summaryMatch[1].trim();
++    inline.map = [startLine, startLine + 1];
++    inline.children = [];
++
++    state.push('summary_close', 'summary', -1);
++    state.line = startLine + 1;
++    return true;
++  }
++
++  return false;
++}
++
++/**
++ * markdown-it plugin: registers the disclosure block rule (as a paragraph
++ * terminator so a `</details>` right after a body line still closes the block)
++ * plus the four render rules that emit the safe `<details>`/`<summary>` HTML.
++ */
++export function detailsPlugin(md: MarkdownIt): void {
++  md.block.ruler.before('paragraph', 'details', detailsRule, {
++    alt: ['paragraph', 'reference', 'blockquote', 'list'],
++  });
++
++  const renderDetailsOpen: RenderRule = (tokens, idx) => {
++    const hasOpen = (tokens[idx].attrs ?? []).some(([name]) => name === 'open');
++    return `<details class="note-details"${hasOpen ? ' open' : ''}>\n`;
++  };
++  md.renderer.rules.details_open = renderDetailsOpen;
++  md.renderer.rules.details_close = () => '</details>\n';
++  md.renderer.rules.summary_open = () => '<summary class="note-summary">';
++  md.renderer.rules.summary_close = () => '</summary>\n';
++}
+diff --git a/packages/notes/src/view/preview.test.ts b/packages/notes/src/view/preview.test.ts
+index 46f823783..48980ae21 100644
+--- a/packages/notes/src/view/preview.test.ts
++++ b/packages/notes/src/view/preview.test.ts
+@@ -71,6 +71,83 @@ describe('NotePreview', () => {
+     expect(img?.getAttribute('decoding')).toBe('async');
+   });
+ 
++  it('renders a collapsed <details>/<summary> disclosure by default', () => {
++    const preview = new NotePreview();
++    preview.render(
++      '<details>\n<summary>More</summary>\n\nHidden body\n\n</details>',
++    );
++
++    const details = preview.el.querySelector('details.note-details');
++    const summary = details?.querySelector('summary.note-summary');
++    expect(details).toBeTruthy();
++    expect(summary?.textContent).toBe('More');
++    // Collapsed by default: no `open` attribute.
++    expect(details?.hasAttribute('open')).toBe(false);
++    // Body markdown is rendered inside the disclosure.
++    expect(details?.textContent).toContain('Hidden body');
++  });
++
++  it('renders <details open> expanded by default', () => {
++    const preview = new NotePreview();
++    preview.render(
++      '<details open>\n<summary>Peek</summary>\n\nShown\n\n</details>',
++    );
++
++    const details = preview.el.querySelector('details.note-details');
++    expect(details).toBeTruthy();
++    expect(details?.hasAttribute('open')).toBe(true);
++  });
++
++  it('renders markdown inside the summary label and the body', () => {
++    const preview = new NotePreview();
++    preview.render(
++      '<details>\n<summary>**bold** label</summary>\n\n- one\n- two\n\n</details>',
++    );
++
++    const summary = preview.el.querySelector('summary.note-summary');
++    expect(summary?.querySelector('strong')?.textContent).toBe('bold');
++
++    const items = preview.el.querySelectorAll('details.note-details li');
++    expect(items.length).toBe(2);
++  });
++
++  it('supports nested <details> disclosures', () => {
++    const preview = new NotePreview();
++    preview.render(
++      [
++        '<details>',
++        '<summary>Outer</summary>',
++        '',
++        '<details>',
++        '<summary>Inner</summary>',
++        '',
++        'deep',
++        '',
++        '</details>',
++        '',
++        '</details>',
++      ].join('\n'),
++    );
++
++    const outer = preview.el.querySelector('details.note-details');
++    const inner = outer?.querySelector('details.note-details');
++    expect(outer).toBeTruthy();
++    expect(inner).toBeTruthy();
++    expect(inner?.textContent).toContain('deep');
++  });
++
++  it('does not emit raw HTML for a stray </details> or embedded tags', () => {
++    const preview = new NotePreview();
++    // No opening <details>: the close must not become an orphan element, and
++    // the script tag must never be rendered as executable HTML.
++    preview.render('</details>\n\n<script>alert(1)</script>');
++
++    expect(preview.el.querySelector('details')).toBeNull();
++    expect(preview.el.querySelector('script')).toBeNull();
++    // The literal text is preserved (escaped), proving html:false still holds.
++    expect(preview.el.textContent).toContain('<script>alert(1)</script>');
++  });
++
+   it('copies code to the clipboard when the copy button is clicked', async () => {
+     const writeText = vi.fn().mockResolvedValue(undefined);
+     Object.assign(navigator, { clipboard: { writeText } });
+@@ -79,9 +156,8 @@ describe('NotePreview', () => {
+     document.body.appendChild(preview.el);
+     preview.render('```\nhello world\n```');
+ 
+-    const button = preview.el.querySelector<HTMLButtonElement>(
+-      '.note-copy-btn',
+-    );
++    const button =
++      preview.el.querySelector<HTMLButtonElement>('.note-copy-btn');
+     expect(button).toBeTruthy();
+     button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+ 
+diff --git a/packages/notes/src/view/preview.ts b/packages/notes/src/view/preview.ts
+index f9a2f7d91..aa78f1cf8 100644
+--- a/packages/notes/src/view/preview.ts
++++ b/packages/notes/src/view/preview.ts
+@@ -8,6 +8,7 @@ import MarkdownIt from 'markdown-it';
+ import hljs from 'highlight.js/lib/common';
+ import taskLists from 'markdown-it-task-lists';
+ import katexPlugin from '@vscode/markdown-it-katex';
++import { detailsPlugin } from './details-plugin.js';
+ 
+ const md: MarkdownIt = new MarkdownIt({
+   html: false,
+@@ -36,6 +37,11 @@ md.use(taskLists, { label: true, enabled: false });
+ // KaTeX math (`$inline$` and `$$block$$`).
+ md.use(katexPlugin);
+ 
++// Collapsible sections (`<details>` / `<summary>`). A narrow allowlist for
++// just these two disclosure tags — keeps the preview's `html: false` posture
++// (no arbitrary raw HTML) while supporting GitHub/MDN-style foldouts.
++md.use(detailsPlugin);
++
+ /**
+  * Code fences: reuses markdown-it's own `highlight` option (configured
+  * above) but renders the block ourselves so we can guarantee the `hljs`
+@@ -128,8 +134,7 @@ export class NotePreview {
+       const target = e.target;
+       if (!(target instanceof Element)) return;
+       const button = target.closest(COPY_BUTTON_SELECTOR);
+-      if (!(button instanceof HTMLElement) || !this.el.contains(button))
+-        return;
++      if (!(button instanceof HTMLElement) || !this.el.contains(button)) return;
+ 
+       const code = button.parentElement?.querySelector('code');
+       const text = code?.textContent ?? '';

@@ -1,0 +1,1258 @@
+From 43dd59760d5ee68f4055b11ff407058fa8e27606 Mon Sep 17 00:00:00 2001
+From: "claude[bot]" <41898282+claude[bot]@users.noreply.github.com>
+Date: Fri, 24 Jul 2026 13:50:24 +0000
+Subject: [PATCH 1/6] Allow selection, copy, and link clicks in Docs viewer
+ mode
+
+Read-only Docs mode constructed no TextEditor, so viewers could not
+select text, copy it, or open hyperlinks even though none of those
+mutate the document. Reuse the existing editor machinery instead of
+duplicating it: construct the TextEditor in read-only mode too and
+thread a readOnly flag that gates every mutating path (typing, IME,
+paste, cut, table-border resize, header/footer edit-context switch)
+while leaving drag selection, copy serialization, and link opening
+intact. A plain click on a link opens it (Google-Docs viewer parity);
+a drag still selects. The link popover hides its Edit/Remove buttons
+in read-only mode.
+
+Fixes #482
+
+Assisted-by: Claude Code (autonomous)
+---
+ ...24-docs-viewer-read-interaction-lessons.md |  23 +++
+ ...60724-docs-viewer-read-interaction-todo.md |  92 ++++++++++
+ packages/docs/src/view/editor.ts              |  12 +-
+ packages/docs/src/view/text-editor.ts         | 106 ++++++++++-
+ .../docs/test/view/editor-read-only.test.ts   | 165 ++++++++++++++++++
+ .../src/app/docs/docs-link-popover.tsx        |  43 +++--
+ packages/frontend/src/app/docs/docs-view.tsx  |   1 +
+ 7 files changed, 421 insertions(+), 21 deletions(-)
+ create mode 100644 docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
+ create mode 100644 docs/tasks/active/20260724-docs-viewer-read-interaction-todo.md
+ create mode 100644 packages/docs/test/view/editor-read-only.test.ts
+
+diff --git a/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md b/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
+new file mode 100644
+index 000000000..f6d955aff
+--- /dev/null
++++ b/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
+@@ -0,0 +1,23 @@
++# Lessons — Docs viewer read interaction (issue #482)
++
++## Context
++
++Read-only docs mode disabled *all* pointer/clipboard/link interaction by
++constructing no `TextEditor` at all. Fix reuses the editor's existing
++machinery with a `readOnly` gate rather than duplicating selection/copy.
++
++## Findings
++
++- Selection highlight paint is independent of the `focused` flag (uses an
++  inactive color when unfocused); the caret paints only when `focused`.
++  So enabling selection in read-only just needed the pointer/copy path,
++  not new render code. (`doc-canvas.ts` lines ~462 / ~598.)
++- `focused` becomes true when the hidden textarea gains focus. In
++  read-only we grab focus on first click so `Ctrl+C` works and the caret
++  appears — matching Google-Docs viewer behavior.
++- Distinguishing a link *click* from a drag: check whether the selection
++  is collapsed (anchor == focus) on mouseup, no distance threshold needed.
++
++## Follow-ups / open questions
++
++- (fill in during review)
+diff --git a/docs/tasks/active/20260724-docs-viewer-read-interaction-todo.md b/docs/tasks/active/20260724-docs-viewer-read-interaction-todo.md
+new file mode 100644
+index 000000000..dc4f01826
+--- /dev/null
++++ b/docs/tasks/active/20260724-docs-viewer-read-interaction-todo.md
+@@ -0,0 +1,92 @@
++# Docs viewer: text selection, copy, and link interaction (issue #482)
++
++## Problem
++
++In Docs **viewer / read-only** mode, readers cannot:
++
++- Select text by dragging.
++- Copy the selected text.
++- Click a hyperlink to open its destination.
++
++Read-only mode should block document *edits* while still permitting these
++non-mutating "read the document" interactions (Google-Docs viewer parity).
++
++## Root cause
++
++`initialize(container, store, theme, readOnly)` in
++`packages/docs/src/view/editor.ts` constructs the `TextEditor` only when
++**not** read-only:
++
++```ts
++const textEditor = readOnly ? null : new TextEditor(...);
++```
++
++The `TextEditor` owns *all* pointer + clipboard + link machinery (drag
++selection, `copy` serialization, `Ctrl/Cmd+Click` link open, the hidden
++textarea the browser copy event needs). With it null in read-only mode,
++none of those interactions exist. The link popover (`DocsLinkPopover`) is
++also driven by cursor-move link detection, which never fires without a
++caret.
++
++## Approach
++
++Reuse the existing `TextEditor` machinery instead of duplicating it:
++construct the `TextEditor` in read-only mode too, threading a `readOnly`
++flag that gates every **mutating** path while leaving selection / copy /
++link paths intact.
++
++### `packages/docs/src/view/text-editor.ts`
++
++- Add `readOnly` constructor flag (default `false`) + field.
++- `handleInput`: no-op in read-only (clear textarea, return).
++- `handleCompositionStart`: no-op in read-only (blocks IME insertion).
++- `handleCut` / `handlePaste`: `preventDefault` + return in read-only.
++- `handleKeyDown`: in read-only allow only caret navigation
++  (Arrows / Home / End), `Cmd/Ctrl+A` select-all, and `Cmd/Ctrl+F` find;
++  plain `Cmd/Ctrl+C` falls through to the browser `copy` event
++  (`handleCopy`, which stays enabled). Everything else is a no-op.
++- `handleMouseDown`: skip table-border-resize + header/footer edit-context
++  switching in read-only; keep selection (single/double/triple/shift/drag)
++  and link handling. Record the link href under the pointer for a
++  plain-click open.
++- `handleMouseUp`: in read-only, if the pointer press did not drag
++  (selection collapsed) and landed on a safe link href, open it in a new
++  tab — Google-Docs viewer behavior (plain click opens links).
++- `handleMouseMove`: in read-only, show `pointer` over links / `text`
++  elsewhere and keep drag selection; skip the table-border resize cursor.
++
++### `packages/docs/src/view/editor.ts`
++
++- Always construct the `TextEditor`, passing `readOnly`.
++- Do not auto-focus the hidden textarea on mount in read-only (focus is
++  acquired on first click so `Ctrl+C` works); keep focus/blur wiring so the
++  caret + selection paint on click.
++
++### `packages/frontend/src/app/docs/docs-link-popover.tsx`
++
++- Accept a `readOnly` prop; in read-only render only the open-link anchor,
++  hiding the Edit / Remove-link buttons (both mutate).
++- `docs-view.tsx`: pass `readOnly` to `DocsLinkPopover`.
++
++## Non-goals
++
++- No new editing affordances in viewer mode.
++- Comments / context-menu already receive `readOnly` and are unchanged.
++- Selecting text that *starts inside* a link opens on a pure click only;
++  drag-select still works when started from non-link text.
++
++## Test plan
++
++- Unit: read-only `TextEditor` ignores typing / paste / cut but performs
++  drag selection + copy serialization + link open. (add
++  `text-editor` read-only spec if a harness exists)
++- Manual: open a doc via a viewer share link — drag-select text, `Ctrl+C`
++  copies, click a hyperlink opens it; typing / paste do nothing.
++- `pnpm verify:fast` (via CI).
++
++## Acceptance criteria (from issue #482)
++
++- [ ] Select text by dragging in viewer mode.
++- [ ] Copy selected text.
++- [ ] Click a hyperlink to open its destination.
++- [ ] Editing remains blocked (no content changes).
+diff --git a/packages/docs/src/view/editor.ts b/packages/docs/src/view/editor.ts
+index 626ce1916..bbbbd7fc6 100644
+--- a/packages/docs/src/view/editor.ts
++++ b/packages/docs/src/view/editor.ts
+@@ -2037,7 +2037,11 @@ export function initialize(
+     afterCursorRender();
+   };
+ 
+-  const textEditor = readOnly ? null : new TextEditor(
++  // The TextEditor is constructed in read-only mode too: it owns the
++  // pointer/clipboard/link machinery (drag selection, copy serialization,
++  // hyperlink opening) that viewers need. Its `readOnly` flag gates every
++  // mutating path so no edit can reach the store. See issue #482.
++  const textEditor = new TextEditor(
+     container,
+     doc,
+     cursor,
+@@ -2076,6 +2080,7 @@ export function initialize(
+     invalidateLayout,
+     () => headerLayout,
+     () => footerLayout,
++    readOnly,
+   );
+   textEditorRef = textEditor;
+ 
+@@ -2579,7 +2584,10 @@ export function initialize(
+   };
+   if (textEditor) {
+     textEditor.onFocusChange(handleFocus, handleBlur);
+-    textEditor.focus();
++    // In read-only mode don't steal focus on mount — a viewer opening the
++    // document shouldn't get a blinking caret at the start. Focus is
++    // acquired on first click (so Ctrl/Cmd+C works) via handleMouseDown.
++    if (!readOnly) textEditor.focus();
+   }
+ 
+   return {
+diff --git a/packages/docs/src/view/text-editor.ts b/packages/docs/src/view/text-editor.ts
+index 7dd2f83a3..5fc45c020 100644
+--- a/packages/docs/src/view/text-editor.ts
++++ b/packages/docs/src/view/text-editor.ts
+@@ -99,6 +99,19 @@ export class TextEditor {
+   private editContext: EditContext = 'body';
+   /** Which page the header/footer editing is active on. */
+   private hfActivePageIndex = 0;
++  /**
++   * View-only mode (viewer / read-only share links). All mutating paths
++   * (typing, IME, paste, cut, border resize, header/footer edit-context
++   * switching) are gated off; drag selection, copy, and hyperlink opening
++   * stay enabled so readers can review the document. See issue #482.
++   */
++  private readOnly = false;
++  /**
++   * Link href under the pointer at read-only `mousedown`, resolved back on
++   * `mouseup` to open the link on a pure click (no drag). `null` when the
++   * press did not land on a link.
++   */
++  private readOnlyPendingLinkHref: string | null = null;
+ 
+   private container: HTMLElement;
+   private doc: Doc;
+@@ -379,7 +392,9 @@ export class TextEditor {
+     invalidateLayout: () => void,
+     getHeaderLayout?: () => DocumentLayout | null,
+     getFooterLayout?: () => DocumentLayout | null,
++    readOnly: boolean = false,
+   ) {
++    this.readOnly = readOnly;
+     this.container = container;
+     this.doc = doc;
+     this.cursor = cursor;
+@@ -527,6 +542,9 @@ export class TextEditor {
+   }
+ 
+   private handleCompositionStart = (): void => {
++    // View-only mode: never begin a composition so no IME text is committed
++    // on compositionend (its `active` guard then makes the end a no-op).
++    if (this.readOnly) return;
+     // Cancel any pending post-compositionend ignore — a new composition is
+     // starting (e.g. syllable boundary in Korean: compositionend → compositionstart).
+     this.ignoreInputUntilNextTick = false;
+@@ -592,6 +610,13 @@ export class TextEditor {
+   // --- Event handlers ---
+ 
+   private handleInput = (): void => {
++    // View-only mode: never write to the model. Drop whatever the browser
++    // put in the hidden textarea (e.g. a stray keystroke while focused for
++    // copy) so nothing is inserted.
++    if (this.readOnly) {
++      this.textarea.value = '';
++      return;
++    }
+     // Ignore all input events fired synchronously after compositionend
+     if (this.ignoreInputUntilNextTick) return;
+ 
+@@ -699,6 +724,30 @@ export class TextEditor {
+     // Word-level modifier: Option on Mac, Ctrl on Windows/Linux
+     const wordMod = isMac ? altKey : ctrlKey;
+ 
++    // View-only mode: permit caret navigation, select-all, and find; let
++    // plain Cmd/Ctrl+C fall through to the browser `copy` event (handleCopy
++    // stays enabled). Everything else — typing, deletion, formatting,
++    // undo/redo, paste — is a no-op so the document can't be mutated.
++    if (this.readOnly) {
++      const isNav =
++        key === 'ArrowLeft' || key === 'ArrowRight' ||
++        key === 'ArrowUp' || key === 'ArrowDown' ||
++        key === 'Home' || key === 'End';
++      if (!isNav) {
++        if (mod && key === 'a') {
++          e.preventDefault();
++          this.selectAll();
++        } else if (mod && key === 'f') {
++          e.preventDefault();
++          this.onFindRequest?.();
++        }
++        // Plain Cmd/Ctrl+C is intentionally not preventDefault-ed here so
++        // the browser fires the `copy` event handled by handleCopy.
++        return;
++      }
++      // Navigation keys fall through to the shared switch below.
++    }
++
+     // Flush software Hangul composition before processing special keys
+     if (this.hangulAssembler.isComposing) {
+       if (key === 'Backspace' || key === 'Delete' || key === 'Enter' ||
+@@ -1011,6 +1060,12 @@ export class TextEditor {
+   };
+ 
+   private handleCut = (e: ClipboardEvent): void => {
++    // View-only mode: cutting would delete content — block it. (Copy is
++    // still available via the separate `copy` event / Cmd/Ctrl+C.)
++    if (this.readOnly) {
++      e.preventDefault();
++      return;
++    }
+     this.pending?.clear();
+     if (!this.selection.hasSelection()) return;
+     e.preventDefault();
+@@ -1119,6 +1174,11 @@ export class TextEditor {
+   }
+ 
+   private handlePaste = (e: ClipboardEvent): void => {
++    // View-only mode: pasting would insert content — block it.
++    if (this.readOnly) {
++      e.preventDefault();
++      return;
++    }
+     this.pending?.clear();
+     e.preventDefault();
+ 
+@@ -1279,10 +1339,18 @@ export class TextEditor {
+       }
+     }
+ 
++    // View-only mode: remember the link under the pointer so a pure click
++    // (no drag) opens it on mouseup — Google-Docs viewer behavior, where a
++    // plain click follows the link rather than placing an editing caret.
++    if (this.readOnly) {
++      this.readOnlyPendingLinkHref = this.getLinkHrefAtMouse(e) ?? null;
++    }
++
+     e.preventDefault();
+ 
++    // Table border resize is an edit — skip it in view-only mode.
+     // Check for border resize drag
+-    const tableInfo = this.resolveTableFromMouse(e);
++    const tableInfo = this.readOnly ? null : this.resolveTableFromMouse(e);
+     if (tableInfo) {
+       const tableData = this.doc.getBlock(tableInfo.tableBlockId).tableData;
+       const hit = detectTableBorder(
+@@ -1331,8 +1399,11 @@ export class TextEditor {
+     this.lastClickX = e.clientX;
+     this.lastClickY = e.clientY;
+ 
+-    // Header/footer context switching via click target detection
+-    {
++    // Header/footer context switching via click target detection.
++    // Entering a header/footer is an edit-context change (and can create
++    // the region via ensureHeader/ensureFooter), so it is view-only-gated;
++    // in read-only the body stays the sole selectable/copyable context.
++    if (!this.readOnly) {
+       const rect = this.container.getBoundingClientRect();
+       const s = this.getScaleFactor();
+       const canvasX = (e.clientX - rect.left + this.container.scrollLeft) / s;
+@@ -1498,6 +1569,19 @@ export class TextEditor {
+   };
+ 
+   private handleMouseMove = (e: MouseEvent): void => {
++    // View-only mode: no border-resize cursor (resize is disabled). Show a
++    // pointer over links, a text I-beam elsewhere, and keep drag selection.
++    if (this.readOnly) {
++      const href = this.getLinkHrefAtMouse(e);
++      this.setCanvasCursor(href ? 'pointer' : 'text');
++      if (this.isMouseDown && this.selection.range) {
++        this.lastMouseClientY = e.clientY;
++        this.updateDragSelection(e.clientX, e.clientY);
++        this.startDragScroll();
++      }
++      return;
++    }
++
+     // During border drag: update drag position and guideline
+     if (this.borderDragState) {
+       const rect = this.container.getBoundingClientRect();
+@@ -1563,6 +1647,22 @@ export class TextEditor {
+     }
+     this.isMouseDown = false;
+     this.stopDragScroll();
++
++    // View-only mode: a pure click (no drag → collapsed selection) on a
++    // link follows it. A drag creates a non-collapsed range, so text
++    // selection over/around links still works.
++    if (this.readOnly && this.readOnlyPendingLinkHref) {
++      const href = this.readOnlyPendingLinkHref;
++      this.readOnlyPendingLinkHref = null;
++      const range = this.selection.range;
++      const collapsed =
++        !range ||
++        (range.anchor.blockId === range.focus.blockId &&
++          range.anchor.offset === range.focus.offset);
++      if (collapsed && isSafeUrl(href)) {
++        window.open(href, '_blank', 'noopener,noreferrer');
++      }
++    }
+   };
+ 
+   private applyBorderDrag(): void {
+diff --git a/packages/docs/test/view/editor-read-only.test.ts b/packages/docs/test/view/editor-read-only.test.ts
+new file mode 100644
+index 000000000..d2e7ebb6a
+--- /dev/null
++++ b/packages/docs/test/view/editor-read-only.test.ts
+@@ -0,0 +1,165 @@
++// @vitest-environment jsdom
++import { describe, test, expect, beforeEach, afterEach } from 'vitest';
++import { MemDocStore } from '../../src/store/memory.js';
++import { initialize, type EditorAPI } from '../../src/view/editor.js';
++import { getBlockText, normalizeBlockStyle } from '../../src/model/types.js';
++import type { Block } from '../../src/model/types.js';
++
++const EMPTY_BLOCK_STYLE = normalizeBlockStyle({});
++
++/**
++ * Read-only (viewer) mode must block every document mutation while still
++ * permitting the read interactions from issue #482 (selection, copy,
++ * link opening). These jsdom tests pin the mutation-blocking guarantees
++ * and that keyboard-driven selection still works; pointer/copy/link paths
++ * that need real pixel layout are covered by manual / browser tests.
++ */
++
++function installCanvasShim(): void {
++  const ctxHandler: ProxyHandler<object> = {
++    get(_t, prop) {
++      if (prop === 'measureText') {
++        return (text: string) => ({
++          width: typeof text === 'string' ? text.length * 6 : 0,
++          actualBoundingBoxAscent: 8,
++          actualBoundingBoxDescent: 2,
++        });
++      }
++      if (prop === 'canvas') return null;
++      if (prop === 'font') return '12px sans-serif';
++      return () => {};
++    },
++    set() {
++      return true;
++    },
++  };
++  const fakeCtx = new Proxy({}, ctxHandler) as unknown as CanvasRenderingContext2D;
++  (HTMLCanvasElement.prototype as unknown as {
++    getContext: (kind: string) => unknown;
++  }).getContext = (kind: string) => (kind === '2d' ? fakeCtx : null);
++  (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
++    observe(): void {}
++    unobserve(): void {}
++    disconnect(): void {}
++  };
++}
++
++function setupEditor(
++  blocks: Block[],
++  readOnly: boolean,
++): { editor: EditorAPI; container: HTMLElement; textarea: HTMLTextAreaElement } {
++  const store = new MemDocStore();
++  store.setDocument({ blocks });
++  const container = document.createElement('div');
++  document.body.appendChild(container);
++  const editor = initialize(container, store, undefined, readOnly);
++  const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
++  return { editor, container, textarea };
++}
++
++function para(id: string, text: string): Block {
++  return {
++    id,
++    type: 'paragraph',
++    inlines: [{ text, style: { fontFamily: 'Arial', fontSize: 12 } }],
++    style: EMPTY_BLOCK_STYLE,
++  };
++}
++
++function bodyText(editor: EditorAPI): string {
++  return editor
++    .getDoc()
++    .document.blocks.map((b) => getBlockText(b))
++    .join('\n');
++}
++
++describe('read-only docs editor (issue #482)', () => {
++  beforeEach(() => {
++    installCanvasShim();
++    document.body.innerHTML = '';
++  });
++
++  afterEach(() => {
++    document.body.innerHTML = '';
++  });
++
++  test('a text-editor is still constructed (owns selection/copy/link)', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    expect(textarea).toBeTruthy();
++    editor.dispose();
++  });
++
++  test('typing (input event) does not mutate the document', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    textarea.value = 'X';
++    textarea.dispatchEvent(new Event('input', { bubbles: true }));
++    expect(bodyText(editor)).toBe('hello world');
++    editor.dispose();
++  });
++
++  test('control: typing DOES mutate when not read-only', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], false);
++    textarea.value = 'X';
++    textarea.dispatchEvent(new Event('input', { bubbles: true }));
++    expect(bodyText(editor)).not.toBe('hello world');
++    expect(bodyText(editor)).toContain('X');
++    editor.dispose();
++  });
++
++  test('paste event does not mutate the document', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    textarea.dispatchEvent(new Event('paste', { bubbles: true, cancelable: true }));
++    expect(bodyText(editor)).toBe('hello world');
++    editor.dispose();
++  });
++
++  test('Backspace does not delete text', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    // Place a collapsed caret mid-word so Backspace would delete if allowed.
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 5 },
++      focus: { blockId: 'b1', offset: 5 },
++    });
++    textarea.dispatchEvent(
++      new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true }),
++    );
++    expect(bodyText(editor)).toBe('hello world');
++    editor.dispose();
++  });
++
++  test('Enter does not split the block', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 5 },
++      focus: { blockId: 'b1', offset: 5 },
++    });
++    textarea.dispatchEvent(
++      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
++    );
++    expect(editor.getDoc().document.blocks.length).toBe(1);
++    editor.dispose();
++  });
++
++  test('Shift+ArrowRight still extends the selection (navigation works)', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 0 },
++    });
++    textarea.dispatchEvent(
++      new KeyboardEvent('keydown', {
++        key: 'ArrowRight',
++        shiftKey: true,
++        bubbles: true,
++        cancelable: true,
++      }),
++    );
++    const sel = editor.getActiveSelection();
++    expect(sel).not.toBeNull();
++    expect(sel!.anchor.offset).toBe(0);
++    expect(sel!.focus.offset).toBe(1);
++    // Text is unchanged by navigation.
++    expect(bodyText(editor)).toBe('hello world');
++    editor.dispose();
++  });
++});
+diff --git a/packages/frontend/src/app/docs/docs-link-popover.tsx b/packages/frontend/src/app/docs/docs-link-popover.tsx
+index 77d39f1e3..432864354 100644
+--- a/packages/frontend/src/app/docs/docs-link-popover.tsx
++++ b/packages/frontend/src/app/docs/docs-link-popover.tsx
+@@ -19,6 +19,12 @@ interface DocsLinkPopoverProps {
+     position: { x: number; y: number; height: number };
+   } | null;
+   onEditRequestHandled: () => void;
++  /**
++   * Viewer / read-only mode. When set, the popover shows only the
++   * open-link affordance — the Edit and Remove-link buttons (both mutate
++   * the document) are hidden. See issue #482.
++   */
++  readOnly?: boolean;
+ }
+ 
+ /**
+@@ -31,6 +37,7 @@ export function DocsLinkPopover({
+   containerRef,
+   editRequest,
+   onEditRequestHandled,
++  readOnly,
+ }: DocsLinkPopoverProps) {
+   const [linkInfo, setLinkInfo] = useState<LinkHoverInfo | undefined>();
+   const [visible, setVisible] = useState(false);
+@@ -187,22 +194,26 @@ export function DocsLinkPopover({
+               ? linkInfo.href.slice(0, 37) + "..."
+               : linkInfo.href}
+           </a>
+-          <button
+-            className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded hover:bg-muted"
+-            onClick={handleEdit}
+-            aria-label="Edit link"
+-            title="Edit link"
+-          >
+-            <IconEdit size={14} />
+-          </button>
+-          <button
+-            className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded hover:bg-muted"
+-            onClick={handleRemove}
+-            aria-label="Remove link"
+-            title="Remove link"
+-          >
+-            <IconUnlink size={14} />
+-          </button>
++          {!readOnly && (
++            <>
++              <button
++                className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded hover:bg-muted"
++                onClick={handleEdit}
++                aria-label="Edit link"
++                title="Edit link"
++              >
++                <IconEdit size={14} />
++              </button>
++              <button
++                className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded hover:bg-muted"
++                onClick={handleRemove}
++                aria-label="Remove link"
++                title="Remove link"
++              >
++                <IconUnlink size={14} />
++              </button>
++            </>
++          )}
+         </>
+       ) : mode === "edit" ? (
+         <>
+diff --git a/packages/frontend/src/app/docs/docs-view.tsx b/packages/frontend/src/app/docs/docs-view.tsx
+index ded66bb60..fcaf5cb6c 100644
+--- a/packages/frontend/src/app/docs/docs-view.tsx
++++ b/packages/frontend/src/app/docs/docs-view.tsx
+@@ -568,6 +568,7 @@ export function DocsView({
+         containerRef={containerRef}
+         editRequest={linkInputRequest}
+         onEditRequestHandled={() => setLinkInputRequest(null)}
++        readOnly={readOnly}
+       />
+       {findBarOpen && (
+         <DocsFindBar
+
+From e4cb364281abfb5a12ac554673277dcea8dd5845 Mon Sep 17 00:00:00 2001
+From: "claude[bot]" <41898282+claude[bot]@users.noreply.github.com>
+Date: Fri, 24 Jul 2026 14:01:22 +0000
+Subject: [PATCH 2/6] Block table context menu in read-only Docs mode
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Enabling the pointer path in viewer mode lets the caret enter a table
+cell, making isInTable() true and opening DocsTableContextMenu — whose
+items all edit the table (insert/delete row+column, merge, cell bg).
+This was unreachable before (read-only had no TextEditor, so no caret).
+Bail out of its handleContextMenu when readOnly so the edit-free body
+context menu handles the right-click instead.
+
+Assisted-by: Claude Code (autonomous)
+---
+ ...724-docs-viewer-read-interaction-lessons.md | 18 +++++++++++++++++-
+ .../src/app/docs/docs-table-context-menu.tsx   |  9 ++++++++-
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md b/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
+index f6d955aff..d875134c2 100644
+--- a/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
++++ b/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
+@@ -18,6 +18,22 @@ machinery with a `readOnly` gate rather than duplicating selection/copy.
+ - Distinguishing a link *click* from a drag: check whether the selection
+   is collapsed (anchor == focus) on mouseup, no distance threshold needed.
+ 
++## Review finding (self-review, fixed)
++
++- **Enabling the pointer path in read-only re-exposed a table-edit menu.**
++  Because the caret can now land in a table cell, `editor.isInTable()`
++  becomes true in read-only, and `DocsTableContextMenu` (all items mutate
++  the table) would open on right-click. Previously unreachable because the
++  read-only editor had no pointer handling / caret at all. Fixed by bailing
++  out of its `handleContextMenu` when `readOnly` — the edit-free body
++  context menu then handles the right-click. Lesson: when you *enable* a
++  previously-dead interaction surface, re-audit every feature that keys off
++  the state that surface produces (here: caret-in-table).
++
+ ## Follow-ups / open questions
+ 
+-- (fill in during review)
++- Non-blocking: viewer right-click Copy. Copy works via `Ctrl/Cmd+C`
++  (issue requirement met), but the body context menu still hides its Copy
++  item in read-only (`showCopy = hasSelection && !readOnly`). Now that the
++  `TextEditor` (and its hidden textarea) exists in read-only, `editor.copy()`
++  would work — a future PR could offer right-click Copy in the viewer.
+diff --git a/packages/frontend/src/app/docs/docs-table-context-menu.tsx b/packages/frontend/src/app/docs/docs-table-context-menu.tsx
+index 6fced900a..20c136c54 100644
+--- a/packages/frontend/src/app/docs/docs-table-context-menu.tsx
++++ b/packages/frontend/src/app/docs/docs-table-context-menu.tsx
+@@ -61,6 +61,13 @@ export function DocsTableContextMenu({
+ 
+   const handleContextMenu = useCallback(
+     (e: MouseEvent) => {
++      // Every item in this menu edits the table (insert/delete row+column,
++      // merge/unmerge, cell background). In read-only viewer mode the caret
++      // can now enter a table cell (the editor's pointer handling is active
++      // so text is selectable), which would make `isInTable()` true — but
++      // opening a table-edit menu there would defeat the read-only guarantee.
++      // Bail so the (edit-free) body context menu handles the right-click.
++      if (readOnly) return;
+       if (!editor?.isInTable()) return;
+       e.preventDefault();
+       setPosition({ x: e.clientX, y: e.clientY });
+@@ -68,7 +75,7 @@ export function DocsTableContextMenu({
+       setHasSelection(!!editor.getActiveSelection());
+       setShowColors(false);
+     },
+-    [editor],
++    [editor, readOnly],
+   );
+ 
+   const close = useCallback(() => {
+
+From ffeb1d27c81b1fdb58224fe05543519b453148a7 Mon Sep 17 00:00:00 2001
+From: hackerwins <susukang98@gmail.com>
+Date: Sun, 26 Jul 2026 12:46:07 +0900
+Subject: [PATCH 3/6] Document Docs read-only mode in sharing.md
+
+The Docs viewer read-only interaction contract (construct TextEditor in
+read-only, permit selection/copy/link, block mutation) was recorded only
+in the docs/tasks/active/ task files. Fold it into the canonical sharing
+design doc alongside the existing 'Sheet Package (Read-Only Mode)' section,
+per the repo's design-doc discipline, to satisfy the agent-review-design-fit
+gate on PR #548.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+---
+ docs/design/sharing.md | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/docs/design/sharing.md b/docs/design/sharing.md
+index 443ab23f0..4a41e5aee 100644
+--- a/docs/design/sharing.md
++++ b/docs/design/sharing.md
+@@ -117,6 +117,22 @@ The `Spreadsheet` class accepts a `readOnly` option. When enabled:
+ - Navigation, selection, scrolling, and copy still work
+ - The formatting toolbar is hidden in the React component
+ 
++### Docs Package (Read-Only Mode)
++
++The Docs editor accepts a `readOnly` flag threaded through
++`initialize(container, store, theme, readOnly)`. Rather than skipping the
++`TextEditor` (which owns all pointer, clipboard, and link machinery), it is
++constructed in read-only mode too, with every **mutating** path gated so
++"read the document" interactions match Google-Docs viewer parity. When enabled:
++- Typing, IME composition, cut, and paste are blocked
++- Keyboard is limited to caret navigation (Arrows / Home / End),
++  `Cmd/Ctrl+A` select-all, and `Cmd/Ctrl+F` find; other edit shortcuts no-op
++- Table-border resize and header/footer edit-context switching are blocked
++- The link popover shows only the open-link anchor (Edit / Remove hidden)
++- Drag selection, `Cmd/Ctrl+C` copy, and plain-click link open still work
++- The hidden textarea is not auto-focused on mount; focus is acquired on
++  first click so the caret paints and the browser copy event fires
++
+ ### Security
+ 
+ - **Token entropy** — UUIDs provide 122 bits of entropy, making tokens
+
+From d4f944ead12a837f97847f99a900d5e2b857c387 Mon Sep 17 00:00:00 2001
+From: hackerwins <susukang98@gmail.com>
+Date: Sun, 26 Jul 2026 13:16:14 +0900
+Subject: [PATCH 4/6] Address review: restore test shims, add copy coverage,
+ check criteria
+
+CodeRabbit review follow-ups on the Docs read-only viewer work:
+
+- editor-read-only.test.ts now restores HTMLCanvasElement.getContext and
+  globalThis.ResizeObserver in afterEach so the canvas/RO shims cannot leak
+  into later jsdom tests.
+- Add a copy-serialization test: a read-only selection copies the selected
+  text out via the browser copy event while leaving the document unchanged
+  (issue #482's copy behavior).
+- Check off the issue #482 acceptance criteria and note where each is
+  verified (unit vs. manual/browser for the pointer paths).
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+---
+ ...60724-docs-viewer-read-interaction-todo.md | 13 ++++---
+ .../docs/test/view/editor-read-only.test.ts   | 34 +++++++++++++++++++
+ 2 files changed, 43 insertions(+), 4 deletions(-)
+
+diff --git a/docs/tasks/active/20260724-docs-viewer-read-interaction-todo.md b/docs/tasks/active/20260724-docs-viewer-read-interaction-todo.md
+index dc4f01826..00bc840b6 100644
+--- a/docs/tasks/active/20260724-docs-viewer-read-interaction-todo.md
++++ b/docs/tasks/active/20260724-docs-viewer-read-interaction-todo.md
+@@ -86,7 +86,12 @@ link paths intact.
+ 
+ ## Acceptance criteria (from issue #482)
+ 
+-- [ ] Select text by dragging in viewer mode.
+-- [ ] Copy selected text.
+-- [ ] Click a hyperlink to open its destination.
+-- [ ] Editing remains blocked (no content changes).
++- [x] Select text by dragging in viewer mode.
++- [x] Copy selected text.
++- [x] Click a hyperlink to open its destination.
++- [x] Editing remains blocked (no content changes).
++
++Verification: `packages/docs/test/view/editor-read-only.test.ts` pins the
++mutation-blocking guarantees (typing / paste / Backspace / Enter no-op),
++keyboard-driven selection, and copy serialization; drag-select and
++plain-click link open are pointer paths validated by manual / browser tests.
+diff --git a/packages/docs/test/view/editor-read-only.test.ts b/packages/docs/test/view/editor-read-only.test.ts
+index d2e7ebb6a..34809572a 100644
+--- a/packages/docs/test/view/editor-read-only.test.ts
++++ b/packages/docs/test/view/editor-read-only.test.ts
+@@ -15,7 +15,13 @@ const EMPTY_BLOCK_STYLE = normalizeBlockStyle({});
+  * that need real pixel layout are covered by manual / browser tests.
+  */
+ 
++let originalGetContext: typeof HTMLCanvasElement.prototype.getContext;
++let originalResizeObserver: typeof globalThis.ResizeObserver | undefined;
++
+ function installCanvasShim(): void {
++  originalGetContext = HTMLCanvasElement.prototype.getContext;
++  originalResizeObserver = (globalThis as { ResizeObserver?: typeof globalThis.ResizeObserver })
++    .ResizeObserver;
+   const ctxHandler: ProxyHandler<object> = {
+     get(_t, prop) {
+       if (prop === 'measureText') {
+@@ -81,6 +87,13 @@ describe('read-only docs editor (issue #482)', () => {
+ 
+   afterEach(() => {
+     document.body.innerHTML = '';
++    // Restore the global shims so they do not leak into other jsdom tests.
++    HTMLCanvasElement.prototype.getContext = originalGetContext;
++    if (originalResizeObserver === undefined) {
++      delete (globalThis as { ResizeObserver?: unknown }).ResizeObserver;
++    } else {
++      (globalThis as { ResizeObserver?: unknown }).ResizeObserver = originalResizeObserver;
++    }
+   });
+ 
+   test('a text-editor is still constructed (owns selection/copy/link)', () => {
+@@ -140,6 +153,27 @@ describe('read-only docs editor (issue #482)', () => {
+     editor.dispose();
+   });
+ 
++  test('copy serializes the selected text without mutating the document', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 5 },
++    });
++    // Stub clipboardData; jsdom's ClipboardEvent does not carry one.
++    const written = new Map<string, string>();
++    const clipboardData = {
++      setData: (type: string, value: string) => written.set(type, value),
++      getData: (type: string) => written.get(type) ?? '',
++    };
++    const event = new Event('copy', { bubbles: true, cancelable: true });
++    Object.defineProperty(event, 'clipboardData', { value: clipboardData });
++    textarea.dispatchEvent(event);
++    // Selected text is copied out; the document itself is untouched.
++    expect(written.get('text/plain')).toBe('hello');
++    expect(bodyText(editor)).toBe('hello world');
++    editor.dispose();
++  });
++
+   test('Shift+ArrowRight still extends the selection (navigation works)', () => {
+     const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
+     editor._setSelectionForTest({
+
+From 89d97f6a6ccb171c18c3fac15d6e739321e8743a Mon Sep 17 00:00:00 2001
+From: hackerwins <susukang98@gmail.com>
+Date: Sun, 26 Jul 2026 20:53:55 +0900
+Subject: [PATCH 5/6] Add real-payload paste test + cut/select-all/table-menu
+ coverage
+
+agent-review-test-adequacy flagged two blocking gaps:
+
+- The read-only paste test dispatched an empty paste event, so it passed
+  whether or not the guard existed. Give it a real text payload and add a
+  non-read-only control that proves the payload would otherwise insert.
+- DocsTableContextMenu's read-only bail (right-click no longer opens the
+  table-EDIT menu) shipped untested. Add a frontend test: read-only bails
+  before opening (isInTable never consulted), with a non-read-only control.
+
+Also cover the previously manual-only read-only guarantees now that a real
+clipboard payload is available: cut is blocked (with a control that deletes
+when editable) and Cmd/Ctrl+A select-all works without mutating.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+---
+ .../docs/test/view/editor-read-only.test.ts   | 77 ++++++++++++++++++-
+ .../app/docs/docs-table-context-menu.test.tsx | 57 ++++++++++++++
+ 2 files changed, 132 insertions(+), 2 deletions(-)
+ create mode 100644 packages/frontend/tests/app/docs/docs-table-context-menu.test.tsx
+
+diff --git a/packages/docs/test/view/editor-read-only.test.ts b/packages/docs/test/view/editor-read-only.test.ts
+index 34809572a..07c020f9c 100644
+--- a/packages/docs/test/view/editor-read-only.test.ts
++++ b/packages/docs/test/view/editor-read-only.test.ts
+@@ -63,6 +63,23 @@ function setupEditor(
+   return { editor, container, textarea };
+ }
+ 
++/**
++ * Build a paste/cut ClipboardEvent carrying a real text payload. jsdom does
++ * not populate `clipboardData` on a ClipboardEvent, so stub it: paste reads
++ * `text/plain`, cut writes to it (no-op here). A real payload makes the
++ * read-only assertions non-vacuous — without the guard the paste would insert.
++ */
++function clipboardEvent(type: 'paste' | 'cut', text: string): Event {
++  const clipboardData = {
++    getData: (t: string) => (t === 'text/plain' ? text : ''),
++    setData: () => {},
++    items: [] as unknown[],
++  };
++  const event = new Event(type, { bubbles: true, cancelable: true });
++  Object.defineProperty(event, 'clipboardData', { value: clipboardData });
++  return event;
++}
++
+ function para(id: string, text: string): Block {
+   return {
+     id,
+@@ -119,9 +136,65 @@ describe('read-only docs editor (issue #482)', () => {
+     editor.dispose();
+   });
+ 
+-  test('paste event does not mutate the document', () => {
++  test('paste (with a real payload) does not mutate the document', () => {
+     const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
+-    textarea.dispatchEvent(new Event('paste', { bubbles: true, cancelable: true }));
++    // A plain empty paste event inserts nothing regardless of the guard, so
++    // carry a real text payload — without the read-only gate this WOULD paste.
++    textarea.dispatchEvent(clipboardEvent('paste', 'PASTED'));
++    expect(bodyText(editor)).toBe('hello world');
++    editor.dispose();
++  });
++
++  test('control: the same paste payload DOES insert when not read-only', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], false);
++    textarea.dispatchEvent(clipboardEvent('paste', 'PASTED'));
++    expect(bodyText(editor)).toContain('PASTED');
++    editor.dispose();
++  });
++
++  test('cut does not delete the selection', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 5 },
++    });
++    textarea.dispatchEvent(clipboardEvent('cut', ''));
++    expect(bodyText(editor)).toBe('hello world');
++    editor.dispose();
++  });
++
++  test('control: cut DOES delete the selection when not read-only', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], false);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 5 },
++    });
++    textarea.dispatchEvent(clipboardEvent('cut', ''));
++    expect(bodyText(editor)).not.toBe('hello world');
++    expect(bodyText(editor)).not.toContain('hello');
++    editor.dispose();
++  });
++
++  test('Cmd/Ctrl+A selects all (navigation aid) without mutating', () => {
++    const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 0 },
++    });
++    textarea.dispatchEvent(
++      new KeyboardEvent('keydown', {
++        key: 'a',
++        ctrlKey: true,
++        metaKey: true,
++        bubbles: true,
++        cancelable: true,
++      }),
++    );
++    const sel = editor.getActiveSelection();
++    expect(sel).not.toBeNull();
++    // Whole block is selected: caret 0 → end of "hello world".
++    expect(sel!.anchor.offset).toBe(0);
++    expect(sel!.focus.offset).toBe(11);
+     expect(bodyText(editor)).toBe('hello world');
+     editor.dispose();
+   });
+diff --git a/packages/frontend/tests/app/docs/docs-table-context-menu.test.tsx b/packages/frontend/tests/app/docs/docs-table-context-menu.test.tsx
+new file mode 100644
+index 000000000..74cf4505c
+--- /dev/null
++++ b/packages/frontend/tests/app/docs/docs-table-context-menu.test.tsx
+@@ -0,0 +1,57 @@
++import { describe, it, expect, vi } from 'vitest';
++import { render, screen, fireEvent } from '@testing-library/react';
++import { useRef } from 'react';
++import { DocsTableContextMenu } from '@/app/docs/docs-table-context-menu';
++import type { EditorAPI } from '@wafflebase/docs';
++
++/** Minimal EditorAPI stub — only the methods DocsTableContextMenu touches. */
++function makeEditor(overrides: Partial<EditorAPI> = {}): EditorAPI {
++  return {
++    isInTable: vi.fn(() => true),
++    getTableMergeContext: vi.fn(() => ({ state: 'none' })),
++    getActiveSelection: vi.fn(() => null),
++    insertTableRow: vi.fn(),
++    deleteTableRow: vi.fn(),
++    insertTableColumn: vi.fn(),
++    deleteTableColumn: vi.fn(),
++    focus: vi.fn(),
++    ...overrides,
++  } as unknown as EditorAPI;
++}
++
++/** Wrapper that owns the container ref the menu attaches its listener to. */
++function Wrapper({ editor, readOnly = false }: { editor: EditorAPI; readOnly?: boolean }) {
++  const containerRef = useRef<HTMLDivElement>(null);
++  return (
++    <>
++      <div ref={containerRef} data-testid="doc-container" />
++      <DocsTableContextMenu editor={editor} containerRef={containerRef} readOnly={readOnly} />
++    </>
++  );
++}
++
++describe('DocsTableContextMenu read-only bail (issue #482)', () => {
++  it('control: right-click inside a table opens the edit menu when not read-only', () => {
++    const editor = makeEditor();
++    render(<Wrapper editor={editor} readOnly={false} />);
++
++    fireEvent.contextMenu(screen.getByTestId('doc-container'), { clientX: 10, clientY: 10 });
++
++    // The table-edit menu opened.
++    expect(screen.getByText('Delete row')).toBeDefined();
++    expect(editor.isInTable).toHaveBeenCalled();
++  });
++
++  it('read-only: right-click inside a table does NOT open the edit menu', () => {
++    const editor = makeEditor();
++    render(<Wrapper editor={editor} readOnly={true} />);
++
++    fireEvent.contextMenu(screen.getByTestId('doc-container'), { clientX: 10, clientY: 10 });
++
++    // Bailed before opening — no table-edit affordances rendered.
++    expect(screen.queryByText('Delete row')).toBeNull();
++    expect(screen.queryByText('Insert above')).toBeNull();
++    // Bail happens before it even asks whether the caret is in a table.
++    expect(editor.isInTable).not.toHaveBeenCalled();
++  });
++});
+
+From 47f17eaedeb808cdb53c0168fc6f69979a18b3a4 Mon Sep 17 00:00:00 2001
+From: hackerwins <susukang98@gmail.com>
+Date: Tue, 28 Jul 2026 09:33:32 +0900
+Subject: [PATCH 6/6] Guard read-only mutations at the EditorAPI boundary
+
+Read-only viewer mode only gated pointer/keyboard/clipboard event
+handlers. The programmatic EditorAPI (paste -> TextEditor.pasteContent,
+plus applyStyle, insertLink, table/image ops) mutates the store directly
+and bypasses those handlers, so any holder of the api object could still
+alter a viewer's document (CodeRabbit Major finding).
+
+Neutralize every mutating EditorAPI command at the API boundary via an
+allowlist no-op wrapper, and gate the direct TextEditor.pasteContent /
+insertText entry points to mirror handlePaste / handleInput. This stays
+client-side defense-in-depth; the store/server remains the authoritative
+write boundary. Adds non-vacuous programmatic-path tests (applyStyle /
+insertLink / insertTable, each with a not-read-only control).
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+---
+ docs/design/sharing.md                        |  4 ++
+ ...24-docs-viewer-read-interaction-lessons.md | 12 ++++
+ packages/docs/src/view/editor.ts              | 31 +++++++++-
+ packages/docs/src/view/text-editor.ts         |  4 ++
+ .../docs/test/view/editor-read-only.test.ts   | 60 +++++++++++++++++++
+ 5 files changed, 110 insertions(+), 1 deletion(-)
+
+diff --git a/docs/design/sharing.md b/docs/design/sharing.md
+index 4a41e5aee..85369315e 100644
+--- a/docs/design/sharing.md
++++ b/docs/design/sharing.md
+@@ -128,6 +128,10 @@ constructed in read-only mode too, with every **mutating** path gated so
+ - Keyboard is limited to caret navigation (Arrows / Home / End),
+   `Cmd/Ctrl+A` select-all, and `Cmd/Ctrl+F` find; other edit shortcuts no-op
+ - Table-border resize and header/footer edit-context switching are blocked
++- The programmatic `EditorAPI` mutating commands (`applyStyle`, `insertLink`,
++  `paste`, table / image ops, …) are neutralized at the API boundary, and the
++  direct `TextEditor` entry points (`pasteContent`, `insertText`) are gated —
++  so read-only holds even for callers that bypass pointer / keyboard events
+ - The link popover shows only the open-link anchor (Edit / Remove hidden)
+ - Drag selection, `Cmd/Ctrl+C` copy, and plain-click link open still work
+ - The hidden textarea is not auto-focused on mount; focus is acquired on
+diff --git a/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md b/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
+index d875134c2..b5998cfc0 100644
+--- a/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
++++ b/docs/tasks/active/20260724-docs-viewer-read-interaction-lessons.md
+@@ -30,6 +30,18 @@ machinery with a `readOnly` gate rather than duplicating selection/copy.
+   previously-dead interaction surface, re-audit every feature that keys off
+   the state that surface produces (here: caret-in-table).
+ 
++- **Event-handler gating alone left the programmatic API open (CodeRabbit
++  Major).** The `readOnly` flag guarded pointer / keyboard / clipboard
++  *events*, but the public `EditorAPI` (`paste` → `TextEditor.pasteContent`,
++  plus `applyStyle`, `insertLink`, table / image ops) mutates the store
++  directly and bypasses those handlers. Fixed by neutralizing every mutating
++  `EditorAPI` command at the API boundary (allowlist no-op wrapper) and gating
++  the direct `TextEditor.pasteContent` / `insertText` entry points. Lesson:
++  when a mode is enforced per-event-handler, audit the programmatic API that
++  reaches the same mutations without going through those handlers. This stays
++  client-side defense-in-depth; the store/server is the authoritative write
++  boundary (see sharing.md Security).
++
+ ## Follow-ups / open questions
+ 
+ - Non-blocking: viewer right-click Copy. Copy works via `Ctrl/Cmd+C`
+diff --git a/packages/docs/src/view/editor.ts b/packages/docs/src/view/editor.ts
+index bbbbd7fc6..8d347b543 100644
+--- a/packages/docs/src/view/editor.ts
++++ b/packages/docs/src/view/editor.ts
+@@ -2590,7 +2590,7 @@ export function initialize(
+     if (!readOnly) textEditor.focus();
+   }
+ 
+-  return {
++  const api: EditorAPI = {
+     render,
+     getDoc: () => doc,
+     getStore: () => docStore,
+@@ -3697,4 +3697,33 @@ export function initialize(
+     },
+     _getCursorForTest: () => ({ ...cursor.position }),
+   };
++
++  // View-only mode: neutralize every mutating command at the public API
++  // boundary. TextEditor's per-handler guards already block pointer /
++  // keyboard / clipboard events, but the programmatic EditorAPI (e.g.
++  // paste, applyStyle, table ops) is reachable by any holder of `api`, so
++  // gate it here too. Keep this allowlist in sync when adding mutating
++  // methods. Read-only stays a client-side convenience — the store/server
++  // remains the authoritative write boundary for viewer share tokens.
++  if (readOnly) {
++    const MUTATING_METHODS = [
++      'applyStyle', 'clearInlineFormatting', 'applyBlockStyle',
++      'undo', 'redo', 'setBlockType', 'setDocStyles',
++      'updateStyleToMatch', 'resetNamedStyle', 'resetAllNamedStyles',
++      'toggleList', 'indent', 'outdent', 'insertLink', 'removeLink',
++      'applySpellSuggestion', 'cut', 'paste', 'insertTable', 'deleteTable',
++      'insertTableRow', 'deleteTableRow', 'insertTableColumn',
++      'deleteTableColumn', 'mergeTableCells', 'splitTableCell',
++      'applyTableCellStyle', 'insertImage', 'updateSelectedImage',
++      'insertPageNumber',
++    ] as const;
++    const noop = () => {};
++    for (const name of MUTATING_METHODS) {
++      // `paste`/`insertImage` are async (Promise<void>); the rest are sync
++      // void. A bare no-op satisfies both — callers only await or ignore.
++      (api as unknown as Record<string, () => void>)[name] = noop;
++    }
++  }
++
++  return api;
+ }
+diff --git a/packages/docs/src/view/text-editor.ts b/packages/docs/src/view/text-editor.ts
+index 5fc45c020..60955a0a7 100644
+--- a/packages/docs/src/view/text-editor.ts
++++ b/packages/docs/src/view/text-editor.ts
+@@ -492,6 +492,8 @@ export class TextEditor {
+    */
+   insertText(text: string): void {
+     if (text === '') return;
++    // View-only mode: block programmatic text injection, mirroring handleInput.
++    if (this.readOnly) return;
+     this.flushHangul();
+     this.saveSnapshot();
+     this.deleteSelection();
+@@ -1169,6 +1171,8 @@ export class TextEditor {
+    * keyboard state to respect the "paste as plain text" modifier.
+    */
+   pasteContent(opts: { html?: string; text?: string }): void {
++    // View-only mode: block programmatic paste, mirroring handlePaste.
++    if (this.readOnly) return;
+     this.pending?.clear();
+     this.pasteFromParts(opts);
+   }
+diff --git a/packages/docs/test/view/editor-read-only.test.ts b/packages/docs/test/view/editor-read-only.test.ts
+index 07c020f9c..0e5147479 100644
+--- a/packages/docs/test/view/editor-read-only.test.ts
++++ b/packages/docs/test/view/editor-read-only.test.ts
+@@ -247,6 +247,66 @@ describe('read-only docs editor (issue #482)', () => {
+     editor.dispose();
+   });
+ 
++  // The programmatic EditorAPI is reachable independently of pointer /
++  // keyboard events, so its mutating commands must be gated too — not just
++  // the event handlers. These pin the API-boundary guard.
++
++  test('programmatic applyStyle() does not mutate in read-only', () => {
++    const { editor } = setupEditor([para('b1', 'hello world')], true);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 5 },
++    });
++    editor.applyStyle({ bold: true });
++    expect(editor.getRangeStyleSummary().bold).not.toBe(true);
++    editor.dispose();
++  });
++
++  test('control: applyStyle() DOES apply when not read-only', () => {
++    const { editor } = setupEditor([para('b1', 'hello world')], false);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 5 },
++    });
++    editor.applyStyle({ bold: true });
++    expect(editor.getRangeStyleSummary().bold).toBe(true);
++    editor.dispose();
++  });
++
++  test('programmatic insertLink() does not insert text in read-only', () => {
++    const { editor } = setupEditor([para('b1', 'hello world')], true);
++    editor.insertLink('https://example.com');
++    expect(bodyText(editor)).toBe('hello world');
++    editor.dispose();
++  });
++
++  test('control: insertLink() DOES insert URL text when not read-only', () => {
++    const { editor } = setupEditor([para('b1', 'hello world')], false);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 11 },
++      focus: { blockId: 'b1', offset: 11 },
++    });
++    editor.insertLink('https://example.com');
++    expect(bodyText(editor)).toContain('https://example.com');
++    editor.dispose();
++  });
++
++  test('programmatic insertTable() does not add a table in read-only', () => {
++    const { editor } = setupEditor([para('b1', 'hello world')], true);
++    const before = editor.getDoc().document.blocks.length;
++    editor.insertTable(2, 2);
++    expect(editor.getDoc().document.blocks.length).toBe(before);
++    editor.dispose();
++  });
++
++  test('control: insertTable() DOES add a table when not read-only', () => {
++    const { editor } = setupEditor([para('b1', 'hello world')], false);
++    const before = editor.getDoc().document.blocks.length;
++    editor.insertTable(2, 2);
++    expect(editor.getDoc().document.blocks.length).toBeGreaterThan(before);
++    editor.dispose();
++  });
++
+   test('Shift+ArrowRight still extends the selection (navigation works)', () => {
+     const { editor, textarea } = setupEditor([para('b1', 'hello world')], true);
+     editor._setSelectionForTest({

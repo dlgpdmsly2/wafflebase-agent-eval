@@ -1,0 +1,355 @@
+From 24eb509a1e72e958fd16cd18f185ceaf13e03009 Mon Sep 17 00:00:00 2001
+From: ggyuchive <byeonggyu1214@gmail.com>
+Date: Thu, 23 Jul 2026 21:48:27 +0900
+Subject: [PATCH] Add PDF download and download buttons in the file list
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+PDF files had no way to be saved — the viewer only rendered them. Image
+download already worked (a button in the bottom zoom overlay). Add a
+download helper and surface downloads where files are managed:
+
+- PDF viewer header gets a Download button (new — PDFs couldn't be saved).
+- The image viewer's existing download button moves from the bottom zoom
+  overlay to the top-right header, matching the PDF viewer.
+- Each pdf/image row in the documents list gets a Download item in its
+  three-dot menu (above Rename) plus a Download button in the bulk bar.
+
+downloadDocumentFile fetches the blob through the authed, permission-gated
+file endpoint and names it from the title plus the file's extension.
+---
+ packages/frontend/src/api/download-file.ts    | 56 +++++++++++++
+ .../src/app/documents/document-list.tsx       | 44 ++++++++++
+ .../frontend/src/app/files/file-detail.tsx    | 84 ++++++++++++++++++-
+ .../frontend/src/app/files/image-viewer.tsx   | 24 +-----
+ 4 files changed, 181 insertions(+), 27 deletions(-)
+ create mode 100644 packages/frontend/src/api/download-file.ts
+
+diff --git a/packages/frontend/src/api/download-file.ts b/packages/frontend/src/api/download-file.ts
+new file mode 100644
+index 000000000..ecc1f9811
+--- /dev/null
++++ b/packages/frontend/src/api/download-file.ts
+@@ -0,0 +1,56 @@
++import { fetchWithAuth } from "./auth";
++import { fileUrl } from "./files";
++
++/**
++ * Fallback extension by blob MIME type, used when a document's stored `fileId`
++ * (which carries the original extension) isn't available on the caller — e.g.
++ * the documents list, whose projection omits it. Covers the blob types the app
++ * accepts (pdf + the image formats).
++ */
++const MIME_EXT: Record<string, string> = {
++  "application/pdf": "pdf",
++  "image/png": "png",
++  "image/jpeg": "jpg",
++  "image/gif": "gif",
++  "image/webp": "webp",
++};
++
++/**
++ * Build the saved-file name: keep the document title and ensure it ends with
++ * the file's extension (from `fileId` first, then the blob MIME type). Returns
++ * the bare title when no extension can be determined.
++ */
++export function downloadFileName(
++  title: string,
++  fileId?: string,
++  mime?: string,
++): string {
++  const ext =
++    fileId?.split(".").pop()?.toLowerCase() ||
++    (mime ? MIME_EXT[mime] : undefined);
++  if (!ext) return title;
++  return title.toLowerCase().endsWith(`.${ext}`) ? title : `${title}.${ext}`;
++}
++
++/**
++ * Fetch a document's stored blob through the authed, permission-gated file
++ * endpoint and trigger a browser download. Throws on a non-OK response so the
++ * caller can surface an error.
++ */
++export async function downloadDocumentFile(doc: {
++  id: string;
++  title: string;
++  fileId?: string;
++}): Promise<void> {
++  const res = await fetchWithAuth(fileUrl(doc.id));
++  if (!res.ok) throw new Error(`Failed to download (${res.status})`);
++  const blob = await res.blob();
++  const url = URL.createObjectURL(blob);
++  const a = document.createElement("a");
++  a.href = url;
++  a.download = downloadFileName(doc.title, doc.fileId, blob.type);
++  a.click();
++  // Revoke on a delay: revoking synchronously after click() can cancel the
++  // download before the browser has started reading the blob.
++  setTimeout(() => URL.revokeObjectURL(url), 10_000);
++}
+diff --git a/packages/frontend/src/app/documents/document-list.tsx b/packages/frontend/src/app/documents/document-list.tsx
+index 6e7612388..774f83a83 100644
+--- a/packages/frontend/src/app/documents/document-list.tsx
++++ b/packages/frontend/src/app/documents/document-list.tsx
+@@ -29,6 +29,7 @@ import {
+   ArrowDown,
+   ArrowUp,
+   ChevronsUpDown,
++  Download,
+   FileDown,
+   FileText,
+   Folder as FolderIcon,
+@@ -120,6 +121,7 @@ import {
+   fetchWorkspaces,
+   type Workspace,
+ } from "@/api/workspaces";
++import { downloadDocumentFile } from "@/api/download-file";
+ import { UploadPanel } from "./upload-panel";
+ import { useWindowFileDrop } from "./use-window-file-drop";
+ import { enqueue, startUploads } from "./upload-queue";
+@@ -394,6 +396,18 @@ export function DocumentList({
+               </Button>
+             </DropdownMenuTrigger>
+             <DropdownMenuContent align="end">
++              {(row.original.type === "image" ||
++                row.original.type === "pdf") && (
++                <DropdownMenuItem
++                  onClick={(e: MouseEvent<HTMLElement>) => {
++                    e.stopPropagation();
++                    handleDownload(row.original);
++                  }}
++                >
++                  <Download className="mr-2 h-4 w-4" />
++                  Download
++                </DropdownMenuItem>
++              )}
+               <DropdownMenuItem
+                 onClick={(e: MouseEvent<HTMLElement>) => {
+                   e.stopPropagation();
+@@ -777,6 +791,30 @@ export function DocumentList({
+     setTargetFolderId(null);
+   };
+ 
++  // Download a single blob-backed document (pdf/image) through the authed file
++  // endpoint. Other document types have nothing to download.
++  const handleDownload = async (doc: Document) => {
++    try {
++      await downloadDocumentFile({ id: String(doc.id), title: doc.title });
++    } catch {
++      toast.error(`Failed to download "${doc.title}"`);
++    }
++  };
++
++  // The pdf/image documents in the current selection — what a bulk "Download"
++  // acts on.
++  const downloadableSelected = data.filter(
++    (d) =>
++      selectedIds.includes(String(d.id)) &&
++      (d.type === "image" || d.type === "pdf"),
++  );
++
++  const handleBulkDownload = async () => {
++    for (const doc of downloadableSelected) {
++      await handleDownload(doc);
++    }
++  };
++
+   return (
+     <>
+       <div className="w-full">
+@@ -824,6 +862,12 @@ export function DocumentList({
+               </span>
+             </div>
+             <div className="flex w-full items-center gap-1 sm:w-auto sm:flex-1 sm:justify-end">
++              {downloadableSelected.length > 0 && (
++                <Button variant="outline" onClick={handleBulkDownload}>
++                  <Download className="mr-1 h-4 w-4" />
++                  Download
++                </Button>
++              )}
+               <Button
+                 variant="outline"
+                 disabled={!selectedCanManage}
+diff --git a/packages/frontend/src/app/files/file-detail.tsx b/packages/frontend/src/app/files/file-detail.tsx
+index e1878ceca..93d028527 100644
+--- a/packages/frontend/src/app/files/file-detail.tsx
++++ b/packages/frontend/src/app/files/file-detail.tsx
+@@ -1,7 +1,11 @@
+ import { Navigate, useParams } from "react-router-dom";
+ import { keepPreviousData, useQuery } from "@tanstack/react-query";
++import { Download } from "lucide-react";
++import { toast } from "sonner";
+ import { fetchMe } from "@/api/auth";
+ import { fetchDocument } from "@/api/documents";
++import { downloadDocumentFile } from "@/api/download-file";
++import { Button } from "@/components/ui/button";
+ import { Loader } from "@/components/loader";
+ import { ShareDialog } from "@/components/share-dialog";
+ import { UserPresence } from "@/components/user-presence";
+@@ -14,11 +18,46 @@ import {
+   PdfCollabBody,
+ } from "./pdf-collab";
+ 
++/** Header icon button that saves a blob-backed document to disk. */
++function DownloadFileButton({
++  documentId,
++  title,
++  fileId,
++  label,
++}: {
++  documentId: string;
++  title: string;
++  fileId?: string;
++  label: string;
++}) {
++  return (
++    <Button
++      variant="ghost"
++      size="icon"
++      aria-label={label}
++      title={label}
++      onClick={async () => {
++        try {
++          await downloadDocumentFile({ id: documentId, title, fileId });
++        } catch {
++          toast.error("Failed to download");
++        }
++      }}
++    >
++      <Download className="h-4 w-4" />
++    </Button>
++  );
++}
++
+ function PdfFileLayout({
+   documentId,
++  title,
++  fileId,
+   currentUser,
+ }: {
+   documentId: string;
++  title: string;
++  fileId?: string;
+   currentUser: User;
+ }) {
+   return (
+@@ -37,6 +76,12 @@ function PdfFileLayout({
+         headerActions={
+           <>
+             <PdfHeaderActions />
++            <DownloadFileButton
++              documentId={documentId}
++              title={title}
++              fileId={fileId}
++              label="Download PDF"
++            />
+             <ShareDialog documentId={documentId} />
+             <UserPresence />
+           </>
+@@ -48,11 +93,29 @@ function PdfFileLayout({
+   );
+ }
+ 
+-function ImageFileLayout({ documentId }: { documentId: string }) {
++function ImageFileLayout({
++  documentId,
++  title,
++  fileId,
++}: {
++  documentId: string;
++  title: string;
++  fileId?: string;
++}) {
+   return (
+     <FileShell
+       documentId={documentId}
+-      headerActions={<ShareDialog documentId={documentId} />}
++      headerActions={
++        <>
++          <DownloadFileButton
++            documentId={documentId}
++            title={title}
++            fileId={fileId}
++            label="Download image"
++          />
++          <ShareDialog documentId={documentId} />
++        </>
++      }
+     >
+       <ImageViewer documentId={documentId} />
+     </FileShell>
+@@ -101,9 +164,22 @@ export function FileDetail() {
+   if (docError || !documentData) return <Navigate to="/documents" replace />;
+ 
+   if (documentData.type === "image") {
+-    return <ImageFileLayout documentId={id!} />;
++    return (
++      <ImageFileLayout
++        documentId={id!}
++        title={documentData.title}
++        fileId={documentData.fileId}
++      />
++    );
+   }
+-  return <PdfFileLayout documentId={id!} currentUser={currentUser} />;
++  return (
++    <PdfFileLayout
++      documentId={id!}
++      title={documentData.title}
++      fileId={documentData.fileId}
++      currentUser={currentUser}
++    />
++  );
+ }
+ 
+ export default FileDetail;
+diff --git a/packages/frontend/src/app/files/image-viewer.tsx b/packages/frontend/src/app/files/image-viewer.tsx
+index 7172e11c9..4530938a0 100644
+--- a/packages/frontend/src/app/files/image-viewer.tsx
++++ b/packages/frontend/src/app/files/image-viewer.tsx
+@@ -1,13 +1,7 @@
+ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import { useNavigate } from "react-router-dom";
+ import { useQuery } from "@tanstack/react-query";
+-import {
+-  ChevronLeft,
+-  ChevronRight,
+-  Download,
+-  ZoomIn,
+-  ZoomOut,
+-} from "lucide-react";
++import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+ import { Button } from "@/components/ui/button";
+ import { fetchWithAuth } from "@/api/auth";
+ import { fetchDocument, fetchDocuments } from "@/api/documents";
+@@ -113,14 +107,6 @@ export function ImageViewer({ documentId }: { documentId: string }) {
+     return () => window.removeEventListener("keydown", onKey);
+   }, [go, prevId, nextId]);
+ 
+-  const download = useCallback(() => {
+-    if (!src) return;
+-    const a = document.createElement("a");
+-    a.href = src;
+-    a.download = downloadName.current;
+-    a.click();
+-  }, [src]);
+-
+   return (
+     <div className="relative flex flex-1 items-center justify-center overflow-auto bg-muted/30">
+       {error ? (
+@@ -179,14 +165,6 @@ export function ImageViewer({ documentId }: { documentId: string }) {
+         >
+           <ZoomIn className="h-4 w-4" />
+         </Button>
+-        <Button
+-          variant="ghost"
+-          size="icon"
+-          aria-label="Download image"
+-          onClick={download}
+-        >
+-          <Download className="h-4 w-4" />
+-        </Button>
+       </div>
+     </div>
+   );

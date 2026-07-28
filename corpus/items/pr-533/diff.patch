@@ -1,0 +1,309 @@
+From 24c5ab47e0b54bd31cf3bd377bf50ce86c670933 Mon Sep 17 00:00:00 2001
+From: hotsunchip <hotsunchip@kaist.ac.kr>
+Date: Thu, 23 Jul 2026 20:06:36 +0900
+Subject: [PATCH] Pin note code-block copy button and refine code styling
+
+The copy button was a child of the horizontally-scrolling <pre>, so a
+long code line scrolled it out of view. Wrap the fenced block in a
+non-scrolling .note-code-wrapper and make the button a sibling of the
+<pre> (wrapper owns positioning, <pre> owns overflow) so it stays pinned.
+
+Also refine code styling in the preview: drop the forced transparent
+background from the shared .hljs rule, give inline code a neutral pill,
+cancel the prose backtick pseudo-elements markdown-it makes redundant,
+and add fenced-block backgrounds + a thin scrollbar (light and dark).
+
+Local verify:fast is unreliable on this WSL/jsdom host (vitest fork
+workers time out on random unrelated files); notes typecheck + the
+preview suite pass. CI is the authoritative gate.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ docs/tasks/README.md                          |  2 +
+ .../20260723-note-code-block-style-lessons.md | 34 ++++++++
+ .../20260723-note-code-block-style-todo.md    | 44 +++++++++++
+ .../frontend/src/app/notes/notes-preview.css  | 78 ++++++++++++++++++-
+ packages/notes/src/view/preview.test.ts       | 17 ++++
+ packages/notes/src/view/preview.ts            | 12 ++-
+ 6 files changed, 181 insertions(+), 6 deletions(-)
+ create mode 100644 docs/tasks/active/20260723-note-code-block-style-lessons.md
+ create mode 100644 docs/tasks/active/20260723-note-code-block-style-todo.md
+
+diff --git a/docs/tasks/README.md b/docs/tasks/README.md
+index ded180ee0..7a017059f 100644
+--- a/docs/tasks/README.md
++++ b/docs/tasks/README.md
+@@ -19,8 +19,10 @@ Track task-specific plan/review and lessons files using the active/archive layou
+ | Task | Todo | Lessons |
+ |---|---|---|
+ | maintainer merge skill (2026-07-23) | [20260723-maintainer-merge-skill-todo.md](./active/20260723-maintainer-merge-skill-todo.md) | [20260723-maintainer-merge-skill-lessons.md](./active/20260723-maintainer-merge-skill-lessons.md) |
++| note code block style (2026-07-23) | [20260723-note-code-block-style-todo.md](./active/20260723-note-code-block-style-todo.md) | [20260723-note-code-block-style-lessons.md](./active/20260723-note-code-block-style-lessons.md) |
+ | docs baseline dedup (2026-07-22) | [20260722-docs-baseline-dedup-todo.md](./active/20260722-docs-baseline-dedup-todo.md) | [20260722-docs-baseline-dedup-lessons.md](./active/20260722-docs-baseline-dedup-lessons.md) |
+ | docs hyperlink formatting exit (2026-07-22) | [20260722-docs-hyperlink-formatting-exit-todo.md](./active/20260722-docs-hyperlink-formatting-exit-todo.md) | - |
++| docs undo selection (2026-07-22) | [20260722-docs-undo-selection-todo.md](./active/20260722-docs-undo-selection-todo.md) | [20260722-docs-undo-selection-lessons.md](./active/20260722-docs-undo-selection-lessons.md) |
+ | byte text functions (2026-07-21) | [20260721-byte-text-functions-todo.md](./active/20260721-byte-text-functions-todo.md) | [20260721-byte-text-functions-lessons.md](./active/20260721-byte-text-functions-lessons.md) |
+ | docs mixed fontsize baseline (2026-07-21) | [20260721-docs-mixed-fontsize-baseline-todo.md](./active/20260721-docs-mixed-fontsize-baseline-todo.md) | [20260721-docs-mixed-fontsize-baseline-lessons.md](./active/20260721-docs-mixed-fontsize-baseline-lessons.md) |
+ | docx sdt text import (2026-07-21) | [20260721-docx-sdt-text-import-todo.md](./active/20260721-docx-sdt-text-import-todo.md) | [20260721-docx-sdt-text-import-lessons.md](./active/20260721-docx-sdt-text-import-lessons.md) |
+diff --git a/docs/tasks/active/20260723-note-code-block-style-lessons.md b/docs/tasks/active/20260723-note-code-block-style-lessons.md
+new file mode 100644
+index 000000000..0f84a2397
+--- /dev/null
++++ b/docs/tasks/active/20260723-note-code-block-style-lessons.md
+@@ -0,0 +1,34 @@
++# Lessons — Fix note code-block copy-button drift and code styling
++
++## What broke
++
++The copy button lived inside the `<pre>`, the very element that scrolls
++horizontally. `position` on the scrolling element doesn't hold a child fixed
++against its viewport, so a long line pushed the button out of view. Separately,
++a single `.hljs` rule was doing double duty — carrying both the syntax palette
++and a `background: transparent` — which starved inline code and fenced blocks
++of a proper surface.
++
++## Lessons
++
++- **Anchor overlays to a non-scrolling ancestor.** A "pinned" control must be a
++  child of a static positioning context, not of the element that scrolls. The
++  fix is structural (wrapper div owns position, `<pre>` owns overflow), so no
++  amount of long lines can move the button.
++
++- **Don't overload one selector across two render targets.** `.hljs` is applied
++  to both inline highlight spans and the fenced `<code>`; forcing a background
++  there fought both. Splitting responsibilities — palette on `.hljs`, pill on
++  `:not(pre) > code`, block surface on `pre.note-code` — let each target get
++  the right treatment.
++
++- **Watch for framework-injected pseudo-content.** `@tailwindcss/typography`'s
++  `prose` adds decorative backticks via `code::before/::after`. Because
++  markdown-it already turned the real backticks into a `<code>` tag, those
++  pseudo-elements were duplicate visible cruft; `content: none` is the targeted
++  cancel.
++
++- **A DOM-structure change deserves a DOM-structure test.** The regression is
++  invisible to a snapshot of rendered text, so the test asserts parentage
++  (button in wrapper, `<pre>` a sibling, button not contained by `<pre>`)
++  rather than styling — that is what actually pins the behavior.
+diff --git a/docs/tasks/active/20260723-note-code-block-style-todo.md b/docs/tasks/active/20260723-note-code-block-style-todo.md
+new file mode 100644
+index 000000000..8c8c81991
+--- /dev/null
++++ b/docs/tasks/active/20260723-note-code-block-style-todo.md
+@@ -0,0 +1,44 @@
++# Notes — Fix code-block copy-button drift and code styling in preview
++
++## Context
++
++The notes markdown preview renders fenced code blocks with a custom
++`md.renderer.rules.fence` (in `packages/notes/src/view/preview.ts`) plus a
++"Copy" affordance, styled by `packages/frontend/src/app/notes/notes-preview.css`.
++
++Two problems:
++
++- **Copy button drifts.** The button was a child of the `<pre>`, which is the
++  horizontally-scrolling element. A long code line scrolled the button
++  sideways out of view instead of keeping it pinned to the block's top-right.
++- **Code styling gaps.** `.hljs` (shared by inline highlight targets and the
++  fenced `<code>`) forced `background: transparent`, so inline code had no
++  visual boundary and fenced blocks leaned on the wrong surface. The
++  `@tailwindcss/typography` `prose` styles also inject decorative backtick
++  pseudo-elements around `<code>`, which show as literal duplicate backticks
++  because markdown-it already consumed the real ones.
++
++## Work
++
++- [x] `preview.ts` — wrap the fenced block in a non-scrolling
++  `<div class="note-code-wrapper">`; move the copy `<button>` into the wrapper
++  (a sibling of `<pre>`, not a child). The wrapper becomes the positioning
++  context; the `<pre>` only owns overflow.
++- [x] `notes-preview.css`:
++  - Drop the forced `background: transparent` from `.note-preview .hljs` so the
++    rule only carries the token color palette.
++  - Add inline-code pill styling scoped to `:not(pre) > code` (light + dark),
++    and `code::before/::after { content: none }` to cancel prose's backtick
++    pseudo-elements.
++  - Add fenced-block background + thin scrollbar styling on `pre.note-code`
++    (light + dark).
++  - Retarget the copy-button positioning/hover rules from `.note-code` to the
++    new `.note-code-wrapper`.
++- [x] `preview.test.ts` — assert the copy button anchors to the wrapper and
++  sits outside the scrolling `<pre>`.
++
++## Notes
++
++- Pure view/styling change; no data-model or CRDT impact.
++- Colors follow the existing GitHub-markdown-body palette already used in the
++  file (light `#f6f8fa` / dark `#161b22`).
+diff --git a/packages/frontend/src/app/notes/notes-preview.css b/packages/frontend/src/app/notes/notes-preview.css
+index 52d023da9..f9ac33c57 100644
+--- a/packages/frontend/src/app/notes/notes-preview.css
++++ b/packages/frontend/src/app/notes/notes-preview.css
+@@ -8,9 +8,14 @@
+  * match the existing `prose` / `prose-invert` split in index.css.
+  */
+ 
++/*
++ * `.hljs` is on both the inline highlight target and the fenced <code>. Only
++ * the token *color* palette should apply broadly; the block's own background
++ * lives on `pre.note-code` below, and inline code gets its own pill styling,
++ * so this rule must not force a background onto either.
++ */
+ .note-preview .hljs {
+   color: #24292e;
+-  background: transparent;
+ }
+ 
+ .note-preview .hljs-comment,
+@@ -71,6 +76,69 @@
+   color: #c9d1d9;
+ }
+ 
++/*
++ * Inline code (`code`): a subtle neutral pill so the span's boundaries read
++ * clearly against body text, mirroring GitHub's markdown-body. Scoped to
++ * `code` NOT inside a `pre` so fenced blocks (styled below) are untouched.
++ *
++ * `code::before/::after { content: none }` cancels the backtick pseudo-
++ * elements that @tailwindcss/typography's `prose` injects — markdown-it has
++ * already consumed the real backticks into the <code> tag, so the plugin's
++ * decorative ones are duplicate, visible-in-output cruft.
++ */
++.note-preview :not(pre) > code {
++  padding: 0.2em 0.4em;
++  font-size: 85%;
++  background-color: #eff1f3;
++  border-radius: 6px;
++}
++
++.note-preview code::before,
++.note-preview code::after {
++  content: none;
++}
++
++.dark .note-preview :not(pre) > code {
++  background-color: #2d333b;
++}
++
++/* Fenced code block background + horizontal scroll live on the <pre>. The
++ * dark background is a touch lighter than the editor surface for contrast. */
++.note-preview pre.note-code {
++  background-color: #f6f8fa;
++  scrollbar-width: thin;
++  scrollbar-color: #d0d7de #f6f8fa;
++}
++
++.note-preview pre.note-code::-webkit-scrollbar {
++  height: 10px;
++  width: 10px;
++}
++
++.note-preview pre.note-code::-webkit-scrollbar-track {
++  background: #f6f8fa;
++}
++
++.note-preview pre.note-code::-webkit-scrollbar-thumb {
++  background-color: #d0d7de;
++  border-radius: 6px;
++  border: 2px solid #f6f8fa;
++}
++
++.dark .note-preview pre.note-code {
++  background-color: #161b22;
++  scrollbar-color: #30363d #161b22;
++}
++
++.dark .note-preview pre.note-code::-webkit-scrollbar-track {
++  background: #161b22;
++}
++
++.dark .note-preview pre.note-code::-webkit-scrollbar-thumb {
++  background-color: #30363d;
++  border: 2px solid #161b22;
++}
++
+ .dark .note-preview .hljs-comment,
+ .dark .note-preview .hljs-quote {
+   color: #8b949e;
+@@ -116,9 +184,11 @@
+   color: #8b949e;
+ }
+ 
+-/* Code-block chrome: relative anchor for the copy button + a subtle,
++/* Code-block chrome: the wrapper (not the scrolling <pre>) is the copy
++ * button's positioning context, so the button stays pinned to the block's
++ * top-right even while a long line scrolls the <pre> horizontally. A subtle,
+  * hover-revealed affordance so it doesn't compete with the code itself. */
+-.note-preview .note-code {
++.note-preview .note-code-wrapper {
+   position: relative;
+ }
+ 
+@@ -140,7 +210,7 @@
+     background-color 0.12s ease;
+ }
+ 
+-.note-preview .note-code:hover .note-copy-btn,
++.note-preview .note-code-wrapper:hover .note-copy-btn,
+ .note-preview .note-copy-btn:focus-visible {
+   opacity: 1;
+ }
+diff --git a/packages/notes/src/view/preview.test.ts b/packages/notes/src/view/preview.test.ts
+index 67e89accd..46f823783 100644
+--- a/packages/notes/src/view/preview.test.ts
++++ b/packages/notes/src/view/preview.test.ts
+@@ -17,6 +17,23 @@ describe('NotePreview', () => {
+     expect(preview.el.querySelector('.note-copy-btn')).toBeTruthy();
+   });
+ 
++  it('places the copy button in the wrapper, outside the scrolling <pre>', () => {
++    const preview = new NotePreview();
++    preview.render('```\ncode\n```');
++
++    const wrapper = preview.el.querySelector('.note-code-wrapper');
++    const button = preview.el.querySelector('.note-copy-btn');
++    const pre = preview.el.querySelector('pre.note-code');
++
++    // The button anchors to the non-scrolling wrapper so it stays pinned when
++    // a long line scrolls the <pre> horizontally, rather than drifting inside
++    // the scrolled content.
++    expect(wrapper).toBeTruthy();
++    expect(button?.parentElement).toBe(wrapper);
++    expect(pre?.parentElement).toBe(wrapper);
++    expect(pre?.contains(button)).toBe(false);
++  });
++
+   it('renders a disabled checkbox for task-list items', () => {
+     const preview = new NotePreview();
+     preview.render('- [x] done\n- [ ] todo');
+diff --git a/packages/notes/src/view/preview.ts b/packages/notes/src/view/preview.ts
+index 926942717..f9a2f7d91 100644
+--- a/packages/notes/src/view/preview.ts
++++ b/packages/notes/src/view/preview.ts
+@@ -41,6 +41,12 @@ md.use(katexPlugin);
+  * above) but renders the block ourselves so we can guarantee the `hljs`
+  * class (for the syntax palette in notes-preview.css) and inject a copy
+  * button, matching CodePair's code-block affordances.
++ *
++ * The copy button is a child of a non-scrolling outer wrapper, NOT of the
++ * `<pre>`: the `<pre>` is the horizontally-scrolling element, so anchoring
++ * the button to it would make the button drift out of view when a long line
++ * scrolls the block sideways. The wrapper is the positioning context; the
++ * `<pre>` only owns overflow.
+  */
+ md.renderer.rules.fence = (tokens, idx, options) => {
+   const token = tokens[idx];
+@@ -53,10 +59,12 @@ md.renderer.rules.fence = (tokens, idx, options) => {
+   const langClass = lang ? ` language-${md.utils.escapeHtml(lang)}` : '';
+ 
+   return (
+-    `<pre class="hljs note-code">` +
++    `<div class="note-code-wrapper">` +
+     `<button class="note-copy-btn" type="button" aria-label="Copy code">Copy</button>` +
++    `<pre class="hljs note-code">` +
+     `<code class="hljs${langClass}">${highlighted}</code>` +
+-    `</pre>\n`
++    `</pre>` +
++    `</div>\n`
+   );
+ };
+ 
