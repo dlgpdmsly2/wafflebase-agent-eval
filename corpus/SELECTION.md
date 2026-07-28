@@ -28,6 +28,12 @@ secondary question "is the panel equally reliable on bot vs human diffs?")
 13 human. Reliability is computed over all 20; the autonomous subset can be
 reported as a secondary cut.
 
+**Review point (fidelity):** each item's diff is frozen at the commit the panel
+actually reviewed, not the merged state — autonomous PRs at their **first commit**
+(pre-fix, where blocking findings originate → verdict diversity), human PRs at
+**head**. Recorded per item as `review_commit`/`review_point`; the runner also
+checks the repo out at that commit so lenses get real surrounding-code context.
+
 **Selected (20):**
 - Autonomous product (7): 549 548 547 546 544 521 513
 - Human product (13): 556 536 533 532 531 523 520 514 507 505 502 493 471
