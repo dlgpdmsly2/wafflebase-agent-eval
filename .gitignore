@@ -1,4 +1,6 @@
-# The harness writes gzip transcripts; keep everything else as plain text/JSON.
-# Nothing to ignore yet — artifacts are the point of this repo.
+# Raw SDK transcripts: bulky, and unreadable by `git` under corporate EDR (the
+# gzip files trip the file-open block). The verdicts/findings live in payload.json
+# and the metrics in scores/, so transcripts stay LOCAL for debugging only.
+runs/**/transcript.json.gz
 .DS_Store
 node_modules/
