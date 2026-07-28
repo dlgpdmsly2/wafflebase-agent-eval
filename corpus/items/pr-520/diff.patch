@@ -1,33 +1,9 @@
-From ef42f3bdc78c191bcaeb398538d39641f0c5ae2a Mon Sep 17 00:00:00 2001
-From: hotsunchip <hotsunchip@kaist.ac.kr>
-Date: Wed, 22 Jul 2026 15:30:35 +0900
-Subject: [PATCH 1/3] Exit hyperlink formatting on Enter and Space
-
-Inserting or pasting a link left the caret flush against its href
-run, and applyInsertText/applySplitBlock blindly inherit the style
-of whatever run touches the caret. So the very next Enter or Space
-silently pulled new text into the same hyperlink instead of starting
-plain text, forcing users to manually strip formatting afterward.
-
-Reuse the existing pending-style controller: when the caret sits at
-a link's trailing edge, arm pending with href: undefined (merged
-onto the caret's current style so bold/italic etc. survive) so the
-next typed character - first char of a new paragraph on Enter, or a
-typed space - exits the link instead of extending it.
----
- ...722-docs-hyperlink-formatting-exit-todo.md |  75 ++++++++
- packages/docs/src/view/text-editor.ts         |  45 +++++
- .../docs/test/view/link-trailing-edge.test.ts | 175 ++++++++++++++++++
- 3 files changed, 295 insertions(+)
- create mode 100644 docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
- create mode 100644 packages/docs/test/view/link-trailing-edge.test.ts
-
 diff --git a/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md b/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
 new file mode 100644
-index 000000000..6ac812cef
+index 000000000..e3b190b91
 --- /dev/null
 +++ b/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
-@@ -0,0 +1,75 @@
+@@ -0,0 +1,114 @@
 +# Docs — Exit hyperlink formatting on Enter / Space
 +
 +## Context
@@ -77,6 +53,14 @@ index 000000000..6ac812cef
 +  press is also exited).
 +- [x] Wire into `handleInput`'s space branch, before `docInsertText`, so
 +  the typed space itself does not join the link.
++- [x] Wire into `insertPlainText` (the plain-text paste path), before the
++  first line's insert — same root cause: pasting text right after a
++  link's trailing edge (e.g. right after `insertLink`) went through the
++  same style-inheriting `docInsertText` and silently extended the link.
++  Found by an independent review pass (see below); the rich-paste path
++  (`insertBlocks`, HTML/`WAFFLEDOCS_MIME`/markdown-table paste) is
++  unaffected since it splices the clipboard payload's own explicit
++  per-inline styles rather than inheriting the destination caret's run.
 +- [x] Checked non-regressions: bold/italic pending at the same caret is
 +  preserved (merge, not overwrite); `insertLink`'s direct-write path
 +  (doesn't use `pending`, no conflict); auto-link-before-cursor via space
@@ -84,27 +68,58 @@ index 000000000..6ac812cef
 +  adjacency) — unaffected; mid-link Enter/Space (splitting or spacing
 +  inside link text) untouched since the caret isn't at a trailing edge;
 +  Hangul/IME composition doesn't route space/Enter through this path.
-+- [x] Tests: new `test/view/link-trailing-edge.test.ts`, driving the real
++- [x] Tests: `test/view/link-trailing-edge.test.ts`, driving the real
 +  `editor.js` `initialize()` + jsdom textarea (same harness as
 +  `pending-style-editor.test.ts` / `ime-composition-editor.test.ts`):
-+  space right after `insertLink` doesn't extend the link; text typed
-+  after that space stays plain; Enter right after `insertLink` starts a
-+  plain new paragraph; space in the *middle* of link text still stays
-+  part of the link (non-regression for the trailing-edge-only guard).
++  - space right after `insertLink` doesn't extend the link
++  - text typed after that space stays plain
++  - Enter right after `insertLink` starts a plain new paragraph
++  - space in the *middle* of link text still stays part of the link
++    (non-regression for the trailing-edge-only guard)
++  - space at the internal boundary between two runs of the *same* link
++    (e.g. a bold prefix) still stays part of the link — exercises the
++    `next.style.href === inline.style.href` guard in
++    `isAtLinkTrailingEdge`
++  - a pending style armed at the same caret (toolbar bold toggle) is
++    preserved through the link-exit merge, not clobbered by it
++  - pasting plain text right after `insertLink` doesn't extend the link
++    (regression coverage for the `insertPlainText` fix above)
 +- [x] `@wafflebase/docs` typecheck clean; full test suite green (81
-+  files, 1104 passed, 1 skipped — up from 80/1100 with the 4 new tests).
++  files, 1107 passed, 1 skipped — up from 80/1100 baseline).
 +- [x] `@wafflebase/slides` typecheck + tests green — `text-box-editor.ts`
 +  wraps the same `TextEditor` class for slide text boxes, so this fix
 +  (and its test coverage) applies there too.
++
++## Self-review
++
++Dispatched an independent review agent over the branch diff (the
++`/code-review` skill isn't directly invocable by the assistant in this
++session). Findings:
++- **Fixed**: paste right after a link's trailing edge bypassed the fix
++  (see `insertPlainText` bullet above).
++- **Non-blocking, pre-existing, orthogonal**: `insertLink`'s
++  collapsed-caret branch (`editor.ts`) moves the cursor directly without
++  going through the `pending`-aware `docInsertText`/arrow-key clear
++  paths; a stale `pending` anchor from immediately before a keyboard-
++  triggered Ctrl+K could persist until the next Enter/Space, at which
++  point this fix's own `pending.set(..., pos)` rebinds it correctly
++  anyway. Not touched — out of scope for this bug.
++- **Nit, not applied**: `exitLinkIfAtTrailingEdge` reads
++  `this.cursor.position` via `getStyleAtCursor()` rather than the `pos`
++  parameter it's given; harmless at all 3 call sites today (nothing
++  mutates the cursor in between) but is a latent trap for a future call
++  site. Left as-is since fixing it means changing `getStyleAtCursor`'s
++  shared signature for no current bug.
 +
 +## Follow-up (out of scope for this branch)
 +
 +- Typing a normal (non-space) character immediately after a link with no
 +  separator has the same underlying inheritance behavior and was not
-+  changed — only Enter and Space were reported and fixed, matching
-+  Google Docs' narrower "space/paragraph break exits the link" behavior.
++  changed — only Enter and Space (and, after review, paste) were fixed,
++  matching Google Docs' narrower "space/paragraph break/paste exits the
++  link" behavior.
 diff --git a/packages/docs/src/view/text-editor.ts b/packages/docs/src/view/text-editor.ts
-index fbf13807f..0709c655e 100644
+index fbf13807f..7d5c1dbba 100644
 --- a/packages/docs/src/view/text-editor.ts
 +++ b/packages/docs/src/view/text-editor.ts
 @@ -637,6 +637,12 @@ export class TextEditor {
@@ -136,7 +151,18 @@ index fbf13807f..0709c655e 100644
      const newBlockId = this.docSplitBlock(pos.blockId, pos.offset);
  
      if (newBlockId === pos.blockId) {
-@@ -4960,6 +4968,43 @@ export class TextEditor {
+@@ -3359,6 +3367,10 @@ export class TextEditor {
+   private insertPlainText(text: string): void {
+     // If cursor is on a non-editable block, split to create a text block first
+     this.ensureEditableBlock();
++    // Pasting right after a hyperlink should not extend it into the
++    // pasted text, same as typing Enter/Space there (see handleEnter /
++    // handleInput's space branch).
++    this.exitLinkIfAtTrailingEdge(this.cursor.position);
+     const lines = text.split(/\r?\n/);
+     for (let i = 0; i < lines.length; i++) {
+       if (i > 0) {
+@@ -4960,6 +4972,43 @@ export class TextEditor {
      };
    }
  
@@ -182,10 +208,10 @@ index fbf13807f..0709c655e 100644
      this.textarea.removeEventListener('keydown', this.handleKeyDown);
 diff --git a/packages/docs/test/view/link-trailing-edge.test.ts b/packages/docs/test/view/link-trailing-edge.test.ts
 new file mode 100644
-index 000000000..ae121d34b
+index 000000000..b38cdf4b7
 --- /dev/null
 +++ b/packages/docs/test/view/link-trailing-edge.test.ts
-@@ -0,0 +1,175 @@
+@@ -0,0 +1,230 @@
 +// @vitest-environment jsdom
 +import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 +import { initialize, type EditorAPI } from '../../src/view/editor.js';
@@ -309,6 +335,17 @@ index 000000000..ae121d34b
 +    );
 +  }
 +
++  function pastePlainText(text: string): void {
++    const ev = new Event('paste', { bubbles: true, cancelable: true });
++    Object.defineProperty(ev, 'clipboardData', {
++      value: {
++        items: [] as DataTransferItem[],
++        getData: (type: string) => (type === 'text/plain' ? text : ''),
++      },
++    });
++    textarea().dispatchEvent(ev);
++  }
++
 +  function firstBlockInlines() {
 +    return editor.getDoc().document.blocks[0].inlines;
 +  }
@@ -360,153 +397,6 @@ index 000000000..ae121d34b
 +    expect(inlines.map((i) => i.text).join('')).toBe('https ://example.com');
 +    expect(inlines.every((i) => i.style.href === 'https://example.com')).toBe(true);
 +  });
-+});
-
-From 8133292583b186fafa9b2679ca6bb82f251bbd0a Mon Sep 17 00:00:00 2001
-From: hotsunchip <hotsunchip@kaist.ac.kr>
-Date: Wed, 22 Jul 2026 16:31:43 +0900
-Subject: [PATCH 2/3] Also exit link formatting on plain-text paste
-
-Independent review of the branch caught that pasting plain text
-right after insertLink (same trailing-edge caret state Enter/Space
-already fix) still went through the same style-inheriting
-docInsertText path and silently extended the link into the pasted
-text. insertBlocks (HTML/markdown-table/internal rich paste) is
-unaffected since it splices the clipboard payload's own explicit
-per-inline styles rather than inheriting the destination run.
-
-Also adds regression tests for: a link split into same-href runs by
-partial bold (space at the internal run boundary must not exit),
-and a pending style armed at the same caret (toolbar bold) surviving
-the link-exit merge.
----
- ...722-docs-hyperlink-formatting-exit-todo.md | 55 ++++++++++++++++---
- packages/docs/src/view/text-editor.ts         |  4 ++
- .../docs/test/view/link-trailing-edge.test.ts | 55 +++++++++++++++++++
- 3 files changed, 106 insertions(+), 8 deletions(-)
-
-diff --git a/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md b/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
-index 6ac812cef..e3b190b91 100644
---- a/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
-+++ b/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
-@@ -47,6 +47,14 @@ gets the override via `consumeForInsert` instead of inheriting the link.
-   press is also exited).
- - [x] Wire into `handleInput`'s space branch, before `docInsertText`, so
-   the typed space itself does not join the link.
-+- [x] Wire into `insertPlainText` (the plain-text paste path), before the
-+  first line's insert — same root cause: pasting text right after a
-+  link's trailing edge (e.g. right after `insertLink`) went through the
-+  same style-inheriting `docInsertText` and silently extended the link.
-+  Found by an independent review pass (see below); the rich-paste path
-+  (`insertBlocks`, HTML/`WAFFLEDOCS_MIME`/markdown-table paste) is
-+  unaffected since it splices the clipboard payload's own explicit
-+  per-inline styles rather than inheriting the destination caret's run.
- - [x] Checked non-regressions: bold/italic pending at the same caret is
-   preserved (merge, not overwrite); `insertLink`'s direct-write path
-   (doesn't use `pending`, no conflict); auto-link-before-cursor via space
-@@ -54,22 +62,53 @@ gets the override via `consumeForInsert` instead of inheriting the link.
-   adjacency) — unaffected; mid-link Enter/Space (splitting or spacing
-   inside link text) untouched since the caret isn't at a trailing edge;
-   Hangul/IME composition doesn't route space/Enter through this path.
--- [x] Tests: new `test/view/link-trailing-edge.test.ts`, driving the real
-+- [x] Tests: `test/view/link-trailing-edge.test.ts`, driving the real
-   `editor.js` `initialize()` + jsdom textarea (same harness as
-   `pending-style-editor.test.ts` / `ime-composition-editor.test.ts`):
--  space right after `insertLink` doesn't extend the link; text typed
--  after that space stays plain; Enter right after `insertLink` starts a
--  plain new paragraph; space in the *middle* of link text still stays
--  part of the link (non-regression for the trailing-edge-only guard).
-+  - space right after `insertLink` doesn't extend the link
-+  - text typed after that space stays plain
-+  - Enter right after `insertLink` starts a plain new paragraph
-+  - space in the *middle* of link text still stays part of the link
-+    (non-regression for the trailing-edge-only guard)
-+  - space at the internal boundary between two runs of the *same* link
-+    (e.g. a bold prefix) still stays part of the link — exercises the
-+    `next.style.href === inline.style.href` guard in
-+    `isAtLinkTrailingEdge`
-+  - a pending style armed at the same caret (toolbar bold toggle) is
-+    preserved through the link-exit merge, not clobbered by it
-+  - pasting plain text right after `insertLink` doesn't extend the link
-+    (regression coverage for the `insertPlainText` fix above)
- - [x] `@wafflebase/docs` typecheck clean; full test suite green (81
--  files, 1104 passed, 1 skipped — up from 80/1100 with the 4 new tests).
-+  files, 1107 passed, 1 skipped — up from 80/1100 baseline).
- - [x] `@wafflebase/slides` typecheck + tests green — `text-box-editor.ts`
-   wraps the same `TextEditor` class for slide text boxes, so this fix
-   (and its test coverage) applies there too.
- 
-+## Self-review
-+
-+Dispatched an independent review agent over the branch diff (the
-+`/code-review` skill isn't directly invocable by the assistant in this
-+session). Findings:
-+- **Fixed**: paste right after a link's trailing edge bypassed the fix
-+  (see `insertPlainText` bullet above).
-+- **Non-blocking, pre-existing, orthogonal**: `insertLink`'s
-+  collapsed-caret branch (`editor.ts`) moves the cursor directly without
-+  going through the `pending`-aware `docInsertText`/arrow-key clear
-+  paths; a stale `pending` anchor from immediately before a keyboard-
-+  triggered Ctrl+K could persist until the next Enter/Space, at which
-+  point this fix's own `pending.set(..., pos)` rebinds it correctly
-+  anyway. Not touched — out of scope for this bug.
-+- **Nit, not applied**: `exitLinkIfAtTrailingEdge` reads
-+  `this.cursor.position` via `getStyleAtCursor()` rather than the `pos`
-+  parameter it's given; harmless at all 3 call sites today (nothing
-+  mutates the cursor in between) but is a latent trap for a future call
-+  site. Left as-is since fixing it means changing `getStyleAtCursor`'s
-+  shared signature for no current bug.
-+
- ## Follow-up (out of scope for this branch)
- 
- - Typing a normal (non-space) character immediately after a link with no
-   separator has the same underlying inheritance behavior and was not
--  changed — only Enter and Space were reported and fixed, matching
--  Google Docs' narrower "space/paragraph break exits the link" behavior.
-+  changed — only Enter and Space (and, after review, paste) were fixed,
-+  matching Google Docs' narrower "space/paragraph break/paste exits the
-+  link" behavior.
-diff --git a/packages/docs/src/view/text-editor.ts b/packages/docs/src/view/text-editor.ts
-index 0709c655e..7d5c1dbba 100644
---- a/packages/docs/src/view/text-editor.ts
-+++ b/packages/docs/src/view/text-editor.ts
-@@ -3367,6 +3367,10 @@ export class TextEditor {
-   private insertPlainText(text: string): void {
-     // If cursor is on a non-editable block, split to create a text block first
-     this.ensureEditableBlock();
-+    // Pasting right after a hyperlink should not extend it into the
-+    // pasted text, same as typing Enter/Space there (see handleEnter /
-+    // handleInput's space branch).
-+    this.exitLinkIfAtTrailingEdge(this.cursor.position);
-     const lines = text.split(/\r?\n/);
-     for (let i = 0; i < lines.length; i++) {
-       if (i > 0) {
-diff --git a/packages/docs/test/view/link-trailing-edge.test.ts b/packages/docs/test/view/link-trailing-edge.test.ts
-index ae121d34b..b38cdf4b7 100644
---- a/packages/docs/test/view/link-trailing-edge.test.ts
-+++ b/packages/docs/test/view/link-trailing-edge.test.ts
-@@ -121,6 +121,17 @@ describe('docs editor — exit hyperlink formatting on Enter / Space', () => {
-     );
-   }
- 
-+  function pastePlainText(text: string): void {
-+    const ev = new Event('paste', { bubbles: true, cancelable: true });
-+    Object.defineProperty(ev, 'clipboardData', {
-+      value: {
-+        items: [] as DataTransferItem[],
-+        getData: (type: string) => (type === 'text/plain' ? text : ''),
-+      },
-+    });
-+    textarea().dispatchEvent(ev);
-+  }
-+
-   function firstBlockInlines() {
-     return editor.getDoc().document.blocks[0].inlines;
-   }
-@@ -172,4 +183,48 @@ describe('docs editor — exit hyperlink formatting on Enter / Space', () => {
-     expect(inlines.map((i) => i.text).join('')).toBe('https ://example.com');
-     expect(inlines.every((i) => i.style.href === 'https://example.com')).toBe(true);
-   });
 +
 +  it('space at the boundary between two same-link runs stays part of the link', () => {
 +    editor.insertLink('https://example.com');
@@ -551,84 +441,4 @@ index ae121d34b..b38cdf4b7 100644
 +    expect(last(inlines).style.href).toBeFalsy();
 +    expect(inlines.map((i) => i.text).join('')).toBe('https://example.comhello');
 +  });
- });
-
-From 750c6c844248936bb9ee198250b0053b32de295a Mon Sep 17 00:00:00 2001
-From: hotsunchip <hotsunchip@kaist.ac.kr>
-Date: Wed, 22 Jul 2026 18:02:57 +0900
-Subject: [PATCH 3/3] Correct Slides applicability claim in the todo, doc no-op
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-CodeRabbit review on PR #520 caught that the todo file claimed this
-fix "applies to Slides too" because text-box-editor.ts wraps the
-same TextEditor class. False: that host never calls setPendingStyle,
-so pending stays null there and exitLinkIfAtTrailingEdge's
-pending?.set(...) is a silent no-op — Enter/Space/paste can still
-extend a link in a Slides text box.
-
-Wiring pending into Slides is left as a follow-up rather than bolted
-on here: it would either quietly enable the whole pending-style
-toolbar-toggle feature for Slides with no dedicated test of that
-surface, or need a parallel non-pending reimplementation — both
-larger than this Docs-scoped bug fix warrants.
----
- ...722-docs-hyperlink-formatting-exit-todo.md | 25 ++++++++++++++++---
- packages/docs/src/view/text-editor.ts         |  3 +++
- 2 files changed, 25 insertions(+), 3 deletions(-)
-
-diff --git a/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md b/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
-index e3b190b91..ee72e9801 100644
---- a/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
-+++ b/docs/tasks/active/20260722-docs-hyperlink-formatting-exit-todo.md
-@@ -80,9 +80,20 @@ gets the override via `consumeForInsert` instead of inheriting the link.
-     (regression coverage for the `insertPlainText` fix above)
- - [x] `@wafflebase/docs` typecheck clean; full test suite green (81
-   files, 1107 passed, 1 skipped — up from 80/1100 baseline).
--- [x] `@wafflebase/slides` typecheck + tests green — `text-box-editor.ts`
--  wraps the same `TextEditor` class for slide text boxes, so this fix
--  (and its test coverage) applies there too.
-+- [x] `@wafflebase/slides` typecheck + tests green — but this fix does
-+  **not** apply to Slides text boxes. `text-box-editor.ts` wraps the same
-+  `TextEditor` class, but never calls `setPendingStyle`, so `pending`
-+  stays `null` there (`text-editor.ts`'s own field doc already says so:
-+  "null in standalone contexts (slides text boxes) where pending
-+  behavior is not wired"). `exitLinkIfAtTrailingEdge`'s
-+  `this.pending?.set(...)` is therefore a silent no-op in Slides —
-+  Enter/Space/paste can still inherit `href` there. Caught by CodeRabbit
-+  on PR #520; corrected here rather than claiming coverage that doesn't
-+  exist. Slides parity is a reasonable follow-up but out of scope for
-+  this fix (see below) — bolting it on here would mean either quietly
-+  turning on the *whole* pending-style toolbar-toggle feature for Slides
-+  text boxes with no dedicated test of that surface, or a parallel
-+  non-pending reimplementation, both larger than this bug fix warrants.
- 
- ## Self-review
- 
-@@ -112,3 +123,11 @@ session). Findings:
-   changed — only Enter and Space (and, after review, paste) were fixed,
-   matching Google Docs' narrower "space/paragraph break/paste exits the
-   link" behavior.
-+- Slides text boxes don't get this fix (see the corrected bullet above)
-+  since `text-box-editor.ts` never wires a `pending` controller into its
-+  `TextEditor` instances. Giving Slides the same link-exit behavior
-+  needs its own deliberate design pass (construct + wire a
-+  `PendingStyle`, decide whether to also enable the toolbar
-+  collapsed-caret pending-toggle feature that would come along with it,
-+  and test both surfaces in Slides) rather than a side effect of this
-+  Docs-scoped fix.
-diff --git a/packages/docs/src/view/text-editor.ts b/packages/docs/src/view/text-editor.ts
-index 7d5c1dbba..01d4cb767 100644
---- a/packages/docs/src/view/text-editor.ts
-+++ b/packages/docs/src/view/text-editor.ts
-@@ -5001,6 +5001,9 @@ export class TextEditor {
-    * (first char of a new paragraph on Enter, or a typed space) exits
-    * the link instead of inheriting it from the adjacent run. Other
-    * styles active at the caret (bold, italic, ...) are preserved.
-+   *
-+   * No-op when `pending` isn't wired (see the field doc above) — e.g.
-+   * standalone Slides text boxes, which don't call `setPendingStyle`.
-    */
-   private exitLinkIfAtTrailingEdge(pos: DocPosition): void {
-     if (!this.isAtLinkTrailingEdge(pos)) return;
++});

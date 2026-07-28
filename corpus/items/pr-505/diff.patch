@@ -1,30 +1,3 @@
-From 1e17044e4de3ad6c32eb8508797184484103040c Mon Sep 17 00:00:00 2001
-From: Youngteac Hong <susukang98@gmail.com>
-Date: Tue, 21 Jul 2026 01:41:53 +0900
-Subject: [PATCH 1/2] Add Tab indent (default+vim) and Undo/Redo to Notes
- toolbar
-
-Two Notes editor gaps:
-
-- Tab / Shift+Tab did nothing. CodeMirror deliberately omits Tab from
-  the default keymap (so keyboard users can tab out), and
-  @replit/codemirror-vim binds no Tab key either. Register
-  indentWithTab unconditionally; vim sits ahead in the extension list
-  so it still wins for every key it handles, and Tab falls through to
-  indent/outdent in both default and vim modes.
-
-- No visible undo/redo affordance. history() + keyboard shortcuts
-  already worked via basicSetup; expose undo/redo/canUndo/canRedo on
-  NoteEditorAPI and add toolbar buttons. Remote edits are already
-  excluded from local history in note-sync, so a button undo reverts
-  only the local user's edits.
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
----
- .../frontend/src/app/notes/notes-toolbar.tsx  | 58 ++++++++++++++++++-
- packages/notes/src/view/editor.ts             | 34 ++++++++++-
- 2 files changed, 89 insertions(+), 3 deletions(-)
-
 diff --git a/packages/frontend/src/app/notes/notes-toolbar.tsx b/packages/frontend/src/app/notes/notes-toolbar.tsx
 index 87be0cf00..85fa41d41 100644
 --- a/packages/frontend/src/app/notes/notes-toolbar.tsx
@@ -122,7 +95,7 @@ index 87be0cf00..85fa41d41 100644
              label="Bold"
              pressed={formats.bold}
 diff --git a/packages/notes/src/view/editor.ts b/packages/notes/src/view/editor.ts
-index cf72ed7dc..fa69d8a23 100644
+index cf72ed7dc..6b1e0bc7b 100644
 --- a/packages/notes/src/view/editor.ts
 +++ b/packages/notes/src/view/editor.ts
 @@ -1,6 +1,13 @@
@@ -134,8 +107,9 @@ index cf72ed7dc..fa69d8a23 100644
 +  undoDepth,
 +} from '@codemirror/commands';
  import { markdown } from '@codemirror/lang-markdown';
- import { EditorState, type Extension } from '@codemirror/state';
+-import { EditorState, type Extension } from '@codemirror/state';
 -import { EditorView } from '@codemirror/view';
++import { Compartment, EditorState, Prec, type Extension } from '@codemirror/state';
 +import { EditorView, keymap } from '@codemirror/view';
  import { vim } from '@replit/codemirror-vim';
  import { basicSetup } from '@uiw/codemirror-extensions-basic-setup';
@@ -155,85 +129,10 @@ index cf72ed7dc..fa69d8a23 100644
    /** Inline markdown formats active at the current selection. */
    getActiveFormats(): NoteInlineFormats;
    /**
-@@ -144,6 +159,13 @@ export function initialize(
- 
-   const buildExtensions = (mode: ThemeMode): Extension[] => [
-     currentKeymap === 'vim' ? vim() : [],
-+    // CodeMirror deliberately leaves Tab out of the default keymap (so keyboard
-+    // users can tab out of the editor). Bind it explicitly for indent/outdent.
-+    // Registered unconditionally: @replit/codemirror-vim binds no Tab key and
-+    // lets it fall through (it only preventDefaults keys it actually handles),
-+    // so this also drives Tab indent in vim mode. `vim()` sits ahead of this in
-+    // the list, so vim still wins for every key it does handle.
-+    keymap.of([indentWithTab]),
-     basicSetup({ highlightSelectionMatches: false }),
-     markdown(),
-     themeExt(mode),
-@@ -303,6 +325,16 @@ export function initialize(
-     toggleStrikethrough: () => toggleStrikethrough(view),
-     toggleLink: () => toggleLink(view),
-     insertTable: (rows, cols) => insertTable(view, rows, cols),
-+    undo: () => {
-+      undo(view);
-+      view.focus();
-+    },
-+    redo: () => {
-+      redo(view);
-+      view.focus();
-+    },
-+    canUndo: () => undoDepth(view.state) > 0,
-+    canRedo: () => redoDepth(view.state) > 0,
-     getActiveFormats: () => computeActiveFormats(view.state),
-     onSelectionChange: (cb) => {
-       selectionCb = cb;
-
-From a4f6ea70a51f5e25a0024e2923144e4242883861 Mon Sep 17 00:00:00 2001
-From: Youngteac Hong <susukang98@gmail.com>
-Date: Tue, 21 Jul 2026 01:55:38 +0900
-Subject: [PATCH 2/2] Preserve undo history across theme/keymap switch; fix Tab
- focus trap
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-Address code review on the Notes editor changes:
-
-- setTheme/setKeymap rebuilt the EditorState with view.setState, which
-  dropped basicSetup's history() — toggling light/dark theme (fired on
-  every resolvedTheme change) or Default<->Vim silently wiped the undo
-  stack and left the toolbar Undo/Redo enabled state stale. Move theme
-  and keymap into CodeMirror Compartments and reconfigure them in place
-  so history and selection survive the switch.
-
-- Unconditional indentWithTab removed Tab-to-exit, trapping keyboard
-  users in the editor (WCAG 2.1.2). Add a low-precedence Escape->blur
-  binding in default mode (vim owns Escape) so focus can leave; low
-  precedence keeps autocomplete/tooltip Escape handlers winning first.
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
----
- packages/notes/src/view/editor.ts | 79 +++++++++++++++++++------------
- 1 file changed, 49 insertions(+), 30 deletions(-)
-
-diff --git a/packages/notes/src/view/editor.ts b/packages/notes/src/view/editor.ts
-index fa69d8a23..6b1e0bc7b 100644
---- a/packages/notes/src/view/editor.ts
-+++ b/packages/notes/src/view/editor.ts
-@@ -6,7 +6,7 @@ import {
-   undoDepth,
- } from '@codemirror/commands';
- import { markdown } from '@codemirror/lang-markdown';
--import { EditorState, type Extension } from '@codemirror/state';
-+import { Compartment, EditorState, Prec, type Extension } from '@codemirror/state';
- import { EditorView, keymap } from '@codemirror/view';
- import { vim } from '@replit/codemirror-vim';
- import { basicSetup } from '@uiw/codemirror-extensions-basic-setup';
-@@ -157,18 +157,48 @@ export function initialize(
+@@ -142,11 +157,48 @@ export function initialize(
    // list (before the default keymaps) to take precedence.
    let currentKeymap: NoteKeymap = 'default';
  
--  const buildExtensions = (mode: ThemeMode): Extension[] => [
--    currentKeymap === 'vim' ? vim() : [],
 +  // Compartments so theme / keymap switches reconfigure in place instead of
 +  // rebuilding the whole EditorState — a full rebuild would drop the undo
 +  // history (basicSetup's history()), silently disabling undo after a toggle.
@@ -241,13 +140,8 @@ index fa69d8a23..6b1e0bc7b 100644
 +  const keymapCompartment = new Compartment();
 +
 +  const keymapExt = (): Extension => {
-     // CodeMirror deliberately leaves Tab out of the default keymap (so keyboard
-     // users can tab out of the editor). Bind it explicitly for indent/outdent.
--    // Registered unconditionally: @replit/codemirror-vim binds no Tab key and
--    // lets it fall through (it only preventDefaults keys it actually handles),
--    // so this also drives Tab indent in vim mode. `vim()` sits ahead of this in
--    // the list, so vim still wins for every key it does handle.
--    keymap.of([indentWithTab]),
++    // CodeMirror deliberately leaves Tab out of the default keymap (so keyboard
++    // users can tab out of the editor). Bind it explicitly for indent/outdent.
 +    // @replit/codemirror-vim binds no Tab key and lets it fall through (it only
 +    // preventDefaults keys it actually handles), so indentWithTab drives Tab
 +    // indent in both modes; `vim()` sits ahead of it so vim still wins for every
@@ -276,7 +170,8 @@ index fa69d8a23..6b1e0bc7b 100644
 +    ];
 +  };
 +
-+  const buildExtensions = (mode: ThemeMode): Extension[] => [
+   const buildExtensions = (mode: ThemeMode): Extension[] => [
+-    currentKeymap === 'vim' ? vim() : [],
 +    keymapCompartment.of(keymapExt()),
      basicSetup({ highlightSelectionMatches: false }),
      markdown(),
@@ -285,7 +180,7 @@ index fa69d8a23..6b1e0bc7b 100644
      EditorView.lineWrapping,
      EditorView.editable.of(!readOnly),
      // Fill the wrapper's full height (so an empty note starts full-height, not
-@@ -287,18 +317,11 @@ export function initialize(
+@@ -265,18 +317,11 @@ export function initialize(
      setTheme: (mode: ThemeMode) => {
        if (mode === currentTheme) return;
        currentTheme = mode;
@@ -309,7 +204,7 @@ index fa69d8a23..6b1e0bc7b 100644
      },
      setViewMode: (mode: NoteViewMode) => {
        if (mode === currentViewMode) return;
-@@ -308,15 +331,11 @@ export function initialize(
+@@ -286,15 +331,11 @@ export function initialize(
      setKeymap: (mode: NoteKeymap) => {
        if (mode === currentKeymap) return;
        currentKeymap = mode;
@@ -330,3 +225,20 @@ index fa69d8a23..6b1e0bc7b 100644
        view.focus();
      },
      getKeymap: () => currentKeymap,
+@@ -303,6 +344,16 @@ export function initialize(
+     toggleStrikethrough: () => toggleStrikethrough(view),
+     toggleLink: () => toggleLink(view),
+     insertTable: (rows, cols) => insertTable(view, rows, cols),
++    undo: () => {
++      undo(view);
++      view.focus();
++    },
++    redo: () => {
++      redo(view);
++      view.focus();
++    },
++    canUndo: () => undoDepth(view.state) > 0,
++    canRedo: () => redoDepth(view.state) > 0,
+     getActiveFormats: () => computeActiveFormats(view.state),
+     onSelectionChange: (cb) => {
+       selectionCb = cb;

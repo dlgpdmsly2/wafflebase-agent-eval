@@ -1,31 +1,3 @@
-From 24eb509a1e72e958fd16cd18f185ceaf13e03009 Mon Sep 17 00:00:00 2001
-From: ggyuchive <byeonggyu1214@gmail.com>
-Date: Thu, 23 Jul 2026 21:48:27 +0900
-Subject: [PATCH] Add PDF download and download buttons in the file list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-PDF files had no way to be saved — the viewer only rendered them. Image
-download already worked (a button in the bottom zoom overlay). Add a
-download helper and surface downloads where files are managed:
-
-- PDF viewer header gets a Download button (new — PDFs couldn't be saved).
-- The image viewer's existing download button moves from the bottom zoom
-  overlay to the top-right header, matching the PDF viewer.
-- Each pdf/image row in the documents list gets a Download item in its
-  three-dot menu (above Rename) plus a Download button in the bulk bar.
-
-downloadDocumentFile fetches the blob through the authed, permission-gated
-file endpoint and names it from the title plus the file's extension.
----
- packages/frontend/src/api/download-file.ts    | 56 +++++++++++++
- .../src/app/documents/document-list.tsx       | 44 ++++++++++
- .../frontend/src/app/files/file-detail.tsx    | 84 ++++++++++++++++++-
- .../frontend/src/app/files/image-viewer.tsx   | 24 +-----
- 4 files changed, 181 insertions(+), 27 deletions(-)
- create mode 100644 packages/frontend/src/api/download-file.ts
-
 diff --git a/packages/frontend/src/api/download-file.ts b/packages/frontend/src/api/download-file.ts
 new file mode 100644
 index 000000000..ecc1f9811
