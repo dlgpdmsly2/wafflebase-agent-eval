@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "test-adequacy",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/formula/arguments.ts::blank-skipping in `arguments.iterate` silently changes and/or/xor semantics over cell ranges, and no test anywhere passes a range to those functions"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "summary": "Blank-skipping in `Arguments.iterate` silently changes AND/OR/XOR semantics over cell ranges, and no test anywhere passes a range to those functions",
+      "evidence": "The diff changes the shared `Arguments.iterate` (packages/sheets/src/formula/arguments.ts:110-125) to skip blank cells for *every* range, not just unbounded ones. `BoolArgs.iterate` is used by AND/OR/XOR (packages/sheets/src/formula/functions-logical.ts:111, 133, 174), so e.g. `=AND(A1:A3)` with A2 blank changes from FALSE (blank→false) to TRUE. Every AND/OR/XOR test in the suite uses literal arguments only (packages/sheets/test/formula/formula.test.ts:455-470, 1066-1067, 1325-1328); grepping the test tree for `AND(A`/`OR(A` over a range returns nothing. The new tests in this diff only exercise SUM/AVERAGE/COUNT, so the boolean-aggregation behavior change ships with zero coverage.",
+      "file": "packages/sheets/src/formula/arguments.ts"
+    },
+    "rubric": {
+      "sha256": "sha256:1151a85371c695d9804ea0c841de92245c9dac051b3c753d4932c1d45420fc1a",
+      "bytes": 2544
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

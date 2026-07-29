@@ -1,0 +1,329 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "detection",
+  "instance": {
+    "lens_id": "test-adequacy"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "rubric": {
+      "sha256": "sha256:1151a85371c695d9804ea0c841de92245c9dac051b3c753d4932c1d45420fc1a",
+      "bytes": 2544
+    },
+    "diff": {
+      "sha256": "sha256:0186444cd7b8efadad9531b65f1be6fb600cadf4c8fdaa5f869bf8f475dcf99c",
+      "bytes": 70256
+    },
+    "issue": {
+      "sha256": "sha256:5a7e809077c8f932d8923162a3412a72bc57113f98d94ceea7cf939951c54027",
+      "bytes": 1510
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "samples": 2,
+    "model": "claude-opus-5",
+    "title": "Test-adequacy",
+    "needs_issue_spec": false
+  },
+  "output": {
+    "union": [
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Blank-skipping in `Arguments.iterate` silently changes AND/OR/XOR semantics over cell ranges, and no test anywhere passes a range to those functions",
+        "evidence": "The diff changes the shared `Arguments.iterate` (packages/sheets/src/formula/arguments.ts:110-125) to skip blank cells for *every* range, not just unbounded ones. `BoolArgs.iterate` is used by AND/OR/XOR (packages/sheets/src/formula/functions-logical.ts:111, 133, 174), so e.g. `=AND(A1:A3)` with A2 blank changes from FALSE (blank→false) to TRUE. Every AND/OR/XOR test in the suite uses literal arguments only (packages/sheets/test/formula/formula.test.ts:455-470, 1066-1067, 1325-1328); grepping the test tree for `AND(A`/`OR(A` over a range returns nothing. The new tests in this diff only exercise SUM/AVERAGE/COUNT, so the boolean-aggregation behavior change ships with zero coverage.",
+        "file": "packages/sheets/src/formula/arguments.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "All-blank / mostly-blank bounded ranges now change results for AVERAGE/MEDIAN/STDEV/VAR/GEOMEAN (e.g. AVERAGE → #VALUE!), with no test for those functions",
+        "evidence": "With blanks skipped (arguments.ts:118-123), `averageFunc` reaches `count === 0` and returns `ErrNode.VALUE` (packages/sheets/src/formula/functions-statistical.ts:39-41) where it previously returned 0; `stdevFunc`/`varFunc` (639, 689) similarly flip to #VALUE! when fewer than two numeric cells survive. The only empty-data test added is `=SUM(A:A)` on an empty sheet → '0' (packages/sheets/test/sheet/calculation.test.ts:351-355). The repository has follow-up unit tests for MIN/MAX over blank ranges only (packages/sheets/test/formula/formula.test.ts:4412-4438) — nothing covers AVERAGE/MEDIAN/STDEV/VAR over an all-blank or single-numeric range, at either the formula or sheet level.",
+        "file": "packages/sheets/src/formula/arguments.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "high",
+        "summary": "YorkieStore changes (getUsedBounds + expandUnboundedRanges in all three buildDependantsMap branches, incl. batchOverlay) have no test",
+        "evidence": "packages/frontend/src/app/spreadsheet/yorkie-store.ts:561-616 adds `ensureIndex()`/`bounds()` and rewrites formulas in the document branch, the batchOverlay-skip branch, and the overlay branch, plus a new `getUsedBounds()`. Grepping packages/frontend/tests for `A:A`, `SUM(A:`, `getUsedBounds`, or `expandUnbounded` returns no matches, and there is no yorkie-store unit test file covering buildDependantsMap. The MemStore equivalent is covered indirectly by test/sheet/calculation.test.ts, but the collaborative store path (where the overlay branches make the code non-trivial) is untested.",
+        "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "summary": "New `CellIndex.bounds()` and `Store.getUsedBounds()` have no direct tests despite dedicated test files for both",
+        "evidence": "packages/sheets/src/store/cell-index.ts:128-149 adds `bounds()`. packages/sheets/test/store/cell-index.test.ts covers add/remove/clear/rebuild/size/cellsInRange/hasAnyInRange/getOccupied* but has no `bounds` case (file read in full, 201 lines). Likewise packages/sheets/test/store/store.test.ts contains no `getUsedBounds` assertion (grep for `getUsedBounds` matches only src files and docs). So the empty-index `undefined` result and the sparse min/max-across-independent-row/col-indexes behavior are only covered incidentally via sheet-level SUM assertions.",
+        "file": "packages/sheets/src/store/cell-index.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "summary": "New grammar alternatives `COL ':' REF` (`A:B1`) and `ROW ':' REF` (`1:B2`) are never lexed by any test; `$`-prefixed unbounded refs are never run through expansion",
+        "evidence": "packages/sheets/antlr/Formula.g4 adds 7 REFRANGE alternatives, but the lexer-level tests only cover `A:A`, `1:1`, `B2:B`, `A:B`, `1:3` (packages/sheets/test/formula/formula.test.ts:4355-4370). `A:B2`/`$A:$A` appear only as plain strings passed to `isUnboundedRange`/`resolveRange` unit tests (packages/sheets/src/model/core/coordinates.test.ts:231-270), which bypass the regenerated ANTLR lexer entirely. A mistake in the regenerated FormulaLexer for the COL:REF / ROW:REF alternatives, or the fact that `resolveRange` strips `$` so `=SUM($A:$A)` expands to `=SUM(A1:A3)` (losing absolute markers), would not be caught.",
+        "file": "packages/sheets/test/formula/formula.test.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "summary": "No test where an unbounded range includes the formula's own cell (self-reference / circular case)",
+        "evidence": "Every sheet-level test parks the formula in column D while referencing column A or rows 1-3 (packages/sheets/test/sheet/calculation.test.ts:294-355), so the case that a whole-column/whole-row expansion swallows the formula cell itself (e.g. `=SUM(A:A)` in A5, or `=SUM(1:1)` in D1 where D1 is inside row 1) is never exercised. This is the classic pitfall of whole-column refs (circular reference / potential recalculation loop) and the diff ships no coverage for it.",
+        "file": "packages/sheets/test/sheet/calculation.test.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Documented limitation \"cross-sheet unbounded refs evaluate to #ERROR!\" is asserted only as a string passthrough, never evaluated",
+        "evidence": "docs/design/sheets/formula.md (new \"Limitations\" paragraph) claims `Sheet2!A:A` evaluates to `#ERROR!`. The only test is `expect(expandUnboundedRanges('=SUM(Sheet2!A:A)', bounds)).toBe('=SUM(Sheet2!A:A)')` (packages/sheets/test/formula/formula.test.ts:4395-4399), which asserts the rewrite is skipped but not the claimed evaluation outcome. Grepping packages/sheets/test for cross-sheet unbounded refs (`Sheet2!A:A` in cross-sheet-calculation.test.ts) finds nothing, so the actual behavior (error vs. crash vs. silent wrong value) is unverified.",
+        "file": "docs/design/sheets/formula.md"
+      },
+      {
+        "severity": "nit",
+        "confidence": "medium",
+        "summary": "Lowercase unbounded refs and the `try/catch` fallback path in expandUnboundedRanges are untested",
+        "evidence": "packages/sheets/src/formula/formula.ts (expandUnboundedRanges) calls `resolveRange(token.text.toUpperCase(), resolved)` inside a try/catch that falls back to the original text. No test passes a lowercase reference (`=sum(a:a)`, which would be rewritten to `=sum(A1:A3)`) and no test drives the catch branch, so both the case-normalization behavior and the failure fallback are uncovered.",
+        "file": "packages/sheets/src/formula/formula.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "high",
+        "summary": "`Arguments.iterate` now skips blank cells inside *every* range (not just unbounded ones), changing the result of all existing bounded-range aggregations, but the diff adds no test for that change — and MIN/MAX over a range with no numeric cells is untested and regresses.",
+        "evidence": "packages/sheets/src/formula/arguments.ts (diff): `const isRange = isSrng(node.v); ... if (!cell || cell.v === undefined || cell.v === '') continue;` applies to any range, e.g. `=MIN(A1:A3)`/`=MAX(A1:A3)`/`=AVERAGE(A1:A3)` on a pre-existing bounded range. The only tests touching this are indirect (`=AVERAGE(B2:B)`→200, `=COUNT(A:B)`→5 in test/sheet/calculation.test.ts, and COUNT does not even use `iterate`). Searching the whole test suite for MIN/MAX over a grid range finds only literal-argument tests (test/formula/formula.test.ts:519-529). Consequently `minFunc`/`maxFunc` (src/formula/functions-statistical.ts:85-98, 110-123) leak their `Infinity`/`-Infinity` accumulator once blanks are skipped — the later main I could read contains exactly that fix plus new tests (`describe('Aggregations over ranges with no numeric cells')`, formula.test.ts:4412-4438) that are NOT in this diff, i.e. the regression shipped uncaught because this change has no direct test.",
+        "file": "packages/sheets/src/formula/arguments.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "The new range syntax now flows through formula-rewriting code paths that cannot parse it (row/column insert, delete, move, autofill), and no test covers a sheet containing `=SUM(A:A)` when structure changes.",
+        "evidence": "`shiftFormula` (src/model/worksheet/shifting.ts:360-379) and `moveFormula` (ibid. 80-84) split a REFERENCE token on ':' and call `parseARef(endpoint)`; `parseARef` throws `Invalid Reference` for a column-only/row-only endpoint (src/model/core/coordinates.ts:362-369). The diff adds no test in test/sheet/shifting.test.ts, test/sheet/manipulation.test.ts, test/sheet/moving.test.ts or test/sheet/autofill.test.ts exercising insert/delete/move/fill on a sheet whose formula is `=SUM(A:A)` or `=SUM(1:1)`, so a throw/`#REF!` corruption on the newly-legal syntax would not be caught.",
+        "file": "packages/sheets/src/model/worksheet/shifting.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "high",
+        "summary": "New public `CellIndex.bounds()` has no unit test; it is only covered indirectly through MemStore calculation tests, so its own edge cases (data not starting at A1, becoming empty after removals, independent row/col minima) are unverified.",
+        "evidence": "packages/sheets/src/store/cell-index.ts:128-149 adds `bounds()`. packages/sheets/test/store/cell-index.test.ts (read in full, 201 lines) is untouched by the diff and contains no `bounds` reference — I grepped the whole test tree for `bounds` and got no hit in that file. E.g. `bounds()` returning `undefined` after `remove()` empties the index, or a sheet whose data starts at C5, is never asserted anywhere.",
+        "file": "packages/sheets/src/store/cell-index.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "summary": "The calculation test named \"evaluates a whole-column reference on an otherwise empty sheet\" does not exercise the `bounds === undefined` fallback it purports to cover — the formula cell itself is populated, so bounds is defined and the '0' assertion holds either way.",
+        "evidence": "test/sheet/calculation.test.ts (diff): `const sheet = new Sheet(new MemStore()); await sheet.setData({r:1,c:4}, '=SUM(A:A)'); expect(...).toBe('0')`. Writing D1 populates the cell index, so `getUsedBounds()` returns `[{r:1,c:4},{r:1,c:4}]`, not `undefined`; the `bounds ?? [{r:1,c:1},{r:1,c:1}]` fallback in `expandUnboundedRanges` (src/formula/formula.ts) is never taken by this test. The undefined path is only covered by the unit test `expandUnboundedRanges('=SUM(A:A)', undefined)`.",
+        "file": "packages/sheets/test/sheet/calculation.test.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "summary": "`expandUnboundedRanges` rebuilds the whole formula from tokens, but every rewriting test in the diff uses a single-function formula, so corruption of surrounding tokens (string literals, operators, whitespace, nested calls) would not be detected.",
+        "evidence": "test/formula/formula.test.ts (diff) asserts only `=SUM(A:A)`, `=SUM(1:1)`, `=AVERAGE(B2:B)`, `=COUNT(A:B)`, `=SUM(1:3)`. The \"leaves bounded formulas untouched\" case returns via the `!tokens.some(shouldExpand)` fast path, so it does not test reconstruction at all. No test mixes an unbounded ref with other tokens (e.g. `=SUM(A:A)+B1*2`, `=COUNT(1:1)&\" rows\"`, `=IF(A1>0, SUM(A:A), 0)`). The later main I could read added exactly such a test (formula.test.ts:4379-4389), which is absent here.",
+        "file": "packages/sheets/test/formula/formula.test.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Two of the seven new grammar alternatives (`REF ':' ROW` and `ROW ':' REF`, i.e. `A1:2`, `1:B2`) are documented but untested at every layer.",
+        "evidence": "antlr/Formula.g4 (diff) adds `REF ':' ROW | ROW ':' REF` and docs/design/sheets/formula.md documents `A1:2`, `1:B2`. But coordinates.test.ts only asserts `A:A, A:C, 1:1, 2:5, A1:B, B2:B, A:B2, $A:$A` for `isUnboundedRange` and `A:A, A:C, 1:1, 2:5, A1:B, B2:B, A:B2, A1:B2` for `resolveRange`; formula.test.ts and calculation.test.ts never use `A1:2` or `1:B2`. Lexing, `resolveRange` semantics and evaluation for these forms are unverified.",
+        "file": "packages/sheets/src/model/core/coordinates.test.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "The YorkieStore and ReadOnlyStore wire-in (`getUsedBounds`, plus three `expandUnboundedRanges` call sites in `buildDependantsMap` including both batch-overlay branches) has no test.",
+        "evidence": "packages/frontend/src/app/spreadsheet/yorkie-store.ts (diff) rewrites formulas in three separate loops and adds `getUsedBounds()` with a new `ensureIndex()` call; packages/sheets/src/store/readonly.ts adds `getUsedBounds()`. I searched packages/frontend for tests: the only file mentioning formulas over the Yorkie store is tests/app/spreadsheet/yorkie-cross-sheet.integration.ts (not a `*.test.ts`, so not part of the unit run) and it uses only bounded refs. No test asserts a whole-column dependants entry or recalculation via YorkieStore, nor whole-column evaluation in a read-only sheet.",
+        "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Two behaviors the PR explicitly documents are asserted nowhere: a cross-sheet unbounded ref evaluating to `#ERROR!`, and `extractFormulaRanges` tolerating (skipping) unbounded refs for highlighting.",
+        "evidence": "docs/design/sheets/formula.md (diff) states `Sheet2!A:A` \"evaluate to `#ERROR!`\" and \"Whole-column/row highlighting (`extractFormulaRanges`) skips unbounded refs\". The only related test is `expandUnboundedRanges('=SUM(Sheet2!A:A)', bounds) === '=SUM(Sheet2!A:A)'` (string pass-through). Nothing in test/sheet/cross-sheet-calculation.test.ts or the `Formula.extractFormulaRanges` describe block in the diff feeds `A:A`/`1:1` into `extractFormulaRanges` (which calls `parseRange` inside a try/catch), so a throw/incorrect highlight regression would go unnoticed.",
+        "file": "docs/design/sheets/formula.md"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Error/fallback branches of the new coordinate helpers are untested: `parsePartialRef`'s throw, `expandUnboundedRanges`' try/catch fall-through, and `$`-marked endpoints in `resolveRange`.",
+        "evidence": "src/model/core/coordinates.ts (diff) `parsePartialRef` throws `Invalid Reference` when an endpoint has neither column nor row, and `expandUnboundedRanges` (src/formula/formula.ts) has a `catch { /* fall through to the original text */ }` branch. No test in coordinates.test.ts or formula.test.ts drives either path, so the fallback could be dead or wrong. Likewise `isUnboundedRange('$A:$A')` is asserted but `resolveRange('$A:$A', bounds)` / `resolveRange('$B$2:$B', bounds)` are not.",
+        "file": "packages/sheets/src/model/core/coordinates.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "No test for a self-referential whole-column/row formula (e.g. `=SUM(A:A)` written into column A), which the new syntax makes trivially reachable and which interacts with circular-reference detection.",
+        "evidence": "All new calculation tests place the formula in column D (`{r:N,c:4}`) so the expanded range never contains the formula cell. With bounds derived from the used extent (which includes the formula cell), `=SUM(A:A)` in A5 expands to a range covering A5 itself; no test in test/sheet/calculation.test.ts asserts the resulting behavior (`#REF!`/cycle detection vs. silent wrong value).",
+        "file": "packages/sheets/test/sheet/calculation.test.ts"
+      },
+      {
+        "severity": "nit",
+        "confidence": "high",
+        "summary": "`resolveRange` test names claim clamping that the assertions disprove for explicitly-given endpoints beyond the bounds.",
+        "evidence": "src/model/core/coordinates.test.ts (diff): `it('clamps a whole column to the data extent')` asserts `resolveRange('A:C', bounds)` = `r(1,1,3,3)` with maxC=2, and `it('clamps a whole row ...')` asserts `resolveRange('2:5', bounds)` = `r(2,1,5,2)` with maxR=3 — i.e. the explicit endpoints are not clamped. The assertions are meaningful, only the test names mislead about the contract.",
+        "file": "packages/sheets/src/model/core/coordinates.test.ts"
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Blank-skipping in `Arguments.iterate` silently changes AND/OR/XOR semantics over cell ranges, and no test anywhere passes a range to those functions",
+          "evidence": "The diff changes the shared `Arguments.iterate` (packages/sheets/src/formula/arguments.ts:110-125) to skip blank cells for *every* range, not just unbounded ones. `BoolArgs.iterate` is used by AND/OR/XOR (packages/sheets/src/formula/functions-logical.ts:111, 133, 174), so e.g. `=AND(A1:A3)` with A2 blank changes from FALSE (blank→false) to TRUE. Every AND/OR/XOR test in the suite uses literal arguments only (packages/sheets/test/formula/formula.test.ts:455-470, 1066-1067, 1325-1328); grepping the test tree for `AND(A`/`OR(A` over a range returns nothing. The new tests in this diff only exercise SUM/AVERAGE/COUNT, so the boolean-aggregation behavior change ships with zero coverage.",
+          "file": "packages/sheets/src/formula/arguments.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "All-blank / mostly-blank bounded ranges now change results for AVERAGE/MEDIAN/STDEV/VAR/GEOMEAN (e.g. AVERAGE → #VALUE!), with no test for those functions",
+          "evidence": "With blanks skipped (arguments.ts:118-123), `averageFunc` reaches `count === 0` and returns `ErrNode.VALUE` (packages/sheets/src/formula/functions-statistical.ts:39-41) where it previously returned 0; `stdevFunc`/`varFunc` (639, 689) similarly flip to #VALUE! when fewer than two numeric cells survive. The only empty-data test added is `=SUM(A:A)` on an empty sheet → '0' (packages/sheets/test/sheet/calculation.test.ts:351-355). The repository has follow-up unit tests for MIN/MAX over blank ranges only (packages/sheets/test/formula/formula.test.ts:4412-4438) — nothing covers AVERAGE/MEDIAN/STDEV/VAR over an all-blank or single-numeric range, at either the formula or sheet level.",
+          "file": "packages/sheets/src/formula/arguments.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "high",
+          "summary": "YorkieStore changes (getUsedBounds + expandUnboundedRanges in all three buildDependantsMap branches, incl. batchOverlay) have no test",
+          "evidence": "packages/frontend/src/app/spreadsheet/yorkie-store.ts:561-616 adds `ensureIndex()`/`bounds()` and rewrites formulas in the document branch, the batchOverlay-skip branch, and the overlay branch, plus a new `getUsedBounds()`. Grepping packages/frontend/tests for `A:A`, `SUM(A:`, `getUsedBounds`, or `expandUnbounded` returns no matches, and there is no yorkie-store unit test file covering buildDependantsMap. The MemStore equivalent is covered indirectly by test/sheet/calculation.test.ts, but the collaborative store path (where the overlay branches make the code non-trivial) is untested.",
+          "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "summary": "New `CellIndex.bounds()` and `Store.getUsedBounds()` have no direct tests despite dedicated test files for both",
+          "evidence": "packages/sheets/src/store/cell-index.ts:128-149 adds `bounds()`. packages/sheets/test/store/cell-index.test.ts covers add/remove/clear/rebuild/size/cellsInRange/hasAnyInRange/getOccupied* but has no `bounds` case (file read in full, 201 lines). Likewise packages/sheets/test/store/store.test.ts contains no `getUsedBounds` assertion (grep for `getUsedBounds` matches only src files and docs). So the empty-index `undefined` result and the sparse min/max-across-independent-row/col-indexes behavior are only covered incidentally via sheet-level SUM assertions.",
+          "file": "packages/sheets/src/store/cell-index.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "summary": "New grammar alternatives `COL ':' REF` (`A:B1`) and `ROW ':' REF` (`1:B2`) are never lexed by any test; `$`-prefixed unbounded refs are never run through expansion",
+          "evidence": "packages/sheets/antlr/Formula.g4 adds 7 REFRANGE alternatives, but the lexer-level tests only cover `A:A`, `1:1`, `B2:B`, `A:B`, `1:3` (packages/sheets/test/formula/formula.test.ts:4355-4370). `A:B2`/`$A:$A` appear only as plain strings passed to `isUnboundedRange`/`resolveRange` unit tests (packages/sheets/src/model/core/coordinates.test.ts:231-270), which bypass the regenerated ANTLR lexer entirely. A mistake in the regenerated FormulaLexer for the COL:REF / ROW:REF alternatives, or the fact that `resolveRange` strips `$` so `=SUM($A:$A)` expands to `=SUM(A1:A3)` (losing absolute markers), would not be caught.",
+          "file": "packages/sheets/test/formula/formula.test.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "summary": "No test where an unbounded range includes the formula's own cell (self-reference / circular case)",
+          "evidence": "Every sheet-level test parks the formula in column D while referencing column A or rows 1-3 (packages/sheets/test/sheet/calculation.test.ts:294-355), so the case that a whole-column/whole-row expansion swallows the formula cell itself (e.g. `=SUM(A:A)` in A5, or `=SUM(1:1)` in D1 where D1 is inside row 1) is never exercised. This is the classic pitfall of whole-column refs (circular reference / potential recalculation loop) and the diff ships no coverage for it.",
+          "file": "packages/sheets/test/sheet/calculation.test.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Documented limitation \"cross-sheet unbounded refs evaluate to #ERROR!\" is asserted only as a string passthrough, never evaluated",
+          "evidence": "docs/design/sheets/formula.md (new \"Limitations\" paragraph) claims `Sheet2!A:A` evaluates to `#ERROR!`. The only test is `expect(expandUnboundedRanges('=SUM(Sheet2!A:A)', bounds)).toBe('=SUM(Sheet2!A:A)')` (packages/sheets/test/formula/formula.test.ts:4395-4399), which asserts the rewrite is skipped but not the claimed evaluation outcome. Grepping packages/sheets/test for cross-sheet unbounded refs (`Sheet2!A:A` in cross-sheet-calculation.test.ts) finds nothing, so the actual behavior (error vs. crash vs. silent wrong value) is unverified.",
+          "file": "docs/design/sheets/formula.md"
+        },
+        {
+          "severity": "nit",
+          "confidence": "medium",
+          "summary": "Lowercase unbounded refs and the `try/catch` fallback path in expandUnboundedRanges are untested",
+          "evidence": "packages/sheets/src/formula/formula.ts (expandUnboundedRanges) calls `resolveRange(token.text.toUpperCase(), resolved)` inside a try/catch that falls back to the original text. No test passes a lowercase reference (`=sum(a:a)`, which would be rewritten to `=sum(A1:A3)`) and no test drives the catch branch, so both the case-normalization behavior and the failure fallback are uncovered.",
+          "file": "packages/sheets/src/formula/formula.ts"
+        }
+      ],
+      [
+        {
+          "severity": "major",
+          "confidence": "high",
+          "summary": "`Arguments.iterate` now skips blank cells inside *every* range (not just unbounded ones), changing the result of all existing bounded-range aggregations, but the diff adds no test for that change — and MIN/MAX over a range with no numeric cells is untested and regresses.",
+          "evidence": "packages/sheets/src/formula/arguments.ts (diff): `const isRange = isSrng(node.v); ... if (!cell || cell.v === undefined || cell.v === '') continue;` applies to any range, e.g. `=MIN(A1:A3)`/`=MAX(A1:A3)`/`=AVERAGE(A1:A3)` on a pre-existing bounded range. The only tests touching this are indirect (`=AVERAGE(B2:B)`→200, `=COUNT(A:B)`→5 in test/sheet/calculation.test.ts, and COUNT does not even use `iterate`). Searching the whole test suite for MIN/MAX over a grid range finds only literal-argument tests (test/formula/formula.test.ts:519-529). Consequently `minFunc`/`maxFunc` (src/formula/functions-statistical.ts:85-98, 110-123) leak their `Infinity`/`-Infinity` accumulator once blanks are skipped — the later main I could read contains exactly that fix plus new tests (`describe('Aggregations over ranges with no numeric cells')`, formula.test.ts:4412-4438) that are NOT in this diff, i.e. the regression shipped uncaught because this change has no direct test.",
+          "file": "packages/sheets/src/formula/arguments.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "The new range syntax now flows through formula-rewriting code paths that cannot parse it (row/column insert, delete, move, autofill), and no test covers a sheet containing `=SUM(A:A)` when structure changes.",
+          "evidence": "`shiftFormula` (src/model/worksheet/shifting.ts:360-379) and `moveFormula` (ibid. 80-84) split a REFERENCE token on ':' and call `parseARef(endpoint)`; `parseARef` throws `Invalid Reference` for a column-only/row-only endpoint (src/model/core/coordinates.ts:362-369). The diff adds no test in test/sheet/shifting.test.ts, test/sheet/manipulation.test.ts, test/sheet/moving.test.ts or test/sheet/autofill.test.ts exercising insert/delete/move/fill on a sheet whose formula is `=SUM(A:A)` or `=SUM(1:1)`, so a throw/`#REF!` corruption on the newly-legal syntax would not be caught.",
+          "file": "packages/sheets/src/model/worksheet/shifting.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "high",
+          "summary": "New public `CellIndex.bounds()` has no unit test; it is only covered indirectly through MemStore calculation tests, so its own edge cases (data not starting at A1, becoming empty after removals, independent row/col minima) are unverified.",
+          "evidence": "packages/sheets/src/store/cell-index.ts:128-149 adds `bounds()`. packages/sheets/test/store/cell-index.test.ts (read in full, 201 lines) is untouched by the diff and contains no `bounds` reference — I grepped the whole test tree for `bounds` and got no hit in that file. E.g. `bounds()` returning `undefined` after `remove()` empties the index, or a sheet whose data starts at C5, is never asserted anywhere.",
+          "file": "packages/sheets/src/store/cell-index.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "summary": "The calculation test named \"evaluates a whole-column reference on an otherwise empty sheet\" does not exercise the `bounds === undefined` fallback it purports to cover — the formula cell itself is populated, so bounds is defined and the '0' assertion holds either way.",
+          "evidence": "test/sheet/calculation.test.ts (diff): `const sheet = new Sheet(new MemStore()); await sheet.setData({r:1,c:4}, '=SUM(A:A)'); expect(...).toBe('0')`. Writing D1 populates the cell index, so `getUsedBounds()` returns `[{r:1,c:4},{r:1,c:4}]`, not `undefined`; the `bounds ?? [{r:1,c:1},{r:1,c:1}]` fallback in `expandUnboundedRanges` (src/formula/formula.ts) is never taken by this test. The undefined path is only covered by the unit test `expandUnboundedRanges('=SUM(A:A)', undefined)`.",
+          "file": "packages/sheets/test/sheet/calculation.test.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "summary": "`expandUnboundedRanges` rebuilds the whole formula from tokens, but every rewriting test in the diff uses a single-function formula, so corruption of surrounding tokens (string literals, operators, whitespace, nested calls) would not be detected.",
+          "evidence": "test/formula/formula.test.ts (diff) asserts only `=SUM(A:A)`, `=SUM(1:1)`, `=AVERAGE(B2:B)`, `=COUNT(A:B)`, `=SUM(1:3)`. The \"leaves bounded formulas untouched\" case returns via the `!tokens.some(shouldExpand)` fast path, so it does not test reconstruction at all. No test mixes an unbounded ref with other tokens (e.g. `=SUM(A:A)+B1*2`, `=COUNT(1:1)&\" rows\"`, `=IF(A1>0, SUM(A:A), 0)`). The later main I could read added exactly such a test (formula.test.ts:4379-4389), which is absent here.",
+          "file": "packages/sheets/test/formula/formula.test.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Two of the seven new grammar alternatives (`REF ':' ROW` and `ROW ':' REF`, i.e. `A1:2`, `1:B2`) are documented but untested at every layer.",
+          "evidence": "antlr/Formula.g4 (diff) adds `REF ':' ROW | ROW ':' REF` and docs/design/sheets/formula.md documents `A1:2`, `1:B2`. But coordinates.test.ts only asserts `A:A, A:C, 1:1, 2:5, A1:B, B2:B, A:B2, $A:$A` for `isUnboundedRange` and `A:A, A:C, 1:1, 2:5, A1:B, B2:B, A:B2, A1:B2` for `resolveRange`; formula.test.ts and calculation.test.ts never use `A1:2` or `1:B2`. Lexing, `resolveRange` semantics and evaluation for these forms are unverified.",
+          "file": "packages/sheets/src/model/core/coordinates.test.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "The YorkieStore and ReadOnlyStore wire-in (`getUsedBounds`, plus three `expandUnboundedRanges` call sites in `buildDependantsMap` including both batch-overlay branches) has no test.",
+          "evidence": "packages/frontend/src/app/spreadsheet/yorkie-store.ts (diff) rewrites formulas in three separate loops and adds `getUsedBounds()` with a new `ensureIndex()` call; packages/sheets/src/store/readonly.ts adds `getUsedBounds()`. I searched packages/frontend for tests: the only file mentioning formulas over the Yorkie store is tests/app/spreadsheet/yorkie-cross-sheet.integration.ts (not a `*.test.ts`, so not part of the unit run) and it uses only bounded refs. No test asserts a whole-column dependants entry or recalculation via YorkieStore, nor whole-column evaluation in a read-only sheet.",
+          "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Two behaviors the PR explicitly documents are asserted nowhere: a cross-sheet unbounded ref evaluating to `#ERROR!`, and `extractFormulaRanges` tolerating (skipping) unbounded refs for highlighting.",
+          "evidence": "docs/design/sheets/formula.md (diff) states `Sheet2!A:A` \"evaluate to `#ERROR!`\" and \"Whole-column/row highlighting (`extractFormulaRanges`) skips unbounded refs\". The only related test is `expandUnboundedRanges('=SUM(Sheet2!A:A)', bounds) === '=SUM(Sheet2!A:A)'` (string pass-through). Nothing in test/sheet/cross-sheet-calculation.test.ts or the `Formula.extractFormulaRanges` describe block in the diff feeds `A:A`/`1:1` into `extractFormulaRanges` (which calls `parseRange` inside a try/catch), so a throw/incorrect highlight regression would go unnoticed.",
+          "file": "docs/design/sheets/formula.md"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Error/fallback branches of the new coordinate helpers are untested: `parsePartialRef`'s throw, `expandUnboundedRanges`' try/catch fall-through, and `$`-marked endpoints in `resolveRange`.",
+          "evidence": "src/model/core/coordinates.ts (diff) `parsePartialRef` throws `Invalid Reference` when an endpoint has neither column nor row, and `expandUnboundedRanges` (src/formula/formula.ts) has a `catch { /* fall through to the original text */ }` branch. No test in coordinates.test.ts or formula.test.ts drives either path, so the fallback could be dead or wrong. Likewise `isUnboundedRange('$A:$A')` is asserted but `resolveRange('$A:$A', bounds)` / `resolveRange('$B$2:$B', bounds)` are not.",
+          "file": "packages/sheets/src/model/core/coordinates.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "No test for a self-referential whole-column/row formula (e.g. `=SUM(A:A)` written into column A), which the new syntax makes trivially reachable and which interacts with circular-reference detection.",
+          "evidence": "All new calculation tests place the formula in column D (`{r:N,c:4}`) so the expanded range never contains the formula cell. With bounds derived from the used extent (which includes the formula cell), `=SUM(A:A)` in A5 expands to a range covering A5 itself; no test in test/sheet/calculation.test.ts asserts the resulting behavior (`#REF!`/cycle detection vs. silent wrong value).",
+          "file": "packages/sheets/test/sheet/calculation.test.ts"
+        },
+        {
+          "severity": "nit",
+          "confidence": "high",
+          "summary": "`resolveRange` test names claim clamping that the assertions disprove for explicitly-given endpoints beyond the bounds.",
+          "evidence": "src/model/core/coordinates.test.ts (diff): `it('clamps a whole column to the data extent')` asserts `resolveRange('A:C', bounds)` = `r(1,1,3,3)` with maxC=2, and `it('clamps a whole row ...')` asserts `resolveRange('2:5', bounds)` = `r(2,1,5,2)` with maxR=3 — i.e. the explicit endpoints are not clamped. The assertions are meaningful, only the test names mislead about the contract.",
+          "file": "packages/sheets/src/model/core/coordinates.test.ts"
+        }
+      ]
+    ],
+    "samples_run": 2,
+    "samples_ok": 2,
+    "agreement": "disjoint",
+    "severity_counts": {
+      "critical": 0,
+      "major": 6,
+      "minor": 11,
+      "nit": 2
+    },
+    "confidence_counts": {
+      "high": 9,
+      "medium": 9,
+      "low": 1,
+      "unknown": 0
+    }
+  }
+}

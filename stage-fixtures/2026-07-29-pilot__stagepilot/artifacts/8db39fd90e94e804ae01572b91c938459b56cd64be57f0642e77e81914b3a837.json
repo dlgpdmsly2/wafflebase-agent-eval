@@ -1,0 +1,62 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "correctness",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/formula/arguments.ts::possibly missing imports for symbols newly used in the diff (`issrng` in arguments.ts, `range` in cell-index.ts / readonly.ts), which would break the build"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "low",
+      "summary": "Possibly missing imports for symbols newly used in the diff (`isSrng` in arguments.ts, `Range` in cell-index.ts / readonly.ts), which would break the build",
+      "evidence": "arguments.ts introduces `isSrng(node.v)` with no import hunk in the diff; cell-index.ts introduces `bounds(): Range | undefined` and readonly.ts `async getUsedBounds(): Promise<Range | undefined>` with no import hunks either. If any of these files did not already import the symbol, compilation fails.",
+      "file": "packages/sheets/src/formula/arguments.ts"
+    },
+    "rubric": {
+      "sha256": "sha256:f9a536593dea9e65a09e740fb67bcf802e588ac9dad78de00894b8425271a687",
+      "bytes": 3077
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": {
+      "verdict": "confirmed",
+      "confidence": "low",
+      "reason": "Cannot verify: the working directory /tmp/eval-item-hRoO8Z/repo contains no source files (Glob '**/*' and '**/*.ts' return nothing), so the import blocks of arguments.ts, cell-index.ts and readonly.ts are unreadable. The diff-level claims do hold: isSrng(node.v) is added at diff.patch:558 with the file's only hunk starting at line 108 (diff.patch:549, no import hunk); bounds(): Range | undefined added at diff.patch:874 with only hunk @@ -120,6 +120,34 @@ (diff.patch:865); getUsedBounds(): Promise<Range | undefined> added at diff.patch:948 with only hunk @@ -154,6 +154,10 @@ (diff.patch:944). Other files in the same PR do add import hunks when they need new symbols (formula.ts diff.patch:577-580, memory.ts diff.patch:906), so the omission is unresolved rather than clearly benign. Without the pre-image I cannot establish that these symbols were already imported, so no named refutation ground (not-present/already-guarded/out-of-scope/pre-existing) applies and the finding stays. A missing import would be a hard build break on the primary path.",
+      "refutationGround": "none",
+      "groundedIn": [
+        "/tmp/eval-item-hRoO8Z/diff.patch:549",
+        "/tmp/eval-item-hRoO8Z/diff.patch:558",
+        "/tmp/eval-item-hRoO8Z/diff.patch:865",
+        "/tmp/eval-item-hRoO8Z/diff.patch:874",
+        "/tmp/eval-item-hRoO8Z/diff.patch:944",
+        "/tmp/eval-item-hRoO8Z/diff.patch:948",
+        "/tmp/eval-item-hRoO8Z/diff.patch:577",
+        "/tmp/eval-item-hRoO8Z/diff.patch:906"
+      ]
+    },
+    "error": null,
+    "dropped": false
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "test-adequacy",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/model/worksheet/shifting.ts::the new range syntax now flows through formula-rewriting code paths that cannot parse it (row/column insert, delete, move, autofill), and no test covers a sheet containing `=sum(a:a)` when structure changes."
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "summary": "The new range syntax now flows through formula-rewriting code paths that cannot parse it (row/column insert, delete, move, autofill), and no test covers a sheet containing `=SUM(A:A)` when structure changes.",
+      "evidence": "`shiftFormula` (src/model/worksheet/shifting.ts:360-379) and `moveFormula` (ibid. 80-84) split a REFERENCE token on ':' and call `parseARef(endpoint)`; `parseARef` throws `Invalid Reference` for a column-only/row-only endpoint (src/model/core/coordinates.ts:362-369). The diff adds no test in test/sheet/shifting.test.ts, test/sheet/manipulation.test.ts, test/sheet/moving.test.ts or test/sheet/autofill.test.ts exercising insert/delete/move/fill on a sheet whose formula is `=SUM(A:A)` or `=SUM(1:1)`, so a throw/`#REF!` corruption on the newly-legal syntax would not be caught.",
+      "file": "packages/sheets/src/model/worksheet/shifting.ts"
+    },
+    "rubric": {
+      "sha256": "sha256:1151a85371c695d9804ea0c841de92245c9dac051b3c753d4932c1d45420fc1a",
+      "bytes": 2544
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

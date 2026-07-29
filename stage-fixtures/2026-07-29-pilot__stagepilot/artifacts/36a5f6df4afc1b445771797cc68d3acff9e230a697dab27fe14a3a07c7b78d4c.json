@@ -1,0 +1,51 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "correctness",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/formula/formula.ts::newly-lexable unbounded reference tokens (a:a, 1:1, a1:b) reach parserange/parseref in call sites that were not updated (e.g. extractformularanges), likely throwing 'invalid reference' on a live ui path"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "critical",
+      "confidence": "medium",
+      "summary": "Newly-lexable unbounded REFERENCE tokens (A:A, 1:1, A1:B) reach parseRange/parseRef in call sites that were not updated (e.g. extractFormulaRanges), likely throwing 'Invalid Reference' on a live UI path",
+      "evidence": "The grammar change makes `A:A`/`1:1`/`A1:B` valid REFERENCE tokens everywhere, but the only new guard is inside `expandUnboundedRanges` (formula.ts) which is wired into `calculate()` and `buildDependantsMap` only. docs/design/sheets/formula.md claims \"Whole-column/row highlighting (`extractFormulaRanges`) skips unbounded refs\", yet the diff contains no change to `extractFormulaRanges` — it still parses every REFERENCE token via `parseRange`, and `parseRange('A:A')` → `parseRef('A')`, which has no row and cannot match the ref pattern. Highlighting runs on every keystroke, so an uncaught throw here breaks formula editing. Same exposure for `shiftFormula`/`shiftSref` on row/column insert and any other `toSrefs(extractReferences(...))` caller that was not given the expansion.",
+      "file": "packages/sheets/src/formula/formula.ts",
+      "severity_reason": null
+    },
+    "rubric": {
+      "sha256": "sha256:f9a536593dea9e65a09e740fb67bcf802e588ac9dad78de00894b8425271a687",
+      "bytes": 3077
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

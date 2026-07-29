@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "correctness",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/model/core/coordinates.ts::`resolverange` inverts the range when the explicit `from` endpoint lies beyond the sheet's used bounds, so the expanded range silently includes cells *before* the requested start"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "summary": "`resolveRange` inverts the range when the explicit `from` endpoint lies beyond the sheet's used bounds, so the expanded range silently includes cells *before* the requested start",
+      "evidence": "coordinates.ts `resolveRange`: `toRange({r: a.r ?? 1, ...}, {r: b.r ?? max.r, ...})`. For `=SUM(A5:A)` with bounds maxR=3, from={r:5,c:1}, to={r:3,c:1}; `toRange` normalizes to `[{3,1},{5,1}]` i.e. `A3:A5`, pulling A3 (a populated cell outside the user's intent) into the sum. Correct behavior is an empty result (0). Same flip applies to `A9:A`, `D2:D` variants whenever the omitted endpoint clamps below the explicit one.",
+      "file": "packages/sheets/src/model/core/coordinates.ts"
+    },
+    "rubric": {
+      "sha256": "sha256:f9a536593dea9e65a09e740fb67bcf802e588ac9dad78de00894b8425271a687",
+      "bytes": 3077
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

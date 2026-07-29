@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "test-adequacy",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/formula/arguments.ts::`arguments.iterate` now skips blank cells inside *every* range (not just unbounded ones), changing the result of all existing bounded-range aggregations, but the diff adds no test for that change — and min/max over a range with no numeric cells is untested and regresses."
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "high",
+      "summary": "`Arguments.iterate` now skips blank cells inside *every* range (not just unbounded ones), changing the result of all existing bounded-range aggregations, but the diff adds no test for that change — and MIN/MAX over a range with no numeric cells is untested and regresses.",
+      "evidence": "packages/sheets/src/formula/arguments.ts (diff): `const isRange = isSrng(node.v); ... if (!cell || cell.v === undefined || cell.v === '') continue;` applies to any range, e.g. `=MIN(A1:A3)`/`=MAX(A1:A3)`/`=AVERAGE(A1:A3)` on a pre-existing bounded range. The only tests touching this are indirect (`=AVERAGE(B2:B)`→200, `=COUNT(A:B)`→5 in test/sheet/calculation.test.ts, and COUNT does not even use `iterate`). Searching the whole test suite for MIN/MAX over a grid range finds only literal-argument tests (test/formula/formula.test.ts:519-529). Consequently `minFunc`/`maxFunc` (src/formula/functions-statistical.ts:85-98, 110-123) leak their `Infinity`/`-Infinity` accumulator once blanks are skipped — the later main I could read contains exactly that fix plus new tests (`describe('Aggregations over ranges with no numeric cells')`, formula.test.ts:4412-4438) that are NOT in this diff, i.e. the regression shipped uncaught because this change has no direct test.",
+      "file": "packages/sheets/src/formula/arguments.ts"
+    },
+    "rubric": {
+      "sha256": "sha256:1151a85371c695d9804ea0c841de92245c9dac051b3c753d4932c1d45420fc1a",
+      "bytes": 2544
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

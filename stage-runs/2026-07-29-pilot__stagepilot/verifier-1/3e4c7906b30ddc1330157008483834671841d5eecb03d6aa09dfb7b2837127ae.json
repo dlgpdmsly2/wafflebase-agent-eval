@@ -1,0 +1,36 @@
+{
+  "run_id": "verifier-1",
+  "stage_id": "verifier",
+  "fixture_ref": "pr-521::verifier::test-adequacy::fresh::packages/frontend/src/app/spreadsheet/yorkie-store.ts::yorkiestore changes (getusedbounds + expandunboundedranges in all three builddependantsmap branches, incl. batchoverlay) have no test",
+  "item_id": "pr-521",
+  "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+  "stage_version": "2026-07-29-pilot__stagepilot",
+  "timestamp": "2026-07-29T13:03:20.908Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.08449310000000002,
+  "weighted_tokens": 11044,
+  "raw_tokens": 52126,
+  "duration_ms": 57282,
+  "turns": 16,
+  "calls": 1,
+  "output": {
+    "decision": {
+      "verdict": "confirmed",
+      "confidence": "low",
+      "reason": "I could not verify this finding because the entire working directory is unreadable by my tools, so I have no basis for a grounded refutation. Read on packages/frontend/src/app/spreadsheet/yorkie-store.ts failed with \"File does not exist\"; Grep for getUsedBounds|expandUnbounded|buildDependantsMap returned no files; Glob for **/yorkie-store.ts, packages/*/package.json, *, and **/* returned no files; and a catch-all Grep for \".\" also returned nothing. Crucially, Read also failed for packages/sheets/src/store/memory.ts and the root package.json — files that indisputably exist per the authoritative changed-file list. So the empty results reflect a staging/tooling failure, not absence of code, and cannot support a not-present refutation without circular reasoning. No guard could be cited (already-guarded), the issue is squarely in the test-adequacy lane so it is not out-of-scope, and pre-existing is ruled out because yorkie-store.ts is in the PR's changed-file list. The finding is at least internally consistent with that list: yorkie-store.ts was modified while the only touched test files (coordinates.test.ts, formula/formula.test.ts, sheet/calculation.test.ts) all live in the sheets package, none under packages/frontend, matching the claim that the collaborative-store path lacks coverage. Under this lens a clear behavior change with no meaningful test is major, and per the instruction that uncertainty keeps the finding, I confirm with low confidence.",
+      "refutationGround": "none",
+      "groundedIn": [
+        "Attempted Read: /tmp/stage-repo-ytIMuo/repo/packages/frontend/src/app/spreadsheet/yorkie-store.ts -> File does not exist",
+        "Attempted Read: /tmp/stage-repo-ytIMuo/repo/packages/sheets/src/store/memory.ts -> File does not exist (known-existing file per changed-file list)",
+        "Attempted Read: /tmp/stage-repo-ytIMuo/repo/package.json -> File does not exist",
+        "Grep pattern getUsedBounds|expandUnbounded|buildDependantsMap over cwd and /tmp/stage-repo-ytIMuo/repo -> no files found",
+        "Glob **/yorkie-store.ts, packages/frontend/src/app/**/*.ts, packages/*/package.json, *, **/* -> no files found",
+        "Grep catch-all pattern '.' -> no files found, indicating repository-wide inaccessibility"
+      ]
+    },
+    "error": null,
+    "dropped": false
+  },
+  "error": null
+}

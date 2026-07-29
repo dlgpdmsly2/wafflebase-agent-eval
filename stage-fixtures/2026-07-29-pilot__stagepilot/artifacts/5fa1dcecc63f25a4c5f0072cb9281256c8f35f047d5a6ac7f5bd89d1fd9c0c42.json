@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "blast-radius",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/formula/arguments.ts::blank-skipping in `arguments.iterate` silently changes semantics for every existing range consumer, not just sum/average"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "file": "packages/sheets/src/formula/arguments.ts",
+      "summary": "Blank-skipping in `Arguments.iterate` silently changes semantics for every existing range consumer, not just SUM/AVERAGE",
+      "evidence": "packages/sheets/src/formula/arguments.ts `iterate` now does `if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; }`. `iterate` is the shared argument walker for the whole function library (packages/sheets/src/formula/function*.ts — not in the changed-files list), so this changes behaviour for *bounded* ranges too, in functions the diff never considered: `COUNTBLANK(A1:A10)` can now only ever see non-blank cells (→ 0), `COUNTA`/`ROWS`/`COLUMNS`-style cardinality changes, and `AVERAGE(A1:A3)` with a blank A2 now divides by 2 instead of 3 — a behaviour change for existing user formulas that have nothing to do with unbounded ranges. Verify each consumer of `Arguments.iterate`/`ref` in packages/sheets/src/formula/."
+    },
+    "rubric": {
+      "sha256": "sha256:7a63926711bbe5515312dcfb8772e62365cbde200a8ddcb855f128404893dee8",
+      "bytes": 5267
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

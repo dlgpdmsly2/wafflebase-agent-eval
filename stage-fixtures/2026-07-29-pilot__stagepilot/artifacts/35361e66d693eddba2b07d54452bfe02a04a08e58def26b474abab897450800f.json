@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "blast-radius",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/model/worksheet/shifting.ts:184::`relocateformula` has the same unguarded `parsearef` on range endpoints, so copy/paste and autofill of any formula containing a whole-column/row range now throws."
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "critical",
+      "confidence": "high",
+      "summary": "`relocateFormula` has the same unguarded `parseARef` on range endpoints, so copy/paste and autofill of any formula containing a whole-column/row range now throws.",
+      "file": "packages/sheets/src/model/worksheet/shifting.ts:184",
+      "evidence": "shifting.ts:183-185 `const [startStr, endStr] = text.split(':'); relocateARef(parseARef(startStr.toUpperCase()), ...)`. Callers: clipboard.ts:25 (`relocateFormula(cell.f, deltaRow, deltaCol)` while building the pasted grid) and clipboard.ts:151. Pasting `=SUM(A:A)` — a formula the new grammar now accepts and users will type — throws instead of pasting."
+    },
+    "rubric": {
+      "sha256": "sha256:7a63926711bbe5515312dcfb8772e62365cbde200a8ddcb855f128404893dee8",
+      "bytes": 5267
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

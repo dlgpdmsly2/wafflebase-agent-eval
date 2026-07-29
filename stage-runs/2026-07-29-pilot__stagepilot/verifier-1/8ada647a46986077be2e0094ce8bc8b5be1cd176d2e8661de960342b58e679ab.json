@@ -1,0 +1,34 @@
+{
+  "run_id": "verifier-1",
+  "stage_id": "verifier",
+  "fixture_ref": "pr-521::verifier::blast-radius::fresh::packages/sheets/src/model/worksheet/sheet.ts:2615::`sheet.fetchgridbyreferences` calls `tosrefs` on the calculator's unexpanded cross-sheet unbounded reference and throws, aborting the whole recalculation pass instead of yielding `#error!` as the design doc promises.",
+  "item_id": "pr-521",
+  "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+  "stage_version": "2026-07-29-pilot__stagepilot",
+  "timestamp": "2026-07-29T13:03:20.908Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.08225759999999999,
+  "weighted_tokens": 10998,
+  "raw_tokens": 57563,
+  "duration_ms": 56491,
+  "turns": 15,
+  "calls": 1,
+  "output": {
+    "decision": {
+      "verdict": "confirmed",
+      "confidence": "low",
+      "reason": "I could not verify the finding because the working tree is not readable from my session, so I have no ground to refute it. Probes: Read of packages/sheets/src/model/worksheet/calculator.ts and .../sheet.ts both returned \"file does not exist\"; Glob for **/calculator.ts, **/sheet.ts, **/formula.md, packages/**, and **/* (both relative and rooted at /tmp/stage-repo-GK1w6t/repo and /tmp) returned no files; Grep for \"fetchGridByReferences\" returned no matches; and a catch-all Grep of \".\" in files_with_matches mode returned no files, which shows nothing in the checkout is visible to me rather than showing the symbols are absent. Claiming not-present on the basis of an unreadable checkout would erase a finding without evidence, which the high refutation bar exists to prevent. already-guarded would require citing an actual guard (a try/catch around the calculate() loop, or an expansion/filter step stripping cross-sheet unbounded refs before fetchGridByReferences) and I read no such line. pre-existing does not apply: both packages/sheets/src/model/worksheet/calculator.ts and packages/sheets/src/model/worksheet/sheet.ts are in the authoritative changed-file list, along with formula.ts, coordinates.ts, and docs/design/sheets/formula.md. out-of-scope does not apply either: as described this is squarely blast-radius — a caller passing an argument shape the callee's stricter parsing rejects, with the damage (aborting recalculation for every remaining cell in sorted) landing outside the diff. Severity critical is appropriate if real, since an uncaught throw escaping calculate() breaks all remaining cells instead of degrading one to #ERROR!. Re-check with a readable checkout: (1) the first statement of fetchGridByReferences around sheet.ts:2615, (2) whether calculator.ts:~94 expands or filters cross-sheet unbounded refs before the call, (3) whether any try/catch encloses the per-cell calculate() loop.",
+      "refutationGround": "none",
+      "groundedIn": [
+        "packages/sheets/src/model/worksheet/sheet.ts (unreadable: Read returned file-does-not-exist; target line ~2615 unverified)",
+        "packages/sheets/src/model/worksheet/calculator.ts (unreadable: Read returned file-does-not-exist; target lines ~94-95 unverified)",
+        "Grep 'fetchGridByReferences' repo-wide: no matches (consistent with an empty/invisible working tree, not with absence)",
+        "Grep '.' output_mode=files_with_matches: no files found, confirming no repository content is accessible to this session"
+      ]
+    },
+    "error": null,
+    "dropped": false
+  },
+  "error": null
+}

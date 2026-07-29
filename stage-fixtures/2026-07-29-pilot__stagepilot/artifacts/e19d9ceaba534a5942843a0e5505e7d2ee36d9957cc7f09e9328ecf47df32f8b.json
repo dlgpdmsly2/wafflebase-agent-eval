@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "blast-radius",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/formula/formula.ts::`extractformularanges` (highlighting) now receives reference tokens it cannot parse — the claimed \"skips unbounded refs\" behaviour is only in the docs"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "file": "packages/sheets/src/formula/formula.ts",
+      "summary": "`extractFormulaRanges` (highlighting) now receives REFERENCE tokens it cannot parse — the claimed \"skips unbounded refs\" behaviour is only in the docs",
+      "evidence": "docs/design/sheets/formula.md (new 'Limitations' paragraph) states \"Whole-column/row highlighting (`extractFormulaRanges`) skips unbounded refs\", but no change to `extractFormulaRanges` appears anywhere in the diff. Its implementation (packages/sheets/src/formula/formula.ts, documented as 'Each REFERENCE token is parsed into a Range') calls `parseRange`/`parseRef`, and `parseRef('A')` throws `Invalid Reference` (see the new `parsePartialRef` in packages/sheets/src/model/core/coordinates.ts, which exists precisely because `parseRef` cannot handle a column-only endpoint). Now that `A:A`/`1:1` lex as REFERENCE, typing `=SUM(A:A)` into the formula bar routes an unparsable token into the highlighter and can throw on every keystroke. Fix belongs in `extractFormulaRanges` (guard with `isUnboundedRange`) or its frontend caller."
+    },
+    "rubric": {
+      "sha256": "sha256:7a63926711bbe5515312dcfb8772e62365cbde200a8ddcb855f128404893dee8",
+      "bytes": 5267
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

@@ -1,0 +1,401 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "detection",
+  "instance": {
+    "lens_id": "correctness"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "rubric": {
+      "sha256": "sha256:f9a536593dea9e65a09e740fb67bcf802e588ac9dad78de00894b8425271a687",
+      "bytes": 3077
+    },
+    "diff": {
+      "sha256": "sha256:0186444cd7b8efadad9531b65f1be6fb600cadf4c8fdaa5f869bf8f475dcf99c",
+      "bytes": 70256
+    },
+    "issue": {
+      "sha256": "sha256:5a7e809077c8f932d8923162a3412a72bc57113f98d94ceea7cf939951c54027",
+      "bytes": 1510
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "samples": 2,
+    "model": "claude-opus-5",
+    "title": "Correctness",
+    "needs_issue_spec": false
+  },
+  "output": {
+    "union": [
+      {
+        "severity": "critical",
+        "confidence": "medium",
+        "summary": "Newly-lexable unbounded REFERENCE tokens (A:A, 1:1, A1:B) reach parseRange/parseRef in call sites that were not updated (e.g. extractFormulaRanges), likely throwing 'Invalid Reference' on a live UI path",
+        "evidence": "The grammar change makes `A:A`/`1:1`/`A1:B` valid REFERENCE tokens everywhere, but the only new guard is inside `expandUnboundedRanges` (formula.ts) which is wired into `calculate()` and `buildDependantsMap` only. docs/design/sheets/formula.md claims \"Whole-column/row highlighting (`extractFormulaRanges`) skips unbounded refs\", yet the diff contains no change to `extractFormulaRanges` — it still parses every REFERENCE token via `parseRange`, and `parseRange('A:A')` → `parseRef('A')`, which has no row and cannot match the ref pattern. Highlighting runs on every keystroke, so an uncaught throw here breaks formula editing. Same exposure for `shiftFormula`/`shiftSref` on row/column insert and any other `toSrefs(extractReferences(...))` caller that was not given the expansion.",
+        "file": "packages/sheets/src/formula/formula.ts",
+        "severity_reason": null
+      },
+      {
+        "severity": "critical",
+        "confidence": "low",
+        "summary": "`getUsedBounds()` added as a required member of the `Store` interface; any implementation not updated in this diff will throw `store.getUsedBounds is not a function` from `Sheet.getUsedBounds()` during calculation",
+        "evidence": "store.ts adds `getUsedBounds(): Promise<Range | undefined>` as a non-optional method; only MemStore, ReadOnlyStore and YorkieStore are updated. `packages/sheets/src/store/memory.ts` itself references another implementation in a comment: \"Unlike the `IDBStore` implementation, this builds the map from the entire grid.\" `Sheet.getUsedBounds()` blindly calls `this.store.getUsedBounds()` and `calculate()` awaits it for every formula cell, so any un-updated Store impl (IDBStore, test doubles/mocks in frontend or sheets tests) turns every recalculation into a TypeError.",
+        "file": "packages/sheets/src/store/store.ts"
+      },
+      {
+        "severity": "critical",
+        "confidence": "medium",
+        "summary": "Blank-cell skipping in `Arguments.iterate` applies to every range-consuming function, not just aggregations, silently changing/breaking positional and blank-counting semantics",
+        "evidence": "arguments.ts: `const isRange = isSrng(node.v); ... if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; }`. The skip is unconditional for all range args of all functions that go through `Arguments.iterate`, so (a) functions with positional semantics over a range (MATCH/INDEX/VLOOKUP/HLOOKUP-style, or any function relying on the yielded cell count/order matching the range shape) now see a compacted sequence with shifted indices; (b) COUNTBLANK/COUNTA-style functions over a range can no longer observe blanks and will return 0/wrong counts; (c) previously-passing bounded-range behavior (`=AVERAGE(A1:A5)` with blanks counted as 0) changes for all existing formulas. Nothing in the diff restricts the skip to aggregation functions.",
+        "file": "packages/sheets/src/formula/arguments.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "`resolveRange` inverts the range when the explicit `from` endpoint lies beyond the sheet's used bounds, so the expanded range silently includes cells *before* the requested start",
+        "evidence": "coordinates.ts `resolveRange`: `toRange({r: a.r ?? 1, ...}, {r: b.r ?? max.r, ...})`. For `=SUM(A5:A)` with bounds maxR=3, from={r:5,c:1}, to={r:3,c:1}; `toRange` normalizes to `[{3,1},{5,1}]` i.e. `A3:A5`, pulling A3 (a populated cell outside the user's intent) into the sum. Correct behavior is an empty result (0). Same flip applies to `A9:A`, `D2:D` variants whenever the omitted endpoint clamps below the explicit one.",
+        "file": "packages/sheets/src/model/core/coordinates.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Deleting/clearing the bottom-most or right-most populated cell shrinks the used bounds, so the rebuilt dependants map no longer contains that cell and whole-column/row formulas keep a stale value",
+        "evidence": "Dependants are derived from the *expanded, clamped* range: `toSrefs(extractReferences(expandUnboundedRanges(cell.f, bounds)))` (memory.ts, yorkie-store.ts). Mirror of the added test 'picks up a newly added cell beyond the prior data extent': after A10=5 the map contains A10→D1, but when A10 is cleared the map is rebuilt with maxR back to 3, so A10 is no longer a key and the edit to A10 has no dependants — `=SUM(A:A)` in D1 is never marked dirty and keeps showing 65 instead of 60. No test covers the shrink direction.",
+        "file": "packages/sheets/src/store/memory.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "YorkieStore expands formulas with index-only bounds that ignore `batchOverlay`, so during a batch (e.g. paste) new cells outside the prior extent are neither summed nor registered as dependencies",
+        "evidence": "yorkie-store.ts `buildDependantsMap`: `const bounds = this.cellIndex.bounds();` is computed once from the index, then used for both the document-cell loop *and* the `batchOverlay` loop, even though overlay cells are explicitly the ones not yet in the document/index. `getUsedBounds()` likewise returns `this.cellIndex.bounds()` with no overlay merge, and `calculate()` uses it to clamp the formula it evaluates. A batch that adds rows below the previous extent therefore yields both a wrong SUM(A:A) value and missing dependants for the new cells.",
+        "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Dependants map now materializes every cell of every expanded whole-column/row range via `toSrefs`, which is O(rows×cols) per formula and can hang/OOM on realistic sheets",
+        "evidence": "memory.ts: `for (const r of toSrefs(extractReferences(expandUnboundedRanges(cell.f, bounds))))` (same in the three YorkieStore loops). `A:A` on a sheet with 50k used rows enumerates 50k srefs per formula, and the map is rebuilt on *every* edit (per the design doc). Previously ranges were user-sized; now a single `=SUM(A:A)` makes each keystroke's dependants rebuild linear in the sheet extent.",
+        "file": "packages/sheets/src/store/memory.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "summary": "`CellIndex.bounds()` can return `Infinity`/`-Infinity` coordinates or an inflated extent because it trusts key presence rather than non-empty buckets and assumes rowIndex/colIndex are both populated",
+        "evidence": "cell-index.ts `bounds()`: guards only `if (this.rowIndex.size === 0) return undefined;` then reduces over `rowIndex.keys()` and separately `colIndex.keys()` starting from `Infinity`/`-Infinity`. If removal leaves empty-set keys behind (a common CellIndex implementation detail), the extent stays at the deleted cell's row/col forever; if `colIndex` is ever empty while `rowIndex` is not, the returned Range contains `Infinity`, which `resolveRange` will propagate into `toSrefs` — an effectively infinite range enumeration.",
+        "file": "packages/sheets/src/store/cell-index.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "summary": "Possibly missing imports for symbols newly used in the diff (`isSrng` in arguments.ts, `Range` in cell-index.ts / readonly.ts), which would break the build",
+        "evidence": "arguments.ts introduces `isSrng(node.v)` with no import hunk in the diff; cell-index.ts introduces `bounds(): Range | undefined` and readonly.ts `async getUsedBounds(): Promise<Range | undefined>` with no import hunks either. If any of these files did not already import the symbol, compilation fails.",
+        "file": "packages/sheets/src/formula/arguments.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "summary": "Rebuilding the formula string from `extractTokens` output can corrupt formulas whose token text is not verbatim source (whitespace runs, quoted string literals)",
+        "evidence": "formula.ts `expandUnboundedRanges` concatenates `token.text` for every token and prepends `'='` (`return '=' + body;`). This is only safe if `extractTokens` returns strictly verbatim text for every token and covers all gaps — the grammar `-> skip`s WS, and STRING tokens are also used as gap fillers, so any normalization (dropped whitespace, unquoted string text) silently rewrites the user's formula whenever a single unbounded ref is present. It also assumes tokens exclude the leading '='; if not, the result is '==…'.",
+        "file": "packages/sheets/src/formula/formula.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "`resolveRange` throws on cross-sheet input that `isUnboundedRange` happily accepts — an inconsistent contract waiting for the next caller",
+        "evidence": "`isUnboundedRange` strips the sheet prefix via `parseCrossSheetRef(...).localRef`, but `resolveRange` does `srng.split(':')` and feeds `'Sheet2!A'` to `parsePartialRef`, whose regex `^([A-Za-z]*)([0-9]*)$` cannot match, so it throws 'Invalid Reference'. Only the `isCrossSheetRef` pre-check in `expandUnboundedRanges` keeps this from firing today; both functions are exported.",
+        "file": "packages/sheets/src/model/core/coordinates.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "Aggregations over an all-blank expanded range now receive zero arguments, so AVERAGE/MIN/MAX can produce NaN or an error where they previously returned 0",
+        "evidence": "With the new skip in `Arguments.iterate`, `=AVERAGE(A:A)` on an empty sheet (expanded to `A1:A1`, blank) yields no values at all; a naive `sum/count` gives 0/0. Only `=SUM(A:A)` on an empty sheet is covered by the new tests (`expects '0'`).",
+        "file": "packages/sheets/src/formula/arguments.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "`calculate()` re-reads used bounds per formula cell inside the loop, so bounds can change mid-pass (spill writes) and disagree with the bounds used to build the dependency order",
+        "evidence": "calculator.ts: `const formula = expandUnboundedRanges(cell.f!, await sheet.getUsedBounds());` sits inside the per-cell loop. Spill results written earlier in the same pass extend the used extent, so later formulas expand against different bounds than the ones the topological order was derived from — a formula can end up referencing a cell scheduled after it, yielding a stale value for that pass.",
+        "file": "packages/sheets/src/model/worksheet/calculator.ts"
+      },
+      {
+        "severity": "nit",
+        "confidence": "medium",
+        "summary": "`isUnboundedRange` ignores extra colon-separated segments and does not reject empty endpoints",
+        "evidence": "`const [from, to] = local.split(':');` discards anything past the second segment, and `isFullRef('')` returns false, so a malformed `':A1'` or `'A1:B2:C3'` is classified as unbounded and handed to `resolveRange`, which then relies on the try/catch in `expandUnboundedRanges`.",
+        "file": "packages/sheets/src/model/core/coordinates.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "high",
+        "summary": "`resolveRange` silently inverts open-ended ranges whose explicit start lies beyond the sheet's used extent, pulling in cells before the start",
+        "file": "packages/sheets/src/model/core/coordinates.ts",
+        "evidence": "`resolveRange` builds `to` as `{ r: b.r ?? max.r, c: b.c ?? max.c }` and then calls `toRange(from, to)`, which normalizes (sorts) the endpoints. If the `from` endpoint is beyond the data extent, e.g. `=SUM(A5:A)` with bounds maxR=3, we get from={r:5,c:1}, to={r:3,c:1}, and `toRange` flips it into A3:A5 — a range that includes A3 and A4, i.e. cells *above* the requested start. With the issue's data (A1=10,A2=20,A3=30) `=SUM(A5:A)` returns 30 instead of 0, and `=AVERAGE(B4:B)` returns 200 instead of an empty/DIV0 result. The same happens for row-open forms (`A:B5` style / `5:` variants) whenever the explicit endpoint exceeds `bounds`."
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Blank-cell skipping in `Arguments.iterate` changes semantics for *all* bounded ranges, breaking position-dependent and paired-range functions",
+        "file": "packages/sheets/src/formula/arguments.ts",
+        "evidence": "The new block `const isRange = isSrng(node.v); ... if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; }` is applied to every range argument, not just expanded unbounded ones. Any function whose semantics depend on the *number* or *ordinal position* of cells in a range (MATCH/INDEX-style lookups, COUNTBLANK, ROWS/COLUMNS-ish helpers, or paired ranges such as SUMIF(range, crit, sum_range) / SUMPRODUCT) now receives a compacted, misaligned stream: e.g. `=MATCH(x, A1:A10, 0)` returns the index within the non-blank subset, not within the range. It also changes pre-existing results for bounded ranges (`=AVERAGE(A1:A3)` with A2 blank goes from 13.33 to 20) — an intentional Excel alignment, but one applied far outside the stated scope, and an all-blank range now yields zero arguments where callers previously always got N arguments (functions that reduce without an initial value can throw or return an error instead of 0)."
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Whole-column/whole-row expansion can include the formula's own cell, creating a self-reference the engine never had to handle",
+        "file": "packages/sheets/src/model/worksheet/calculator.ts",
+        "evidence": "`expandUnboundedRanges(cell.f!, await sheet.getUsedBounds())` clamps to bounds computed *including the formula cell itself*. `=SUM(1:1)` entered in D1 expands to `SUM(A1:D1)`, and `=SUM(A:A)` entered in A5 expands to `SUM(A1:A5)` — the formula depends on itself. `buildDependantsMap` will then record `A5 -> {A5}` (self edge), which either trips the cycle path or re-dirties the cell indefinitely. Excel reports a circular reference here; the new tests deliberately place every formula outside the referenced column/row (`=SUM(1:1)` at r2c4, `=SUM(A:A)` at c4), so this path is untested."
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Shrinking the used bounds (clearing the last populated cell) leaves formulas over unbounded ranges stale",
+        "file": "packages/sheets/src/store/memory.ts",
+        "evidence": "`buildDependantsMap` computes `const bounds = this.cellIndex.bounds()` *after* the edit has been applied, then expands each formula against those bounds. When the edit deletes the cell that defined the extent (e.g. A10 cleared while `=SUM(A:A)` exists), bounds have already shrunk to r<=3, so the formula's dependency set is A1:A3 and does not contain A10; the dirty cell A10 therefore has no dependants and the formula is never recalculated, keeping the pre-delete total on screen. The new test only covers the growth direction ('picks up a newly added cell beyond the prior data extent'), not deletion. Same logic in YorkieStore.buildDependantsMap."
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "summary": "YorkieStore bounds ignore `batchOverlay`, so batched writes expand unbounded ranges against stale extents",
+        "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts",
+        "evidence": "`getUsedBounds()` and the new `const bounds = this.cellIndex.bounds()` in `buildDependantsMap` read only the committed cell index; the `batchOverlay` branch immediately below iterates overlay cells (`for (const [sref, cell] of this.batchOverlay)`) and expands their formulas with those same committed bounds. Cells written/removed in the overlay (e.g. a paste extending column A far past the old extent, or an overlay deletion at the extent) are not reflected, so dependency edges and the expanded range both miss them and `=SUM(A:A)` computes over the pre-batch extent."
+      },
+      {
+        "severity": "critical",
+        "confidence": "low",
+        "summary": "Newly lexable `A:A` / `1:1` REFERENCE tokens reach un-updated consumers that call parseRef/parseRange and will throw",
+        "file": "packages/sheets/src/formula/formula.ts",
+        "evidence": "The grammar change makes `A:A`, `1:1`, `A1:B` lex as REFERENCE tokens everywhere, but only three call sites were given the `expandUnboundedRanges` guard (calculator, MemStore.buildDependantsMap, YorkieStore.buildDependantsMap). Every other consumer of REFERENCE tokens still parses them directly: `extractFormulaRanges` (parses each REFERENCE via parseRange for highlighting — the docs added in this diff *claim* it 'skips unbounded refs' although no code in the diff makes it skip), `toSrefs(extractReferences(f))` used outside those three sites, `shiftFormula`/`shiftSref` (row/column insert, fill, copy-paste rewriting) and `normalizeFormulaOnCommit`. `parseRef('A')` / `parseRef('1')` throw 'Invalid Reference', so typing `=SUM(A:A)` in the formula bar or inserting a row near such a formula can throw an unhandled exception in the UI rather than degrade."
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "`CellIndex.bounds()` can return Infinity coordinates and trusts index keys that may outlive their cells",
+        "file": "packages/sheets/src/store/cell-index.ts",
+        "evidence": "The empty check only tests `this.rowIndex.size === 0`; if `colIndex` is empty (or is emptied independently) while `rowIndex` is not, minC/maxC stay `Infinity`/`-Infinity` and the returned Range contains non-finite coordinates, which `resolveRange`/`toSrng` will turn into a garbage reference. Likewise, if deletion leaves zero-size buckets in `rowIndex`/`colIndex`, `bounds()` over-reports the extent and unbounded ranges expand over phantom rows/columns."
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "`resolveRange` throws on cross-sheet input and ignores extra `:` segments",
+        "file": "packages/sheets/src/model/core/coordinates.ts",
+        "evidence": "`resolveRange` does `srng.split(':')` with no cross-sheet handling, so `resolveRange(\"Sheet2!A:A\", bounds)` sends 'Sheet2!A' into `parsePartialRef`, whose regex `^([A-Za-z]*)([0-9]*)$` fails and throws 'Invalid Reference'. It is exported alongside `isUnboundedRange` (which *does* strip the sheet prefix), so the asymmetry invites throwing call sites; the caller in formula.ts only avoids it by an explicit `!isCrossSheetRef` check. Quoted sheet names containing ':' would also mis-split."
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "`expandUnboundedRanges` rebuilds the formula by concatenating token texts, relying on `extractTokens` round-tripping exactly",
+        "file": "packages/sheets/src/formula/formula.ts",
+        "evidence": "`let body = ''; for (const token of tokens) { ... body += token.text } return '=' + body;` reconstructs the whole formula from tokens. Any text the lexer drops or normalizes (hidden-channel whitespace, or a gap-filling STRING token whose `text` is not byte-identical to the source) is silently lost from the rewritten formula that is then evaluated — and if `extractTokens` ever emits the leading '=' as a token the result becomes '==...'. The rewrite also only runs when `formula.startsWith('=')`, so any stored formula lacking the '=' prefix keeps its unbounded refs and evaluates to #ERROR!."
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Used bounds are re-read per cell inside the calculation loop, so expansion is inconsistent within one pass",
+        "file": "packages/sheets/src/model/worksheet/calculator.ts",
+        "evidence": "`await sheet.getUsedBounds()` is invoked inside the per-cell body of `calculate`, after earlier iterations may have written spill values that extend the extent. Two `=SUM(A:A)` cells in the same recalculation can therefore be expanded against different bounds, producing divergent results for identical formulas in one pass (plus a repeated async read per cell)."
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "critical",
+          "confidence": "medium",
+          "summary": "Newly-lexable unbounded REFERENCE tokens (A:A, 1:1, A1:B) reach parseRange/parseRef in call sites that were not updated (e.g. extractFormulaRanges), likely throwing 'Invalid Reference' on a live UI path",
+          "evidence": "The grammar change makes `A:A`/`1:1`/`A1:B` valid REFERENCE tokens everywhere, but the only new guard is inside `expandUnboundedRanges` (formula.ts) which is wired into `calculate()` and `buildDependantsMap` only. docs/design/sheets/formula.md claims \"Whole-column/row highlighting (`extractFormulaRanges`) skips unbounded refs\", yet the diff contains no change to `extractFormulaRanges` — it still parses every REFERENCE token via `parseRange`, and `parseRange('A:A')` → `parseRef('A')`, which has no row and cannot match the ref pattern. Highlighting runs on every keystroke, so an uncaught throw here breaks formula editing. Same exposure for `shiftFormula`/`shiftSref` on row/column insert and any other `toSrefs(extractReferences(...))` caller that was not given the expansion.",
+          "file": "packages/sheets/src/formula/formula.ts",
+          "severity_reason": null
+        },
+        {
+          "severity": "critical",
+          "confidence": "low",
+          "summary": "`getUsedBounds()` added as a required member of the `Store` interface; any implementation not updated in this diff will throw `store.getUsedBounds is not a function` from `Sheet.getUsedBounds()` during calculation",
+          "evidence": "store.ts adds `getUsedBounds(): Promise<Range | undefined>` as a non-optional method; only MemStore, ReadOnlyStore and YorkieStore are updated. `packages/sheets/src/store/memory.ts` itself references another implementation in a comment: \"Unlike the `IDBStore` implementation, this builds the map from the entire grid.\" `Sheet.getUsedBounds()` blindly calls `this.store.getUsedBounds()` and `calculate()` awaits it for every formula cell, so any un-updated Store impl (IDBStore, test doubles/mocks in frontend or sheets tests) turns every recalculation into a TypeError.",
+          "file": "packages/sheets/src/store/store.ts"
+        },
+        {
+          "severity": "critical",
+          "confidence": "medium",
+          "summary": "Blank-cell skipping in `Arguments.iterate` applies to every range-consuming function, not just aggregations, silently changing/breaking positional and blank-counting semantics",
+          "evidence": "arguments.ts: `const isRange = isSrng(node.v); ... if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; }`. The skip is unconditional for all range args of all functions that go through `Arguments.iterate`, so (a) functions with positional semantics over a range (MATCH/INDEX/VLOOKUP/HLOOKUP-style, or any function relying on the yielded cell count/order matching the range shape) now see a compacted sequence with shifted indices; (b) COUNTBLANK/COUNTA-style functions over a range can no longer observe blanks and will return 0/wrong counts; (c) previously-passing bounded-range behavior (`=AVERAGE(A1:A5)` with blanks counted as 0) changes for all existing formulas. Nothing in the diff restricts the skip to aggregation functions.",
+          "file": "packages/sheets/src/formula/arguments.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "`resolveRange` inverts the range when the explicit `from` endpoint lies beyond the sheet's used bounds, so the expanded range silently includes cells *before* the requested start",
+          "evidence": "coordinates.ts `resolveRange`: `toRange({r: a.r ?? 1, ...}, {r: b.r ?? max.r, ...})`. For `=SUM(A5:A)` with bounds maxR=3, from={r:5,c:1}, to={r:3,c:1}; `toRange` normalizes to `[{3,1},{5,1}]` i.e. `A3:A5`, pulling A3 (a populated cell outside the user's intent) into the sum. Correct behavior is an empty result (0). Same flip applies to `A9:A`, `D2:D` variants whenever the omitted endpoint clamps below the explicit one.",
+          "file": "packages/sheets/src/model/core/coordinates.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Deleting/clearing the bottom-most or right-most populated cell shrinks the used bounds, so the rebuilt dependants map no longer contains that cell and whole-column/row formulas keep a stale value",
+          "evidence": "Dependants are derived from the *expanded, clamped* range: `toSrefs(extractReferences(expandUnboundedRanges(cell.f, bounds)))` (memory.ts, yorkie-store.ts). Mirror of the added test 'picks up a newly added cell beyond the prior data extent': after A10=5 the map contains A10→D1, but when A10 is cleared the map is rebuilt with maxR back to 3, so A10 is no longer a key and the edit to A10 has no dependants — `=SUM(A:A)` in D1 is never marked dirty and keeps showing 65 instead of 60. No test covers the shrink direction.",
+          "file": "packages/sheets/src/store/memory.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "YorkieStore expands formulas with index-only bounds that ignore `batchOverlay`, so during a batch (e.g. paste) new cells outside the prior extent are neither summed nor registered as dependencies",
+          "evidence": "yorkie-store.ts `buildDependantsMap`: `const bounds = this.cellIndex.bounds();` is computed once from the index, then used for both the document-cell loop *and* the `batchOverlay` loop, even though overlay cells are explicitly the ones not yet in the document/index. `getUsedBounds()` likewise returns `this.cellIndex.bounds()` with no overlay merge, and `calculate()` uses it to clamp the formula it evaluates. A batch that adds rows below the previous extent therefore yields both a wrong SUM(A:A) value and missing dependants for the new cells.",
+          "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Dependants map now materializes every cell of every expanded whole-column/row range via `toSrefs`, which is O(rows×cols) per formula and can hang/OOM on realistic sheets",
+          "evidence": "memory.ts: `for (const r of toSrefs(extractReferences(expandUnboundedRanges(cell.f, bounds))))` (same in the three YorkieStore loops). `A:A` on a sheet with 50k used rows enumerates 50k srefs per formula, and the map is rebuilt on *every* edit (per the design doc). Previously ranges were user-sized; now a single `=SUM(A:A)` makes each keystroke's dependants rebuild linear in the sheet extent.",
+          "file": "packages/sheets/src/store/memory.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "summary": "`CellIndex.bounds()` can return `Infinity`/`-Infinity` coordinates or an inflated extent because it trusts key presence rather than non-empty buckets and assumes rowIndex/colIndex are both populated",
+          "evidence": "cell-index.ts `bounds()`: guards only `if (this.rowIndex.size === 0) return undefined;` then reduces over `rowIndex.keys()` and separately `colIndex.keys()` starting from `Infinity`/`-Infinity`. If removal leaves empty-set keys behind (a common CellIndex implementation detail), the extent stays at the deleted cell's row/col forever; if `colIndex` is ever empty while `rowIndex` is not, the returned Range contains `Infinity`, which `resolveRange` will propagate into `toSrefs` — an effectively infinite range enumeration.",
+          "file": "packages/sheets/src/store/cell-index.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "summary": "Possibly missing imports for symbols newly used in the diff (`isSrng` in arguments.ts, `Range` in cell-index.ts / readonly.ts), which would break the build",
+          "evidence": "arguments.ts introduces `isSrng(node.v)` with no import hunk in the diff; cell-index.ts introduces `bounds(): Range | undefined` and readonly.ts `async getUsedBounds(): Promise<Range | undefined>` with no import hunks either. If any of these files did not already import the symbol, compilation fails.",
+          "file": "packages/sheets/src/formula/arguments.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "summary": "Rebuilding the formula string from `extractTokens` output can corrupt formulas whose token text is not verbatim source (whitespace runs, quoted string literals)",
+          "evidence": "formula.ts `expandUnboundedRanges` concatenates `token.text` for every token and prepends `'='` (`return '=' + body;`). This is only safe if `extractTokens` returns strictly verbatim text for every token and covers all gaps — the grammar `-> skip`s WS, and STRING tokens are also used as gap fillers, so any normalization (dropped whitespace, unquoted string text) silently rewrites the user's formula whenever a single unbounded ref is present. It also assumes tokens exclude the leading '='; if not, the result is '==…'.",
+          "file": "packages/sheets/src/formula/formula.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "`resolveRange` throws on cross-sheet input that `isUnboundedRange` happily accepts — an inconsistent contract waiting for the next caller",
+          "evidence": "`isUnboundedRange` strips the sheet prefix via `parseCrossSheetRef(...).localRef`, but `resolveRange` does `srng.split(':')` and feeds `'Sheet2!A'` to `parsePartialRef`, whose regex `^([A-Za-z]*)([0-9]*)$` cannot match, so it throws 'Invalid Reference'. Only the `isCrossSheetRef` pre-check in `expandUnboundedRanges` keeps this from firing today; both functions are exported.",
+          "file": "packages/sheets/src/model/core/coordinates.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "Aggregations over an all-blank expanded range now receive zero arguments, so AVERAGE/MIN/MAX can produce NaN or an error where they previously returned 0",
+          "evidence": "With the new skip in `Arguments.iterate`, `=AVERAGE(A:A)` on an empty sheet (expanded to `A1:A1`, blank) yields no values at all; a naive `sum/count` gives 0/0. Only `=SUM(A:A)` on an empty sheet is covered by the new tests (`expects '0'`).",
+          "file": "packages/sheets/src/formula/arguments.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "`calculate()` re-reads used bounds per formula cell inside the loop, so bounds can change mid-pass (spill writes) and disagree with the bounds used to build the dependency order",
+          "evidence": "calculator.ts: `const formula = expandUnboundedRanges(cell.f!, await sheet.getUsedBounds());` sits inside the per-cell loop. Spill results written earlier in the same pass extend the used extent, so later formulas expand against different bounds than the ones the topological order was derived from — a formula can end up referencing a cell scheduled after it, yielding a stale value for that pass.",
+          "file": "packages/sheets/src/model/worksheet/calculator.ts"
+        },
+        {
+          "severity": "nit",
+          "confidence": "medium",
+          "summary": "`isUnboundedRange` ignores extra colon-separated segments and does not reject empty endpoints",
+          "evidence": "`const [from, to] = local.split(':');` discards anything past the second segment, and `isFullRef('')` returns false, so a malformed `':A1'` or `'A1:B2:C3'` is classified as unbounded and handed to `resolveRange`, which then relies on the try/catch in `expandUnboundedRanges`.",
+          "file": "packages/sheets/src/model/core/coordinates.ts"
+        }
+      ],
+      [
+        {
+          "severity": "major",
+          "confidence": "high",
+          "summary": "`resolveRange` silently inverts open-ended ranges whose explicit start lies beyond the sheet's used extent, pulling in cells before the start",
+          "file": "packages/sheets/src/model/core/coordinates.ts",
+          "evidence": "`resolveRange` builds `to` as `{ r: b.r ?? max.r, c: b.c ?? max.c }` and then calls `toRange(from, to)`, which normalizes (sorts) the endpoints. If the `from` endpoint is beyond the data extent, e.g. `=SUM(A5:A)` with bounds maxR=3, we get from={r:5,c:1}, to={r:3,c:1}, and `toRange` flips it into A3:A5 — a range that includes A3 and A4, i.e. cells *above* the requested start. With the issue's data (A1=10,A2=20,A3=30) `=SUM(A5:A)` returns 30 instead of 0, and `=AVERAGE(B4:B)` returns 200 instead of an empty/DIV0 result. The same happens for row-open forms (`A:B5` style / `5:` variants) whenever the explicit endpoint exceeds `bounds`."
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Blank-cell skipping in `Arguments.iterate` changes semantics for *all* bounded ranges, breaking position-dependent and paired-range functions",
+          "file": "packages/sheets/src/formula/arguments.ts",
+          "evidence": "The new block `const isRange = isSrng(node.v); ... if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; }` is applied to every range argument, not just expanded unbounded ones. Any function whose semantics depend on the *number* or *ordinal position* of cells in a range (MATCH/INDEX-style lookups, COUNTBLANK, ROWS/COLUMNS-ish helpers, or paired ranges such as SUMIF(range, crit, sum_range) / SUMPRODUCT) now receives a compacted, misaligned stream: e.g. `=MATCH(x, A1:A10, 0)` returns the index within the non-blank subset, not within the range. It also changes pre-existing results for bounded ranges (`=AVERAGE(A1:A3)` with A2 blank goes from 13.33 to 20) — an intentional Excel alignment, but one applied far outside the stated scope, and an all-blank range now yields zero arguments where callers previously always got N arguments (functions that reduce without an initial value can throw or return an error instead of 0)."
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Whole-column/whole-row expansion can include the formula's own cell, creating a self-reference the engine never had to handle",
+          "file": "packages/sheets/src/model/worksheet/calculator.ts",
+          "evidence": "`expandUnboundedRanges(cell.f!, await sheet.getUsedBounds())` clamps to bounds computed *including the formula cell itself*. `=SUM(1:1)` entered in D1 expands to `SUM(A1:D1)`, and `=SUM(A:A)` entered in A5 expands to `SUM(A1:A5)` — the formula depends on itself. `buildDependantsMap` will then record `A5 -> {A5}` (self edge), which either trips the cycle path or re-dirties the cell indefinitely. Excel reports a circular reference here; the new tests deliberately place every formula outside the referenced column/row (`=SUM(1:1)` at r2c4, `=SUM(A:A)` at c4), so this path is untested."
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Shrinking the used bounds (clearing the last populated cell) leaves formulas over unbounded ranges stale",
+          "file": "packages/sheets/src/store/memory.ts",
+          "evidence": "`buildDependantsMap` computes `const bounds = this.cellIndex.bounds()` *after* the edit has been applied, then expands each formula against those bounds. When the edit deletes the cell that defined the extent (e.g. A10 cleared while `=SUM(A:A)` exists), bounds have already shrunk to r<=3, so the formula's dependency set is A1:A3 and does not contain A10; the dirty cell A10 therefore has no dependants and the formula is never recalculated, keeping the pre-delete total on screen. The new test only covers the growth direction ('picks up a newly added cell beyond the prior data extent'), not deletion. Same logic in YorkieStore.buildDependantsMap."
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "summary": "YorkieStore bounds ignore `batchOverlay`, so batched writes expand unbounded ranges against stale extents",
+          "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts",
+          "evidence": "`getUsedBounds()` and the new `const bounds = this.cellIndex.bounds()` in `buildDependantsMap` read only the committed cell index; the `batchOverlay` branch immediately below iterates overlay cells (`for (const [sref, cell] of this.batchOverlay)`) and expands their formulas with those same committed bounds. Cells written/removed in the overlay (e.g. a paste extending column A far past the old extent, or an overlay deletion at the extent) are not reflected, so dependency edges and the expanded range both miss them and `=SUM(A:A)` computes over the pre-batch extent."
+        },
+        {
+          "severity": "critical",
+          "confidence": "low",
+          "summary": "Newly lexable `A:A` / `1:1` REFERENCE tokens reach un-updated consumers that call parseRef/parseRange and will throw",
+          "file": "packages/sheets/src/formula/formula.ts",
+          "evidence": "The grammar change makes `A:A`, `1:1`, `A1:B` lex as REFERENCE tokens everywhere, but only three call sites were given the `expandUnboundedRanges` guard (calculator, MemStore.buildDependantsMap, YorkieStore.buildDependantsMap). Every other consumer of REFERENCE tokens still parses them directly: `extractFormulaRanges` (parses each REFERENCE via parseRange for highlighting — the docs added in this diff *claim* it 'skips unbounded refs' although no code in the diff makes it skip), `toSrefs(extractReferences(f))` used outside those three sites, `shiftFormula`/`shiftSref` (row/column insert, fill, copy-paste rewriting) and `normalizeFormulaOnCommit`. `parseRef('A')` / `parseRef('1')` throw 'Invalid Reference', so typing `=SUM(A:A)` in the formula bar or inserting a row near such a formula can throw an unhandled exception in the UI rather than degrade."
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "`CellIndex.bounds()` can return Infinity coordinates and trusts index keys that may outlive their cells",
+          "file": "packages/sheets/src/store/cell-index.ts",
+          "evidence": "The empty check only tests `this.rowIndex.size === 0`; if `colIndex` is empty (or is emptied independently) while `rowIndex` is not, minC/maxC stay `Infinity`/`-Infinity` and the returned Range contains non-finite coordinates, which `resolveRange`/`toSrng` will turn into a garbage reference. Likewise, if deletion leaves zero-size buckets in `rowIndex`/`colIndex`, `bounds()` over-reports the extent and unbounded ranges expand over phantom rows/columns."
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "`resolveRange` throws on cross-sheet input and ignores extra `:` segments",
+          "file": "packages/sheets/src/model/core/coordinates.ts",
+          "evidence": "`resolveRange` does `srng.split(':')` with no cross-sheet handling, so `resolveRange(\"Sheet2!A:A\", bounds)` sends 'Sheet2!A' into `parsePartialRef`, whose regex `^([A-Za-z]*)([0-9]*)$` fails and throws 'Invalid Reference'. It is exported alongside `isUnboundedRange` (which *does* strip the sheet prefix), so the asymmetry invites throwing call sites; the caller in formula.ts only avoids it by an explicit `!isCrossSheetRef` check. Quoted sheet names containing ':' would also mis-split."
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "`expandUnboundedRanges` rebuilds the formula by concatenating token texts, relying on `extractTokens` round-tripping exactly",
+          "file": "packages/sheets/src/formula/formula.ts",
+          "evidence": "`let body = ''; for (const token of tokens) { ... body += token.text } return '=' + body;` reconstructs the whole formula from tokens. Any text the lexer drops or normalizes (hidden-channel whitespace, or a gap-filling STRING token whose `text` is not byte-identical to the source) is silently lost from the rewritten formula that is then evaluated — and if `extractTokens` ever emits the leading '=' as a token the result becomes '==...'. The rewrite also only runs when `formula.startsWith('=')`, so any stored formula lacking the '=' prefix keeps its unbounded refs and evaluates to #ERROR!."
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Used bounds are re-read per cell inside the calculation loop, so expansion is inconsistent within one pass",
+          "file": "packages/sheets/src/model/worksheet/calculator.ts",
+          "evidence": "`await sheet.getUsedBounds()` is invoked inside the per-cell body of `calculate`, after earlier iterations may have written spill values that extend the extent. Two `=SUM(A:A)` cells in the same recalculation can therefore be expanded against different bounds, producing divergent results for identical formulas in one pass (plus a repeated async read per cell)."
+        }
+      ]
+    ],
+    "samples_run": 2,
+    "samples_ok": 2,
+    "agreement": "disjoint",
+    "severity_counts": {
+      "critical": 4,
+      "major": 12,
+      "minor": 7,
+      "nit": 1
+    },
+    "confidence_counts": {
+      "high": 1,
+      "medium": 13,
+      "low": 10,
+      "unknown": 0
+    }
+  }
+}

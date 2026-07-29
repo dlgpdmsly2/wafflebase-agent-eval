@@ -1,0 +1,59 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "test-adequacy",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/formula/arguments.ts::all-blank / mostly-blank bounded ranges now change results for average/median/stdev/var/geomean (e.g. average → #value!), with no test for those functions"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "summary": "All-blank / mostly-blank bounded ranges now change results for AVERAGE/MEDIAN/STDEV/VAR/GEOMEAN (e.g. AVERAGE → #VALUE!), with no test for those functions",
+      "evidence": "With blanks skipped (arguments.ts:118-123), `averageFunc` reaches `count === 0` and returns `ErrNode.VALUE` (packages/sheets/src/formula/functions-statistical.ts:39-41) where it previously returned 0; `stdevFunc`/`varFunc` (639, 689) similarly flip to #VALUE! when fewer than two numeric cells survive. The only empty-data test added is `=SUM(A:A)` on an empty sheet → '0' (packages/sheets/test/sheet/calculation.test.ts:351-355). The repository has follow-up unit tests for MIN/MAX over blank ranges only (packages/sheets/test/formula/formula.test.ts:4412-4438) — nothing covers AVERAGE/MEDIAN/STDEV/VAR over an all-blank or single-numeric range, at either the formula or sheet level.",
+      "file": "packages/sheets/src/formula/arguments.ts"
+    },
+    "rubric": {
+      "sha256": "sha256:1151a85371c695d9804ea0c841de92245c9dac051b3c753d4932c1d45420fc1a",
+      "bytes": 2544
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": {
+      "verdict": "confirmed",
+      "confidence": "low",
+      "reason": "The diff does contain the described behavior change: arguments.ts now skips blank cells for ANY range reference (diff.patch:549-567, `isSrng(node.v)` + `continue` on `cell.v === undefined || ''`), which alters aggregation semantics for bounded ranges as well as the new unbounded forms. The added tests are accurately described by the reviewer: the only zero-numeric-data case is `=SUM(A:A)` on an empty sheet -> '0' (diff.patch:1125-1129), and the new formula-level block (diff.patch:998-1047) only covers lexing/rewriting plus one SUM evaluation. No test in this diff exercises AVERAGE/MEDIAN/STDEV/VAR/GEOMEAN over an all-blank (or single-numeric) range, where skipping blanks can flip the result from a number to an error. Partial mitigation exists: `AVERAGE(B2:B)` -> '200' (diff.patch:1082-1087) is genuine non-vacuous coverage of blank-skipping for AVERAGE (counting blanks would give 100), which suggests the severity may be closer to minor than major. However, I could not refute the finding on any named ground: the working directory /tmp/eval-item-hRoO8Z/repo is empty (Glob '**/*' returned nothing), so I could not read functions-statistical.ts to verify the claimed `count === 0 -> ErrNode.VALUE` path, nor search pre-existing test files for existing all-blank statistical coverage. Per the instructions, unresolved uncertainty keeps the finding.",
+      "refutationGround": "none",
+      "groundedIn": [
+        "/tmp/eval-item-hRoO8Z/diff.patch:549-567 (arguments.ts blank-skipping applies to all ranges via isSrng)",
+        "/tmp/eval-item-hRoO8Z/diff.patch:1082-1087 (AVERAGE(B2:B) -> '200' partially covers blank-skipping)",
+        "/tmp/eval-item-hRoO8Z/diff.patch:1125-1129 (only empty-data test is =SUM(A:A) -> '0')",
+        "/tmp/eval-item-hRoO8Z/diff.patch:998-1047 (new formula.test.ts block covers only lexing/rewrite plus one SUM evaluation)",
+        "/tmp/eval-item-hRoO8Z/changed-files.txt (functions-statistical.ts not in change set; source tree unavailable for verification)"
+      ]
+    },
+    "error": null,
+    "dropped": false
+  }
+}

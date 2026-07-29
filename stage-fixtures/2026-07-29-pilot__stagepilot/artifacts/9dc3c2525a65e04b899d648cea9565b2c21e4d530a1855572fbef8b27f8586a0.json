@@ -1,0 +1,161 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "detection",
+  "instance": {
+    "lens_id": "security"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "rubric": {
+      "sha256": "sha256:e6a9c8324569ee065f06bd0e6e424035eae6bc529b42d65213feeada98d581ab",
+      "bytes": 3148
+    },
+    "diff": {
+      "sha256": "sha256:0186444cd7b8efadad9531b65f1be6fb600cadf4c8fdaa5f869bf8f475dcf99c",
+      "bytes": 70256
+    },
+    "issue": {
+      "sha256": "sha256:5a7e809077c8f932d8923162a3412a72bc57113f98d94ceea7cf939951c54027",
+      "bytes": 1510
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "samples": 2,
+    "model": "claude-opus-5",
+    "title": "Security",
+    "needs_issue_spec": false
+  },
+  "output": {
+    "union": [
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Unbounded-range expansion is not size-capped: explicit endpoints bypass the \"clamp to data extent\" guarantee, enabling memory/CPU exhaustion (DoS) from a single formula, amplified to all collaborators via buildDependantsMap",
+        "evidence": "`resolveRange` (packages/sheets/src/model/core/coordinates.ts, new function) only substitutes the *omitted* half of an endpoint from `bounds` — explicitly written parts are passed through unclamped: `toRange({r: a.r ?? 1, c: a.c ?? 1}, {r: b.r ?? max.r, c: b.c ?? max.c})`. The new grammar (packages/sheets/antlr/Formula.g4) makes `ROW: '$'? [1-9][0-9]*` and `COL` (up to 3 letters, i.e. up to ZZZ = 18278) legal *range endpoints on their own*, so `=SUM(1:99999999)` lexes as one REFRANGE and resolves to rows 1..99,999,999 × cols 1..maxC, and `=SUM(A:ZZZ)` resolves to 18,278 columns × maxR rows. Every downstream consumer then materialises that range cell-by-cell: `toSrefs(extractReferences(...))` in MemStore.buildDependantsMap (packages/sheets/src/store/memory.ts, changed line) and three times in YorkieStore.buildDependantsMap (packages/frontend/src/app/spreadsheet/yorkie-store.ts ~565-605), plus `Arguments.iterate`'s `for (const ref of toSrefs([node.v]))` (packages/sheets/src/formula/arguments.ts). Attack: a user types one formula (or, in the collaborative YorkieStore document, any participant does) — buildDependantsMap is rebuilt on every edit and will allocate one Map/Set entry per cell of the expanded range, hanging or OOM-ing every client sharing the document. Even the fully-omitted form is cheap to weaponise: place one value at a far row (e.g. row 1,000,000) so `getUsedBounds()`/`CellIndex.bounds()` reports maxR=1,000,000, then `=SUM(A:A)` expands to a million refs per formula. I could not open the working tree (Glob/Grep returned no files in /tmp/eval-item-hRoO8Z/repo), so I could not confirm the absence of a size cap inside `toSrefs`/`fetchGridByReferences`; hence medium confidence. No cap appears anywhere in the diff, and the new docs (docs/design/sheets/formula.md) assert ranges are \"clamped to the sheet's data extent\", which is only true for omitted endpoints.",
+        "file": "packages/sheets/src/model/core/coordinates.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "resolveRange throws a raw TypeError on a reference without ':' — safe only because the sole current caller wraps it in try/catch",
+        "evidence": "`resolveRange` does `const [fromStr, toStr] = srng.split(':')`; for a single ref (`'A1'`) `toStr` is `undefined` and `parsePartialRef(undefined)` dereferences `.replace` → TypeError rather than the intended `Error('Invalid Reference')`. It is exported from coordinates.ts (public surface), and the only guard today is the `try { ... } catch {}` in `expandUnboundedRanges` (packages/sheets/src/formula/formula.ts). Any future/other caller reached from user-controlled formula text gets an unhandled exception (availability). Validate that the input contains exactly one ':' and both endpoints parse.",
+        "file": "packages/sheets/src/model/core/coordinates.ts"
+      },
+      {
+        "severity": "nit",
+        "confidence": "medium",
+        "summary": "Formula is reconstructed by string concatenation of lexer tokens and re-parsed, a re-serialisation step that must be lossless to be safe",
+        "evidence": "`expandUnboundedRanges` builds `'=' + body` by concatenating `token.text` for every token from `extractTokens` (packages/sheets/src/formula/formula.ts). The rewritten string is then fed to `extractReferences` and `evaluateWithSpill` in calculator.ts, and to `extractReferences` in both dependants-map builders. Any token whose `text` does not round-trip exactly (skipped WS, quoted sheet names, `\"\"` escapes inside STRING) silently changes the evaluated expression relative to the stored `cell.f` — i.e. the string the user sees is not the string that is evaluated. Cross-sheet and unparsable refs are correctly left as-is via `isCrossSheetRef` + try/catch, so I found no concrete divergence; flagging the pattern only, and noting I could not read extractTokens in the working tree to verify losslessness.",
+        "file": "packages/sheets/src/formula/formula.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Unbounded range expansion amplifies attacker-controlled data extent into unbounded reference enumeration (resource-exhaustion DoS across all collaborators)",
+        "file": "packages/sheets/src/model/core/coordinates.ts",
+        "evidence": "`resolveRange` fills an omitted endpoint from `bounds` max (`{ r: b.r ?? max.r, c: b.c ?? max.c }`), and `bounds` comes from `CellIndex.bounds()` — the min/max of *any* populated cell, with no density check and no clamp. Every consumer then materializes the range cell-by-cell: `MemStore.buildDependantsMap` and `YorkieStore.buildDependantsMap` do `toSrefs(extractReferences(expandUnboundedRanges(cell.f, bounds)))`, `calculator.ts` does `sheet.fetchGridByReferences(references)`, and `Arguments.iterate` walks `toSrefs([node.v])` calling `grid.get(ref)` per cell. Attack: a collaborator writes one cell far out (e.g. `A1048576`) plus one formula `=SUM(A:A)`; on every subsequent edit each client rebuilds the dependants map, expanding a 4-character reference into ~1e6 Set entries per formula (and `A:B` into maxR×maxC), hanging/OOMing every connected client. Before this change the cost of a range was bounded by the literal text the author typed; now it is derived from other cells' positions, which in YorkieStore come from the untrusted shared CRDT document (`this.cellIndex.bounds()` at yorkie-store.ts, `getUsedBounds`/`buildDependantsMap`) and are never validated. No cap or guard against the expanded cell count appears anywhere in the diff."
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "No magnitude clamp on parsed row/column when resolving ranges — grammar admits arbitrarily large row numbers",
+        "file": "packages/sheets/antlr/Formula.g4",
+        "evidence": "`fragment ROW: '$'? [1-9][0-9]* ;` places no digit limit on a row, and `resolveRange` (coordinates.ts) parses it with `r: match[2] ? parseInt(match[2], 10) : null` and passes it straight to `toRange` with no upper bound / sheet-dimension check. A single short input such as `=SUM(1:99999999999999)` or `=COUNT(A1:B99999999999)` produces a Range spanning ~1e14 rows, which `toSrefs` in `buildDependantsMap` / `Arguments.iterate` then iterates one sref at a time — an effectively non-terminating loop that freezes the tab. The new `REFRANGE` alternatives (`ROW ':' ROW`, `REF ':' ROW`, …) widen the set of short inputs that reach this unvalidated path, and `resolveRange` is the natural place to clamp to the sheet's maximum dimensions but does not."
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "`expandUnboundedRanges` silently swallows all resolution errors and falls back to the raw, unexpanded formula (fail-open)",
+        "file": "packages/sheets/src/formula/formula.ts",
+        "evidence": "`try { body += toSrng(resolveRange(token.text.toUpperCase(), resolved)); continue; } catch { /* Fall through to the original text on any parse failure. */ }` catches every throwable — including a `parsePartialRef` 'Invalid Reference' or any future validation/limit error — and emits the attacker-supplied token text unchanged into the reconstructed formula that is then evaluated. Any clamp or rejection added inside `resolveRange` would be defeated here: the malformed/oversized reference is passed through rather than rejected, and nothing is logged, so the anomaly is invisible."
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "`parsePartialRef` accepts arbitrary-length column labels, wider than the grammar it is meant to mirror",
+        "file": "packages/sheets/src/model/core/coordinates.ts",
+        "evidence": "`cleaned.match(/^([A-Za-z]*)([0-9]*)$/)` then `parseColumnLabel(match[1])` places no bound on label length, while the grammar caps a column at three letters (`fragment COL: '$'? [A-Za-z] [A-Za-z]? [A-Za-z]?`). `resolveRange`/`isUnboundedRange` are module-level exports, so any caller that does not come through the lexer (or a future one) can pass e.g. `AAAAAAAAAA:1`, yielding an astronomically large column index that feeds the same per-cell `toSrefs` enumeration described above. Currently only lexer-fed call sites appear in the diff, so this is hardening rather than a live vector — I could not grep the tree to confirm there is no other caller."
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Unbounded-range expansion is not size-capped: explicit endpoints bypass the \"clamp to data extent\" guarantee, enabling memory/CPU exhaustion (DoS) from a single formula, amplified to all collaborators via buildDependantsMap",
+          "evidence": "`resolveRange` (packages/sheets/src/model/core/coordinates.ts, new function) only substitutes the *omitted* half of an endpoint from `bounds` — explicitly written parts are passed through unclamped: `toRange({r: a.r ?? 1, c: a.c ?? 1}, {r: b.r ?? max.r, c: b.c ?? max.c})`. The new grammar (packages/sheets/antlr/Formula.g4) makes `ROW: '$'? [1-9][0-9]*` and `COL` (up to 3 letters, i.e. up to ZZZ = 18278) legal *range endpoints on their own*, so `=SUM(1:99999999)` lexes as one REFRANGE and resolves to rows 1..99,999,999 × cols 1..maxC, and `=SUM(A:ZZZ)` resolves to 18,278 columns × maxR rows. Every downstream consumer then materialises that range cell-by-cell: `toSrefs(extractReferences(...))` in MemStore.buildDependantsMap (packages/sheets/src/store/memory.ts, changed line) and three times in YorkieStore.buildDependantsMap (packages/frontend/src/app/spreadsheet/yorkie-store.ts ~565-605), plus `Arguments.iterate`'s `for (const ref of toSrefs([node.v]))` (packages/sheets/src/formula/arguments.ts). Attack: a user types one formula (or, in the collaborative YorkieStore document, any participant does) — buildDependantsMap is rebuilt on every edit and will allocate one Map/Set entry per cell of the expanded range, hanging or OOM-ing every client sharing the document. Even the fully-omitted form is cheap to weaponise: place one value at a far row (e.g. row 1,000,000) so `getUsedBounds()`/`CellIndex.bounds()` reports maxR=1,000,000, then `=SUM(A:A)` expands to a million refs per formula. I could not open the working tree (Glob/Grep returned no files in /tmp/eval-item-hRoO8Z/repo), so I could not confirm the absence of a size cap inside `toSrefs`/`fetchGridByReferences`; hence medium confidence. No cap appears anywhere in the diff, and the new docs (docs/design/sheets/formula.md) assert ranges are \"clamped to the sheet's data extent\", which is only true for omitted endpoints.",
+          "file": "packages/sheets/src/model/core/coordinates.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "resolveRange throws a raw TypeError on a reference without ':' — safe only because the sole current caller wraps it in try/catch",
+          "evidence": "`resolveRange` does `const [fromStr, toStr] = srng.split(':')`; for a single ref (`'A1'`) `toStr` is `undefined` and `parsePartialRef(undefined)` dereferences `.replace` → TypeError rather than the intended `Error('Invalid Reference')`. It is exported from coordinates.ts (public surface), and the only guard today is the `try { ... } catch {}` in `expandUnboundedRanges` (packages/sheets/src/formula/formula.ts). Any future/other caller reached from user-controlled formula text gets an unhandled exception (availability). Validate that the input contains exactly one ':' and both endpoints parse.",
+          "file": "packages/sheets/src/model/core/coordinates.ts"
+        },
+        {
+          "severity": "nit",
+          "confidence": "medium",
+          "summary": "Formula is reconstructed by string concatenation of lexer tokens and re-parsed, a re-serialisation step that must be lossless to be safe",
+          "evidence": "`expandUnboundedRanges` builds `'=' + body` by concatenating `token.text` for every token from `extractTokens` (packages/sheets/src/formula/formula.ts). The rewritten string is then fed to `extractReferences` and `evaluateWithSpill` in calculator.ts, and to `extractReferences` in both dependants-map builders. Any token whose `text` does not round-trip exactly (skipped WS, quoted sheet names, `\"\"` escapes inside STRING) silently changes the evaluated expression relative to the stored `cell.f` — i.e. the string the user sees is not the string that is evaluated. Cross-sheet and unparsable refs are correctly left as-is via `isCrossSheetRef` + try/catch, so I found no concrete divergence; flagging the pattern only, and noting I could not read extractTokens in the working tree to verify losslessness.",
+          "file": "packages/sheets/src/formula/formula.ts"
+        }
+      ],
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Unbounded range expansion amplifies attacker-controlled data extent into unbounded reference enumeration (resource-exhaustion DoS across all collaborators)",
+          "file": "packages/sheets/src/model/core/coordinates.ts",
+          "evidence": "`resolveRange` fills an omitted endpoint from `bounds` max (`{ r: b.r ?? max.r, c: b.c ?? max.c }`), and `bounds` comes from `CellIndex.bounds()` — the min/max of *any* populated cell, with no density check and no clamp. Every consumer then materializes the range cell-by-cell: `MemStore.buildDependantsMap` and `YorkieStore.buildDependantsMap` do `toSrefs(extractReferences(expandUnboundedRanges(cell.f, bounds)))`, `calculator.ts` does `sheet.fetchGridByReferences(references)`, and `Arguments.iterate` walks `toSrefs([node.v])` calling `grid.get(ref)` per cell. Attack: a collaborator writes one cell far out (e.g. `A1048576`) plus one formula `=SUM(A:A)`; on every subsequent edit each client rebuilds the dependants map, expanding a 4-character reference into ~1e6 Set entries per formula (and `A:B` into maxR×maxC), hanging/OOMing every connected client. Before this change the cost of a range was bounded by the literal text the author typed; now it is derived from other cells' positions, which in YorkieStore come from the untrusted shared CRDT document (`this.cellIndex.bounds()` at yorkie-store.ts, `getUsedBounds`/`buildDependantsMap`) and are never validated. No cap or guard against the expanded cell count appears anywhere in the diff."
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "No magnitude clamp on parsed row/column when resolving ranges — grammar admits arbitrarily large row numbers",
+          "file": "packages/sheets/antlr/Formula.g4",
+          "evidence": "`fragment ROW: '$'? [1-9][0-9]* ;` places no digit limit on a row, and `resolveRange` (coordinates.ts) parses it with `r: match[2] ? parseInt(match[2], 10) : null` and passes it straight to `toRange` with no upper bound / sheet-dimension check. A single short input such as `=SUM(1:99999999999999)` or `=COUNT(A1:B99999999999)` produces a Range spanning ~1e14 rows, which `toSrefs` in `buildDependantsMap` / `Arguments.iterate` then iterates one sref at a time — an effectively non-terminating loop that freezes the tab. The new `REFRANGE` alternatives (`ROW ':' ROW`, `REF ':' ROW`, …) widen the set of short inputs that reach this unvalidated path, and `resolveRange` is the natural place to clamp to the sheet's maximum dimensions but does not."
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "`expandUnboundedRanges` silently swallows all resolution errors and falls back to the raw, unexpanded formula (fail-open)",
+          "file": "packages/sheets/src/formula/formula.ts",
+          "evidence": "`try { body += toSrng(resolveRange(token.text.toUpperCase(), resolved)); continue; } catch { /* Fall through to the original text on any parse failure. */ }` catches every throwable — including a `parsePartialRef` 'Invalid Reference' or any future validation/limit error — and emits the attacker-supplied token text unchanged into the reconstructed formula that is then evaluated. Any clamp or rejection added inside `resolveRange` would be defeated here: the malformed/oversized reference is passed through rather than rejected, and nothing is logged, so the anomaly is invisible."
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "`parsePartialRef` accepts arbitrary-length column labels, wider than the grammar it is meant to mirror",
+          "file": "packages/sheets/src/model/core/coordinates.ts",
+          "evidence": "`cleaned.match(/^([A-Za-z]*)([0-9]*)$/)` then `parseColumnLabel(match[1])` places no bound on label length, while the grammar caps a column at three letters (`fragment COL: '$'? [A-Za-z] [A-Za-z]? [A-Za-z]?`). `resolveRange`/`isUnboundedRange` are module-level exports, so any caller that does not come through the lexer (or a future one) can pass e.g. `AAAAAAAAAA:1`, yielding an astronomically large column index that feeds the same per-cell `toSrefs` enumeration described above. Currently only lexer-fed call sites appear in the diff, so this is hardening rather than a live vector — I could not grep the tree to confirm there is no other caller."
+        }
+      ]
+    ],
+    "samples_run": 2,
+    "samples_ok": 2,
+    "agreement": "disjoint",
+    "severity_counts": {
+      "critical": 0,
+      "major": 3,
+      "minor": 3,
+      "nit": 1
+    },
+    "confidence_counts": {
+      "high": 0,
+      "medium": 6,
+      "low": 1,
+      "unknown": 0
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "correctness",
+    "population": "fresh",
+    "finding_key": "packages/frontend/src/app/spreadsheet/yorkie-store.ts::yorkiestore expands formulas with index-only bounds that ignore `batchoverlay`, so during a batch (e.g. paste) new cells outside the prior extent are neither summed nor registered as dependencies"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "summary": "YorkieStore expands formulas with index-only bounds that ignore `batchOverlay`, so during a batch (e.g. paste) new cells outside the prior extent are neither summed nor registered as dependencies",
+      "evidence": "yorkie-store.ts `buildDependantsMap`: `const bounds = this.cellIndex.bounds();` is computed once from the index, then used for both the document-cell loop *and* the `batchOverlay` loop, even though overlay cells are explicitly the ones not yet in the document/index. `getUsedBounds()` likewise returns `this.cellIndex.bounds()` with no overlay merge, and `calculate()` uses it to clamp the formula it evaluates. A batch that adds rows below the previous extent therefore yields both a wrong SUM(A:A) value and missing dependants for the new cells.",
+      "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+    },
+    "rubric": {
+      "sha256": "sha256:f9a536593dea9e65a09e740fb67bcf802e588ac9dad78de00894b8425271a687",
+      "bytes": 3077
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "design-fit",
+    "population": "fresh",
+    "finding_key": "packages/sheets/src/store/cell-index.ts::possible duplication: a sheet \"data extent\" accessor may already exist (dimension/used-range apis on store/sheet) that `cellindex.bounds()` + `store.getusedbounds()` + `sheet.getusedbounds()` reinvent"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "low",
+      "summary": "Possible duplication: a sheet \"data extent\" accessor may already exist (dimension/used-range APIs on Store/Sheet) that `CellIndex.bounds()` + `Store.getUsedBounds()` + `Sheet.getUsedBounds()` reinvent",
+      "evidence": "The diff introduces a brand-new three-layer bounds API (packages/sheets/src/store/cell-index.ts `bounds()`, store.ts `getUsedBounds()`, sheet.ts `getUsedBounds()`). The repo already maintains dimension metadata (`setDimensionSize`, `shiftDimensionMap`, `Axis`) and a row/column index inside `CellIndex`; if an existing used-range/dimension query is available it should be reused rather than adding a parallel accessor across four files. I could not open the working tree to confirm (no files were readable), so this is a suspicion for the verifier to resolve.",
+      "file": "packages/sheets/src/store/cell-index.ts"
+    },
+    "rubric": {
+      "sha256": "sha256:718b0b03c4098d108740b2d41150f65c0640abd090fe001ec6bf550d7925b5b1",
+      "bytes": 2992
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 20,
+      "listed_count": 20
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

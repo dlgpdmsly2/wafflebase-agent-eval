@@ -1,0 +1,27 @@
+{
+  "scorer_id": "stage-reliability-gate",
+  "scorer_version": "stage-reliability-v1",
+  "stage": "gate",
+  "computed": "2026-07-29T15:52:29.862Z",
+  "stage_version": "2026-07-29-pilot__stagepilot",
+  "run_ids": [
+    "gate-1",
+    "gate-2"
+  ],
+  "method": "Fleiss κ over replicate binary gate decision (block/approve)",
+  "per_fixture": {
+    "pr-521::gate": {
+      "stable": true,
+      "block": 2,
+      "approve": 0,
+      "n_runs": 2
+    }
+  },
+  "aggregate": {
+    "n": 1,
+    "k_runs": 2,
+    "items_excluded": 0,
+    "flip_rate": 0,
+    "kappa": null
+  }
+}

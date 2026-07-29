@@ -1,0 +1,29 @@
+{
+  "run_id": "verifier-1",
+  "stage_id": "verifier",
+  "fixture_ref": "pr-521::verifier::blast-radius::fresh::packages/sheets/src/formula/formula.ts::`extractformularanges` (highlighting) now receives reference tokens it cannot parse — the claimed \"skips unbounded refs\" behaviour is only in the docs",
+  "item_id": "pr-521",
+  "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+  "stage_version": "2026-07-29-pilot__stagepilot",
+  "timestamp": "2026-07-29T13:03:20.908Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.1762627,
+  "weighted_tokens": 27947,
+  "raw_tokens": 108155,
+  "duration_ms": 109710,
+  "turns": 21,
+  "calls": 2,
+  "output": {
+    "decision": {
+      "verdict": "confirmed",
+      "confidence": "low",
+      "reason": "I could not verify this finding because my working directory contains no readable files. Probes run: Grep for `extractFormulaRanges` (no matches); Grep for `parsePartialRef|isUnboundedRange` (no matches); Glob for `packages/sheets/src/formula/*.ts`, `**/coordinates.ts`, `**/*.g4`, `**/*.ts`, `**/*.md`, and `*` (all \"No files found\"); and finally Grep for the pattern `.` in files_with_matches mode, which matches any non-empty line in any file and still returned \"No files found\". A checkout containing the 20 files in the authoritative changed-file list would return thousands of hits for `.`, so the empty results indicate an empty/unmounted working tree, not a repository in which the cited code is genuinely absent.\n\nI deliberately did NOT use refutationGround `not-present`. That ground asserts a positive fact about the repository — that the code does not exist as described. The same failed searches also failed to locate packages/sheets/src/formula/formula.ts, packages/sheets/src/model/core/coordinates.ts, packages/sheets/antlr/Formula.g4 and docs/design/sheets/formula.md, all of which the authoritative changed-file list says this PR modified. The economical explanation is tooling/checkout failure, not that the PR edited nonexistent files. Treating an inaccessible tree as proof of absence would let any checkout failure silently strip findings from the merge gate. Refuting also requires groundedIn file:line locations actually read; I read zero lines and have no citations, and the protocol's fallback is explicit that uncertainty for any reason keeps the finding.\n\nOn the merits, as far as is assessable without code access, the finding is in-lane and has the canonical blast-radius shape: a widened token contract (`A:A`/`1:1` newly lexing as REFERENCE) whose impact on an unchanged downstream consumer (extractFormulaRanges, reached from the formula-bar highlighter) is not visible in the diff. A new `parsePartialRef` helper existing alongside an unmodified `parseRef` is consistent with one parse path being updated and another left behind, and a \"Limitations\" note in a design doc is documentation rather than a guard, so it cannot make the path safe. That is exactly the claim a verifier with repo access must check, and it remains unresolved.\n\nFollow-up for a verifier with a working checkout: confirm whether extractFormulaRanges guards REFERENCE tokens (e.g. via an unbounded-range check) before calling parseRange/parseRef, and whether parseRef('A') still throws \"Invalid Reference\".",
+      "refutationGround": "none",
+      "groundedIn": []
+    },
+    "error": null,
+    "dropped": false
+  },
+  "error": null
+}

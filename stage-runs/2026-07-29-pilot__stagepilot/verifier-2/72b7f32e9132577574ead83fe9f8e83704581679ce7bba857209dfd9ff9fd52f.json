@@ -1,0 +1,35 @@
+{
+  "run_id": "verifier-2",
+  "stage_id": "verifier",
+  "fixture_ref": "pr-521::verifier::blast-radius::fresh::packages/sheets/src/store/memory.ts:333::cross-sheet unbounded refs (`sheet2!a:a`) are deliberately left unexpanded, but now lex as reference tokens and reach `tosrefs`, which throws `invalid reference` — breaking `builddependantsmap` for the entire sheet, not just that cell. the `iscrosssheetref(r) continue` guard in the loop body cannot help: the generator throws while producing the value, before any iteration happens.",
+  "item_id": "pr-521",
+  "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+  "stage_version": "2026-07-29-pilot__stagepilot",
+  "timestamp": "2026-07-29T14:53:23.726Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.1627936,
+  "weighted_tokens": 24618,
+  "raw_tokens": 111499,
+  "duration_ms": 93009,
+  "turns": 23,
+  "calls": 2,
+  "output": {
+    "decision": {
+      "verdict": "confirmed",
+      "confidence": "low",
+      "reason": "I could not verify or refute this finding because the designated working directory contains no readable files. The harness reports cwd as /tmp/stage-repo-Ncwl8o/repo, but Glob for `**/*`, `**/package.json`, and `packages/sheets/src/store/*.ts` all returned \"No files found\"; Grep for `expandUnboundedRanges|toSrefs` (both with an explicit path and with the default directory) returned \"No matches found\"; and direct Read of packages/sheets/src/store/memory.ts and packages/sheets/src/model/core/coordinates.ts both returned \"File does not exist\". This indicates an empty or unmounted checkout, not a repository where the described code is genuinely absent.\n\nI deliberately did NOT use `not-present`. A zero-result grep against an empty filesystem is evidence about my environment, not about the PR: the same empty tree would \"refute\" all twenty files in the authoritative changed-file list identically, including coordinates.ts and yorkie-store.ts. An inference that disproves every changed file equally is an artifact, not a refutation. `not-present` requires that I read the cited location and found different code there; I read no location.\n\nOther grounds also fail. `already-guarded` would require citing a guard, and the finding pre-empts the obvious one by arguing the in-loop `isCrossSheetRef(r) continue` cannot fire because the generator throws while producing the first value before any iteration — a mechanism needing toSrefs' source to assess. `pre-existing` is contradicted by the changed-file list, which names memory.ts, coordinates.ts, formula.ts, and yorkie-store.ts as modified. `out-of-scope` does not apply: a stricter lexer contract reaching an unupdated consumer that throws, breaking buildDependantsMap for an entire sheet with uncaught callers, is exactly the Blast-radius lane at critical severity.\n\nPer the instruction that uncertainty for any reason keeps the finding, this stays on the merge gate. It should be re-verified in an environment where the repository is actually mounted.",
+      "refutationGround": "none",
+      "groundedIn": [
+        "/tmp/stage-repo-Ncwl8o/repo: Glob `**/*` and `**/package.json` both returned no files — working tree is empty/unmounted",
+        "/tmp/stage-repo-Ncwl8o/repo: Grep for `expandUnboundedRanges|toSrefs` returned no matches, both with explicit path and with default directory",
+        "/tmp/stage-repo-Ncwl8o/repo/packages/sheets/src/store/memory.ts: Read returned 'File does not exist' (cited site memory.ts:333 unverifiable)",
+        "/tmp/stage-repo-Ncwl8o/repo/packages/sheets/src/model/core/coordinates.ts: Read returned 'File does not exist' (cited sites coordinates.ts:236-243, :336-338 unverifiable)",
+        "Authoritative changed-file list includes packages/sheets/src/store/memory.ts, packages/sheets/src/model/core/coordinates.ts, packages/sheets/src/formula/formula.ts, packages/frontend/src/app/spreadsheet/yorkie-store.ts — ruling out `pre-existing`"
+      ]
+    },
+    "error": null,
+    "dropped": false
+  },
+  "error": null
+}

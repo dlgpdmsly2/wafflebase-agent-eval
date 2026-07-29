@@ -1,0 +1,357 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-521",
+  "stage": "detection",
+  "instance": {
+    "lens_id": "design-fit"
+  },
+  "provenance": {
+    "run_id": "stage-capture",
+    "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-29T13:03:20.708Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "rubric": {
+      "sha256": "sha256:718b0b03c4098d108740b2d41150f65c0640abd090fe001ec6bf550d7925b5b1",
+      "bytes": 2992
+    },
+    "diff": {
+      "sha256": "sha256:0186444cd7b8efadad9531b65f1be6fb600cadf4c8fdaa5f869bf8f475dcf99c",
+      "bytes": 70256
+    },
+    "issue": {
+      "sha256": "sha256:5a7e809077c8f932d8923162a3412a72bc57113f98d94ceea7cf939951c54027",
+      "bytes": 1510
+    },
+    "changed_files": {
+      "sha256": "sha256:f503e452296bd3bdba80c6564a3c0792d05dd6f8d64482eb422b50d00923d583",
+      "bytes": 848
+    },
+    "repo_commit": "5d52689d2201ea9d3cdaf3f80ae40ba0b21edda1",
+    "samples": 2,
+    "model": "claude-opus-5",
+    "title": "Design-fit",
+    "needs_issue_spec": true
+  },
+  "output": {
+    "union": [
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Unrequested semantic change to ALL bounded-range aggregations: `Arguments.iterate` now silently skips blank cells for every range reference, not just unbounded ones",
+        "evidence": "packages/sheets/src/formula/arguments.ts: `const isRange = isSrng(node.v); for (const ref of toSrefs([node.v])) { if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; } ... }`. The issue only asks for whole-column/row/open-ended lexing + evaluation; this changes the meaning of existing formulas such as `=AVERAGE(A1:A10)` or `=COUNT`/`=MIN`/`=MAX` over a partially-empty bounded range. Worse, the design doc presents it as pre-existing behavior — docs/design/sheets/formula.md: \"Blank cells inside a range contribute nothing to aggregations (`Arguments.iterate` skips them)\" — so the doc does not record that a cross-cutting evaluation-semantics change was made here. If blank-skipping is genuinely required for `AVERAGE(B2:B)` = 200, that should be stated as an intentional, documented semantics change with its own note in the design doc.",
+        "file": "packages/sheets/src/formula/arguments.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "summary": "`Store.getUsedBounds()` added as a required interface method but possibly not implemented by every Store implementation (IDBStore)",
+        "evidence": "packages/sheets/src/store/store.ts adds `getUsedBounds(): Promise<Range | undefined>;` to the `Store` interface (non-optional). Implementations are added only for MemStore, ReadOnlyStore and YorkieStore. packages/sheets/src/store/memory.ts still carries the comment \"Unlike the `IDBStore` implementation, this builds the map from the entire grid\", indicating at least one other Store implementation (and any test doubles/mocks implementing `Store`) exists that was not updated. The plan doc itself scopes this to \"3 impls\" (docs/tasks/active/20260722-open-ended-ranges-todo.md: \"`Store.getUsedBounds()` + 3 impls\"), so an IDBStore/other implementation would be left non-conforming.",
+        "file": "packages/sheets/src/store/store.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "summary": "The issue's literal acceptance scenario (D1–D5 formulas in one sheet) is not demonstrated and likely does not produce the stated numbers, because expansion uses whole-sheet used bounds",
+        "evidence": "The issue fixes a single setup (A1=10,A2=20,A3=30,B1=100,B2=200) and expects D1..D5 to yield 60/110/200/5/360 simultaneously. `resolveRange` fills omitted columns from `Store.getUsedBounds()`, which is the bounding box of *all* populated cells including the D-column formula cells. With all five formulas present, `=SUM(1:1)` in D2 expands to `A1:D1` (D1 = 60) → 170, and `=SUM(1:3)` in D5 expands to `A1:D3` → 360 + D1 + D2 + D3. packages/sheets/test/sheet/calculation.test.ts sidesteps this by constructing `new Sheet(new MemStore())` per case and placing only one formula. Related unspecified case: a whole-column formula placed *inside* the referenced column (e.g. `=SUM(A:A)` in A5) becomes self-referential once bounds include the formula cell — neither the design doc nor the tests state the intended behavior (Excel raises a circular-reference error).",
+        "file": "packages/sheets/src/model/core/coordinates.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "summary": "Newly lexable unbounded refs are not integrated with existing reference-rewriting machinery (`shiftFormula`/`shiftSref`, autofill/copy-paste adjustment)",
+        "evidence": "packages/sheets/src/index.ts exports `shiftSref`, `shiftFormula`, `shiftDimensionMap`, which rewrite REFERENCE tokens when rows/columns are inserted or deleted. After this grammar change, `A:A`, `1:1`, `A1:B` lex as REFERENCE tokens and will flow into those code paths, which parse endpoints with the full-ref assumption (`parseRef`). Neither the diff nor docs/design/sheets/formula.md mentions how unbounded refs survive row/column insert-delete, fill-handle, or copy/paste reference adjustment; only `extractFormulaRanges` is called out as a limitation. A partially-supported syntax that corrupts on structural edits is a fit gap for the feature.",
+        "file": "packages/sheets/src/index.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Formula range highlighting silently does not support the newly accepted syntax",
+        "evidence": "docs/design/sheets/formula.md (new text): \"Whole-column/row highlighting (`extractFormulaRanges`) skips unbounded refs.\" `extractFormulaRanges` is described in the same doc as \"Returns ranges referenced in the formula ... for visual highlighting\". A user typing `=SUM(A:A)` gets no highlight, unlike every other range form — a user-visible inconsistency introduced by, and belonging to, this feature. It is documented rather than fixed; acceptable only if deliberately deferred (and it should then be a tracked follow-up, not just a doc sentence).",
+        "file": "docs/design/sheets/formula.md"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Reference parsing is re-implemented rather than reused; the lexer's REF rule is duplicated as a hand-written regex that can drift from the grammar",
+        "evidence": "packages/sheets/src/model/core/coordinates.ts adds `parsePartialRef` (`cleaned.match(/^([A-Za-z]*)([0-9]*)$/)`) and `isFullRef` (`/^\\$?[A-Za-z]+\\$?[0-9]+$/`). The file already contains `parseRef`, `parseRange`, `parseColumnLabel` and `toRange`; the new regexes restate the `COL`/`ROW` fragments just introduced in packages/sheets/antlr/Formula.g4 in a second, unrelated dialect (e.g. the regex accepts unlimited letters where COL caps at 3, and accepts a leading `0` row where ROW requires `[1-9]`). A single shared column/row parser (or deriving from the grammar fragments) would keep the two definitions from diverging.",
+        "file": "packages/sheets/src/model/core/coordinates.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Expansion must be manually re-applied at every dependants-map site (1 in MemStore, 3 in YorkieStore, 1 in calculator); no shared helper, so the frontend package now duplicates evaluation-layer knowledge",
+        "evidence": "packages/frontend/src/app/spreadsheet/yorkie-store.ts wraps `extractReferences(cell.f)` with `expandUnboundedRanges(cell.f, bounds)` in three separate blocks; packages/sheets/src/store/memory.ts does the same a fourth time; packages/sheets/src/model/worksheet/calculator.ts a fifth. The pre-existing duplication of `buildDependantsMap` is amplified rather than factored — a single exported helper (e.g. `extractDependencies(formula, bounds)`) would be the natural reuse point and would guarantee any future Store implementation cannot forget the rewrite.",
+        "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Bounds are recomputed per formula cell by scanning the whole index, and whole-column ranges materialize the full data extent through `fetchGridByReferences`",
+        "evidence": "packages/sheets/src/model/worksheet/calculator.ts calls `await sheet.getUsedBounds()` inside the per-cell calculation loop, and packages/sheets/src/store/cell-index.ts `bounds()` iterates every key of `rowIndex` and `colIndex` on each call (no cached/incrementally maintained min/max). Combined with expanding `A:A` to the full used extent before `fetchGridByReferences`, this makes whole-column formulas O(rows) per evaluation and bounds O(R+C) per formula cell. For a spreadsheet engine this is a layer/approach concern worth stating in the design doc's trade-offs section, which currently discusses only correctness.",
+        "file": "packages/sheets/src/model/worksheet/calculator.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "Process artifacts committed under `docs/tasks/active/` with unfilled placeholders and an entirely unchecked checklist despite the work being implemented",
+        "evidence": "docs/tasks/active/20260722-open-ended-ranges-lessons.md contains \"## Surprises / pitfalls\\n\\n- (to fill in during implementation)\" and docs/tasks/active/20260722-open-ended-ranges-todo.md has every checklist item unchecked (`- [ ] Grammar: ...`, `- [ ] Update docs/design/sheets/formula.md`) while the diff clearly does all of them. These two files also restate the approach already captured in the canonical design doc (docs/design/sheets/formula.md), i.e. a third parallel description of the same design. If `docs/tasks/` is not an established repo convention, this is duplicated design prose that will rot; if it is, the files should at least be accurate at merge time.",
+        "file": "docs/tasks/active/20260722-open-ended-ranges-lessons.md"
+      },
+      {
+        "severity": "nit",
+        "confidence": "medium",
+        "summary": "Design doc's syntax table omits the row-open-ended forms the grammar now accepts",
+        "evidence": "packages/sheets/antlr/Formula.g4 and the doc's own grammar snippet accept `REF ':' ROW | ROW ':' REF` (`A1:2`, `1:B2`), and coordinates.test.ts exercises `A:B2`, but the \"Whole-column / whole-row / open-ended ranges\" table in docs/design/sheets/formula.md lists only `A:A`, `A:C`, `1:1`, `2:5`, `A1:B`, `B2:B`. A reader of the design doc cannot tell that `A1:2` / `1:B2` are supported or what they mean.",
+        "file": "docs/design/sheets/formula.md"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Blank-cell skipping in `Arguments.iterate` is applied to ALL ranges, not just unbounded ones — an unrequested global semantics change to bounded-range aggregation, documented only inside the new \"Whole-column / whole-row\" section of the design doc",
+        "evidence": "packages/sheets/src/formula/arguments.ts: `const isRange = isSrng(node.v); ... if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; }`. The issue only asks that unbounded ranges treat unused cells as contributing nothing; this changes how every existing bounded range (`=AVERAGE(A1:A10)` with blanks, `=COUNT`, `=MIN/MAX`, and any argument-position-sensitive function) is evaluated. docs/design/sheets/formula.md records the new rule as a note under the unbounded-range section (\"Blank cells inside a range contribute nothing to aggregations (`Arguments.iterate` skips them)\") rather than as a change to the canonical evaluation/arguments semantics, so the doc understates the blast radius of the behavior change.",
+        "file": "packages/sheets/src/formula/arguments.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "`Store.getUsedBounds()` is added to the interface but likely not implemented on every `Store` implementation (memory.ts's own comment references an `IDBStore`), so the feature is silently broken (or the interface unsatisfied) for that backend",
+        "evidence": "packages/sheets/src/store/store.ts adds required `getUsedBounds(): Promise<Range | undefined>` to the `Store` interface; the diff only implements it in MemStore, ReadOnlyStore and YorkieStore. packages/sheets/src/store/memory.ts contains the pre-existing comment \"Unlike the `IDBStore` implementation, this builds the map from the entire grid\", indicating another `Store` implementation exists that the diff never touches; docs/tasks/active/20260722-open-ended-ranges-todo.md itself only budgets \"3 impls\". If IDBStore implements `Store`, either it fails to satisfy the interface or unbounded ranges silently never expand there (evaluating to `#ERROR!`), failing the issue's acceptance table on that backend.",
+        "file": "packages/sheets/src/store/store.ts"
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "summary": "Newly lexable unbounded REFERENCE tokens are only handled by the calculator/dependants path; other existing consumers of REFERENCE tokens (range highlighting, formula shifting on row/column insert/delete, range parsing helpers) are not adapted, and the design doc only acknowledges highlighting",
+        "evidence": "docs/design/sheets/formula.md new \"Limitations\" paragraph mentions only `extractFormulaRanges` skipping unbounded refs. The grammar change makes `A:A`/`1:1`/`A1:B` valid tokens everywhere, but the diff does not touch `shiftFormula`/`shiftSref`/`parseRange` call sites (still exported from packages/sheets/src/index.ts alongside `extractReferences`), which call `parseRef`-style parsing on each endpoint and cannot represent a column-only/row-only endpoint. A formula containing `A:A` that is shifted by a row/column insert or deletion is therefore either dropped, thrown on, or silently corrupted — a behavior the design doc neither specifies nor lists as a non-goal.",
+        "file": "docs/design/sheets/formula.md"
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "summary": "Possible duplication: a sheet \"data extent\" accessor may already exist (dimension/used-range APIs on Store/Sheet) that `CellIndex.bounds()` + `Store.getUsedBounds()` + `Sheet.getUsedBounds()` reinvent",
+        "evidence": "The diff introduces a brand-new three-layer bounds API (packages/sheets/src/store/cell-index.ts `bounds()`, store.ts `getUsedBounds()`, sheet.ts `getUsedBounds()`). The repo already maintains dimension metadata (`setDimensionSize`, `shiftDimensionMap`, `Axis`) and a row/column index inside `CellIndex`; if an existing used-range/dimension query is available it should be reused rather than adding a parallel accessor across four files. I could not open the working tree to confirm (no files were readable), so this is a suspicion for the verifier to resolve.",
+        "file": "packages/sheets/src/store/cell-index.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Process/task docs committed in an unfinished, self-contradicting state and duplicating the canonical design doc's content",
+        "evidence": "docs/tasks/active/20260722-open-ended-ranges-lessons.md ships with a placeholder body: \"## Surprises / pitfalls\\n- (to fill in during implementation)\". docs/tasks/active/20260722-open-ended-ranges-todo.md has every checklist item unchecked ([ ] Grammar, [ ] Regenerate ANTLR parser, [ ] Update docs/design/sheets/formula.md, ...) even though the diff completes them, and its \"Approach\" section restates the architecture already folded into docs/design/sheets/formula.md — a parallel description that can drift from the canonical subsystem doc.",
+        "file": "docs/tasks/active/20260722-open-ended-ranges-lessons.md"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Grammar accepts mixed row/ref forms (`A1:2`, `1:B2`) that Excel/Sheets do not support and that the issue never asks for — scope creep in the token surface, and the design-doc table does not document them",
+        "evidence": "packages/sheets/antlr/Formula.g4 adds `REF ':' ROW | ROW ':' REF`; docs/design/sheets/formula.md grammar comment lists them as \"A1:2, 1:B2 (open-ended row)\", yet the human-readable syntax table in the same doc lists only `A:A`, `A:C`, `1:1`, `2:5`, `A1:B`, `B2:B`. The issue lists only whole-column, whole-row and open-ended column shapes. Accepting extra non-standard syntax widens the supported language beyond the spec with no documented semantics.",
+        "file": "packages/sheets/antlr/Formula.g4"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Wrong-layer approach: unbounded ranges are handled by string-rewriting the formula (tokenize → splice → re-lex) rather than resolving at the AST/reference-resolution layer, and the endpoint parsing is re-implemented with a regex instead of reusing existing ref parsing",
+        "evidence": "packages/sheets/src/formula/formula.ts `expandUnboundedRanges` rebuilds the formula text (`body += toSrng(resolveRange(...))`, `return '=' + body`) so it must be re-lexed by every downstream consumer, and packages/sheets/src/model/core/coordinates.ts adds `parsePartialRef` with its own `/^([A-Za-z]*)([0-9]*)$/` regex plus `isFullRef` `/^\\$?[A-Za-z]+\\$?[0-9]+$/`, duplicating the `$`-stripping/column-label logic that `parseRef`/`parseRange` already own. The `try { ... } catch { /* fall through */ }` in `expandUnboundedRanges` silently degrades to the unexpanded (error-producing) formula, hiding layering failures.",
+        "file": "packages/sheets/src/formula/formula.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "The \"expand then extract dependencies\" step is copy-pasted across store implementations instead of being a single shared helper, inviting divergence (and a missed call site is exactly how a backend loses the feature)",
+        "evidence": "packages/sheets/src/store/memory.ts (`toSrefs(extractReferences(expandUnboundedRanges(cell.f, bounds)))`) and packages/frontend/src/app/spreadsheet/yorkie-store.ts repeat the identical wrapping three separate times inside `buildDependantsMap`, which is why `expandUnboundedRanges` had to be added to the public barrel in packages/sheets/src/index.ts. A shared `extractDependencies(formula, bounds)` in @wafflebase/sheets would keep the rule in one place, consistent with the repo's stated reuse expectation.",
+        "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "Self-reference/circularity of whole-column ranges is neither specified nor handled: a `=SUM(A:A)` written inside column A expands to a range containing its own cell",
+        "evidence": "packages/sheets/src/model/worksheet/calculator.ts expands `cell.f` against `sheet.getUsedBounds()`, which includes the formula cell itself once written. Every test in packages/sheets/test/sheet/calculation.test.ts places the formula in column D (`{ r: 1, c: 4 }`), so the in-column case is undefined behavior; docs/design/sheets/formula.md's new section does not state the intended semantics (Excel reports a circular reference) nor list it as a non-goal.",
+        "file": "packages/sheets/src/model/worksheet/calculator.ts"
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "summary": "Cross-sheet unbounded refs now lex successfully but evaluate to `#ERROR!` — the grammar advertises a syntax the engine cannot honour, a gap accepted only in prose",
+        "evidence": "packages/sheets/antlr/Formula.g4 lets `REFERENCE: SHEET_NAME '!' REFRANGE` match `Sheet2!A:A`, while formula.ts `expandUnboundedRanges` explicitly skips `isCrossSheetRef(token.text)` and docs/design/sheets/formula.md records \"Cross-sheet unbounded refs (`Sheet2!A:A`) are not resolved ... and evaluate to `#ERROR!`\". Widening the lexer without a resolution path yields a syntactically valid formula that always errors; the issue does not request cross-sheet support, so narrowing the grammar (or resolving it) would fit the spec better.",
+        "file": "docs/design/sheets/formula.md"
+      },
+      {
+        "severity": "nit",
+        "confidence": "medium",
+        "summary": "`getUsedBounds()` is recomputed per formula cell during recalculation instead of once per pass",
+        "evidence": "packages/sheets/src/model/worksheet/calculator.ts calls `await sheet.getUsedBounds()` inside the per-cell calculation loop, and `CellIndex.bounds()` scans all row and column index keys on each call; hoisting it out of the loop would match the design doc's framing that clamping \"happens up front\".",
+        "file": "packages/sheets/src/model/worksheet/calculator.ts"
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Unrequested semantic change to ALL bounded-range aggregations: `Arguments.iterate` now silently skips blank cells for every range reference, not just unbounded ones",
+          "evidence": "packages/sheets/src/formula/arguments.ts: `const isRange = isSrng(node.v); for (const ref of toSrefs([node.v])) { if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; } ... }`. The issue only asks for whole-column/row/open-ended lexing + evaluation; this changes the meaning of existing formulas such as `=AVERAGE(A1:A10)` or `=COUNT`/`=MIN`/`=MAX` over a partially-empty bounded range. Worse, the design doc presents it as pre-existing behavior — docs/design/sheets/formula.md: \"Blank cells inside a range contribute nothing to aggregations (`Arguments.iterate` skips them)\" — so the doc does not record that a cross-cutting evaluation-semantics change was made here. If blank-skipping is genuinely required for `AVERAGE(B2:B)` = 200, that should be stated as an intentional, documented semantics change with its own note in the design doc.",
+          "file": "packages/sheets/src/formula/arguments.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "summary": "`Store.getUsedBounds()` added as a required interface method but possibly not implemented by every Store implementation (IDBStore)",
+          "evidence": "packages/sheets/src/store/store.ts adds `getUsedBounds(): Promise<Range | undefined>;` to the `Store` interface (non-optional). Implementations are added only for MemStore, ReadOnlyStore and YorkieStore. packages/sheets/src/store/memory.ts still carries the comment \"Unlike the `IDBStore` implementation, this builds the map from the entire grid\", indicating at least one other Store implementation (and any test doubles/mocks implementing `Store`) exists that was not updated. The plan doc itself scopes this to \"3 impls\" (docs/tasks/active/20260722-open-ended-ranges-todo.md: \"`Store.getUsedBounds()` + 3 impls\"), so an IDBStore/other implementation would be left non-conforming.",
+          "file": "packages/sheets/src/store/store.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "summary": "The issue's literal acceptance scenario (D1–D5 formulas in one sheet) is not demonstrated and likely does not produce the stated numbers, because expansion uses whole-sheet used bounds",
+          "evidence": "The issue fixes a single setup (A1=10,A2=20,A3=30,B1=100,B2=200) and expects D1..D5 to yield 60/110/200/5/360 simultaneously. `resolveRange` fills omitted columns from `Store.getUsedBounds()`, which is the bounding box of *all* populated cells including the D-column formula cells. With all five formulas present, `=SUM(1:1)` in D2 expands to `A1:D1` (D1 = 60) → 170, and `=SUM(1:3)` in D5 expands to `A1:D3` → 360 + D1 + D2 + D3. packages/sheets/test/sheet/calculation.test.ts sidesteps this by constructing `new Sheet(new MemStore())` per case and placing only one formula. Related unspecified case: a whole-column formula placed *inside* the referenced column (e.g. `=SUM(A:A)` in A5) becomes self-referential once bounds include the formula cell — neither the design doc nor the tests state the intended behavior (Excel raises a circular-reference error).",
+          "file": "packages/sheets/src/model/core/coordinates.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "summary": "Newly lexable unbounded refs are not integrated with existing reference-rewriting machinery (`shiftFormula`/`shiftSref`, autofill/copy-paste adjustment)",
+          "evidence": "packages/sheets/src/index.ts exports `shiftSref`, `shiftFormula`, `shiftDimensionMap`, which rewrite REFERENCE tokens when rows/columns are inserted or deleted. After this grammar change, `A:A`, `1:1`, `A1:B` lex as REFERENCE tokens and will flow into those code paths, which parse endpoints with the full-ref assumption (`parseRef`). Neither the diff nor docs/design/sheets/formula.md mentions how unbounded refs survive row/column insert-delete, fill-handle, or copy/paste reference adjustment; only `extractFormulaRanges` is called out as a limitation. A partially-supported syntax that corrupts on structural edits is a fit gap for the feature.",
+          "file": "packages/sheets/src/index.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Formula range highlighting silently does not support the newly accepted syntax",
+          "evidence": "docs/design/sheets/formula.md (new text): \"Whole-column/row highlighting (`extractFormulaRanges`) skips unbounded refs.\" `extractFormulaRanges` is described in the same doc as \"Returns ranges referenced in the formula ... for visual highlighting\". A user typing `=SUM(A:A)` gets no highlight, unlike every other range form — a user-visible inconsistency introduced by, and belonging to, this feature. It is documented rather than fixed; acceptable only if deliberately deferred (and it should then be a tracked follow-up, not just a doc sentence).",
+          "file": "docs/design/sheets/formula.md"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Reference parsing is re-implemented rather than reused; the lexer's REF rule is duplicated as a hand-written regex that can drift from the grammar",
+          "evidence": "packages/sheets/src/model/core/coordinates.ts adds `parsePartialRef` (`cleaned.match(/^([A-Za-z]*)([0-9]*)$/)`) and `isFullRef` (`/^\\$?[A-Za-z]+\\$?[0-9]+$/`). The file already contains `parseRef`, `parseRange`, `parseColumnLabel` and `toRange`; the new regexes restate the `COL`/`ROW` fragments just introduced in packages/sheets/antlr/Formula.g4 in a second, unrelated dialect (e.g. the regex accepts unlimited letters where COL caps at 3, and accepts a leading `0` row where ROW requires `[1-9]`). A single shared column/row parser (or deriving from the grammar fragments) would keep the two definitions from diverging.",
+          "file": "packages/sheets/src/model/core/coordinates.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Expansion must be manually re-applied at every dependants-map site (1 in MemStore, 3 in YorkieStore, 1 in calculator); no shared helper, so the frontend package now duplicates evaluation-layer knowledge",
+          "evidence": "packages/frontend/src/app/spreadsheet/yorkie-store.ts wraps `extractReferences(cell.f)` with `expandUnboundedRanges(cell.f, bounds)` in three separate blocks; packages/sheets/src/store/memory.ts does the same a fourth time; packages/sheets/src/model/worksheet/calculator.ts a fifth. The pre-existing duplication of `buildDependantsMap` is amplified rather than factored — a single exported helper (e.g. `extractDependencies(formula, bounds)`) would be the natural reuse point and would guarantee any future Store implementation cannot forget the rewrite.",
+          "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Bounds are recomputed per formula cell by scanning the whole index, and whole-column ranges materialize the full data extent through `fetchGridByReferences`",
+          "evidence": "packages/sheets/src/model/worksheet/calculator.ts calls `await sheet.getUsedBounds()` inside the per-cell calculation loop, and packages/sheets/src/store/cell-index.ts `bounds()` iterates every key of `rowIndex` and `colIndex` on each call (no cached/incrementally maintained min/max). Combined with expanding `A:A` to the full used extent before `fetchGridByReferences`, this makes whole-column formulas O(rows) per evaluation and bounds O(R+C) per formula cell. For a spreadsheet engine this is a layer/approach concern worth stating in the design doc's trade-offs section, which currently discusses only correctness.",
+          "file": "packages/sheets/src/model/worksheet/calculator.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "Process artifacts committed under `docs/tasks/active/` with unfilled placeholders and an entirely unchecked checklist despite the work being implemented",
+          "evidence": "docs/tasks/active/20260722-open-ended-ranges-lessons.md contains \"## Surprises / pitfalls\\n\\n- (to fill in during implementation)\" and docs/tasks/active/20260722-open-ended-ranges-todo.md has every checklist item unchecked (`- [ ] Grammar: ...`, `- [ ] Update docs/design/sheets/formula.md`) while the diff clearly does all of them. These two files also restate the approach already captured in the canonical design doc (docs/design/sheets/formula.md), i.e. a third parallel description of the same design. If `docs/tasks/` is not an established repo convention, this is duplicated design prose that will rot; if it is, the files should at least be accurate at merge time.",
+          "file": "docs/tasks/active/20260722-open-ended-ranges-lessons.md"
+        },
+        {
+          "severity": "nit",
+          "confidence": "medium",
+          "summary": "Design doc's syntax table omits the row-open-ended forms the grammar now accepts",
+          "evidence": "packages/sheets/antlr/Formula.g4 and the doc's own grammar snippet accept `REF ':' ROW | ROW ':' REF` (`A1:2`, `1:B2`), and coordinates.test.ts exercises `A:B2`, but the \"Whole-column / whole-row / open-ended ranges\" table in docs/design/sheets/formula.md lists only `A:A`, `A:C`, `1:1`, `2:5`, `A1:B`, `B2:B`. A reader of the design doc cannot tell that `A1:2` / `1:B2` are supported or what they mean.",
+          "file": "docs/design/sheets/formula.md"
+        }
+      ],
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Blank-cell skipping in `Arguments.iterate` is applied to ALL ranges, not just unbounded ones — an unrequested global semantics change to bounded-range aggregation, documented only inside the new \"Whole-column / whole-row\" section of the design doc",
+          "evidence": "packages/sheets/src/formula/arguments.ts: `const isRange = isSrng(node.v); ... if (isRange) { const cell = grid.get(ref); if (!cell || cell.v === undefined || cell.v === '') continue; }`. The issue only asks that unbounded ranges treat unused cells as contributing nothing; this changes how every existing bounded range (`=AVERAGE(A1:A10)` with blanks, `=COUNT`, `=MIN/MAX`, and any argument-position-sensitive function) is evaluated. docs/design/sheets/formula.md records the new rule as a note under the unbounded-range section (\"Blank cells inside a range contribute nothing to aggregations (`Arguments.iterate` skips them)\") rather than as a change to the canonical evaluation/arguments semantics, so the doc understates the blast radius of the behavior change.",
+          "file": "packages/sheets/src/formula/arguments.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "`Store.getUsedBounds()` is added to the interface but likely not implemented on every `Store` implementation (memory.ts's own comment references an `IDBStore`), so the feature is silently broken (or the interface unsatisfied) for that backend",
+          "evidence": "packages/sheets/src/store/store.ts adds required `getUsedBounds(): Promise<Range | undefined>` to the `Store` interface; the diff only implements it in MemStore, ReadOnlyStore and YorkieStore. packages/sheets/src/store/memory.ts contains the pre-existing comment \"Unlike the `IDBStore` implementation, this builds the map from the entire grid\", indicating another `Store` implementation exists that the diff never touches; docs/tasks/active/20260722-open-ended-ranges-todo.md itself only budgets \"3 impls\". If IDBStore implements `Store`, either it fails to satisfy the interface or unbounded ranges silently never expand there (evaluating to `#ERROR!`), failing the issue's acceptance table on that backend.",
+          "file": "packages/sheets/src/store/store.ts"
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "summary": "Newly lexable unbounded REFERENCE tokens are only handled by the calculator/dependants path; other existing consumers of REFERENCE tokens (range highlighting, formula shifting on row/column insert/delete, range parsing helpers) are not adapted, and the design doc only acknowledges highlighting",
+          "evidence": "docs/design/sheets/formula.md new \"Limitations\" paragraph mentions only `extractFormulaRanges` skipping unbounded refs. The grammar change makes `A:A`/`1:1`/`A1:B` valid tokens everywhere, but the diff does not touch `shiftFormula`/`shiftSref`/`parseRange` call sites (still exported from packages/sheets/src/index.ts alongside `extractReferences`), which call `parseRef`-style parsing on each endpoint and cannot represent a column-only/row-only endpoint. A formula containing `A:A` that is shifted by a row/column insert or deletion is therefore either dropped, thrown on, or silently corrupted — a behavior the design doc neither specifies nor lists as a non-goal.",
+          "file": "docs/design/sheets/formula.md"
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "summary": "Possible duplication: a sheet \"data extent\" accessor may already exist (dimension/used-range APIs on Store/Sheet) that `CellIndex.bounds()` + `Store.getUsedBounds()` + `Sheet.getUsedBounds()` reinvent",
+          "evidence": "The diff introduces a brand-new three-layer bounds API (packages/sheets/src/store/cell-index.ts `bounds()`, store.ts `getUsedBounds()`, sheet.ts `getUsedBounds()`). The repo already maintains dimension metadata (`setDimensionSize`, `shiftDimensionMap`, `Axis`) and a row/column index inside `CellIndex`; if an existing used-range/dimension query is available it should be reused rather than adding a parallel accessor across four files. I could not open the working tree to confirm (no files were readable), so this is a suspicion for the verifier to resolve.",
+          "file": "packages/sheets/src/store/cell-index.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Process/task docs committed in an unfinished, self-contradicting state and duplicating the canonical design doc's content",
+          "evidence": "docs/tasks/active/20260722-open-ended-ranges-lessons.md ships with a placeholder body: \"## Surprises / pitfalls\\n- (to fill in during implementation)\". docs/tasks/active/20260722-open-ended-ranges-todo.md has every checklist item unchecked ([ ] Grammar, [ ] Regenerate ANTLR parser, [ ] Update docs/design/sheets/formula.md, ...) even though the diff completes them, and its \"Approach\" section restates the architecture already folded into docs/design/sheets/formula.md — a parallel description that can drift from the canonical subsystem doc.",
+          "file": "docs/tasks/active/20260722-open-ended-ranges-lessons.md"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Grammar accepts mixed row/ref forms (`A1:2`, `1:B2`) that Excel/Sheets do not support and that the issue never asks for — scope creep in the token surface, and the design-doc table does not document them",
+          "evidence": "packages/sheets/antlr/Formula.g4 adds `REF ':' ROW | ROW ':' REF`; docs/design/sheets/formula.md grammar comment lists them as \"A1:2, 1:B2 (open-ended row)\", yet the human-readable syntax table in the same doc lists only `A:A`, `A:C`, `1:1`, `2:5`, `A1:B`, `B2:B`. The issue lists only whole-column, whole-row and open-ended column shapes. Accepting extra non-standard syntax widens the supported language beyond the spec with no documented semantics.",
+          "file": "packages/sheets/antlr/Formula.g4"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Wrong-layer approach: unbounded ranges are handled by string-rewriting the formula (tokenize → splice → re-lex) rather than resolving at the AST/reference-resolution layer, and the endpoint parsing is re-implemented with a regex instead of reusing existing ref parsing",
+          "evidence": "packages/sheets/src/formula/formula.ts `expandUnboundedRanges` rebuilds the formula text (`body += toSrng(resolveRange(...))`, `return '=' + body`) so it must be re-lexed by every downstream consumer, and packages/sheets/src/model/core/coordinates.ts adds `parsePartialRef` with its own `/^([A-Za-z]*)([0-9]*)$/` regex plus `isFullRef` `/^\\$?[A-Za-z]+\\$?[0-9]+$/`, duplicating the `$`-stripping/column-label logic that `parseRef`/`parseRange` already own. The `try { ... } catch { /* fall through */ }` in `expandUnboundedRanges` silently degrades to the unexpanded (error-producing) formula, hiding layering failures.",
+          "file": "packages/sheets/src/formula/formula.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "The \"expand then extract dependencies\" step is copy-pasted across store implementations instead of being a single shared helper, inviting divergence (and a missed call site is exactly how a backend loses the feature)",
+          "evidence": "packages/sheets/src/store/memory.ts (`toSrefs(extractReferences(expandUnboundedRanges(cell.f, bounds)))`) and packages/frontend/src/app/spreadsheet/yorkie-store.ts repeat the identical wrapping three separate times inside `buildDependantsMap`, which is why `expandUnboundedRanges` had to be added to the public barrel in packages/sheets/src/index.ts. A shared `extractDependencies(formula, bounds)` in @wafflebase/sheets would keep the rule in one place, consistent with the repo's stated reuse expectation.",
+          "file": "packages/frontend/src/app/spreadsheet/yorkie-store.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "Self-reference/circularity of whole-column ranges is neither specified nor handled: a `=SUM(A:A)` written inside column A expands to a range containing its own cell",
+          "evidence": "packages/sheets/src/model/worksheet/calculator.ts expands `cell.f` against `sheet.getUsedBounds()`, which includes the formula cell itself once written. Every test in packages/sheets/test/sheet/calculation.test.ts places the formula in column D (`{ r: 1, c: 4 }`), so the in-column case is undefined behavior; docs/design/sheets/formula.md's new section does not state the intended semantics (Excel reports a circular reference) nor list it as a non-goal.",
+          "file": "packages/sheets/src/model/worksheet/calculator.ts"
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "summary": "Cross-sheet unbounded refs now lex successfully but evaluate to `#ERROR!` — the grammar advertises a syntax the engine cannot honour, a gap accepted only in prose",
+          "evidence": "packages/sheets/antlr/Formula.g4 lets `REFERENCE: SHEET_NAME '!' REFRANGE` match `Sheet2!A:A`, while formula.ts `expandUnboundedRanges` explicitly skips `isCrossSheetRef(token.text)` and docs/design/sheets/formula.md records \"Cross-sheet unbounded refs (`Sheet2!A:A`) are not resolved ... and evaluate to `#ERROR!`\". Widening the lexer without a resolution path yields a syntactically valid formula that always errors; the issue does not request cross-sheet support, so narrowing the grammar (or resolving it) would fit the spec better.",
+          "file": "docs/design/sheets/formula.md"
+        },
+        {
+          "severity": "nit",
+          "confidence": "medium",
+          "summary": "`getUsedBounds()` is recomputed per formula cell during recalculation instead of once per pass",
+          "evidence": "packages/sheets/src/model/worksheet/calculator.ts calls `await sheet.getUsedBounds()` inside the per-cell calculation loop, and `CellIndex.bounds()` scans all row and column index keys on each call; hoisting it out of the loop would match the design doc's framing that clamping \"happens up front\".",
+          "file": "packages/sheets/src/model/worksheet/calculator.ts"
+        }
+      ]
+    ],
+    "samples_run": 2,
+    "samples_ok": 2,
+    "agreement": "disjoint",
+    "severity_counts": {
+      "critical": 0,
+      "major": 8,
+      "minor": 11,
+      "nit": 2
+    },
+    "confidence_counts": {
+      "high": 0,
+      "medium": 15,
+      "low": 6,
+      "unknown": 0
+    }
+  }
+}

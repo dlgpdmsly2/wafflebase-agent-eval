@@ -1,0 +1,26 @@
+{
+  "run_id": "verifier-1",
+  "stage_id": "verifier",
+  "fixture_ref": "pr-521::verifier::blast-radius::fresh::packages/sheets/src/model/worksheet/sheet.ts:2711::`sheet.buildglobaldependantsmap` extracts references straight from raw `cell.f` with no `expandunboundedranges` call, so a purely local `=sum(a:a)` throws there and breaks cross-sheet recalculation.",
+  "item_id": "pr-521",
+  "config_hash": "sha256:ca7b048f94ce7d808453c02aa901194ea8b62a3e49d8e8ab4fe885217d401f9f",
+  "stage_version": "2026-07-29-pilot__stagepilot",
+  "timestamp": "2026-07-29T13:03:20.908Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.2216651,
+  "weighted_tokens": 42260,
+  "raw_tokens": 185527,
+  "duration_ms": 96702,
+  "turns": 27,
+  "calls": 3,
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  },
+  "error": null
+}
