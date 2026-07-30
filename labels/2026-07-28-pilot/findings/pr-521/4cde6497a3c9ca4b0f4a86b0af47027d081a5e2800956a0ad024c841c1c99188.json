@@ -1,0 +1,13 @@
+{
+  "finding_key": "packages/sheets/src/formula/arguments.ts::possibly missing imports for symbols newly used in the diff (`issrng` in arguments.ts, `range` in cell-index.ts / readonly.ts), which would break the build",
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "major",
+  "kind": "correctness",
+  "label_source": "gold",
+  "annotators": [
+    "dlgpdmsly2"
+  ],
+  "evidence": "Imports present: isSrng/toSrefs (arguments.ts:12), Range (cell-index.ts:1); CI/build green. Hallucination — verifier KEPT it (false keep).",
+  "notes": "Adjudicated against the real code at the harness worktree; captured finding_key (joins V1 exactly)."
+}

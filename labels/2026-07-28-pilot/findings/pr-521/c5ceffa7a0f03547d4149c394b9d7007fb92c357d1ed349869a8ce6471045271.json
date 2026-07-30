@@ -1,0 +1,13 @@
+{
+  "finding_key": "packages/sheets/src/store/memory.ts:333::cross-sheet unbounded refs (`sheet2!a:a`) are deliberately left unexpanded, but now lex as reference tokens and reach `tosrefs`, which throws `invalid reference` — breaking `builddependantsmap` for the entire sheet, not just that cell. the `iscrosssheetref(r) continue` guard in the loop body cannot help: the generator throws while producing the value, before any iteration happens.",
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "critical",
+  "kind": "correctness",
+  "label_source": "gold",
+  "annotators": [
+    "dlgpdmsly2"
+  ],
+  "evidence": "Confirmed mechanism: expandUnboundedRanges leaves cross-sheet refs unexpanded (formula.ts:348/364); toSrefs is a generator (coordinates.ts:233) that parseRange()es the unexpanded 'A:A' and throws before the isCrossSheetRef guard (memory.ts:333-334) can skip it → buildDependantsMap throws for the whole sheet. parseRange-throw inferred from the PR's premise (medium confidence). Verifier KEPT it (correct).",
+  "notes": "Adjudicated against the real code at the harness worktree; captured finding_key (joins V1 exactly)."
+}

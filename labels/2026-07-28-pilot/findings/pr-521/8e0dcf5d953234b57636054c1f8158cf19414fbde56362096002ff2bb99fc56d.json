@@ -1,0 +1,13 @@
+{
+  "finding_key": "packages/sheets/src/store/cell-index.ts::new public `cellindex.bounds()` has no unit test; it is only covered indirectly through memstore calculation tests, so its own edge cases (data not starting at a1, becoming empty after removals, independent row/col minima) are unverified.",
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "minor",
+  "kind": "test-adequacy",
+  "label_source": "gold",
+  "annotators": [
+    "dlgpdmsly2"
+  ],
+  "evidence": "bounds() has integration coverage (8 new MemStore calc tests derive expected values from it); a missing DIRECT unit test is a minor gap, not the claimed major. Verifier correctly DROPPED.",
+  "notes": "Adjudicated against the real code at the harness worktree; captured finding_key (joins V1 exactly)."
+}

@@ -1,0 +1,13 @@
+{
+  "finding_key": "packages/sheets/src/store/store.ts::`store.getusedbounds()` added as a required interface method but possibly not implemented by every store implementation (idbstore)",
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "major",
+  "kind": "design-fit",
+  "label_source": "gold",
+  "annotators": [
+    "dlgpdmsly2"
+  ],
+  "evidence": "No IDBStore exists for sheets; all three Store impls (memory.ts:315, readonly.ts:157, yorkie-store.ts:614) implement getUsedBounds, so typecheck/CI passed. Hallucination — verifier KEPT it (false keep).",
+  "notes": "Adjudicated against the real code at the harness worktree; captured finding_key (joins V1 exactly)."
+}

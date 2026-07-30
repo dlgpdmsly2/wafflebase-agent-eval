@@ -1,0 +1,13 @@
+{
+  "finding_key": "packages/frontend/src/app/spreadsheet/yorkie-store.ts::yorkiestore bounds ignore `batchoverlay`, so batched writes expand unbounded ranges against stale extents",
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": "correctness",
+  "label_source": "gold",
+  "annotators": [
+    "dlgpdmsly2"
+  ],
+  "evidence": "Confirmed: YorkieStore.getUsedBounds() (yorkie-store.ts:614) returns cellIndex.bounds() and never consults batchOverlay, so mid-batch bounds are stale. Real latent bug; reachability requires expansion during an open batch (medium confidence). Verifier KEPT it (correct).",
+  "notes": "Adjudicated against the real code at the harness worktree; captured finding_key (joins V1 exactly)."
+}

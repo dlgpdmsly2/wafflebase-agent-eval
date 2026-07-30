@@ -1,0 +1,13 @@
+{
+  "finding_key": "packages/sheets/src/formula/arguments.ts::all-blank / mostly-blank bounded ranges now change results for average/median/stdev/var/geomean (e.g. average → #value!), with no test for those functions",
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": "correctness",
+  "label_source": "gold",
+  "annotators": [
+    "dlgpdmsly2"
+  ],
+  "evidence": "The known #521 blank-skip regression: arguments.ts skips blanks for ANY range, changing bounded-range aggregation (AVERAGE→#VALUE! etc.) with no test. Same defect the product panel flagged major. Verifier KEPT it (correct).",
+  "notes": "Adjudicated against the real code at the harness worktree; captured finding_key (joins V1 exactly)."
+}
