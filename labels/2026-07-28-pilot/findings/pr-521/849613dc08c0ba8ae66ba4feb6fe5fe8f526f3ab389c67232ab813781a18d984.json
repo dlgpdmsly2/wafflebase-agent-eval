@@ -1,0 +1,10 @@
+{
+  "finding_key": "packages/sheets/src/formula/arguments.ts::blank-skip makes min/max over an all-blank range return #num! instead of 0, contradicting the intended google-sheets alignment and regressing prior bounded-range behavior.",
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": "correctness",
+  "label_source": "gold",
+  "evidence": "Same defect the correctness lens flagged major at 12205b3a/d5cec28b/2926b87a and wrongly cleared at 6a0ce6e8. A verifier that DROPS this finding = the #521 false-negative cell (real defect, dropped) in the V1 confusion matrix.",
+  "notes": "finding_key derived from the historical product-panel wording; a fresh eval capture may emit a different summary → cross-run join is a V2/matcher concern, not exact here."
+}

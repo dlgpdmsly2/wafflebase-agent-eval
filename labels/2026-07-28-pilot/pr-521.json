@@ -1,0 +1,22 @@
+{
+  "item_id": "pr-521",
+  "corpus_version": "2026-07-28-pilot",
+  "verdict_label": "block",
+  "primary_defect_class": "correctness",
+  "true_defects": [
+    {
+      "file": "packages/sheets/src/formula/arguments.ts",
+      "kind": "correctness-regression",
+      "severity": "major",
+      "description": "Blank-skip in Arguments.iterate makes MIN/MAX (and MEDIAN) over an all-blank range return #NUM! instead of 0 — regresses existing bounded ranges and is wrong for the new whole-column feature. Symptom surfaces in functions-statistical.ts."
+    }
+  ],
+  "label_source": "gold",
+  "annotators": [
+    "dlgpdmsly2"
+  ],
+  "confidence": "high",
+  "evidence": "PR wafflebase/wafflebase#521 correctness check-runs: flagged MAJOR at 12205b3a, d5cec28b, 2926b87a; APPROVED (0 major) at 6a0ce6e8 on ~unchanged logic = the false negative; panel 'requested changes 5 times without converging' → human handoff.",
+  "diff_sha256": "sha256:dd33b964419402444ebb303bb25261b871210aabcc9d42825cf372620f599709",
+  "notes": "Historical case from the pre-#573 single-pass panel; the flip is a detection-level false negative. is_real is architecture-independent ground truth for V1/V3."
+}
