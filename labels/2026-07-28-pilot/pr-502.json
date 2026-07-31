@@ -1,0 +1,16 @@
+{
+  "corpus_version": "2026-07-28-pilot",
+  "verdict_label": "approve",
+  "primary_defect_class": null,
+  "true_defects": [],
+  "stratum": "benign",
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-4-8"
+  ],
+  "item_id": "pr-502",
+  "confidence": "medium",
+  "diff_sha256": "sha256:3a7d23f5cf41d9427759fc601bcc2856d07370cda4460dc0135103e05fd460c9",
+  "evidence": "Threads folderId through the upload queue (UploadItem, enqueue(), createDoc payload, getOrCreateDoc) so dropped files land in the viewed folder, not root. Correctly adds folderId to the useCallback dep array (avoids a stale-closure bug). Ships a test asserting createDoc is called with folderId:'folder-7'. Read-through: clean, tested bugfix; no real defect.",
+  "notes": "Benign true-negative (read-through, no captured panel verdict → confidence medium). Also renames the move-dialog root placeholder '(workspace root)' → 'Home', a cosmetic consistency change."
+}

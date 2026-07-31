@@ -1,0 +1,16 @@
+{
+  "corpus_version": "2026-07-28-pilot",
+  "verdict_label": "approve",
+  "primary_defect_class": null,
+  "true_defects": [],
+  "stratum": "benign",
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-4-8"
+  ],
+  "item_id": "pr-493",
+  "confidence": "high",
+  "diff_sha256": "sha256:5d43b3401e0b1222821d939d93c2acb95b1c61c7797d9d7c99862a30f35b84c1",
+  "evidence": "40-line, single-file diff: swaps a native title={label} for an idiomatic Radix <Tooltip>/<TooltipTrigger asChild>/<TooltipContent>; aria-label and onClick/toggle behavior unchanged. No real defect. Captured panel run (baseline-opus-s2) independently approved (all 4 lenses success, only minor/nit findings) — corroboration, not the label.",
+  "notes": "Benign true-negative. The panel's minor 'missing TooltipProvider → crash' note is a non-blocking check-before-merge concern; the merged app provides the provider at root. Only benign item with a captured panel verdict → fully scorable for V3 gate validity."
+}

@@ -1,0 +1,16 @@
+{
+  "corpus_version": "2026-07-28-pilot",
+  "verdict_label": "approve",
+  "primary_defect_class": null,
+  "true_defects": [],
+  "stratum": "benign",
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-4-8"
+  ],
+  "item_id": "pr-471",
+  "confidence": "medium",
+  "diff_sha256": "sha256:6d875f999c40e43aefb3f3ce3987dcda2b565bfbfffec056aaf2152b16eacf1f",
+  "evidence": "Two real checkbox bugfixes shipped with thorough tests: (1) toggleCheckboxAt no-ops over a formula cell (guards on cell?.f, returns false, leaves cell.f intact); (2) isCheckboxChecked case-folds TRUE/FALSE only for a fully-default boolean rule, exact-match once either custom value is set (avoids inverting a custom uncheckedValue), canonical compare before the no-alloc toUpperCase fallback. Regression tests cover each edge incl. custom-uncheckedValue. Read-through: correct, well-tested; no real defect.",
+  "notes": "Benign true-negative (read-through, no captured panel verdict → confidence medium). This PR fixes defects rather than introducing them; the correct verdict on the diff itself is approve."
+}
