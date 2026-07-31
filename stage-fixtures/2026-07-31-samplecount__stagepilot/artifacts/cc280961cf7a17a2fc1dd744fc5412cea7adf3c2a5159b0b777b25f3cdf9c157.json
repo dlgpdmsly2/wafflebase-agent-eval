@@ -1,0 +1,52 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-549",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "correctness",
+    "population": "fresh",
+    "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::`islonedash` disables single-dash setext headings everywhere, not just inside list items — `title\\n-` loses its `<h2>` and emits a stray empty bullet"
+  },
+  "provenance": {
+    "run_id": "stage-capture-2026-07-31-samplecount",
+    "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-31T00:02:17.019Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 105,
+      "summary": "`isLoneDash` disables single-dash setext headings everywhere, not just inside list items — `Title\\n-` loses its `<h2>` and emits a stray empty bullet",
+      "evidence": "Line 105: `const isLoneDash = marker === DASH && runLength === 1;` and line 107 `if (pos >= max && !isLoneDash)`. The guard has no context condition (no check that the dash line is indented deeper than the paragraph, or that `state.parentType`/`state.listIndent` indicates we are inside a list item). Consequence for top-level input `Title\\n-`: lheadingRule declines the underline, the terminator loop then calls the wrapped `list` (which returns true for the lone `-`), lheading returns false, `paragraph` consumes `Title` and stops at line 1, and the non-silent `list` rule builds an empty item. Output becomes `<p>Title</p><ul><li></li></ul>` instead of `<h2>Title</h2>` — the heading is silently downgraded AND the `-` character disappears from the rendered text. Issue #517 only concerns an *indented* empty bullet under a list item; nothing in the fix restricts the deviation to that shape. The tests only cover the multi-dash form (`Heading\\n---`), so this regression is untested."
+    },
+    "rubric": {
+      "sha256": "sha256:f9a536593dea9e65a09e740fb67bcf802e588ac9dad78de00894b8425271a687",
+      "bytes": 3077
+    },
+    "changed_files": {
+      "sha256": "sha256:79a4b35f84e54f9f202e9476dc3eff5643b8bb1a16c70921b75d170e8f76f83d",
+      "bytes": 279
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 6,
+      "listed_count": 6
+    },
+    "repo_commit": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

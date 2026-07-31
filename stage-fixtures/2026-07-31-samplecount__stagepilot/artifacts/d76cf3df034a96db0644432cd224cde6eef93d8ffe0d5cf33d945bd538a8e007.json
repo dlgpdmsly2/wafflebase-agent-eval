@@ -1,0 +1,53 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-549",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "blast-radius",
+    "population": "fresh",
+    "finding_key": "packages/notes/src/view/preview.ts::a throw from `getrulefn` at module scope takes down the entire `@wafflebase/notes` public entry point, not just the preview — including the store and toolbar surfaces that never touch markdown."
+  },
+  "provenance": {
+    "run_id": "stage-capture-2026-07-31-samplecount",
+    "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-31T00:02:17.019Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/preview.ts",
+      "line": 48,
+      "summary": "A throw from `getRuleFn` at module scope takes down the entire `@wafflebase/notes` public entry point, not just the preview — including the store and toolbar surfaces that never touch markdown.",
+      "evidence": "`getRuleFn` (packages/notes/src/view/list-empty-bullet-plugin.ts:212) throws `markdown-it block rule not found: list` if markdown-it's private `__rules__` registry shape changes. It is invoked from `md.use(listEmptyBulletPlugin)` at preview.ts:48, which is *module top-level*. The out-of-diff blast radius is the import chain: packages/notes/src/index.ts:12 re-exports `initialize` from `./view/editor.js`, and packages/notes/src/view/editor.ts:20 statically imports `NotePreview` from `./preview.js`. So evaluating the package barrel evaluates preview.ts. Every frontend consumer therefore fails to import, not just the preview pane: packages/frontend/src/app/notes/notes-view.tsx:7, notes-detail.tsx:9, notes-toolbar.tsx:7, and yorkie-note-store.ts:7 (the Yorkie CRDT note store, which has nothing to do with markdown rendering). `packages/notes/package.json:63` pins `\"markdown-it\": \"^14.1.0\"` (caret) and harness.config.json:45 enables `dependencyFreshness` with `failOnCritical`, so an automated bump is a live path. Fix belongs on the new code: make `getRuleFn` degrade (return a no-op / skip the wrap) instead of throwing during module evaluation, or move the `md.use` behind a lazily-initialised renderer.",
+      "searchedFor": []
+    },
+    "rubric": {
+      "sha256": "sha256:7a63926711bbe5515312dcfb8772e62365cbde200a8ddcb855f128404893dee8",
+      "bytes": 5267
+    },
+    "changed_files": {
+      "sha256": "sha256:79a4b35f84e54f9f202e9476dc3eff5643b8bb1a16c70921b75d170e8f76f83d",
+      "bytes": 279
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 6,
+      "listed_count": 6
+    },
+    "repo_commit": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": null,
+    "error": {
+      "message": "verifier produced no verdict (errored or no structured output)",
+      "kind": "no-verdict"
+    },
+    "dropped": false
+  }
+}

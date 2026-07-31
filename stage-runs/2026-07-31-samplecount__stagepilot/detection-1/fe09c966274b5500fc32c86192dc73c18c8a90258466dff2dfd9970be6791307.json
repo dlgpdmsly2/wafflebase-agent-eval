@@ -1,0 +1,379 @@
+{
+  "run_id": "detection-1",
+  "stage_id": "detection",
+  "fixture_ref": "pr-549::detection::test-adequacy",
+  "item_id": "pr-549",
+  "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+  "stage_version": "2026-07-31-samplecount__stagepilot",
+  "timestamp": "2026-07-31T00:02:18.319Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.5824261,
+  "weighted_tokens": 80409,
+  "raw_tokens": 217056,
+  "duration_ms": 279246,
+  "turns": 24,
+  "calls": 2,
+  "output": {
+    "union": [
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/preview.test.ts",
+        "line": 194,
+        "summary": "No test for the top-level lone-dash setext heading whose rendering this change breaks (`Heading\\n-`), even though the change's own plan lists it as a required test case",
+        "evidence": "The new `lheadingRule` in list-empty-bullet-plugin.ts rejects ANY lone single `-` underline (`const isLoneDash = marker === DASH && runLength === 1`), not just one indented under a list item, and `wrappedList` then lets that dash terminate the paragraph in silent mode whenever `state.parentType === 'paragraph'`. So the very common top-level form `Heading\\n-` changes from `<h2>Heading</h2>` to a paragraph followed by an empty `<ul><li></li></ul>` — a user-visible behavior change with zero coverage. The five tests added (preview.test.ts +151..+196) cover only: `- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---`, `- 1\\n  - 2`. The change's own TODO file admits the gap: docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md line 61 says `- [ ] Unit tests in preview.test.ts (bug case, workaround, --- setext still works, non-empty nested list unaffected, top-level lone dash)` — the box is unchecked and the top-level lone-dash case never appears in the diff. Because the behavior is newly changed, a pre-existing test could not already assert it (it would now fail and would have had to be updated in this diff).",
+        "searchedFor": [
+          "Glob **/preview.test.ts (no match — working tree contains only agent/ tooling, not packages/)",
+          "Glob **/list-empty-bullet-plugin.ts",
+          "Glob **/notes/**/*.ts",
+          "Grep NotePreview / lheading / setext across tree",
+          "Glob **/*.test.* (only agent/*.test.mjs and test/verify-entropy.test.mjs exist)",
+          "read every added test in the diff hunk of packages/notes/src/view/preview.test.ts"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 39,
+        "summary": "`*` and `+` empty-bullet markers are accepted by `isEmptyBulletLine` but no test exercises them",
+        "evidence": "`isEmptyBulletLine` explicitly accepts `-`, `*` (0x2a) and `+` (0x2b) markers, so an empty `*`/`+` bullet is now also allowed to interrupt a paragraph (CommonMark forbids this; previously `1\\n*` was lazy text). Every added test uses only the `-` marker (`'- 1\\n  -'`, `'- 1\\n  - '`, `'- 1\\n\\n  - '`, `'- 1\\n  - 2'`), so the `*`/`+` branch of the guard could be deleted or inverted and the suite would stay green.",
+        "searchedFor": [
+          "read all added tests in packages/notes/src/view/preview.test.ts hunk for '*' / '+' bullet strings",
+          "Grep for markdown-it/list rule tests elsewhere in tree (no packages/ files present locally)"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 117,
+        "summary": "The wholesale re-implementation of `lheading` is only tested for the `---` (h2) path; the `=` / h1 path is untested",
+        "evidence": "`lheadingRule` is a hand-copied duplicate of upstream markdown-it `rules_block/lheading.mjs`, including the `level = marker === EQUALS ? 1 : 2` branch, the `content = asciiTrim(state.getLines(...))` extraction, the locally re-created `asciiTrim` regex, and the token `markup`/`map` fields. The only regression test is `preview.render('Heading\\n---')` expecting an `<h2>`. Nothing renders `Heading\\n===` (h1), a multi-line setext body, or a setext heading terminated by a paragraph-terminator rule, so a transcription slip in the copied rule outside the h2 path ships unnoticed.",
+        "searchedFor": [
+          "read all five added tests; only 'Heading\\n---' touches setext",
+          "Grep for '===' setext assertions in the diff",
+          "Glob **/preview.test.ts (file not present in working tree)"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 32,
+        "summary": "No test for an over-indented / code-block-indent empty bullet, where the silent hook claims paragraph termination without the 4-space guard the real list rule applies",
+        "evidence": "`wrappedList` returns `true` in silent mode purely on `isEmptyBulletLine`, which checks only `state.sCount[line] >= state.blkIndent` and never the `sCount - blkIndent >= 4` code-block guard that the stock `list` rule applies. So input such as `1\\n    -` (or an empty bullet indented far past the parent item) now terminates the paragraph even though the non-silent `list` rule will decline the line, and the line falls through to the indented-code rule instead. None of the added tests use more than two spaces of indentation, so this divergence between the silent claim and the non-silent outcome has no coverage.",
+        "searchedFor": [
+          "read all added tests: max indentation used is two spaces ('  -')",
+          "searched the diff for any test string containing 4+ leading spaces",
+          "Glob **/preview.test.ts (working tree lacks packages/)"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 200,
+        "summary": "The restored `alt: ['reference','blockquote']` membership of the replaced `list` rule has no test; only the 'paragraph' entry is incidentally covered",
+        "evidence": "The lessons doc (docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md, 'Ruler.at REPLACES the rule's alt chain') flags this as the trap this change had to work around, and `md.block.ruler.at('list', wrappedList, { alt: ['paragraph','reference','blockquote'] })` restores three chains. Only the `paragraph` chain is exercised (indirectly, by `'- 1\\n  - 2'`); no added test puts a list immediately after a blockquote line or a link-reference definition, so dropping `'reference'`/`'blockquote'` from the alt array would not fail any test.",
+        "searchedFor": [
+          "read all added tests for '>' blockquote or '[x]: url' reference inputs — none present",
+          "Grep for blockquote/reference preview tests (packages/ not present in working tree)"
+        ]
+      },
+      {
+        "severity": "nit",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/preview.test.ts",
+        "line": 175,
+        "summary": "The 'blank-line workaround' test is non-discriminating: it passes identically with and without the plugin",
+        "evidence": "`preview.render('- 1\\n\\n  - ')` with the blank line was already the reporter's documented workaround (docs/tasks/.../todo.md: 'A blank line between the two lines avoids it'), so both assertions — `querySelector('h2')` is null and `ul > li > ul > li` is truthy — hold in stock markdown-it before this change. It is a fine baseline regression guard, but it contributes no coverage of the new plugin code and shouldn't be read as evidence the fix works.",
+        "searchedFor": []
+      },
+      {
+        "severity": "nit",
+        "confidence": "medium",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 210,
+        "summary": "`getRuleFn`'s private-`__rules__` lookup and its throw path are untested",
+        "evidence": "`getRuleFn` reaches into markdown-it's undocumented `__rules__` registry and throws `markdown-it block rule not found: ${name}` if the shape changes. No test covers the throw path or asserts the delegated rule is the stock `list` fn, so a markdown-it upgrade that renames the internal registry would surface only as a runtime failure at module load rather than as a red test.",
+        "searchedFor": [
+          "searched diff for any direct unit test of list-empty-bullet-plugin.ts — all coverage is indirect via NotePreview",
+          "Glob **/list-empty-bullet-plugin*.test.ts (no match; packages/ absent from working tree)"
+        ]
+      },
+      {
+        "severity": "major",
+        "confidence": "high",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 112,
+        "summary": "Top-level lone-dash setext heading (`Heading\\n-`) behavior change has no test, despite being an explicit plan item",
+        "evidence": "The replaced `lheading` rule rejects ANY setext underline that is a single `-` (`const isLoneDash = marker === DASH && runLength === 1;`), not just one indented under a list item. That silently changes a global, user-visible behavior: `Heading\\n-` used to render `<h2>Heading</h2>` and now renders a paragraph followed by an empty list. None of the five new tests in preview.test.ts render a lone `-` at top level after a paragraph — they only cover `- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---` and `- 1\\n  - 2`. The change's own TODO doc (docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md, unit-test checklist line) explicitly lists \"top-level lone dash\" as a required case and leaves the checkbox unchecked, so the shipped test set is narrower than the author's own acceptance list.",
+        "searchedFor": [
+          "read every added `it(...)` block in the preview.test.ts hunk",
+          "Grep for `lheading|setext|Heading\\\\n|list-empty-bullet` across the working tree (no matches — packages/notes is not materialized in this checkout)",
+          "Glob **/preview.test.ts and **/list-empty-bullet-plugin* (no files found)"
+        ]
+      },
+      {
+        "severity": "major",
+        "confidence": "high",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 118,
+        "summary": "The `=` (h1) branch of the hand-reimplemented `lheading` rule is completely untested",
+        "evidence": "`lheadingRule` is a full re-transcription of markdown-it 14.x's upstream `rules_block/lheading.mjs`, including the `EQUALS` marker path (`level = marker === EQUALS ? 1 : 2;`, `tokenOpen.markup = String.fromCharCode(marker)`, `state.line = nextLine + 1`, the `asciiTrim(getLines(...))` content extraction). The only setext test added is `preview.render('Heading\\n---')` asserting `h2?.textContent === 'Heading'` (preview.test.ts ~line 181). No test renders `Heading\\n===`, so a transcription slip in the `=` branch (wrong level, wrong content bounds, wrong `state.line`) would break every setext H1 in the notes preview with a green suite. Multi-line setext bodies (`a\\nb\\n---`) are likewise uncovered, so the `getLines`/`asciiTrim` content path is only exercised in its simplest single-line form.",
+        "searchedFor": [
+          "read all added tests in the preview.test.ts hunk for `=` / `===` markdown input",
+          "Grep for `setext` in working tree (no matches; packages/notes not present in this checkout)"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 40,
+        "summary": "`isEmptyBulletLine` deliberately accepts `*` and `+` empty bullets, but no test uses those markers",
+        "evidence": "`isEmptyBulletLine` matches DASH, `0x2a` (`*`) and `0x2b` (`+`), so an empty `*`/`+` bullet is now allowed to interrupt a paragraph — a behavior change for input like `- 1\\n  *` or `text\\n+ ` (previously lazy-continuation text, since `*`/`+` were never setext underlines). Every new test uses only `-` (`'- 1\\n  -'`, `'- 1\\n  - '`, `'- 1\\n\\n  - '`, `'- 1\\n  - 2'`), so the `*`/`+` half of the new predicate has zero coverage and could be broken (or removed) without failing the suite.",
+        "searchedFor": [
+          "read the markers accepted in isEmptyBulletLine in the diff",
+          "scanned all five added `it(...)` bodies for `*` or `+` markdown input"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 196,
+        "summary": "Only the `paragraph` entry of the restored `alt` chain is exercised; `reference` and `blockquote` membership is untested",
+        "evidence": "`md.block.ruler.at('list', wrappedList, { alt: ['paragraph', 'reference', 'blockquote'] })` restores an alt chain that the lessons doc (docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md) says is easy to lose — `Ruler.at` replaces it wholesale. The new tests implicitly cover the `paragraph` entry (test 1 would fail if `list` stopped terminating paragraphs), but nothing renders a list inside/after a blockquote (`> a\\n> - b`) or after a link reference definition, so dropping `'reference'` or `'blockquote'` from that array would ship green. The diff adds no test file for the plugin itself, so this is only reachable through preview.test.ts.",
+        "searchedFor": [
+          "read the whole preview.test.ts hunk for `>` blockquote or `[ref]:` inputs",
+          "Grep for `blockquote` in working tree (packages/notes not materialized)",
+          "Glob **/list-empty-bullet-plugin* (no test file exists for the plugin)"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/preview.test.ts",
+        "line": 172,
+        "summary": "'trailing space' test asserts far less than the case it claims to cover",
+        "evidence": "`it('nests an empty bullet with a trailing space too')` renders `'- 1\\n  - '` but only asserts `querySelector('h2')` is null and `querySelector('ul > li > ul > li')` is truthy. It never checks the parent still reads `1` nor that the nested item is empty — the sibling test at line 153 does both. So a regression where the trailing-space form produces a nested item containing stray text (e.g. the `-` leaking through, or `1` migrating into the child) would still pass this test.",
+        "searchedFor": []
+      },
+      {
+        "severity": "nit",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/preview.test.ts",
+        "line": 177,
+        "summary": "Two of the new assertions hold identically before the change and add no discriminating power",
+        "evidence": "`it('still renders the blank-line workaround correctly')` and `it('leaves a non-empty nested list unchanged')` both open with `expect(preview.el.querySelector('h2')).toBeNull()`. For `'- 1\\n\\n  - '` and `'- 1\\n  - 2'` no `<h2>` was ever produced (the blank line breaks setext; `- 2` is not an underline shape), so those assertions are true with or without listEmptyBulletPlugin. They are harmless regression guards rather than coverage of the fix; the discriminating assertions in those tests are the `ul > li > ul > li` ones.",
+        "searchedFor": []
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/preview.test.ts",
+          "line": 194,
+          "summary": "No test for the top-level lone-dash setext heading whose rendering this change breaks (`Heading\\n-`), even though the change's own plan lists it as a required test case",
+          "evidence": "The new `lheadingRule` in list-empty-bullet-plugin.ts rejects ANY lone single `-` underline (`const isLoneDash = marker === DASH && runLength === 1`), not just one indented under a list item, and `wrappedList` then lets that dash terminate the paragraph in silent mode whenever `state.parentType === 'paragraph'`. So the very common top-level form `Heading\\n-` changes from `<h2>Heading</h2>` to a paragraph followed by an empty `<ul><li></li></ul>` — a user-visible behavior change with zero coverage. The five tests added (preview.test.ts +151..+196) cover only: `- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---`, `- 1\\n  - 2`. The change's own TODO file admits the gap: docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md line 61 says `- [ ] Unit tests in preview.test.ts (bug case, workaround, --- setext still works, non-empty nested list unaffected, top-level lone dash)` — the box is unchecked and the top-level lone-dash case never appears in the diff. Because the behavior is newly changed, a pre-existing test could not already assert it (it would now fail and would have had to be updated in this diff).",
+          "searchedFor": [
+            "Glob **/preview.test.ts (no match — working tree contains only agent/ tooling, not packages/)",
+            "Glob **/list-empty-bullet-plugin.ts",
+            "Glob **/notes/**/*.ts",
+            "Grep NotePreview / lheading / setext across tree",
+            "Glob **/*.test.* (only agent/*.test.mjs and test/verify-entropy.test.mjs exist)",
+            "read every added test in the diff hunk of packages/notes/src/view/preview.test.ts"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 39,
+          "summary": "`*` and `+` empty-bullet markers are accepted by `isEmptyBulletLine` but no test exercises them",
+          "evidence": "`isEmptyBulletLine` explicitly accepts `-`, `*` (0x2a) and `+` (0x2b) markers, so an empty `*`/`+` bullet is now also allowed to interrupt a paragraph (CommonMark forbids this; previously `1\\n*` was lazy text). Every added test uses only the `-` marker (`'- 1\\n  -'`, `'- 1\\n  - '`, `'- 1\\n\\n  - '`, `'- 1\\n  - 2'`), so the `*`/`+` branch of the guard could be deleted or inverted and the suite would stay green.",
+          "searchedFor": [
+            "read all added tests in packages/notes/src/view/preview.test.ts hunk for '*' / '+' bullet strings",
+            "Grep for markdown-it/list rule tests elsewhere in tree (no packages/ files present locally)"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 117,
+          "summary": "The wholesale re-implementation of `lheading` is only tested for the `---` (h2) path; the `=` / h1 path is untested",
+          "evidence": "`lheadingRule` is a hand-copied duplicate of upstream markdown-it `rules_block/lheading.mjs`, including the `level = marker === EQUALS ? 1 : 2` branch, the `content = asciiTrim(state.getLines(...))` extraction, the locally re-created `asciiTrim` regex, and the token `markup`/`map` fields. The only regression test is `preview.render('Heading\\n---')` expecting an `<h2>`. Nothing renders `Heading\\n===` (h1), a multi-line setext body, or a setext heading terminated by a paragraph-terminator rule, so a transcription slip in the copied rule outside the h2 path ships unnoticed.",
+          "searchedFor": [
+            "read all five added tests; only 'Heading\\n---' touches setext",
+            "Grep for '===' setext assertions in the diff",
+            "Glob **/preview.test.ts (file not present in working tree)"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 32,
+          "summary": "No test for an over-indented / code-block-indent empty bullet, where the silent hook claims paragraph termination without the 4-space guard the real list rule applies",
+          "evidence": "`wrappedList` returns `true` in silent mode purely on `isEmptyBulletLine`, which checks only `state.sCount[line] >= state.blkIndent` and never the `sCount - blkIndent >= 4` code-block guard that the stock `list` rule applies. So input such as `1\\n    -` (or an empty bullet indented far past the parent item) now terminates the paragraph even though the non-silent `list` rule will decline the line, and the line falls through to the indented-code rule instead. None of the added tests use more than two spaces of indentation, so this divergence between the silent claim and the non-silent outcome has no coverage.",
+          "searchedFor": [
+            "read all added tests: max indentation used is two spaces ('  -')",
+            "searched the diff for any test string containing 4+ leading spaces",
+            "Glob **/preview.test.ts (working tree lacks packages/)"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 200,
+          "summary": "The restored `alt: ['reference','blockquote']` membership of the replaced `list` rule has no test; only the 'paragraph' entry is incidentally covered",
+          "evidence": "The lessons doc (docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md, 'Ruler.at REPLACES the rule's alt chain') flags this as the trap this change had to work around, and `md.block.ruler.at('list', wrappedList, { alt: ['paragraph','reference','blockquote'] })` restores three chains. Only the `paragraph` chain is exercised (indirectly, by `'- 1\\n  - 2'`); no added test puts a list immediately after a blockquote line or a link-reference definition, so dropping `'reference'`/`'blockquote'` from the alt array would not fail any test.",
+          "searchedFor": [
+            "read all added tests for '>' blockquote or '[x]: url' reference inputs — none present",
+            "Grep for blockquote/reference preview tests (packages/ not present in working tree)"
+          ]
+        },
+        {
+          "severity": "nit",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/preview.test.ts",
+          "line": 175,
+          "summary": "The 'blank-line workaround' test is non-discriminating: it passes identically with and without the plugin",
+          "evidence": "`preview.render('- 1\\n\\n  - ')` with the blank line was already the reporter's documented workaround (docs/tasks/.../todo.md: 'A blank line between the two lines avoids it'), so both assertions — `querySelector('h2')` is null and `ul > li > ul > li` is truthy — hold in stock markdown-it before this change. It is a fine baseline regression guard, but it contributes no coverage of the new plugin code and shouldn't be read as evidence the fix works.",
+          "searchedFor": []
+        },
+        {
+          "severity": "nit",
+          "confidence": "medium",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 210,
+          "summary": "`getRuleFn`'s private-`__rules__` lookup and its throw path are untested",
+          "evidence": "`getRuleFn` reaches into markdown-it's undocumented `__rules__` registry and throws `markdown-it block rule not found: ${name}` if the shape changes. No test covers the throw path or asserts the delegated rule is the stock `list` fn, so a markdown-it upgrade that renames the internal registry would surface only as a runtime failure at module load rather than as a red test.",
+          "searchedFor": [
+            "searched diff for any direct unit test of list-empty-bullet-plugin.ts — all coverage is indirect via NotePreview",
+            "Glob **/list-empty-bullet-plugin*.test.ts (no match; packages/ absent from working tree)"
+          ]
+        }
+      ],
+      [
+        {
+          "severity": "major",
+          "confidence": "high",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 112,
+          "summary": "Top-level lone-dash setext heading (`Heading\\n-`) behavior change has no test, despite being an explicit plan item",
+          "evidence": "The replaced `lheading` rule rejects ANY setext underline that is a single `-` (`const isLoneDash = marker === DASH && runLength === 1;`), not just one indented under a list item. That silently changes a global, user-visible behavior: `Heading\\n-` used to render `<h2>Heading</h2>` and now renders a paragraph followed by an empty list. None of the five new tests in preview.test.ts render a lone `-` at top level after a paragraph — they only cover `- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---` and `- 1\\n  - 2`. The change's own TODO doc (docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md, unit-test checklist line) explicitly lists \"top-level lone dash\" as a required case and leaves the checkbox unchecked, so the shipped test set is narrower than the author's own acceptance list.",
+          "searchedFor": [
+            "read every added `it(...)` block in the preview.test.ts hunk",
+            "Grep for `lheading|setext|Heading\\\\n|list-empty-bullet` across the working tree (no matches — packages/notes is not materialized in this checkout)",
+            "Glob **/preview.test.ts and **/list-empty-bullet-plugin* (no files found)"
+          ]
+        },
+        {
+          "severity": "major",
+          "confidence": "high",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 118,
+          "summary": "The `=` (h1) branch of the hand-reimplemented `lheading` rule is completely untested",
+          "evidence": "`lheadingRule` is a full re-transcription of markdown-it 14.x's upstream `rules_block/lheading.mjs`, including the `EQUALS` marker path (`level = marker === EQUALS ? 1 : 2;`, `tokenOpen.markup = String.fromCharCode(marker)`, `state.line = nextLine + 1`, the `asciiTrim(getLines(...))` content extraction). The only setext test added is `preview.render('Heading\\n---')` asserting `h2?.textContent === 'Heading'` (preview.test.ts ~line 181). No test renders `Heading\\n===`, so a transcription slip in the `=` branch (wrong level, wrong content bounds, wrong `state.line`) would break every setext H1 in the notes preview with a green suite. Multi-line setext bodies (`a\\nb\\n---`) are likewise uncovered, so the `getLines`/`asciiTrim` content path is only exercised in its simplest single-line form.",
+          "searchedFor": [
+            "read all added tests in the preview.test.ts hunk for `=` / `===` markdown input",
+            "Grep for `setext` in working tree (no matches; packages/notes not present in this checkout)"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 40,
+          "summary": "`isEmptyBulletLine` deliberately accepts `*` and `+` empty bullets, but no test uses those markers",
+          "evidence": "`isEmptyBulletLine` matches DASH, `0x2a` (`*`) and `0x2b` (`+`), so an empty `*`/`+` bullet is now allowed to interrupt a paragraph — a behavior change for input like `- 1\\n  *` or `text\\n+ ` (previously lazy-continuation text, since `*`/`+` were never setext underlines). Every new test uses only `-` (`'- 1\\n  -'`, `'- 1\\n  - '`, `'- 1\\n\\n  - '`, `'- 1\\n  - 2'`), so the `*`/`+` half of the new predicate has zero coverage and could be broken (or removed) without failing the suite.",
+          "searchedFor": [
+            "read the markers accepted in isEmptyBulletLine in the diff",
+            "scanned all five added `it(...)` bodies for `*` or `+` markdown input"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 196,
+          "summary": "Only the `paragraph` entry of the restored `alt` chain is exercised; `reference` and `blockquote` membership is untested",
+          "evidence": "`md.block.ruler.at('list', wrappedList, { alt: ['paragraph', 'reference', 'blockquote'] })` restores an alt chain that the lessons doc (docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md) says is easy to lose — `Ruler.at` replaces it wholesale. The new tests implicitly cover the `paragraph` entry (test 1 would fail if `list` stopped terminating paragraphs), but nothing renders a list inside/after a blockquote (`> a\\n> - b`) or after a link reference definition, so dropping `'reference'` or `'blockquote'` from that array would ship green. The diff adds no test file for the plugin itself, so this is only reachable through preview.test.ts.",
+          "searchedFor": [
+            "read the whole preview.test.ts hunk for `>` blockquote or `[ref]:` inputs",
+            "Grep for `blockquote` in working tree (packages/notes not materialized)",
+            "Glob **/list-empty-bullet-plugin* (no test file exists for the plugin)"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/preview.test.ts",
+          "line": 172,
+          "summary": "'trailing space' test asserts far less than the case it claims to cover",
+          "evidence": "`it('nests an empty bullet with a trailing space too')` renders `'- 1\\n  - '` but only asserts `querySelector('h2')` is null and `querySelector('ul > li > ul > li')` is truthy. It never checks the parent still reads `1` nor that the nested item is empty — the sibling test at line 153 does both. So a regression where the trailing-space form produces a nested item containing stray text (e.g. the `-` leaking through, or `1` migrating into the child) would still pass this test.",
+          "searchedFor": []
+        },
+        {
+          "severity": "nit",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/preview.test.ts",
+          "line": 177,
+          "summary": "Two of the new assertions hold identically before the change and add no discriminating power",
+          "evidence": "`it('still renders the blank-line workaround correctly')` and `it('leaves a non-empty nested list unchanged')` both open with `expect(preview.el.querySelector('h2')).toBeNull()`. For `'- 1\\n\\n  - '` and `'- 1\\n  - 2'` no `<h2>` was ever produced (the blank line breaks setext; `- 2` is not an underline shape), so those assertions are true with or without listEmptyBulletPlugin. They are harmless regression guards rather than coverage of the fix; the discriminating assertions in those tests are the `ul > li > ul > li` ones.",
+          "searchedFor": []
+        }
+      ]
+    ],
+    "samples_run": 2,
+    "samples_ok": 2,
+    "agreement": "disjoint",
+    "severity_counts": {
+      "critical": 0,
+      "major": 3,
+      "minor": 7,
+      "nit": 3
+    },
+    "confidence_counts": {
+      "high": 6,
+      "medium": 5,
+      "low": 2,
+      "unknown": 0
+    }
+  },
+  "error": null
+}

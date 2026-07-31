@@ -1,0 +1,59 @@
+{
+  "run_id": "detection-3",
+  "stage_id": "detection",
+  "fixture_ref": "pr-549::detection::docs",
+  "item_id": "pr-549",
+  "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+  "stage_version": "2026-07-31-samplecount__stagepilot",
+  "timestamp": "2026-07-31T00:56:15.990Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.10817649999999998,
+  "weighted_tokens": 12266,
+  "raw_tokens": 50562,
+  "duration_ms": 53499,
+  "turns": 6,
+  "calls": 1,
+  "output": {
+    "union": [
+      {
+        "severity": "nit",
+        "confidence": "high",
+        "claimType": "presence",
+        "summary": "Todo checklist leaves several steps unchecked even though the diff shows them completed",
+        "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+        "line": 63,
+        "evidence": "The steps list has '- [ ] Add `packages/notes/src/view/list-empty-bullet-plugin.ts`', '- [ ] Wire it into `preview.ts`', '- [ ] Unit tests in `preview.test.ts` ...', '- [ ] Note the deviation in `docs/design/notes/notes.md`' all marked unchecked, but the diff in this same PR adds `list-empty-bullet-plugin.ts`, wires it into `preview.ts`, adds the described tests to `preview.test.ts`, and adds the deviation note to `docs/design/notes/notes.md`. A reader of the task file would be misled into thinking this work is still outstanding."
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "nit",
+          "confidence": "high",
+          "claimType": "presence",
+          "summary": "Todo checklist leaves several steps unchecked even though the diff shows them completed",
+          "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+          "line": 63,
+          "evidence": "The steps list has '- [ ] Add `packages/notes/src/view/list-empty-bullet-plugin.ts`', '- [ ] Wire it into `preview.ts`', '- [ ] Unit tests in `preview.test.ts` ...', '- [ ] Note the deviation in `docs/design/notes/notes.md`' all marked unchecked, but the diff in this same PR adds `list-empty-bullet-plugin.ts`, wires it into `preview.ts`, adds the described tests to `preview.test.ts`, and adds the deviation note to `docs/design/notes/notes.md`. A reader of the task file would be misled into thinking this work is still outstanding."
+        }
+      ]
+    ],
+    "samples_run": 1,
+    "samples_ok": 1,
+    "agreement": "single",
+    "severity_counts": {
+      "critical": 0,
+      "major": 0,
+      "minor": 0,
+      "nit": 1
+    },
+    "confidence_counts": {
+      "high": 1,
+      "medium": 0,
+      "low": 0,
+      "unknown": 0
+    }
+  },
+  "error": null
+}

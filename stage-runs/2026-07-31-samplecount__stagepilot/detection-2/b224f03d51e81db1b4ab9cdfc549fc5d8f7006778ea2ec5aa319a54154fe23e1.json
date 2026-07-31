@@ -1,0 +1,69 @@
+{
+  "run_id": "detection-2",
+  "stage_id": "detection",
+  "fixture_ref": "pr-549::detection::docs",
+  "item_id": "pr-549",
+  "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+  "stage_version": "2026-07-31-samplecount__stagepilot",
+  "timestamp": "2026-07-31T00:29:02.293Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.0538888,
+  "weighted_tokens": 4131,
+  "raw_tokens": 16430,
+  "duration_ms": 30923,
+  "turns": 2,
+  "calls": 1,
+  "output": {
+    "union": [
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "summary": "Task todo checklist left unchecked for steps that the PR's own diff completes",
+        "claimType": "presence",
+        "evidence": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md lines 62-68 list `- [ ] Add packages/notes/src/view/list-empty-bullet-plugin.ts`, `- [ ] Wire it into preview.ts`, `- [ ] Unit tests in preview.test.ts (...)`, and `- [ ] Note the deviation in docs/design/notes/notes.md` as not-yet-done, but the same diff adds list-empty-bullet-plugin.ts, wires it into preview.ts, adds the described unit tests to preview.test.ts, and adds the deviation note to docs/design/notes/notes.md. A reader of the task narration would be misled into thinking these steps are still outstanding when the diff shows them completed."
+      },
+      {
+        "severity": "nit",
+        "confidence": "medium",
+        "summary": "Only the 'Draft PR' step remains legitimately unchecked, which is fine, but the mismatch above suggests the todo file should have been updated alongside the code/docs it accompanies per repo convention (todo + lessons pairing meant to track live progress).",
+        "claimType": "presence",
+        "evidence": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md lines 62-69"
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "summary": "Task todo checklist left unchecked for steps that the PR's own diff completes",
+          "claimType": "presence",
+          "evidence": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md lines 62-68 list `- [ ] Add packages/notes/src/view/list-empty-bullet-plugin.ts`, `- [ ] Wire it into preview.ts`, `- [ ] Unit tests in preview.test.ts (...)`, and `- [ ] Note the deviation in docs/design/notes/notes.md` as not-yet-done, but the same diff adds list-empty-bullet-plugin.ts, wires it into preview.ts, adds the described unit tests to preview.test.ts, and adds the deviation note to docs/design/notes/notes.md. A reader of the task narration would be misled into thinking these steps are still outstanding when the diff shows them completed."
+        },
+        {
+          "severity": "nit",
+          "confidence": "medium",
+          "summary": "Only the 'Draft PR' step remains legitimately unchecked, which is fine, but the mismatch above suggests the todo file should have been updated alongside the code/docs it accompanies per repo convention (todo + lessons pairing meant to track live progress).",
+          "claimType": "presence",
+          "evidence": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md lines 62-69"
+        }
+      ]
+    ],
+    "samples_run": 1,
+    "samples_ok": 1,
+    "agreement": "single",
+    "severity_counts": {
+      "critical": 0,
+      "major": 0,
+      "minor": 1,
+      "nit": 1
+    },
+    "confidence_counts": {
+      "high": 1,
+      "medium": 1,
+      "low": 0,
+      "unknown": 0
+    }
+  },
+  "error": null
+}

@@ -1,0 +1,143 @@
+{
+  "run_id": "detection-2",
+  "stage_id": "detection",
+  "fixture_ref": "pr-549::detection::security",
+  "item_id": "pr-549",
+  "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+  "stage_version": "2026-07-31-samplecount__stagepilot",
+  "timestamp": "2026-07-31T00:29:02.293Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 0.5069788,
+  "weighted_tokens": 57548,
+  "raw_tokens": 239100,
+  "duration_ms": 340781,
+  "turns": 23,
+  "calls": 2,
+  "output": {
+    "union": [
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 20,
+        "summary": "ReDoS: hand-rolled `asciiTrim` uses the classic quadratic trim regex `/^[ws]+|[ws]+$/g` on attacker-controlled note content",
+        "evidence": "Line 19-23 introduces `const ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` and applies it (line 22, via `asciiTrim` called at the `const content = asciiTrim(state.getLines(...))` site in `lheadingRule`) to the raw text of a setext heading — i.e. arbitrary note body text. The trailing alternative `[ws]+$` is the well-known quadratic trim pattern (same shape as CVE-2021-33623 `trim-newlines`, and the `validator.js` trim ReDoS): for a run of k whitespace characters not followed by end-of-string, the engine tries a greedy match from every one of the k start offsets and backtracks O(k) times each, giving O(k^2). Attack: a collaborator (notes content lives in a shared Yorkie doc, so content is remote-supplied) writes a heading paragraph containing a long whitespace run followed by a non-space char, then a `===`/`---` underline, e.g. `'x' + ' '.repeat(300000) + 'y\\n===' `. Every keystroke re-renders the preview and re-runs the regex, freezing the renderer thread (browser tab hang / denial of service) for anyone who opens the note. Upstream markdown-it uses `String.prototype.trim()` here, which is linear; the reimplementation is what introduces the amplification. Fix: use `.trim()` or an index-scan trim rather than a backtracking regex.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 74,
+        "summary": "Vendored copy of markdown-it's `lheading` rule forks parser internals: future upstream security/robustness fixes to that rule will silently not apply to the notes preview",
+        "evidence": "`const lheadingRule: BlockRule = (state, startLine, endLine) => { ... }` (lines 74-155) is a verbatim re-implementation of markdown-it 14.x `rules_block/lheading.mjs`, installed over the real rule with `md.block.ruler.at('lheading', lheadingRule)` (line 175). markdown-it is a security-sensitive dependency for the notes preview (it is the component that keeps untrusted note text out of the HTML sink, together with `html:false`). Any hardening upstream ships in `lheading` (bounds/indent handling, pathological-input fixes) is now bypassed for this pipeline, and a `npm audit`/dependency bump will read as remediated while the forked copy still runs. This is a maintenance/supply-chain hardening concern rather than an exploitable bug today: the copy looks faithful and pushes `heading_open`/`inline`/`heading_close` tokens with `level` constrained to 1 or 2, so no raw-HTML sink is opened. Prefer wrapping/delegating to the original rule (as is done for `list`) instead of copying its body.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 205,
+        "summary": "`getRuleFn` reads markdown-it's private `__rules__` registry and throws at plugin-install time; a dependency bump can hard-fail the notes preview (availability)",
+        "evidence": "Lines 205-212 cast `md.block.ruler` to `{ __rules__: Array<...> }` and `throw new Error('markdown-it block rule not found: ' + name)` if the private field shape changes. `listEmptyBulletPlugin` is installed at module scope in `preview.ts` (`md.use(listEmptyBulletPlugin)`), so a markdown-it upgrade that renames/reshapes `__rules__` turns this into a throw during module evaluation, taking down the whole notes preview module rather than degrading one rule. Not remotely triggerable, so impact is limited to availability after a dependency change; noted as hardening (fail soft, or resolve the rule via a documented API/`md.block.ruler.getRules()` chain).",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 184,
+        "summary": "`wrappedList` reports a paragraph terminator in silent mode without applying the indent/code-block preconditions the real `list` rule enforces, so parse state can diverge from what any later non-silent rule will do",
+        "evidence": "Lines 184-192: in silent mode the wrapper returns `true` purely on `state.parentType === 'paragraph' && isEmptyBulletLine(state, startLine)`, never delegating to `originalList`. `isEmptyBulletLine` (lines 41-63) only checks `state.sCount[line] >= state.blkIndent`; it does not apply markdown-it's `sCount - blkIndent >= 4` code-block precondition or the `state.listIndent` guard that the real `list` rule applies. Consequence: the paragraph is told to terminate at a line the `list` rule would then refuse non-silently (e.g. a lone `-` indented 4+ columns past `blkIndent`, which the `code` rule claims instead). I traced markdown-it's block tokenizer and the `paragraph` fallback always consumes at least the terminating line, so I could NOT construct an input that reaches the `'block rule didn't increment state.line'` / `'none of the block rules matched'` throws — a throw there would surface as an uncaught exception in `NotePreview.render()` and a persistent, content-triggered breakage of the preview for every viewer of the doc. Reporting at low confidence as a potential render-time DoS; mirroring the real rule's indent preconditions in `isEmptyBulletLine` would close it regardless.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "summary": "Re-implemented `asciiTrim` uses a quadratic-backtracking regex on attacker-influenceable note content (potential renderer hang)",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 20,
+        "evidence": "`ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` is applied via `str.replace` to `state.getLines(...)` output for every setext heading candidate (line 22, used at the `const content = asciiTrim(...)` call in `lheadingRule`). The trailing alternative `[ws]+$` is retried at every offset inside a whitespace run, and each attempt backtracks the whole run, giving O(k^2) work for a run of k whitespace characters that is not at end-of-string. A collaborator on a shared Yorkie note can write a setext-heading paragraph containing one very long run of spaces/tabs (e.g. `A` + 200k spaces + `x` then `===`), making every other participant's preview render block the main thread on a single regex. Impact is a client-side hang only (no data exposure), and markdown-it's own parsing of the same input already costs linear-ish work, so exploitability as a real DoS is unconfirmed. Using `String.prototype.replace` with a non-backtracking scan (manual index walk, or two anchored single-pass slices) removes the quadratic term. Note: I could not read the actual file — only the `scripts`-level tree was materialized in this checkout — so the line reference comes from the diff.",
+        "searchedFor": []
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 20,
+          "summary": "ReDoS: hand-rolled `asciiTrim` uses the classic quadratic trim regex `/^[ws]+|[ws]+$/g` on attacker-controlled note content",
+          "evidence": "Line 19-23 introduces `const ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` and applies it (line 22, via `asciiTrim` called at the `const content = asciiTrim(state.getLines(...))` site in `lheadingRule`) to the raw text of a setext heading — i.e. arbitrary note body text. The trailing alternative `[ws]+$` is the well-known quadratic trim pattern (same shape as CVE-2021-33623 `trim-newlines`, and the `validator.js` trim ReDoS): for a run of k whitespace characters not followed by end-of-string, the engine tries a greedy match from every one of the k start offsets and backtracks O(k) times each, giving O(k^2). Attack: a collaborator (notes content lives in a shared Yorkie doc, so content is remote-supplied) writes a heading paragraph containing a long whitespace run followed by a non-space char, then a `===`/`---` underline, e.g. `'x' + ' '.repeat(300000) + 'y\\n===' `. Every keystroke re-renders the preview and re-runs the regex, freezing the renderer thread (browser tab hang / denial of service) for anyone who opens the note. Upstream markdown-it uses `String.prototype.trim()` here, which is linear; the reimplementation is what introduces the amplification. Fix: use `.trim()` or an index-scan trim rather than a backtracking regex.",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 74,
+          "summary": "Vendored copy of markdown-it's `lheading` rule forks parser internals: future upstream security/robustness fixes to that rule will silently not apply to the notes preview",
+          "evidence": "`const lheadingRule: BlockRule = (state, startLine, endLine) => { ... }` (lines 74-155) is a verbatim re-implementation of markdown-it 14.x `rules_block/lheading.mjs`, installed over the real rule with `md.block.ruler.at('lheading', lheadingRule)` (line 175). markdown-it is a security-sensitive dependency for the notes preview (it is the component that keeps untrusted note text out of the HTML sink, together with `html:false`). Any hardening upstream ships in `lheading` (bounds/indent handling, pathological-input fixes) is now bypassed for this pipeline, and a `npm audit`/dependency bump will read as remediated while the forked copy still runs. This is a maintenance/supply-chain hardening concern rather than an exploitable bug today: the copy looks faithful and pushes `heading_open`/`inline`/`heading_close` tokens with `level` constrained to 1 or 2, so no raw-HTML sink is opened. Prefer wrapping/delegating to the original rule (as is done for `list`) instead of copying its body.",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 205,
+          "summary": "`getRuleFn` reads markdown-it's private `__rules__` registry and throws at plugin-install time; a dependency bump can hard-fail the notes preview (availability)",
+          "evidence": "Lines 205-212 cast `md.block.ruler` to `{ __rules__: Array<...> }` and `throw new Error('markdown-it block rule not found: ' + name)` if the private field shape changes. `listEmptyBulletPlugin` is installed at module scope in `preview.ts` (`md.use(listEmptyBulletPlugin)`), so a markdown-it upgrade that renames/reshapes `__rules__` turns this into a throw during module evaluation, taking down the whole notes preview module rather than degrading one rule. Not remotely triggerable, so impact is limited to availability after a dependency change; noted as hardening (fail soft, or resolve the rule via a documented API/`md.block.ruler.getRules()` chain).",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 184,
+          "summary": "`wrappedList` reports a paragraph terminator in silent mode without applying the indent/code-block preconditions the real `list` rule enforces, so parse state can diverge from what any later non-silent rule will do",
+          "evidence": "Lines 184-192: in silent mode the wrapper returns `true` purely on `state.parentType === 'paragraph' && isEmptyBulletLine(state, startLine)`, never delegating to `originalList`. `isEmptyBulletLine` (lines 41-63) only checks `state.sCount[line] >= state.blkIndent`; it does not apply markdown-it's `sCount - blkIndent >= 4` code-block precondition or the `state.listIndent` guard that the real `list` rule applies. Consequence: the paragraph is told to terminate at a line the `list` rule would then refuse non-silently (e.g. a lone `-` indented 4+ columns past `blkIndent`, which the `code` rule claims instead). I traced markdown-it's block tokenizer and the `paragraph` fallback always consumes at least the terminating line, so I could NOT construct an input that reaches the `'block rule didn't increment state.line'` / `'none of the block rules matched'` throws — a throw there would surface as an uncaught exception in `NotePreview.render()` and a persistent, content-triggered breakage of the preview for every viewer of the doc. Reporting at low confidence as a potential render-time DoS; mirroring the real rule's indent preconditions in `isEmptyBulletLine` would close it regardless.",
+          "searchedFor": []
+        }
+      ],
+      [
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "summary": "Re-implemented `asciiTrim` uses a quadratic-backtracking regex on attacker-influenceable note content (potential renderer hang)",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 20,
+          "evidence": "`ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` is applied via `str.replace` to `state.getLines(...)` output for every setext heading candidate (line 22, used at the `const content = asciiTrim(...)` call in `lheadingRule`). The trailing alternative `[ws]+$` is retried at every offset inside a whitespace run, and each attempt backtracks the whole run, giving O(k^2) work for a run of k whitespace characters that is not at end-of-string. A collaborator on a shared Yorkie note can write a setext-heading paragraph containing one very long run of spaces/tabs (e.g. `A` + 200k spaces + `x` then `===`), making every other participant's preview render block the main thread on a single regex. Impact is a client-side hang only (no data exposure), and markdown-it's own parsing of the same input already costs linear-ish work, so exploitability as a real DoS is unconfirmed. Using `String.prototype.replace` with a non-backtracking scan (manual index walk, or two anchored single-pass slices) removes the quadratic term. Note: I could not read the actual file — only the `scripts`-level tree was materialized in this checkout — so the line reference comes from the diff.",
+          "searchedFor": []
+        }
+      ]
+    ],
+    "samples_run": 2,
+    "samples_ok": 2,
+    "agreement": "disjoint",
+    "severity_counts": {
+      "critical": 0,
+      "major": 1,
+      "minor": 4,
+      "nit": 0
+    },
+    "confidence_counts": {
+      "high": 0,
+      "medium": 3,
+      "low": 2,
+      "unknown": 0
+    }
+  },
+  "error": null
+}

@@ -1,0 +1,435 @@
+{
+  "run_id": "detection-1",
+  "stage_id": "detection",
+  "fixture_ref": "pr-549::detection::design-fit",
+  "item_id": "pr-549",
+  "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+  "stage_version": "2026-07-31-samplecount__stagepilot",
+  "timestamp": "2026-07-31T00:02:18.319Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 1.2523023,
+  "weighted_tokens": 241062,
+  "raw_tokens": 1115815,
+  "duration_ms": 369840,
+  "turns": 51,
+  "calls": 2,
+  "output": {
+    "union": [
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 105,
+        "summary": "Fix silently kills the single-dash setext heading (`Heading` + `-`) everywhere in the preview — broader than the reported bug",
+        "evidence": "`const isLoneDash = marker === DASH && runLength === 1;` disables setext-underline recognition for ANY lone `-`, not just an indented empty bullet nested under a list item. In CommonMark `Heading\\n-` is a perfectly valid `<h2>` (the same construct as `Heading\\n---`). The issue (#517) is scoped to \"an indented, empty nested list item\" under a parent `- 1`; nothing in it asks for top-level `Heading\\n-` to stop being a heading. The design-doc text added by this PR (docs/design/notes/notes.md:297-299) says \"Multi-dash `---` and `=` setext underlines are untouched, so ordinary setext headings still render\", which understates the loss: single-dash setext H2s no longer render, and the new tests only cover the `---` form (preview.test.ts 'preserves multi-dash setext headings'). Existing notes containing `Title\\n-` will re-render as a paragraph followed by an empty bullet list. This is unrequested behavior change / scope creep beyond the issue's outcome.",
+        "searchedFor": []
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 70,
+        "summary": "Vendors a ~70-line verbatim fork of markdown-it's upstream `lheading` rule instead of wrapping/reusing it",
+        "evidence": "`const lheadingRule: BlockRule = ...` is, by its own comment (line 67: \"Mirrors the upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a single added guard\"), a copy of dependency-internal parser code with one extra `if`. packages/notes depends on `\"markdown-it\": \"^14.1.0\"` (packages/notes/package.json:63), a floating caret range, so any upstream fix to `lheading` (blockquote/lazy-continuation quirks, token map changes) silently stops applying to the notes preview. The repo's own precedent for extending the preview parser is the additive `md.block.ruler.before('paragraph', 'details', …)` in packages/notes/src/view/details-plugin.ts:104 — no upstream rule is forked there. The file already has `getRuleFn` (line 207) to delegate to the stock `list` rule, so the same delegate-and-guard shape was available for `lheading` too; duplicating the whole rule is reinvention of code that already exists in the dependency.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 208,
+        "summary": "Reaches into markdown-it's private `__rules__` registry to obtain the `list` rule function",
+        "evidence": "`const ruler = md.block.ruler as unknown as { __rules__: … }` (with the comment \"markdown-it's Ruler exposes no public getter, so we read its private `__rules__` registry\"). This couples a first-party plugin to an undocumented internal of a caret-ranged dependency; if the field is renamed the plugin throws at module init (`markdown-it block rule not found`) and the whole notes preview dies, not just the empty-bullet case. The alternative supported layer — registering an additional rule with `ruler.before('list', …)` / `ruler.before('paragraph', …)`, as details-plugin.ts does — was not used or discussed in the task plan.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 36,
+        "summary": "Paragraph-interrupt relaxation also covers `*` and `+` empty bullets, wider than the issue or the documented \"narrow\" deviation",
+        "evidence": "`isEmptyBulletLine` accepts `-`, `*` and `+` (`if (marker !== DASH && marker !== 0x2a && marker !== 0x2b) return false;`). Only `-` has the setext ambiguity described in issue #517; `*`/`+` empty bullets never produced an `<h2>` and were only refused as paragraph interrupters by CommonMark's empty-item rule. Allowing them widens the CommonMark deviation for cases nobody reported, and the design-doc wording added here calls the deviation \"deliberate and narrow\" around \"a lone single `-`\" (docs/design/notes/notes.md:293-296) without mentioning `*`/`+`. No test or acceptance criterion covers them either.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "absence",
+        "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+        "line": 62,
+        "summary": "Planned verification case \"top-level lone dash\" from the task plan was not delivered",
+        "evidence": "The plan's Steps list unit tests for \"(bug case, workaround, `---` setext still works, non-empty nested list unaffected, top-level lone dash)\". The five tests added to packages/notes/src/view/preview.test.ts cover every item except the top-level lone dash — which is precisely the case where this change deviates most from CommonMark (`Heading\\n-` no longer an `<h2>`). The delivered behavior for that input is therefore neither pinned nor acknowledged anywhere.",
+        "searchedFor": [
+          "read packages/notes/src/view/preview.test.ts in full",
+          "grep for 'lone' / 'setext' in packages/notes",
+          "grep for 'Heading' in preview.test.ts"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md",
+        "line": 23,
+        "summary": "Task docs shipped in a half-finished state: unchecked steps and a placeholder Follow-ups section, while the design doc already declares the feature \"shipped\"",
+        "evidence": "The lessons file ends with \"## Follow-ups\\n\\n- (fill in during/after review)\", and the todo file leaves every implementation step unchecked (`- [ ] Add packages/notes/src/view/list-empty-bullet-plugin.ts`, `- [ ] Wire it into preview.ts`, `- [ ] Unit tests …`, `- [ ] Note the deviation in docs/design/notes/notes.md`) even though all of those landed in this same diff, and docs/design/notes/notes.md:276 labels the change \"shipped (issue #517)\". CONTRIBUTING.md:142-143 / CLAUDE.md:64 expect the paired task docs to reflect reality before merge.",
+        "searchedFor": []
+      },
+      {
+        "severity": "nit",
+        "confidence": "low",
+        "claimType": "absence",
+        "file": "docs/tasks/README.md",
+        "line": 21,
+        "summary": "Active-task index not regenerated for the new todo/lessons pair",
+        "evidence": "docs/tasks/README.md's \"Active Tasks\" table lists the other 2026-07 task pairs but not `20260724-notes-empty-bullet-setext-*`; `pnpm tasks:index` (CLAUDE.md:64, docs/tasks/README.md:9) was not run. Weak signal: a couple of other recent active tasks (e.g. 20260727-agent-metrics-cost-weighting-todo.md) are also missing from the table, so the index appears to be regenerated at archive time rather than per PR.",
+        "searchedFor": [
+          "glob docs/tasks/active/*.md",
+          "read docs/tasks/README.md"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/editor.ts",
+        "line": 200,
+        "summary": "Only the preview half of the notes editor deviates; the CodeMirror source pane still parses the lone `-` as a setext underline",
+        "evidence": "The editor pane is built with `markdown()` from `@codemirror/lang-markdown` (lezer-markdown, strict CommonMark), which will keep highlighting `- 1` / `  -` as a setext heading while the preview now renders a nested empty bullet. The change introduces a source-pane vs preview-pane disagreement inside the same feature, and neither the design-doc section nor the task plan records that as a known limitation or a follow-up.",
+        "searchedFor": [
+          "grep 'markdown|lang-markdown|setext|heading' in packages/notes/src/view/editor.ts",
+          "grep 'list|bullet|Enter' in packages/notes/src/view/commands.ts",
+          "glob packages/notes/src/**/*.ts"
+        ]
+      },
+      {
+        "severity": "major",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 126,
+        "summary": "Fix is broader than the issue: single-dash setext H2 (`Heading\\n-`) is now impossible anywhere in the notes preview, not just inside a list",
+        "evidence": "`const isLoneDash = marker === DASH && runLength === 1; if (pos >= max && !isLoneDash) { level = ... }` — the guard is unconditional on context: it applies at top level, at any indent, with or without a surrounding list. So a perfectly ordinary and valid CommonMark H2 written as `Title\\n-` stops rendering as a heading and instead becomes a paragraph plus an empty bullet. The issue (#517) only asks that an *indented, empty nested bullet under a list item* not restyle its parent; nothing in it asks to drop single-dash setext headings. The plugin's own acceptance criteria only protect the multi-dash form (`Heading\\n---`, see docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:70), so the single-dash regression is accepted silently rather than scoped out. A narrower condition (dash line indented relative to / inside an open list item, or `state.parentType`/blkIndent-aware) would satisfy the issue without regressing an unrelated documented Markdown construct.",
+        "searchedFor": []
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 80,
+        "summary": "Vendored fork of markdown-it's upstream `lheading` rule (~70 lines copied) instead of wrapping/delegating like the `list` rule does in the same file",
+        "evidence": "`const lheadingRule: BlockRule = (state, startLine, endLine) => { ... }` is, per its own comment, a copy of \"upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a single added guard\", including a re-implementation of markdown-it's internal `asciiTrim` (line 17-22) and the token-pushing/`parentType` bookkeeping. The same file already demonstrates the non-duplicating pattern for `list` (`getRuleFn(md, 'list')` + `wrappedList` delegating to `originalList`), and a wrap-and-rollback or a pre-`lheading` guard rule would avoid holding a copy of third-party parser code. As written, any markdown-it upgrade silently diverges from the vendored copy with no test that can detect the drift. This is duplication of an existing (upstream) module rather than reuse, which this repo's reuse expectation disfavours.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 36,
+        "summary": "Unrequested scope: the paragraph-interrupt relaxation also covers `*` and `+` empty bullets, which are not implicated by the setext ambiguity",
+        "evidence": "`if (marker !== DASH && marker !== 0x2a /* * */ && marker !== 0x2b /* + */) return false;` in `isEmptyBulletLine`. Only `-` can be a setext underline, so only `-` is needed for issue #517. Allowing empty `*`/`+` bullets to interrupt a paragraph changes rendering for inputs the issue never mentions (e.g. `foo\\n*` becomes paragraph + empty list instead of a single paragraph), a CommonMark deviation with no acceptance criterion and no test behind it.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 205,
+        "summary": "Approach relies on markdown-it's private `__rules__` registry when a public-API path exists",
+        "evidence": "`const ruler = md.block.ruler as unknown as { __rules__: Array<{ name: string; fn: BlockRule; enabled: boolean }> };` plus the manual `alt: ['paragraph','reference','blockquote']` restoration hazard documented at line 196-200. The same effect is reachable through the public `md.block.ruler.before('list', '<name>', fn, { alt: ['paragraph'] })`: a new rule that returns true in silent mode for an empty bullet and false otherwise, letting the stock `list` rule run untouched. Reaching into an undocumented internal is a wrong-layer choice that couples the notes preview to markdown-it's internal shape.",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "absence",
+        "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+        "line": 60,
+        "summary": "Generated tasks index (`docs/tasks/README.md`) not regenerated for the two new active task files",
+        "evidence": "tasks-index.mjs writes `docs/tasks/README.md` with an \"Active Tasks\" table built from `docs/tasks/active/` (tasks-index.mjs:163-197, 213), and the repo workflow says to run `pnpm tasks:index` (hooks/session-prime.sh:15, hooks/post-task-reminder.sh:24). The diff adds `20260724-notes-empty-bullet-setext-todo.md` and `-lessons.md` under docs/tasks/active/ but contains no change to docs/tasks/README.md, so the index does not link the new task records.",
+        "searchedFor": [
+          "Grep 'tasks:index|docs/tasks|tasks/README' across working tree",
+          "Read scripts/tasks-index.mjs",
+          "Read scripts/tasks-archive.mjs",
+          "Read hooks/session-prime.sh, hooks/post-task-reminder.sh",
+          "diff inspection for docs/tasks/README.md changes"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+        "line": 57,
+        "summary": "Task record contradicts the shipped diff: steps that this PR completes are still unchecked, and the lessons file ships a placeholder",
+        "evidence": "Steps `- [ ] Add packages/notes/src/view/list-empty-bullet-plugin.ts`, `- [ ] Wire it into preview.ts`, `- [ ] Unit tests in preview.test.ts`, `- [ ] Note the deviation in docs/design/notes/notes.md` are all unchecked although the diff performs each of them; and 20260724-notes-empty-bullet-setext-lessons.md:24 ships `- (fill in during/after review)` as its only Follow-up. The task record is the repo's plan/review artefact, so shipping it stale/placeholder undercuts its purpose (and keeps the task pinned \"active\" via tasks-archive.mjs's unchecked-todo test at tasks-archive.mjs:12,94).",
+        "searchedFor": []
+      },
+      {
+        "severity": "nit",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "docs/design/notes/notes.md",
+        "line": 276,
+        "summary": "Same rationale duplicated near-verbatim across three docs",
+        "evidence": "The \"two upstream guards conspire\" / \"lone single `-` is not a setext underline\" explanation appears in docs/design/notes/notes.md:276-299, docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:19-49 and ...-lessons.md:9-22, in addition to the ~40 lines of the same prose in the plugin's own doc comments (list-empty-bullet-plugin.ts:60-78, 160-176). The canonical design doc is the right home; the triplication is what drifts later.",
+        "searchedFor": []
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/preview.ts",
+        "line": 47,
+        "summary": "Fix may only cover the preview render path; other markdown render/highlight surfaces (editor decorations, any other MarkdownIt instance) could still show the parent as an H2",
+        "evidence": "The plugin is registered on the single module-level `md` instance in packages/notes/src/view/preview.ts (`md.use(listEmptyBulletPlugin);`). The issue reports the user-visible symptom generically (\"its text inadvertently takes on Header 2 styling\"), which in a notes app can also come from the editor's own Markdown syntax highlighting or from a second MarkdownIt instance used for export/share/print. I could not verify there is only one render path because the package sources are not present in the working tree I can search (only the repo's scripts/ directory materialized), so this is a suspicion for the verifier to confirm or refute by grepping for other `new MarkdownIt(` / markdown heading decorations under packages/.",
+        "searchedFor": [
+          "Glob 'packages/notes/src/view/*.ts' (no files - tree not materialized)",
+          "Glob 'docs/design/**/*.md' (no files)",
+          "Glob '**/notes/**', '**/docs/**' (no files)",
+          "Grep 'wafflebase' across working tree (only agent/ + scripts/ hits)"
+        ]
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "claimType": "absence",
+        "file": "docs/design/notes/notes.md",
+        "line": 296,
+        "summary": "Unverified: deliberate CommonMark deviation may conflict with a stated Non-Goal in the notes design doc",
+        "evidence": "The added section states \"makes the notes preview deviate — deliberately and narrowly\" from CommonMark. Notes/markdown subsystem design docs in this repo commonly declare a \"standard CommonMark/GFM, no custom dialect\" Non-Goal; if docs/design/notes/notes.md carries such a Non-Goal, introducing a forked block rule exceeds it and the Non-Goals section itself would need amending, not just an appended \"shipped\" note. I could not read the doc (packages/ and docs/ are absent from the searchable tree), so the verifier should check the Non-Goals section of docs/design/notes/notes.md and whether docs/design/README.md needs any entry change.",
+        "searchedFor": [
+          "Glob 'docs/design/**/*.md' (no files - tree not materialized)",
+          "Glob '**/docs/**' (no files)",
+          "diff inspection: only an appended subsection to notes.md, no Non-Goals edit, no docs/design/README.md change"
+        ]
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 105,
+          "summary": "Fix silently kills the single-dash setext heading (`Heading` + `-`) everywhere in the preview — broader than the reported bug",
+          "evidence": "`const isLoneDash = marker === DASH && runLength === 1;` disables setext-underline recognition for ANY lone `-`, not just an indented empty bullet nested under a list item. In CommonMark `Heading\\n-` is a perfectly valid `<h2>` (the same construct as `Heading\\n---`). The issue (#517) is scoped to \"an indented, empty nested list item\" under a parent `- 1`; nothing in it asks for top-level `Heading\\n-` to stop being a heading. The design-doc text added by this PR (docs/design/notes/notes.md:297-299) says \"Multi-dash `---` and `=` setext underlines are untouched, so ordinary setext headings still render\", which understates the loss: single-dash setext H2s no longer render, and the new tests only cover the `---` form (preview.test.ts 'preserves multi-dash setext headings'). Existing notes containing `Title\\n-` will re-render as a paragraph followed by an empty bullet list. This is unrequested behavior change / scope creep beyond the issue's outcome.",
+          "searchedFor": []
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 70,
+          "summary": "Vendors a ~70-line verbatim fork of markdown-it's upstream `lheading` rule instead of wrapping/reusing it",
+          "evidence": "`const lheadingRule: BlockRule = ...` is, by its own comment (line 67: \"Mirrors the upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a single added guard\"), a copy of dependency-internal parser code with one extra `if`. packages/notes depends on `\"markdown-it\": \"^14.1.0\"` (packages/notes/package.json:63), a floating caret range, so any upstream fix to `lheading` (blockquote/lazy-continuation quirks, token map changes) silently stops applying to the notes preview. The repo's own precedent for extending the preview parser is the additive `md.block.ruler.before('paragraph', 'details', …)` in packages/notes/src/view/details-plugin.ts:104 — no upstream rule is forked there. The file already has `getRuleFn` (line 207) to delegate to the stock `list` rule, so the same delegate-and-guard shape was available for `lheading` too; duplicating the whole rule is reinvention of code that already exists in the dependency.",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 208,
+          "summary": "Reaches into markdown-it's private `__rules__` registry to obtain the `list` rule function",
+          "evidence": "`const ruler = md.block.ruler as unknown as { __rules__: … }` (with the comment \"markdown-it's Ruler exposes no public getter, so we read its private `__rules__` registry\"). This couples a first-party plugin to an undocumented internal of a caret-ranged dependency; if the field is renamed the plugin throws at module init (`markdown-it block rule not found`) and the whole notes preview dies, not just the empty-bullet case. The alternative supported layer — registering an additional rule with `ruler.before('list', …)` / `ruler.before('paragraph', …)`, as details-plugin.ts does — was not used or discussed in the task plan.",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 36,
+          "summary": "Paragraph-interrupt relaxation also covers `*` and `+` empty bullets, wider than the issue or the documented \"narrow\" deviation",
+          "evidence": "`isEmptyBulletLine` accepts `-`, `*` and `+` (`if (marker !== DASH && marker !== 0x2a && marker !== 0x2b) return false;`). Only `-` has the setext ambiguity described in issue #517; `*`/`+` empty bullets never produced an `<h2>` and were only refused as paragraph interrupters by CommonMark's empty-item rule. Allowing them widens the CommonMark deviation for cases nobody reported, and the design-doc wording added here calls the deviation \"deliberate and narrow\" around \"a lone single `-`\" (docs/design/notes/notes.md:293-296) without mentioning `*`/`+`. No test or acceptance criterion covers them either.",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "absence",
+          "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+          "line": 62,
+          "summary": "Planned verification case \"top-level lone dash\" from the task plan was not delivered",
+          "evidence": "The plan's Steps list unit tests for \"(bug case, workaround, `---` setext still works, non-empty nested list unaffected, top-level lone dash)\". The five tests added to packages/notes/src/view/preview.test.ts cover every item except the top-level lone dash — which is precisely the case where this change deviates most from CommonMark (`Heading\\n-` no longer an `<h2>`). The delivered behavior for that input is therefore neither pinned nor acknowledged anywhere.",
+          "searchedFor": [
+            "read packages/notes/src/view/preview.test.ts in full",
+            "grep for 'lone' / 'setext' in packages/notes",
+            "grep for 'Heading' in preview.test.ts"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md",
+          "line": 23,
+          "summary": "Task docs shipped in a half-finished state: unchecked steps and a placeholder Follow-ups section, while the design doc already declares the feature \"shipped\"",
+          "evidence": "The lessons file ends with \"## Follow-ups\\n\\n- (fill in during/after review)\", and the todo file leaves every implementation step unchecked (`- [ ] Add packages/notes/src/view/list-empty-bullet-plugin.ts`, `- [ ] Wire it into preview.ts`, `- [ ] Unit tests …`, `- [ ] Note the deviation in docs/design/notes/notes.md`) even though all of those landed in this same diff, and docs/design/notes/notes.md:276 labels the change \"shipped (issue #517)\". CONTRIBUTING.md:142-143 / CLAUDE.md:64 expect the paired task docs to reflect reality before merge.",
+          "searchedFor": []
+        },
+        {
+          "severity": "nit",
+          "confidence": "low",
+          "claimType": "absence",
+          "file": "docs/tasks/README.md",
+          "line": 21,
+          "summary": "Active-task index not regenerated for the new todo/lessons pair",
+          "evidence": "docs/tasks/README.md's \"Active Tasks\" table lists the other 2026-07 task pairs but not `20260724-notes-empty-bullet-setext-*`; `pnpm tasks:index` (CLAUDE.md:64, docs/tasks/README.md:9) was not run. Weak signal: a couple of other recent active tasks (e.g. 20260727-agent-metrics-cost-weighting-todo.md) are also missing from the table, so the index appears to be regenerated at archive time rather than per PR.",
+          "searchedFor": [
+            "glob docs/tasks/active/*.md",
+            "read docs/tasks/README.md"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/editor.ts",
+          "line": 200,
+          "summary": "Only the preview half of the notes editor deviates; the CodeMirror source pane still parses the lone `-` as a setext underline",
+          "evidence": "The editor pane is built with `markdown()` from `@codemirror/lang-markdown` (lezer-markdown, strict CommonMark), which will keep highlighting `- 1` / `  -` as a setext heading while the preview now renders a nested empty bullet. The change introduces a source-pane vs preview-pane disagreement inside the same feature, and neither the design-doc section nor the task plan records that as a known limitation or a follow-up.",
+          "searchedFor": [
+            "grep 'markdown|lang-markdown|setext|heading' in packages/notes/src/view/editor.ts",
+            "grep 'list|bullet|Enter' in packages/notes/src/view/commands.ts",
+            "glob packages/notes/src/**/*.ts"
+          ]
+        }
+      ],
+      [
+        {
+          "severity": "major",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 126,
+          "summary": "Fix is broader than the issue: single-dash setext H2 (`Heading\\n-`) is now impossible anywhere in the notes preview, not just inside a list",
+          "evidence": "`const isLoneDash = marker === DASH && runLength === 1; if (pos >= max && !isLoneDash) { level = ... }` — the guard is unconditional on context: it applies at top level, at any indent, with or without a surrounding list. So a perfectly ordinary and valid CommonMark H2 written as `Title\\n-` stops rendering as a heading and instead becomes a paragraph plus an empty bullet. The issue (#517) only asks that an *indented, empty nested bullet under a list item* not restyle its parent; nothing in it asks to drop single-dash setext headings. The plugin's own acceptance criteria only protect the multi-dash form (`Heading\\n---`, see docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:70), so the single-dash regression is accepted silently rather than scoped out. A narrower condition (dash line indented relative to / inside an open list item, or `state.parentType`/blkIndent-aware) would satisfy the issue without regressing an unrelated documented Markdown construct.",
+          "searchedFor": []
+        },
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 80,
+          "summary": "Vendored fork of markdown-it's upstream `lheading` rule (~70 lines copied) instead of wrapping/delegating like the `list` rule does in the same file",
+          "evidence": "`const lheadingRule: BlockRule = (state, startLine, endLine) => { ... }` is, per its own comment, a copy of \"upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a single added guard\", including a re-implementation of markdown-it's internal `asciiTrim` (line 17-22) and the token-pushing/`parentType` bookkeeping. The same file already demonstrates the non-duplicating pattern for `list` (`getRuleFn(md, 'list')` + `wrappedList` delegating to `originalList`), and a wrap-and-rollback or a pre-`lheading` guard rule would avoid holding a copy of third-party parser code. As written, any markdown-it upgrade silently diverges from the vendored copy with no test that can detect the drift. This is duplication of an existing (upstream) module rather than reuse, which this repo's reuse expectation disfavours.",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 36,
+          "summary": "Unrequested scope: the paragraph-interrupt relaxation also covers `*` and `+` empty bullets, which are not implicated by the setext ambiguity",
+          "evidence": "`if (marker !== DASH && marker !== 0x2a /* * */ && marker !== 0x2b /* + */) return false;` in `isEmptyBulletLine`. Only `-` can be a setext underline, so only `-` is needed for issue #517. Allowing empty `*`/`+` bullets to interrupt a paragraph changes rendering for inputs the issue never mentions (e.g. `foo\\n*` becomes paragraph + empty list instead of a single paragraph), a CommonMark deviation with no acceptance criterion and no test behind it.",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 205,
+          "summary": "Approach relies on markdown-it's private `__rules__` registry when a public-API path exists",
+          "evidence": "`const ruler = md.block.ruler as unknown as { __rules__: Array<{ name: string; fn: BlockRule; enabled: boolean }> };` plus the manual `alt: ['paragraph','reference','blockquote']` restoration hazard documented at line 196-200. The same effect is reachable through the public `md.block.ruler.before('list', '<name>', fn, { alt: ['paragraph'] })`: a new rule that returns true in silent mode for an empty bullet and false otherwise, letting the stock `list` rule run untouched. Reaching into an undocumented internal is a wrong-layer choice that couples the notes preview to markdown-it's internal shape.",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "absence",
+          "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+          "line": 60,
+          "summary": "Generated tasks index (`docs/tasks/README.md`) not regenerated for the two new active task files",
+          "evidence": "tasks-index.mjs writes `docs/tasks/README.md` with an \"Active Tasks\" table built from `docs/tasks/active/` (tasks-index.mjs:163-197, 213), and the repo workflow says to run `pnpm tasks:index` (hooks/session-prime.sh:15, hooks/post-task-reminder.sh:24). The diff adds `20260724-notes-empty-bullet-setext-todo.md` and `-lessons.md` under docs/tasks/active/ but contains no change to docs/tasks/README.md, so the index does not link the new task records.",
+          "searchedFor": [
+            "Grep 'tasks:index|docs/tasks|tasks/README' across working tree",
+            "Read scripts/tasks-index.mjs",
+            "Read scripts/tasks-archive.mjs",
+            "Read hooks/session-prime.sh, hooks/post-task-reminder.sh",
+            "diff inspection for docs/tasks/README.md changes"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+          "line": 57,
+          "summary": "Task record contradicts the shipped diff: steps that this PR completes are still unchecked, and the lessons file ships a placeholder",
+          "evidence": "Steps `- [ ] Add packages/notes/src/view/list-empty-bullet-plugin.ts`, `- [ ] Wire it into preview.ts`, `- [ ] Unit tests in preview.test.ts`, `- [ ] Note the deviation in docs/design/notes/notes.md` are all unchecked although the diff performs each of them; and 20260724-notes-empty-bullet-setext-lessons.md:24 ships `- (fill in during/after review)` as its only Follow-up. The task record is the repo's plan/review artefact, so shipping it stale/placeholder undercuts its purpose (and keeps the task pinned \"active\" via tasks-archive.mjs's unchecked-todo test at tasks-archive.mjs:12,94).",
+          "searchedFor": []
+        },
+        {
+          "severity": "nit",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "docs/design/notes/notes.md",
+          "line": 276,
+          "summary": "Same rationale duplicated near-verbatim across three docs",
+          "evidence": "The \"two upstream guards conspire\" / \"lone single `-` is not a setext underline\" explanation appears in docs/design/notes/notes.md:276-299, docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:19-49 and ...-lessons.md:9-22, in addition to the ~40 lines of the same prose in the plugin's own doc comments (list-empty-bullet-plugin.ts:60-78, 160-176). The canonical design doc is the right home; the triplication is what drifts later.",
+          "searchedFor": []
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/preview.ts",
+          "line": 47,
+          "summary": "Fix may only cover the preview render path; other markdown render/highlight surfaces (editor decorations, any other MarkdownIt instance) could still show the parent as an H2",
+          "evidence": "The plugin is registered on the single module-level `md` instance in packages/notes/src/view/preview.ts (`md.use(listEmptyBulletPlugin);`). The issue reports the user-visible symptom generically (\"its text inadvertently takes on Header 2 styling\"), which in a notes app can also come from the editor's own Markdown syntax highlighting or from a second MarkdownIt instance used for export/share/print. I could not verify there is only one render path because the package sources are not present in the working tree I can search (only the repo's scripts/ directory materialized), so this is a suspicion for the verifier to confirm or refute by grepping for other `new MarkdownIt(` / markdown heading decorations under packages/.",
+          "searchedFor": [
+            "Glob 'packages/notes/src/view/*.ts' (no files - tree not materialized)",
+            "Glob 'docs/design/**/*.md' (no files)",
+            "Glob '**/notes/**', '**/docs/**' (no files)",
+            "Grep 'wafflebase' across working tree (only agent/ + scripts/ hits)"
+          ]
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "claimType": "absence",
+          "file": "docs/design/notes/notes.md",
+          "line": 296,
+          "summary": "Unverified: deliberate CommonMark deviation may conflict with a stated Non-Goal in the notes design doc",
+          "evidence": "The added section states \"makes the notes preview deviate — deliberately and narrowly\" from CommonMark. Notes/markdown subsystem design docs in this repo commonly declare a \"standard CommonMark/GFM, no custom dialect\" Non-Goal; if docs/design/notes/notes.md carries such a Non-Goal, introducing a forked block rule exceeds it and the Non-Goals section itself would need amending, not just an appended \"shipped\" note. I could not read the doc (packages/ and docs/ are absent from the searchable tree), so the verifier should check the Non-Goals section of docs/design/notes/notes.md and whether docs/design/README.md needs any entry change.",
+          "searchedFor": [
+            "Glob 'docs/design/**/*.md' (no files - tree not materialized)",
+            "Glob '**/docs/**' (no files)",
+            "diff inspection: only an appended subsection to notes.md, no Non-Goals edit, no docs/design/README.md change"
+          ]
+        }
+      ]
+    ],
+    "samples_run": 2,
+    "samples_ok": 2,
+    "agreement": "disjoint",
+    "severity_counts": {
+      "critical": 0,
+      "major": 6,
+      "minor": 9,
+      "nit": 2
+    },
+    "confidence_counts": {
+      "high": 7,
+      "medium": 6,
+      "low": 4,
+      "unknown": 0
+    }
+  },
+  "error": null
+}

@@ -1,0 +1,279 @@
+{
+  "run_id": "detection-2",
+  "stage_id": "detection",
+  "fixture_ref": "pr-549::detection::blast-radius",
+  "item_id": "pr-549",
+  "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+  "stage_version": "2026-07-31-samplecount__stagepilot",
+  "timestamp": "2026-07-31T00:29:02.293Z",
+  "status": "ok",
+  "reason": null,
+  "cost_usd": 1.5589265,
+  "weighted_tokens": 270801,
+  "raw_tokens": 1364151,
+  "duration_ms": 653586,
+  "turns": 59,
+  "calls": 2,
+  "output": {
+    "union": [
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "claimType": "presence",
+        "summary": "Single-dash setext H2 (`Title\\n-`) anywhere in an existing note stops rendering as a heading — a shared-renderer behaviour change beyond the empty-nested-bullet case",
+        "evidence": "The new guard is unconditional on the *shape* of the line, not on being nested: `lheadingRule` rejects any underline where `marker === DASH && runLength === 1` (packages/notes/src/view/list-empty-bullet-plugin.ts:107), and the wrapped `list` then terminates the paragraph for that same line (packages/notes/src/view/list-empty-bullet-plugin.ts:181-191). The `md` singleton it mutates is the one and only renderer for every note (packages/notes/src/view/preview.ts:48, consumed by `NotePreview.render` at packages/notes/src/view/preview.ts:165 and by every editor instance at packages/notes/src/view/editor.ts:150). So pre-existing note content of the form `Title` + `-` on the next line — a valid CommonMark H2 that GitHub and the old preview both rendered as `<h2>` — now renders as a paragraph plus an empty bullet list. Nothing in the diff exercises the top-level lone-dash case (the plan listed it as a test at docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:62 but preview.test.ts only covers `Heading\\n---`, packages/notes/src/view/preview.test.ts:182-187), and the doc added by this change asserts the opposite contract: \"Multi-dash `---` and `=` setext underlines are untouched, so ordinary setext headings still render\" (docs/design/notes/notes.md:296-298). Single-dash setext headings are ordinary setext headings and they no longer render. Fix belongs on the new code (narrow the guard, e.g. only when the dash line is indented relative to an enclosing list item) or on the doc contract.",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 107
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "presence",
+        "summary": "`*` and `+` empty bullets also now interrupt paragraphs, contradicting the documented \"lone single `-`\" scope",
+        "evidence": "`isEmptyBulletLine` accepts `-`, `*` and `+` (packages/notes/src/view/list-empty-bullet-plugin.ts:41-43), and `wrappedList` uses it as the paragraph-terminating condition (packages/notes/src/view/list-empty-bullet-plugin.ts:181-191). So `text` followed by a lone `*` — previously lazy-continuation text `text<br>*` in existing notes — now renders as a paragraph plus an empty `<ul><li></li></ul>`, even though `*` was never involved in the setext ambiguity being fixed. The docs written by this change scope the deviation to a dash only: \"a **lone single `-`** (the empty-bullet shape) is never a setext underline\" (docs/design/notes/notes.md:295-296) and docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:47-49 (\"a *lone single dash*\"). Either the marker set or the documented contract is wrong; the fix belongs on the new code.",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 41
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "presence",
+        "summary": "Source pane and preview pane now disagree: CodeMirror's lezer-markdown still highlights the lone `-` as a setext heading",
+        "evidence": "The editor half of the split view uses `markdown()` from `@codemirror/lang-markdown` (packages/notes/src/view/editor.ts:200), whose lezer-markdown grammar implements strict CommonMark and therefore still styles `- 1` / `  -` as a SetextHeading in the source pane, while the preview built two elements away (packages/notes/src/view/editor.ts:117, re-rendered at packages/notes/src/view/editor.ts:150) no longer produces a heading. This out-of-diff consumer was not updated, so the user sees heading styling on the left and body text on the right for the exact input the fix targets. Same divergence applies to the single-dash setext heading case above (editor shows a heading, preview shows a bullet list).",
+        "file": "packages/notes/src/view/editor.ts",
+        "line": 200
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "claimType": "presence",
+        "summary": "Plugin reads markdown-it's private `__rules__` at module-import time; a throw there takes down the whole notes editor entry point, not just heading rendering",
+        "evidence": "`getRuleFn` reaches into the undocumented `md.block.ruler.__rules__` registry and throws if the shape changes (packages/notes/src/view/list-empty-bullet-plugin.ts:205-213). It runs during `md.use(listEmptyBulletPlugin)` at module scope (packages/notes/src/view/preview.ts:48), i.e. at *import* of preview.ts, which is imported unconditionally by the package's public entry (`initialize` in packages/notes/src/view/editor.ts, re-exported at packages/notes/src/index.ts:12 and consumed by the frontend notes route). markdown-it is depended on with a floating range `\"markdown-it\": \"^14.1.0\"` (packages/notes/package.json:63), so any minor/patch upgrade that renames or restructures `__rules__` (or that changes the copied `lheading` implementation this file forks, packages/notes/src/view/list-empty-bullet-plugin.ts:70-153) fails the whole `/n/:id` route at load rather than degrading one rendering case. Same fragility applies to the hardcoded `alt: ['paragraph','reference','blockquote']` restore (packages/notes/src/view/list-empty-bullet-plugin.ts:197-199): it silently overwrites whatever `alt` chain `list` had at install time, so any future plugin added *before* this one in preview.ts that extends `list`'s alt chain would be quietly undone. Fix belongs on the new code (prefer a supported extension point / pin the dependency).",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 208
+      },
+      {
+        "severity": "minor",
+        "confidence": "low",
+        "claimType": "presence",
+        "summary": "Empty bullet indented 4+ spaces past the block indent now splits an existing paragraph into a code block",
+        "evidence": "`isEmptyBulletLine` only checks `state.sCount[line] < state.blkIndent` (packages/notes/src/view/list-empty-bullet-plugin.ts:33) and omits markdown-it's `sCount - blkIndent >= 4` indented-code guard that the real `list` rule applies before anything else. Because `wrappedList` returns `true` for such a line in silent mode (packages/notes/src/view/list-empty-bullet-plugin.ts:181-191), a paragraph followed by e.g. four-space-indented `-` now terminates at that line and the following line is re-parsed by the `code` rule as an indented code block, where previously it was lazy-continuation text inside the paragraph. This affects arbitrary pre-existing note content unrelated to the nested-bullet fix; I could not run the parser to confirm the resulting token stream, so confidence is low. Fix belongs on the new code.",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 33
+      },
+      {
+        "severity": "major",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 105,
+        "summary": "Single-dash setext H2 (`Heading\\n-`) silently stops being a heading for ALL existing note content, not just nested empty bullets",
+        "evidence": "The guard `const isLoneDash = marker === DASH && runLength === 1;` (packages/notes/src/view/list-empty-bullet-plugin.ts:105) is unconditional — it does not test `state.blkIndent`, `state.parentType`, or whether a list is in play. A lone `-` is a perfectly ordinary CommonMark setext H2 underline at top level (`Heading\\n-` → `<h2>Heading</h2>` upstream). With this rule installed, `lheading` declines, the wrapped `list` then reports the line as a paragraph terminator (list-empty-bullet-plugin.ts:190), and the non-silent `list` rule builds an empty bullet — so `Heading\\n-` now renders as a paragraph plus an empty `<li>`. Every note already stored in Yorkie that uses the single-dash setext form re-renders differently in the preview; this is a behaviour change to the shared, module-level `md` singleton in packages/notes/src/view/preview.ts (mutated at line ~47 by `md.use(listEmptyBulletPlugin)`), so every consumer of that module inherits it. The added tests only cover the multi-dash form (`preview.test.ts`: 'preserves multi-dash setext headings' renders `'Heading\\n---'`), so no test pins the single-dash case. Fix belongs on the new code: scope `isLoneDash` to the nested/indented empty-bullet situation (e.g. require `state.blkIndent > 0` or that the line is inside a list item) rather than rejecting every lone dash underline.",
+        "searchedFor": []
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "claimType": "absence",
+        "file": "packages/notes/src/view/preview.ts",
+        "line": 47,
+        "summary": "Only the preview pipeline gets the deviation — any other markdown render path for the same note content now disagrees with it",
+        "evidence": "The plugin is wired into exactly one MarkdownIt instance, the module-level `md` in packages/notes/src/view/preview.ts (`md.use(listEmptyBulletPlugin);`, ~line 47). Note content is persisted as markdown, so any second renderer or markdown consumer — an export/print/share-link renderer, a server-side or worker render, a frontend note-card snippet renderer, a heading/outline/TOC extractor, or a search indexer that walks `heading_open` tokens — keeps stock CommonMark and will render `- 1\\n  -` as `<li><h2>1</h2></li>` and `Heading\\n-` as an `<h2>` while the preview does not. Same source, two different documents; a heading extractor would list a heading the preview never shows. docs/design/notes/notes.md:298-299 asserts this is 'a notes-preview-only rendering choice, not a change to the shared markdown model' — that framing is exactly the risk: the model is shared, only the rendering diverged. I could not enumerate the other render sites because the packages/ tree is not present in this checkout; the verifier should grep for `new MarkdownIt`, `markdown-it`, `heading_open`, and imports of `preview.js`/`NotePreview` across packages/ (frontend, backend, any worker or CLI) and confirm each either installs the plugin or is documented as intentionally divergent.",
+        "searchedFor": [
+          "Grep: markdown-it|MarkdownIt (whole tree) → no files",
+          "Grep: lheading|NotePreview|detailsPlugin|markdown -i → only agent/* tooling",
+          "Grep: preview|notes -i → no files",
+          "Grep: use\\(|render\\( glob *.ts → no files",
+          "Glob: packages/notes/src/**/*.ts, **/{preview,details-plugin}*.ts, **/package.json, packages/**/view/*.ts (at /) → no files",
+          "Read: .materialized (confirms only a tooling subset is checked out)"
+        ]
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 175,
+        "summary": "`ruler.at('lheading', ...)` drops whatever `alt` chain the current `lheading` registration carries — the diff restores `alt` for `list` but not for `lheading`",
+        "evidence": "`md.block.ruler.at('lheading', lheadingRule);` (packages/notes/src/view/list-empty-bullet-plugin.ts:175) is called with no options, and markdown-it's `Ruler.at` sets `__rules__[i].alt = opt.alt || []` — the very hazard the change documents for `list` (list-empty-bullet-plugin.ts:195-199 and docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md:19-22). Stock markdown-it registers `lheading` with no alt chain, so on a vanilla instance this is harmless; but this `md` has already been mutated by `detailsPlugin`, `markdown-it-task-lists` and `@vscode/markdown-it-katex` before line 47 of preview.ts. If any of them (most plausibly `detailsPlugin`, which owns a container block rule) added `lheading` to a terminator chain via `ruler.at('lheading', fn, {alt: [...]})` or re-registered it, that membership is silently erased here and setext headings stop terminating that container. Verifier: read packages/notes/src/view/details-plugin.ts and the two node_modules plugins for any `ruler.at('lheading'` / `getRules(` usage; if none, downgrade. Fix belongs on the new code — read the existing `alt` off `__rules__` (getRuleFn already reaches that registry) and pass it back, same as for `list`.",
+        "searchedFor": [
+          "Glob: **/{preview,details-plugin}*.ts → no files (packages/ not materialized)",
+          "Grep: lheading (whole tree) → only agent/* tooling files"
+        ]
+      },
+      {
+        "severity": "major",
+        "confidence": "low",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 179,
+        "summary": "Install-order coupling: `originalList` is snapshotted from private `__rules__` at `md.use` time, and a later plugin replacing `list` bypasses the empty-bullet relaxation entirely",
+        "evidence": "`const originalList = getRuleFn(md, 'list');` (packages/notes/src/view/list-empty-bullet-plugin.ts:179) captures whatever function is registered at that instant, and `wrappedList` is then installed with `ruler.at`. Two out-of-diff hazards follow. (a) Any plugin added to the same singleton AFTER line 47 of packages/notes/src/view/preview.ts that itself calls `md.block.ruler.at('list', ...)` (or `.before`/`.after` a competing list rule) replaces `wrappedList` and the #517 fix silently stops working — nothing in the code or tests detects this, so the ordering of `md.use` calls in preview.ts becomes an undocumented invariant future plugin wiring must preserve. (b) Conversely a plugin installed before it that wrapped `list` is now double-wrapped through the snapshot; correct, but only by accident of ordering. Verifier: check whether anything else in the repo calls `block.ruler.at`/`ruler.before`/`ruler.after` on this `md`, and whether preview.ts's `md.use` order is asserted anywhere. Fix belongs on the new code: add a comment/assert pinning that `listEmptyBulletPlugin` must be installed last, or resolve the delegate lazily at call time.",
+        "searchedFor": [
+          "Grep: use\\(|render\\( glob *.ts → no files",
+          "Grep: markdown-it|MarkdownIt → no files outside agent/"
+        ]
+      },
+      {
+        "severity": "minor",
+        "confidence": "medium",
+        "claimType": "presence",
+        "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "line": 190,
+        "summary": "The paragraph-interrupt relaxation is wider than the `-`-only story: `*` and `+` empty bullets, and top-level paragraphs, also change behaviour",
+        "evidence": "`isEmptyBulletLine` accepts `-`, `*` and `+` (list-empty-bullet-plugin.ts:38-41), and `wrappedList` returns `true` for any of them in silent/paragraph mode (list-empty-bullet-plugin.ts:182-190) with no indent or in-list condition. `*` and `+` have no setext ambiguity at all, so nothing in issue #517 requires relaxing them; yet `text\\n*` (or `text\\n+`) that upstream renders as lazy-continuation text now terminates the paragraph and opens an empty list. Existing notes containing a bare `*` or `+` line under a paragraph therefore re-render. This is a behaviour change to the shared preview renderer that the design note does not describe: docs/design/notes/notes.md:294-299 scopes the deviation to 'a **lone single `-`**'. Verifier can confirm with `md.render('a\\n*')` before/after. Fix belongs on the new code (restrict to the shape the issue needs, or widen the doc deliberately).",
+        "searchedFor": []
+      },
+      {
+        "severity": "minor",
+        "confidence": "high",
+        "claimType": "presence",
+        "file": "docs/design/notes/notes.md",
+        "line": 297,
+        "summary": "Design note documents a narrower contract than the code implements ('ordinary setext headings still render')",
+        "evidence": "docs/design/notes/notes.md:297-299 states 'Multi-dash `---` and `=` setext underlines are untouched, so ordinary setext headings still render.' The implementation rejects EVERY single-dash underline (packages/notes/src/view/list-empty-bullet-plugin.ts:105, `runLength === 1`), and a single-dash H2 underline is an ordinary setext heading — so the doc under-describes the blast radius for anyone later reasoning about note rendering from this doc alone. The same gap appears in docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:60-71, whose acceptance criteria only pin `Heading\\n---`. Doc left describing a narrower contract than shipped; fix the doc (or narrow the code per the first finding).",
+        "searchedFor": []
+      }
+    ],
+    "per_sample": [
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "claimType": "presence",
+          "summary": "Single-dash setext H2 (`Title\\n-`) anywhere in an existing note stops rendering as a heading — a shared-renderer behaviour change beyond the empty-nested-bullet case",
+          "evidence": "The new guard is unconditional on the *shape* of the line, not on being nested: `lheadingRule` rejects any underline where `marker === DASH && runLength === 1` (packages/notes/src/view/list-empty-bullet-plugin.ts:107), and the wrapped `list` then terminates the paragraph for that same line (packages/notes/src/view/list-empty-bullet-plugin.ts:181-191). The `md` singleton it mutates is the one and only renderer for every note (packages/notes/src/view/preview.ts:48, consumed by `NotePreview.render` at packages/notes/src/view/preview.ts:165 and by every editor instance at packages/notes/src/view/editor.ts:150). So pre-existing note content of the form `Title` + `-` on the next line — a valid CommonMark H2 that GitHub and the old preview both rendered as `<h2>` — now renders as a paragraph plus an empty bullet list. Nothing in the diff exercises the top-level lone-dash case (the plan listed it as a test at docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:62 but preview.test.ts only covers `Heading\\n---`, packages/notes/src/view/preview.test.ts:182-187), and the doc added by this change asserts the opposite contract: \"Multi-dash `---` and `=` setext underlines are untouched, so ordinary setext headings still render\" (docs/design/notes/notes.md:296-298). Single-dash setext headings are ordinary setext headings and they no longer render. Fix belongs on the new code (narrow the guard, e.g. only when the dash line is indented relative to an enclosing list item) or on the doc contract.",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 107
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "presence",
+          "summary": "`*` and `+` empty bullets also now interrupt paragraphs, contradicting the documented \"lone single `-`\" scope",
+          "evidence": "`isEmptyBulletLine` accepts `-`, `*` and `+` (packages/notes/src/view/list-empty-bullet-plugin.ts:41-43), and `wrappedList` uses it as the paragraph-terminating condition (packages/notes/src/view/list-empty-bullet-plugin.ts:181-191). So `text` followed by a lone `*` — previously lazy-continuation text `text<br>*` in existing notes — now renders as a paragraph plus an empty `<ul><li></li></ul>`, even though `*` was never involved in the setext ambiguity being fixed. The docs written by this change scope the deviation to a dash only: \"a **lone single `-`** (the empty-bullet shape) is never a setext underline\" (docs/design/notes/notes.md:295-296) and docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:47-49 (\"a *lone single dash*\"). Either the marker set or the documented contract is wrong; the fix belongs on the new code.",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 41
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "presence",
+          "summary": "Source pane and preview pane now disagree: CodeMirror's lezer-markdown still highlights the lone `-` as a setext heading",
+          "evidence": "The editor half of the split view uses `markdown()` from `@codemirror/lang-markdown` (packages/notes/src/view/editor.ts:200), whose lezer-markdown grammar implements strict CommonMark and therefore still styles `- 1` / `  -` as a SetextHeading in the source pane, while the preview built two elements away (packages/notes/src/view/editor.ts:117, re-rendered at packages/notes/src/view/editor.ts:150) no longer produces a heading. This out-of-diff consumer was not updated, so the user sees heading styling on the left and body text on the right for the exact input the fix targets. Same divergence applies to the single-dash setext heading case above (editor shows a heading, preview shows a bullet list).",
+          "file": "packages/notes/src/view/editor.ts",
+          "line": 200
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "claimType": "presence",
+          "summary": "Plugin reads markdown-it's private `__rules__` at module-import time; a throw there takes down the whole notes editor entry point, not just heading rendering",
+          "evidence": "`getRuleFn` reaches into the undocumented `md.block.ruler.__rules__` registry and throws if the shape changes (packages/notes/src/view/list-empty-bullet-plugin.ts:205-213). It runs during `md.use(listEmptyBulletPlugin)` at module scope (packages/notes/src/view/preview.ts:48), i.e. at *import* of preview.ts, which is imported unconditionally by the package's public entry (`initialize` in packages/notes/src/view/editor.ts, re-exported at packages/notes/src/index.ts:12 and consumed by the frontend notes route). markdown-it is depended on with a floating range `\"markdown-it\": \"^14.1.0\"` (packages/notes/package.json:63), so any minor/patch upgrade that renames or restructures `__rules__` (or that changes the copied `lheading` implementation this file forks, packages/notes/src/view/list-empty-bullet-plugin.ts:70-153) fails the whole `/n/:id` route at load rather than degrading one rendering case. Same fragility applies to the hardcoded `alt: ['paragraph','reference','blockquote']` restore (packages/notes/src/view/list-empty-bullet-plugin.ts:197-199): it silently overwrites whatever `alt` chain `list` had at install time, so any future plugin added *before* this one in preview.ts that extends `list`'s alt chain would be quietly undone. Fix belongs on the new code (prefer a supported extension point / pin the dependency).",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 208
+        },
+        {
+          "severity": "minor",
+          "confidence": "low",
+          "claimType": "presence",
+          "summary": "Empty bullet indented 4+ spaces past the block indent now splits an existing paragraph into a code block",
+          "evidence": "`isEmptyBulletLine` only checks `state.sCount[line] < state.blkIndent` (packages/notes/src/view/list-empty-bullet-plugin.ts:33) and omits markdown-it's `sCount - blkIndent >= 4` indented-code guard that the real `list` rule applies before anything else. Because `wrappedList` returns `true` for such a line in silent mode (packages/notes/src/view/list-empty-bullet-plugin.ts:181-191), a paragraph followed by e.g. four-space-indented `-` now terminates at that line and the following line is re-parsed by the `code` rule as an indented code block, where previously it was lazy-continuation text inside the paragraph. This affects arbitrary pre-existing note content unrelated to the nested-bullet fix; I could not run the parser to confirm the resulting token stream, so confidence is low. Fix belongs on the new code.",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 33
+        }
+      ],
+      [
+        {
+          "severity": "major",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 105,
+          "summary": "Single-dash setext H2 (`Heading\\n-`) silently stops being a heading for ALL existing note content, not just nested empty bullets",
+          "evidence": "The guard `const isLoneDash = marker === DASH && runLength === 1;` (packages/notes/src/view/list-empty-bullet-plugin.ts:105) is unconditional — it does not test `state.blkIndent`, `state.parentType`, or whether a list is in play. A lone `-` is a perfectly ordinary CommonMark setext H2 underline at top level (`Heading\\n-` → `<h2>Heading</h2>` upstream). With this rule installed, `lheading` declines, the wrapped `list` then reports the line as a paragraph terminator (list-empty-bullet-plugin.ts:190), and the non-silent `list` rule builds an empty bullet — so `Heading\\n-` now renders as a paragraph plus an empty `<li>`. Every note already stored in Yorkie that uses the single-dash setext form re-renders differently in the preview; this is a behaviour change to the shared, module-level `md` singleton in packages/notes/src/view/preview.ts (mutated at line ~47 by `md.use(listEmptyBulletPlugin)`), so every consumer of that module inherits it. The added tests only cover the multi-dash form (`preview.test.ts`: 'preserves multi-dash setext headings' renders `'Heading\\n---'`), so no test pins the single-dash case. Fix belongs on the new code: scope `isLoneDash` to the nested/indented empty-bullet situation (e.g. require `state.blkIndent > 0` or that the line is inside a list item) rather than rejecting every lone dash underline.",
+          "searchedFor": []
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "claimType": "absence",
+          "file": "packages/notes/src/view/preview.ts",
+          "line": 47,
+          "summary": "Only the preview pipeline gets the deviation — any other markdown render path for the same note content now disagrees with it",
+          "evidence": "The plugin is wired into exactly one MarkdownIt instance, the module-level `md` in packages/notes/src/view/preview.ts (`md.use(listEmptyBulletPlugin);`, ~line 47). Note content is persisted as markdown, so any second renderer or markdown consumer — an export/print/share-link renderer, a server-side or worker render, a frontend note-card snippet renderer, a heading/outline/TOC extractor, or a search indexer that walks `heading_open` tokens — keeps stock CommonMark and will render `- 1\\n  -` as `<li><h2>1</h2></li>` and `Heading\\n-` as an `<h2>` while the preview does not. Same source, two different documents; a heading extractor would list a heading the preview never shows. docs/design/notes/notes.md:298-299 asserts this is 'a notes-preview-only rendering choice, not a change to the shared markdown model' — that framing is exactly the risk: the model is shared, only the rendering diverged. I could not enumerate the other render sites because the packages/ tree is not present in this checkout; the verifier should grep for `new MarkdownIt`, `markdown-it`, `heading_open`, and imports of `preview.js`/`NotePreview` across packages/ (frontend, backend, any worker or CLI) and confirm each either installs the plugin or is documented as intentionally divergent.",
+          "searchedFor": [
+            "Grep: markdown-it|MarkdownIt (whole tree) → no files",
+            "Grep: lheading|NotePreview|detailsPlugin|markdown -i → only agent/* tooling",
+            "Grep: preview|notes -i → no files",
+            "Grep: use\\(|render\\( glob *.ts → no files",
+            "Glob: packages/notes/src/**/*.ts, **/{preview,details-plugin}*.ts, **/package.json, packages/**/view/*.ts (at /) → no files",
+            "Read: .materialized (confirms only a tooling subset is checked out)"
+          ]
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 175,
+          "summary": "`ruler.at('lheading', ...)` drops whatever `alt` chain the current `lheading` registration carries — the diff restores `alt` for `list` but not for `lheading`",
+          "evidence": "`md.block.ruler.at('lheading', lheadingRule);` (packages/notes/src/view/list-empty-bullet-plugin.ts:175) is called with no options, and markdown-it's `Ruler.at` sets `__rules__[i].alt = opt.alt || []` — the very hazard the change documents for `list` (list-empty-bullet-plugin.ts:195-199 and docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md:19-22). Stock markdown-it registers `lheading` with no alt chain, so on a vanilla instance this is harmless; but this `md` has already been mutated by `detailsPlugin`, `markdown-it-task-lists` and `@vscode/markdown-it-katex` before line 47 of preview.ts. If any of them (most plausibly `detailsPlugin`, which owns a container block rule) added `lheading` to a terminator chain via `ruler.at('lheading', fn, {alt: [...]})` or re-registered it, that membership is silently erased here and setext headings stop terminating that container. Verifier: read packages/notes/src/view/details-plugin.ts and the two node_modules plugins for any `ruler.at('lheading'` / `getRules(` usage; if none, downgrade. Fix belongs on the new code — read the existing `alt` off `__rules__` (getRuleFn already reaches that registry) and pass it back, same as for `list`.",
+          "searchedFor": [
+            "Glob: **/{preview,details-plugin}*.ts → no files (packages/ not materialized)",
+            "Grep: lheading (whole tree) → only agent/* tooling files"
+          ]
+        },
+        {
+          "severity": "major",
+          "confidence": "low",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 179,
+          "summary": "Install-order coupling: `originalList` is snapshotted from private `__rules__` at `md.use` time, and a later plugin replacing `list` bypasses the empty-bullet relaxation entirely",
+          "evidence": "`const originalList = getRuleFn(md, 'list');` (packages/notes/src/view/list-empty-bullet-plugin.ts:179) captures whatever function is registered at that instant, and `wrappedList` is then installed with `ruler.at`. Two out-of-diff hazards follow. (a) Any plugin added to the same singleton AFTER line 47 of packages/notes/src/view/preview.ts that itself calls `md.block.ruler.at('list', ...)` (or `.before`/`.after` a competing list rule) replaces `wrappedList` and the #517 fix silently stops working — nothing in the code or tests detects this, so the ordering of `md.use` calls in preview.ts becomes an undocumented invariant future plugin wiring must preserve. (b) Conversely a plugin installed before it that wrapped `list` is now double-wrapped through the snapshot; correct, but only by accident of ordering. Verifier: check whether anything else in the repo calls `block.ruler.at`/`ruler.before`/`ruler.after` on this `md`, and whether preview.ts's `md.use` order is asserted anywhere. Fix belongs on the new code: add a comment/assert pinning that `listEmptyBulletPlugin` must be installed last, or resolve the delegate lazily at call time.",
+          "searchedFor": [
+            "Grep: use\\(|render\\( glob *.ts → no files",
+            "Grep: markdown-it|MarkdownIt → no files outside agent/"
+          ]
+        },
+        {
+          "severity": "minor",
+          "confidence": "medium",
+          "claimType": "presence",
+          "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+          "line": 190,
+          "summary": "The paragraph-interrupt relaxation is wider than the `-`-only story: `*` and `+` empty bullets, and top-level paragraphs, also change behaviour",
+          "evidence": "`isEmptyBulletLine` accepts `-`, `*` and `+` (list-empty-bullet-plugin.ts:38-41), and `wrappedList` returns `true` for any of them in silent/paragraph mode (list-empty-bullet-plugin.ts:182-190) with no indent or in-list condition. `*` and `+` have no setext ambiguity at all, so nothing in issue #517 requires relaxing them; yet `text\\n*` (or `text\\n+`) that upstream renders as lazy-continuation text now terminates the paragraph and opens an empty list. Existing notes containing a bare `*` or `+` line under a paragraph therefore re-render. This is a behaviour change to the shared preview renderer that the design note does not describe: docs/design/notes/notes.md:294-299 scopes the deviation to 'a **lone single `-`**'. Verifier can confirm with `md.render('a\\n*')` before/after. Fix belongs on the new code (restrict to the shape the issue needs, or widen the doc deliberately).",
+          "searchedFor": []
+        },
+        {
+          "severity": "minor",
+          "confidence": "high",
+          "claimType": "presence",
+          "file": "docs/design/notes/notes.md",
+          "line": 297,
+          "summary": "Design note documents a narrower contract than the code implements ('ordinary setext headings still render')",
+          "evidence": "docs/design/notes/notes.md:297-299 states 'Multi-dash `---` and `=` setext underlines are untouched, so ordinary setext headings still render.' The implementation rejects EVERY single-dash underline (packages/notes/src/view/list-empty-bullet-plugin.ts:105, `runLength === 1`), and a single-dash H2 underline is an ordinary setext heading — so the doc under-describes the blast radius for anyone later reasoning about note rendering from this doc alone. The same gap appears in docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:60-71, whose acceptance criteria only pin `Heading\\n---`. Doc left describing a narrower contract than shipped; fix the doc (or narrow the code per the first finding).",
+          "searchedFor": []
+        }
+      ]
+    ],
+    "samples_run": 2,
+    "samples_ok": 2,
+    "agreement": "disjoint",
+    "severity_counts": {
+      "critical": 0,
+      "major": 6,
+      "minor": 5,
+      "nit": 0
+    },
+    "confidence_counts": {
+      "high": 2,
+      "medium": 4,
+      "low": 5,
+      "unknown": 0
+    }
+  },
+  "error": null
+}

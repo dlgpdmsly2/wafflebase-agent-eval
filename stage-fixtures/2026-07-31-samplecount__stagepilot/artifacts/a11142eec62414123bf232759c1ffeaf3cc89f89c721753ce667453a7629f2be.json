@@ -1,0 +1,58 @@
+{
+  "schema_version": "stage-artifacts/v1",
+  "item_id": "pr-549",
+  "stage": "verifier",
+  "instance": {
+    "lens_id": "blast-radius",
+    "population": "fresh",
+    "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::`ruler.at('lheading', ...)` is called without an `options.alt`, discarding whatever alt chain the installed markdown-it registers for `lheading`"
+  },
+  "provenance": {
+    "run_id": "stage-capture-2026-07-31-samplecount",
+    "config_hash": "sha256:1d3055219ecc467bb1727a84fcbf8bd479f0f991da3625329f39da1c6a9e1485",
+    "sdk_version": "0.3.217",
+    "captured_at": "2026-07-31T00:02:17.019Z",
+    "model": "claude-opus-5"
+  },
+  "input": {
+    "finding": {
+      "severity": "major",
+      "confidence": "low",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 175,
+      "summary": "`Ruler.at('lheading', ...)` is called without an `options.alt`, discarding whatever alt chain the installed markdown-it registers for `lheading`",
+      "evidence": "`md.block.ruler.at('lheading', lheadingRule);` at list-empty-bullet-plugin.ts:175 passes no options, while the very next `at()` call (:197-199) does pass `{ alt: ['paragraph','reference','blockquote'] }` precisely because, as the change's own lessons file records, `Ruler.at(name, fn, options)` REPLACES the rule's \\`alt\\` chain with \\`options.alt || []\\` (docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md:19). The author applied that lesson to `list` and not to `lheading`. In markdown-it 14.x's `parser_block` registry `lheading` is declared with no alt chain, so this is likely harmless today — but it is an unguarded assumption about a third-party private table, and if the pinned version (or a future bump) gives `lheading` any alt membership, it silently stops terminating paragraphs/blockquotes/references for consumers well outside this file. To confirm, check `node_modules/markdown-it/lib/parser_block.mjs` for the `lheading` entry's third element. Fix belongs on the new code: pass the upstream alt chain back explicitly, as was done for `list`.",
+      "searchedFor": []
+    },
+    "rubric": {
+      "sha256": "sha256:7a63926711bbe5515312dcfb8772e62365cbde200a8ddcb855f128404893dee8",
+      "bytes": 5267
+    },
+    "changed_files": {
+      "sha256": "sha256:79a4b35f84e54f9f202e9476dc3eff5643b8bb1a16c70921b75d170e8f76f83d",
+      "bytes": 279
+    },
+    "changed_context": {
+      "authoritative": true,
+      "total": 6,
+      "listed_count": 6
+    },
+    "repo_commit": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+    "model": "claude-opus-5",
+    "max_turns": 8
+  },
+  "output": {
+    "decision": {
+      "verdict": "confirmed",
+      "confidence": "low",
+      "reason": "I could not verify or refute the finding because the cited files are absent from my working directory, which holds only a 43-entry partial checkout (.materialized: \"d7fea222a81170524e3e74bd41ac633ba21dfe95 43\"). Glob for **/list-empty-bullet-plugin.ts, packages/**/*.ts, and **/notes/** all returned no matches; Grep for \"lheading\" across the entire cache returned zero hits; and no markdown-it install exists (**/parser_block* no match), so I could not inspect the lheading registry entry's third element as the finding requests. The only materialized content is agent/, hooks/, test/verify-entropy.test.mjs and top-level verify-*.mjs scripts, none of which touch markdown-it rulers. This absence is an environment/materialization gap, not evidence the code differs from the description, so `not-present` is unavailable. `pre-existing` is also unavailable: the authoritative changed-file list explicitly includes packages/notes/src/view/list-empty-bullet-plugin.ts. And `out-of-scope` does not apply on the rubric, since a call that silently discards an upstream alt chain and alters paragraph/blockquote/reference termination for consumers outside the file is exactly the blast-radius lane (behaviour change to a shared rule whose other consumers were not considered). Per the rule that uncertainty for any reason keeps the finding, it stays on the merge gate; a verifier with the full packages/notes tree and node_modules/markdown-it should re-check the two adjacent at() calls and the lheading alt entry.",
+      "refutationGround": "none",
+      "groundedIn": [
+        "/tmp/eval-repo-cache/d7fea222a81170524e3e74bd41ac633ba21dfe95/.materialized:1"
+      ]
+    },
+    "error": null,
+    "dropped": false
+  }
+}
