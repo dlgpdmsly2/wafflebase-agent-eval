@@ -73,6 +73,26 @@
       ],
       "rubric_path": "scripts/agent/lenses/blast-radius.md",
       "rubric_sha256": "sha256:7a63926711bbe5515312dcfb8772e62365cbde200a8ddcb855f128404893dee8"
+    },
+    {
+      "id": "docs",
+      "title": "Docs",
+      "model": "claude-sonnet-5",
+      "samples": 1,
+      "gating": "blocking",
+      "needsIssueSpec": false,
+      "appliesWhen": [
+        "docs/**/*.md",
+        "docs/**/*.txt",
+        "*.md",
+        "*.txt",
+        "packages/*/README.md",
+        "packages/documentation/**/*.md",
+        "packages/documentation/**/*.mdx",
+        ".changeset/*.md"
+      ],
+      "rubric_path": "scripts/agent/lenses/docs.md",
+      "rubric_sha256": "sha256:35aad4c8766684c053ac9de3593fc2667403cf138e447b64d8b1e80b55af378f"
     }
   ]
 }
