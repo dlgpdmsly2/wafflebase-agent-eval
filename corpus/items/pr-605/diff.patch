@@ -1,0 +1,1171 @@
+diff --git a/docs/design/notes/notes.md b/docs/design/notes/notes.md
+index 055c5eedc..209704e7d 100644
+--- a/docs/design/notes/notes.md
++++ b/docs/design/notes/notes.md
+@@ -258,6 +258,54 @@ tree readers/writers). The v1 `POST /documents` create path also learned to
+ accept `type: 'note'` (it previously downgraded unknown types to `sheet`).
+ See [cli.md](../cli.md).
+ 
++#### Undo/redo — Yorkie-native (`doc.history`) — shipped (issue #604)
++
++P1 undo/redo ran through CodeMirror's own history: local edits were the only
++thing in it (remote changes were excluded with
++`Transaction.addToHistory.of(false)`), so undo restored a **local snapshot**
++and then pushed that snapshot forward into Yorkie as a fresh edit. In a
++collaborative session that clobbers whatever a peer typed between the edit
++and the undo — there was no guarantee undo reverted "only what I just did".
++
++Notes now uses the same Yorkie-native pattern as Slides
++([slides-native-undo.md](../slides/slides-native-undo.md)) and Docs:
++
++- **1 batch = 1 Yorkie change = 1 undo unit.** `NoteStore` gained
++  `batch(fn)`; `YorkieNoteStore` keeps an **ambient root** — a top-level
++  `batch()` opens ONE `doc.update()` and every `editText` runs against that
++  root via `withUpdate()`. Nested batches short-circuit into the outermost
++  one. `note-sync` wraps one CodeMirror `ViewUpdate` in one batch, so a
++  command that dispatches several changes (e.g. `insertTable`) undoes in a
++  single step. A batch that mutates nothing records no undo unit (an empty
++  `doc.update` pushes nothing).
++- **Reverse ops, not snapshots.** `undo()/redo()` delegate to
++  `doc.history`, which applies the reverse of that change's ops — a peer's
++  concurrent edit survives. Verified against `@yorkie-js/sdk` 0.7.13: the
++  `Tree.editByPath` merge non-reversibility that affects Docs does not apply
++  here, since a note's whole content is one `Text`.
++- **Undo floor.** `YorkieNoteStore` captures the undo-stack depth at
++  construction (i.e. after `notes-view.tsx`'s `ensureText()` seed) and
++  `canUndo()` refuses to drop below it, so the seed itself can't be undone
++  away — mirrors `YorkieDocStore.undoFloor`.
++- **The undo result re-enters the editor as a remote change.** Yorkie emits
++  the reverse ops as a `local-change` with `source === 'undoredo'`; the
++  formerly dormant `isUndoRedo` branch of `subscribeRemote` now forwards it
++  to `noteSync`, which applies it as a `remote`-annotated transaction — so
++  it never echoes back as a new forward edit.
++- **Keybindings.** `basicSetup` runs with `history: false` /
++  `historyKeymap: false`; `Mod-z` / `Mod-Shift-z` / `Mod-y` are bound to the
++  store (and left unbound entirely on a read-only mount). Vim's `u` /
++  `<C-r>` reach the same place: `@replit/codemirror-vim` resolves them
++  through `CodeMirror.commands.undo/redo` at call time, which the engine
++  re-points at the store from the view's `noteStoreFacet`. (Its `:undo` /
++  `:redo` ex-commands snapshot the original handlers at module load and
++  cannot be re-routed; they are inert.)
++
++One behavior change: CodeMirror grouped keystrokes into a time window
++(`newGroupDelay`), while Yorkie's unit is the change — so undo now steps per
++CodeMirror transaction. Docs and Slides behave the same way after their
++migrations.
++
+ #### Collapsible sections (`<details>` / `<summary>`) — shipped (issue #542)
+ 
+ The preview runs `markdown-it` with `html: false` (raw HTML in a
+diff --git a/docs/tasks/active/20260730-notes-native-undo-lessons.md b/docs/tasks/active/20260730-notes-native-undo-lessons.md
+new file mode 100644
+index 000000000..9fa76ee00
+--- /dev/null
++++ b/docs/tasks/active/20260730-notes-native-undo-lessons.md
+@@ -0,0 +1,26 @@
++# Notes native undo — lessons (issue #604)
++
++## Context
++
++Migrate WaffleNotes undo/redo from CodeMirror local history to Yorkie
++`doc.history`, so undo preserves peers' concurrent edits.
++
++## Lessons
++
++- The issue's prerequisite spike resolved cleanly: `Text.edit()` reverse
++  ops are supported on `@yorkie-js/sdk` 0.7.13. The `Tree.editByPath`
++  merge caveat that motivated the spike is a Tree-only limitation and
++  never applied to notes, whose whole content is one `Text`.
++- An empty `doc.update()` pushes nothing onto the undo stack, so
++  `batch()` does not need to pre-check whether the body will mutate.
++- Disabling `basicSetup`'s `history()` silently breaks vim's `u` /
++  `<C-r>` too: `@replit/codemirror-vim` routes them through
++  `CodeMirror.commands.undo/redo`, which call `@codemirror/commands`'
++  `undo(view)` and no-op without the history extension. The static
++  `CodeMirror.commands` map is read at call time, so overriding it is
++  the supported-shaped hook; its `:undo` ex-command copy is snapshotted
++  at module load and cannot be re-routed.
++- Undo granularity changes: CM history groups keystrokes by time
++  (`newGroupDelay`), Yorkie's unit is one change. One CM transaction =
++  one undo unit, so undo now steps per keystroke — the same behavior
++  Docs and Slides already have after their migrations.
+diff --git a/docs/tasks/active/20260730-notes-native-undo-todo.md b/docs/tasks/active/20260730-notes-native-undo-todo.md
+new file mode 100644
+index 000000000..22270affe
+--- /dev/null
++++ b/docs/tasks/active/20260730-notes-native-undo-todo.md
+@@ -0,0 +1,81 @@
++# Notes native undo — migrate to Yorkie `doc.history` (issue #604)
++
++PR: (to be filled after opening)
++
++## Goal
++
++Move WaffleNotes undo/redo off CodeMirror's local history onto
++Yorkie-native undo (`doc.history`), so undo carries CRDT semantics and
++preserves a peer's concurrent edits instead of last-write-wins-ing over
++them. Reuses the pattern already shipped in Slides
++(`docs/design/slides/slides-native-undo.md`) and Docs
++(`packages/frontend/src/app/docs/yorkie-doc-store.ts`).
++
++## Prerequisite spike (done — result recorded here)
++
++Verified against the pinned `@yorkie-js/sdk` 0.7.13 that character-level
++`Text.edit()` **is** reversible through `doc.history`:
++
++- Two `content.edit()` calls inside ONE `doc.update()` push exactly one
++  undo-stack entry; `history.undo()` reverts both, `redo()` re-applies.
++- The undo emits a `local-change` event with `source === 'undoredo'`
++  carrying `edit` ops on `$.content` with correct `from`/`to`/`content`
++  (already reversed in apply order), i.e. the dormant `isUndoRedo` path
++  in `yorkie-note-store.ts` receives exactly what it needs.
++- A `doc.update()` whose body mutates nothing pushes **no** undo entry,
++  so an empty batch is free.
++
++(`Tree.editByPath` merge non-reversibility, called out in the issue,
++does not apply — notes store markdown in a single `Text`.)
++
++## Approach
++
++**Store layer (`packages/notes/src/store/store.ts`)** — extend
++`NoteStore` with `batch(fn)`, `undo()`, `redo()`, `canUndo()`,
++`canRedo()`. Undo becomes store-owned (like `DocStore`/`SlidesStore`)
++rather than view-owned.
++
++**`YorkieNoteStore`** — ambient-root + `withUpdate()`: a top-level
++`batch()` opens ONE `doc.update()` and every `editText()` runs against
++that ambient root, so one CodeMirror transaction group = one Yorkie
++change = one undo unit. `setLocalSelection` folds into the batch's
++ambient presence proxy when a batch is open. `undo()/redo()` delegate to
++`doc.history`, gated by an undo floor captured at construction (after
++`ensureText()` seeding) so a user cannot undo the seed away.
++
++**`MemNoteStore`** — snapshot-based local history so the engine still
++has working undo without a CRDT (tests / non-collaborative use). Undo
++emits a `replace` remote change so the view reflects it, mirroring how
++the Yorkie store's undo comes back through `subscribeRemote`.
++
++**`note-sync.ts`** — wrap the per-`ViewUpdate` `editText` loop in
++`store.batch()`.
++
++**`editor.ts`** — `basicSetup({ history: false, historyKeymap: false })`;
++bind `Mod-z` / `Mod-Shift-z` / `Mod-y` to the store (skipped in
++read-only); `NoteEditorAPI.undo/redo/canUndo/canRedo` delegate to the
++store. Vim's `u` / `<C-r>` go through `CodeMirror.commands.undo/redo`,
++which the vim adapter looks up at call time — override them once to
++route to the note store resolved from the view's `noteStoreFacet`, else
++vim undo would silently no-op with CM history disabled.
++
++## Tasks
++
++- [ ] `NoteStore`: `batch` / `undo` / `redo` / `canUndo` / `canRedo`
++- [ ] `MemNoteStore`: snapshot history + `replace` emission on undo/redo
++- [ ] `YorkieNoteStore`: ambient root, `withUpdate`, batch, undo floor,
++      `doc.history` delegation
++- [ ] `note-sync.ts`: wrap local edits in `store.batch()`
++- [ ] `editor.ts`: disable CM history, history keymap → store, API
++      delegation, vim command routing
++- [ ] Tests: batch grouping = 1 undo unit, undo floor, peer-edit
++      preservation (churn regression), no-echo on undo, MemNoteStore
++      history, engine-level keybinding
++- [ ] `docs/design/notes/notes.md`: Yorkie-native undo section
++
++## Out of scope
++
++- Time-based keystroke coalescing (Yorkie's undo unit is the change;
++  Docs and Slides behave the same way).
++- `:undo` / `:redo` ex-commands in vim (the vim package snapshots those
++  handlers at module load, so they cannot be re-routed).
+diff --git a/packages/frontend/src/app/notes/yorkie-note-store.test.ts b/packages/frontend/src/app/notes/yorkie-note-store.test.ts
+index 5e97793cd..9f83e7bbb 100644
+--- a/packages/frontend/src/app/notes/yorkie-note-store.test.ts
++++ b/packages/frontend/src/app/notes/yorkie-note-store.test.ts
+@@ -1,5 +1,6 @@
+ import { describe, it, expect } from 'vitest';
+ import { Document, Text } from '@yorkie-js/sdk';
++import type { NoteRemoteChange } from '@wafflebase/notes';
+ import { YorkieNoteStore } from './yorkie-note-store';
+ import type { YorkieNotesRoot, NotesPresence } from '@/types/notes-document';
+ 
+@@ -12,6 +13,33 @@ function makeDoc(): Document<YorkieNotesRoot, NotesPresence> {
+   return doc;
+ }
+ 
++/**
++ * Two documents on the same key with distinct actors, seeded with `text` and
++ * already in sync — a peer session without a Yorkie server. `push` moves one
++ * side's local changes to the other, standing in for a round trip.
++ */
++function twoClients(
++  text: string,
++): [Document<YorkieNotesRoot, NotesPresence>, Document<YorkieNotesRoot, NotesPresence>] {
++  const mine = new Document<YorkieNotesRoot, NotesPresence>('note-peers');
++  const peer = new Document<YorkieNotesRoot, NotesPresence>('note-peers');
++  mine.setActor('000000000000000000000001');
++  peer.setActor('000000000000000000000002');
++  mine.update((root) => {
++    root.content = new Text();
++    root.content.edit(0, 0, text);
++  });
++  push(mine, peer);
++  return [mine, peer];
++}
++
++function push(
++  from: Document<YorkieNotesRoot, NotesPresence>,
++  to: Document<YorkieNotesRoot, NotesPresence>,
++): void {
++  to.applyChangePack(from.createChangePack());
++}
++
+ describe('YorkieNoteStore', () => {
+   it('reads text from the Yorkie Text', () => {
+     const store = new YorkieNoteStore(makeDoc());
+@@ -28,4 +56,85 @@ describe('YorkieNoteStore', () => {
+     const store = new YorkieNoteStore(makeDoc());
+     expect(store.getPeerSelections()).toEqual([]);
+   });
++
++  describe('undo/redo (Yorkie-native)', () => {
++    it('collapses a batch into a single undo unit', () => {
++      const doc = makeDoc();
++      const store = new YorkieNoteStore(doc);
++      const before = doc.getUndoStackForTest().length;
++      store.batch(() => {
++        store.editText(5, 5, ' world');
++        store.editText(11, 11, '!');
++      });
++      expect(store.getText()).toBe('hello world!');
++      // One batch = one doc.update = one undo unit: a single undo must revert
++      // both edits, not just the last one.
++      expect(doc.getUndoStackForTest()).toHaveLength(before + 1);
++      store.undo();
++      expect(store.getText()).toBe('hello');
++      expect(store.canUndo()).toBe(false);
++      store.redo();
++      expect(store.getText()).toBe('hello world!');
++    });
++
++    it('folds a nested batch into the outer undo unit', () => {
++      const doc = makeDoc();
++      const store = new YorkieNoteStore(doc);
++      const before = doc.getUndoStackForTest().length;
++      store.batch(() => {
++        store.editText(5, 5, 'A');
++        store.batch(() => {
++          store.editText(6, 6, 'B');
++        });
++      });
++      expect(doc.getUndoStackForTest()).toHaveLength(before + 1);
++      store.undo();
++      expect(store.getText()).toBe('hello');
++    });
++
++    it('records nothing for a batch that edits nothing', () => {
++      const store = new YorkieNoteStore(makeDoc());
++      store.batch(() => {});
++      expect(store.canUndo()).toBe(false);
++    });
++
++    it('refuses to undo below the seeded baseline', () => {
++      // The seed ran before construction, so it sits under the undo floor —
++      // undoing it would leave the editor bound to a contentless document.
++      const doc = makeDoc();
++      const store = new YorkieNoteStore(doc);
++      expect(doc.history.canUndo()).toBe(true); // the seed is on the stack
++      expect(store.canUndo()).toBe(false); // ...but is below our floor
++      store.undo();
++      expect(store.getText()).toBe('hello');
++    });
++
++    it('emits the undo result through subscribeRemote', () => {
++      const store = new YorkieNoteStore(makeDoc());
++      store.batch(() => store.editText(5, 5, '!'));
++      const changes: NoteRemoteChange[] = [];
++      store.subscribeRemote((c) => changes.push(c));
++      store.undo();
++      expect(changes).toEqual([
++        { type: 'edits', changes: [{ from: 5, to: 6, insert: '' }] },
++      ]);
++    });
++
++    it('preserves a peer edit that landed after the undone change', () => {
++      // The churn regression the migration exists for: CodeMirror's local
++      // history could only re-apply an absolute snapshot, so undoing after a
++      // peer edit wiped the peer's text. Reverse-op undo touches only this
++      // client's own ops.
++      const [mine, peer] = twoClients('hello');
++      const store = new YorkieNoteStore(mine);
++      store.batch(() => store.editText(5, 5, ' mine'));
++
++      peer.update((root) => root.content.edit(0, 0, 'PEER '));
++      push(peer, mine);
++      expect(store.getText()).toBe('PEER hello mine');
++
++      store.undo();
++      expect(store.getText()).toBe('PEER hello');
++    });
++  });
+ });
+diff --git a/packages/frontend/src/app/notes/yorkie-note-store.ts b/packages/frontend/src/app/notes/yorkie-note-store.ts
+index 1d69d16b9..e41d32fab 100644
+--- a/packages/frontend/src/app/notes/yorkie-note-store.ts
++++ b/packages/frontend/src/app/notes/yorkie-note-store.ts
+@@ -1,4 +1,4 @@
+-import type { Document } from '@yorkie-js/sdk';
++import type { Document, Presence } from '@yorkie-js/sdk';
+ import type {
+   NoteStore,
+   NotePeerSelection,
+@@ -12,9 +12,42 @@ import type { YorkieNotesRoot, NotesPresence } from '@/types/notes-document';
+  * at `root.content` and drives peer carets through Yorkie presence. Ported
+  * from CodePair's yorkieSync/remoteSelection, relocated behind NoteStore so
+  * the engine stays CRDT-agnostic (project Store rule).
++ *
++ * Undo/redo is Yorkie-native (`doc.history`): a top-level `batch()` opens ONE
++ * `doc.update` and every `editText` runs against that ambient root, so a batch
++ * commits as one Yorkie change — and therefore one undo unit. Undo applies the
++ * reverse of that change's ops, which leaves a peer's concurrent edit intact;
++ * the CodeMirror-history path it replaced could only restore a local snapshot
++ * and clobbered the peer. Same pattern as `YorkieSlidesStore` /
++ * `YorkieDocStore` (see `docs/design/slides/slides-native-undo.md`).
+  */
+ export class YorkieNoteStore implements NoteStore {
+-  constructor(private readonly doc: Document<YorkieNotesRoot, NotesPresence>) {}
++  /**
++   * The live Yorkie root for the duration of a top-level `batch()`; null
++   * outside one. Mutators route through `withUpdate`, which runs against this
++   * root instead of opening their own `doc.update`.
++   */
++  private activeRoot: YorkieNotesRoot | null = null;
++  /**
++   * The batch's ambient presence proxy, captured alongside `activeRoot`, so a
++   * selection publish that fires while the batch's update is open folds into
++   * it rather than nesting a second `doc.update`. Presence is not added to
++   * history, so it never pollutes the batch's undo unit.
++   */
++  private activePresence: Presence<NotesPresence> | null = null;
++  private batchDepth = 0;
++  /**
++   * Undo-stack depth at construction. Whatever is already in the doc by then
++   * (the `client.attach({ initialRoot })` seed, or the `ensureText()` repair
++   * the view runs just before building this store) is the initial state;
++   * `canUndo()` refuses to drop below it so the user cannot Cmd+Z the note
++   * down to a contentless document. Mirrors `YorkieDocStore.undoFloor`.
++   */
++  private readonly undoFloor: number;
++
++  constructor(private readonly doc: Document<YorkieNotesRoot, NotesPresence>) {
++    this.undoFloor = doc.getUndoStackForTest().length;
++  }
+ 
+   getText(): string {
+     const content = this.doc.getRoot().content;
+@@ -22,19 +55,87 @@ export class YorkieNoteStore implements NoteStore {
+   }
+ 
+   editText(from: number, to: number, insert: string): void {
+-    this.doc.update((root) => {
++    this.withUpdate((root) => {
+       root.content.edit(from, to, insert);
+     });
+   }
+ 
++  batch(fn: () => void): void {
++    // Nested batch: the ambient `doc.update` is already open, so just run the
++    // body. Opening a second update would split the work into two Yorkie
++    // changes and break "one batch = one undo unit".
++    if (this.batchDepth > 0) {
++      this.batchDepth++;
++      try {
++        fn();
++      } finally {
++        this.batchDepth--;
++      }
++      return;
++    }
++    this.batchDepth++;
++    try {
++      this.doc.update((root, presence) => {
++        this.activeRoot = root;
++        this.activePresence = presence;
++        try {
++          fn();
++        } finally {
++          this.activeRoot = null;
++          this.activePresence = null;
++        }
++      });
++    } finally {
++      this.batchDepth--;
++    }
++  }
++
++  undo(): void {
++    if (!this.canUndo()) return;
++    // Applies the reverse ops of this client's last change. The resulting text
++    // change comes back as a `local-change` with `source: 'undoredo'`, which
++    // `subscribeRemote` forwards to the view — so nothing is returned here.
++    this.doc.history.undo();
++  }
++
++  redo(): void {
++    if (!this.canRedo()) return;
++    this.doc.history.redo();
++  }
++
++  canUndo(): boolean {
++    return (
++      this.doc.history.canUndo() &&
++      this.doc.getUndoStackForTest().length > this.undoFloor
++    );
++  }
++
++  canRedo(): boolean {
++    return this.doc.history.canRedo();
++  }
++
++  /**
++   * Run `fn` against the batch's ambient root when a top-level `batch()` is
++   * open, otherwise open a standalone `doc.update`. Every document mutator
++   * goes through this so a whole batch commits as ONE Yorkie change.
++   */
++  private withUpdate(fn: (root: YorkieNotesRoot) => void): void {
++    if (this.activeRoot) {
++      fn(this.activeRoot);
++    } else {
++      this.doc.update((root) => fn(root));
++    }
++  }
++
+   subscribeRemote(listener: (change: NoteRemoteChange) => void): Unsubscribe {
+     return this.doc.subscribe((event) => {
+       if (event.type === 'snapshot') {
+         listener({ type: 'replace', content: this.getText() });
+         return;
+       }
+-      // Retained for forward-compat with Yorkie-native undo; currently
+-      // dormant since P1 undo/redo runs through CodeMirror local history.
++      // `undo()`/`redo()` produce a local change carrying the reverse ops;
++      // route it to the view exactly like a peer's edit so CodeMirror applies
++      // it as a remote (non-echoing) transaction.
+       const isUndoRedo =
+         event.type === 'local-change' && event.source === 'undoredo';
+       if (event.type !== 'remote-change' && !isUndoRedo) return;
+@@ -68,7 +169,7 @@ export class YorkieNoteStore implements NoteStore {
+   }
+ 
+   setLocalSelection(anchor: number, head: number | null): void {
+-    this.doc.update((root, presence) => {
++    const publish = (root: YorkieNotesRoot, presence: Presence<NotesPresence>) => {
+       const content = root.content;
+       if (head === null || !content) {
+         if (presence.get('selection')) {
+@@ -82,7 +183,14 @@ export class YorkieNoteStore implements NoteStore {
+       if (JSON.stringify(prev) !== JSON.stringify(selection)) {
+         presence.set({ selection, cursor });
+       }
+-    });
++    };
++    // Fold into the batch's ambient update when one is open; a nested
++    // `doc.update` there would be an update inside an update.
++    if (this.activeRoot && this.activePresence) {
++      publish(this.activeRoot, this.activePresence);
++      return;
++    }
++    this.doc.update((root, presence) => publish(root, presence));
+   }
+ 
+   getPeerSelections(): NotePeerSelection[] {
+diff --git a/packages/notes/src/store/memory.test.ts b/packages/notes/src/store/memory.test.ts
+index 8994691e1..5f649350c 100644
+--- a/packages/notes/src/store/memory.test.ts
++++ b/packages/notes/src/store/memory.test.ts
+@@ -16,6 +16,66 @@ describe('MemNoteStore', () => {
+     s.editText(0, 5, 'goodbye');
+     expect(s.getText()).toBe('goodbye world');
+   });
++  it('undoes and redoes a single edit', () => {
++    const s = new MemNoteStore('hello');
++    expect(s.canUndo()).toBe(false);
++    s.editText(5, 5, ' world');
++    expect(s.canUndo()).toBe(true);
++    s.undo();
++    expect(s.getText()).toBe('hello');
++    expect(s.canUndo()).toBe(false);
++    expect(s.canRedo()).toBe(true);
++    s.redo();
++    expect(s.getText()).toBe('hello world');
++  });
++  it('collapses a batch into one undo unit', () => {
++    const s = new MemNoteStore('hello');
++    s.batch(() => {
++      s.editText(5, 5, ' world');
++      s.editText(11, 11, '!');
++    });
++    expect(s.getText()).toBe('hello world!');
++    s.undo();
++    expect(s.getText()).toBe('hello');
++    expect(s.canUndo()).toBe(false);
++  });
++  it('records nothing for a batch that edits nothing', () => {
++    const s = new MemNoteStore('hello');
++    s.batch(() => {});
++    expect(s.canUndo()).toBe(false);
++  });
++  it('folds a nested batch into the outer undo unit', () => {
++    const s = new MemNoteStore('a');
++    s.batch(() => {
++      s.editText(1, 1, 'b');
++      s.batch(() => {
++        s.editText(2, 2, 'c');
++      });
++    });
++    expect(s.getText()).toBe('abc');
++    s.undo();
++    expect(s.getText()).toBe('a');
++  });
++  it('drops the redo branch once a new edit lands', () => {
++    const s = new MemNoteStore('a');
++    s.editText(1, 1, 'b');
++    s.undo();
++    expect(s.canRedo()).toBe(true);
++    s.editText(1, 1, 'c');
++    expect(s.canRedo()).toBe(false);
++  });
++  it('emits the reverted text to remote subscribers', () => {
++    const s = new MemNoteStore('hello');
++    const seen: string[] = [];
++    s.subscribeRemote((c) => {
++      if (c.type === 'replace') seen.push(c.content);
++    });
++    s.editText(5, 5, '!');
++    expect(seen).toEqual([]); // local edits are not echoed back
++    s.undo();
++    s.redo();
++    expect(seen).toEqual(['hello', 'hello!']);
++  });
+   it('has no peers and no-op presence', () => {
+     const s = new MemNoteStore('x');
+     expect(s.getPeerSelections()).toEqual([]);
+diff --git a/packages/notes/src/store/memory.ts b/packages/notes/src/store/memory.ts
+index 45c0206b7..08fa8a693 100644
+--- a/packages/notes/src/store/memory.ts
++++ b/packages/notes/src/store/memory.ts
+@@ -3,10 +3,22 @@ import type { Unsubscribe } from '../types.js';
+ 
+ /**
+  * In-memory NoteStore for tests and non-collaborative use. Holds the markdown
+- * as a plain string; never emits remote changes or peer presence.
++ * as a plain string and keeps a snapshot-based undo history — there is no CRDT
++ * here, so reverse ops aren't available and a whole-text snapshot per undo unit
++ * is both correct (single writer) and cheap enough for a note.
++ *
++ * Never emits peer presence; emits a `replace` remote change on undo/redo so
++ * the view picks the reverted text up the same way it picks up the Yorkie
++ * store's `undoredo` events.
+  */
+ export class MemNoteStore implements NoteStore {
+   private text: string;
++  private undoStack: string[] = [];
++  private redoStack: string[] = [];
++  private batchDepth = 0;
++  /** Text as of the outermost `batch()` entry; null outside a batch. */
++  private batchBefore: string | null = null;
++  private listeners = new Set<(change: NoteRemoteChange) => void>();
+ 
+   constructor(text = '') {
+     this.text = text;
+@@ -17,11 +29,57 @@ export class MemNoteStore implements NoteStore {
+   }
+ 
+   editText(from: number, to: number, insert: string): void {
++    // Outside a batch each edit is its own undo unit; inside one, `batch()`
++    // has already captured the pre-state and records a single unit on exit.
++    if (this.batchDepth === 0) this.pushUndo(this.text);
+     this.text = this.text.slice(0, from) + insert + this.text.slice(to);
+   }
+ 
+-  subscribeRemote(_listener: (change: NoteRemoteChange) => void): Unsubscribe {
+-    return () => {};
++  batch(fn: () => void): void {
++    if (this.batchDepth++ === 0) this.batchBefore = this.text;
++    try {
++      fn();
++    } finally {
++      if (--this.batchDepth === 0) {
++        // A batch that changed nothing records no undo unit (matches Yorkie,
++        // where an empty `doc.update` pushes nothing).
++        if (this.batchBefore !== null && this.batchBefore !== this.text) {
++          this.pushUndo(this.batchBefore);
++        }
++        this.batchBefore = null;
++      }
++    }
++  }
++
++  undo(): void {
++    const prev = this.undoStack.pop();
++    if (prev === undefined) return;
++    this.redoStack.push(this.text);
++    this.text = prev;
++    this.emit({ type: 'replace', content: this.text });
++  }
++
++  redo(): void {
++    const next = this.redoStack.pop();
++    if (next === undefined) return;
++    this.undoStack.push(this.text);
++    this.text = next;
++    this.emit({ type: 'replace', content: this.text });
++  }
++
++  canUndo(): boolean {
++    return this.undoStack.length > 0;
++  }
++
++  canRedo(): boolean {
++    return this.redoStack.length > 0;
++  }
++
++  subscribeRemote(listener: (change: NoteRemoteChange) => void): Unsubscribe {
++    this.listeners.add(listener);
++    return () => {
++      this.listeners.delete(listener);
++    };
+   }
+ 
+   setLocalSelection(_anchor: number, _head: number | null): void {
+@@ -35,4 +93,14 @@ export class MemNoteStore implements NoteStore {
+   subscribePresence(_listener: () => void): Unsubscribe {
+     return () => {};
+   }
++
++  private pushUndo(before: string): void {
++    this.undoStack.push(before);
++    // A fresh edit invalidates the redo branch, as in every linear history.
++    this.redoStack.length = 0;
++  }
++
++  private emit(change: NoteRemoteChange): void {
++    for (const listener of this.listeners) listener(change);
++  }
+ }
+diff --git a/packages/notes/src/store/store.ts b/packages/notes/src/store/store.ts
+index 25c4e6207..d6283c893 100644
+--- a/packages/notes/src/store/store.ts
++++ b/packages/notes/src/store/store.ts
+@@ -33,6 +33,12 @@ export interface NotePeerSelection {
+  * plain string (tests); the frontend's YorkieNoteStore backs it with a Yorkie
+  * Text CRDT + presence (collaboration). All coordinates are CodeMirror
+  * character indices; CRDT position translation lives inside YorkieNoteStore.
++ *
++ * Undo/redo is store-owned (as in DocStore / SlidesStore) rather than
++ * view-owned: on the Yorkie store it reverts the local client's ops through
++ * `doc.history`, which preserves a peer's concurrent edits. A view-local
++ * CodeMirror history could only restore an absolute snapshot and would
++ * clobber them.
+  */
+ export interface NoteStore {
+   /** Current full markdown text. */
+@@ -40,8 +46,28 @@ export interface NoteStore {
+   /** Apply a local edit (originating in the editor) to the model. */
+   editText(from: number, to: number, insert: string): void;
+   /**
+-   * Subscribe to remote changes. The listener receives changes already
+-   * translated to CodeMirror coordinates. MemNoteStore never emits.
++   * Run `fn`, grouping every edit it makes into a single undo unit. Reentrant:
++   * a nested `batch` folds into the outermost one. A batch that edits nothing
++   * records no undo unit.
++   */
++  batch(fn: () => void): void;
++  /**
++   * Revert the last local undo unit. The resulting text change is delivered
++   * back through `subscribeRemote` (so the view applies it like any other
++   * out-of-band change) — not returned here. No-op when `canUndo()` is false.
++   */
++  undo(): void;
++  /** Re-apply the last undone unit. No-op when `canRedo()` is false. */
++  redo(): void;
++  /** Whether there is a local unit to undo (above the seeded baseline). */
++  canUndo(): boolean;
++  /** Whether there is an undone local unit to redo. */
++  canRedo(): boolean;
++  /**
++   * Subscribe to out-of-band changes: a peer's edit, a CRDT snapshot, or the
++   * result of a local `undo()`/`redo()`. The listener receives changes already
++   * translated to CodeMirror coordinates. MemNoteStore emits only for
++   * undo/redo (it has no peers).
+    */
+   subscribeRemote(listener: (change: NoteRemoteChange) => void): Unsubscribe;
+   /**
+diff --git a/packages/notes/src/view/editor.test.ts b/packages/notes/src/view/editor.test.ts
+index bdde4eff7..8ab1839f3 100644
+--- a/packages/notes/src/view/editor.test.ts
++++ b/packages/notes/src/view/editor.test.ts
+@@ -1,4 +1,5 @@
+ import { describe, it, expect } from 'vitest';
++import { EditorView } from '@codemirror/view';
+ import { MemNoteStore } from '../store/memory.js';
+ import { initialize } from './editor.js';
+ 
+@@ -56,6 +57,102 @@ describe('initialize', () => {
+     container.remove();
+   });
+ 
++  it('routes undo/redo through the store, not CodeMirror history', () => {
++    const container = document.createElement('div');
++    document.body.appendChild(container);
++    const store = new MemNoteStore('hello');
++    const api = initialize(container, store, 'light');
++
++    expect(api.canUndo()).toBe(false);
++    // Type through CodeMirror so the edit reaches the store the normal way.
++    const view = EditorView.findFromDOM(container)!;
++    view.dispatch({ changes: { from: 5, insert: '!' }, userEvent: 'input.type' });
++    expect(store.getText()).toBe('hello!');
++    expect(api.canUndo()).toBe(true);
++
++    api.undo();
++    // The store reverted and pushed the result back into the editor.
++    expect(store.getText()).toBe('hello');
++    expect(api.getText()).toBe('hello');
++    expect(api.canUndo()).toBe(false);
++    expect(api.canRedo()).toBe(true);
++
++    api.redo();
++    expect(api.getText()).toBe('hello!');
++
++    api.dispose();
++    container.remove();
++  });
++
++  it('does not re-push an undo result into the store', () => {
++    // Regression guard for the echo loop: the store's undo arrives as a
++    // remote-tagged transaction, which noteSync must not send back as a
++    // forward edit (that would strand the undo stack one step behind).
++    const container = document.createElement('div');
++    document.body.appendChild(container);
++    const store = new MemNoteStore('ab');
++    const api = initialize(container, store, 'light');
++    const view = EditorView.findFromDOM(container)!;
++
++    view.dispatch({ changes: { from: 2, insert: 'c' }, userEvent: 'input.type' });
++    api.undo();
++    expect(store.getText()).toBe('ab');
++    expect(store.canUndo()).toBe(false);
++    expect(store.canRedo()).toBe(true);
++
++    api.dispose();
++    container.remove();
++  });
++
++  it('binds Mod-z / Mod-Shift-z to the store history', () => {
++    const container = document.createElement('div');
++    document.body.appendChild(container);
++    const store = new MemNoteStore('hello');
++    const api = initialize(container, store, 'light');
++    const content = container.querySelector('.cm-content') as HTMLElement;
++    const view = EditorView.findFromDOM(container)!;
++    view.dispatch({ changes: { from: 5, insert: '!' }, userEvent: 'input.type' });
++
++    // jsdom is not macOS, so CodeMirror resolves `Mod` to Ctrl here. A shifted
++    // letter arrives as the uppercase `key`; CodeMirror recovers the base name
++    // for the `Ctrl-Shift-z` lookup from `keyCode`, so both must be set.
++    const press = (key: string, shift = false) =>
++      content.dispatchEvent(
++        new KeyboardEvent('keydown', {
++          key: shift ? key.toUpperCase() : key,
++          keyCode: key.toUpperCase().charCodeAt(0),
++          ctrlKey: true,
++          shiftKey: shift,
++          bubbles: true,
++        }),
++      );
++
++    press('z');
++    expect(store.getText()).toBe('hello');
++    press('z', true);
++    expect(store.getText()).toBe('hello!');
++
++    api.dispose();
++    container.remove();
++  });
++
++  it('leaves history unbound on a read-only mount', () => {
++    const container = document.createElement('div');
++    document.body.appendChild(container);
++    const store = new MemNoteStore('hello');
++    // Seed a unit directly on the store: a read-only view cannot type one.
++    store.editText(5, 5, '!');
++    const api = initialize(container, store, 'light', true);
++    const content = container.querySelector('.cm-content') as HTMLElement;
++    content.dispatchEvent(
++      new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }),
++    );
++    expect(store.getText()).toBe('hello!');
++
++    api.dispose();
++    container.remove();
++  });
++
+   it('switches the keybinding mode (default <-> vim)', () => {
+     const container = document.createElement('div');
+     document.body.appendChild(container);
+diff --git a/packages/notes/src/view/editor.ts b/packages/notes/src/view/editor.ts
+index 6b1e0bc7b..5e49e8845 100644
+--- a/packages/notes/src/view/editor.ts
++++ b/packages/notes/src/view/editor.ts
+@@ -1,14 +1,8 @@
+-import {
+-  indentWithTab,
+-  redo,
+-  redoDepth,
+-  undo,
+-  undoDepth,
+-} from '@codemirror/commands';
++import { indentWithTab } from '@codemirror/commands';
+ import { markdown } from '@codemirror/lang-markdown';
+ import { Compartment, EditorState, Prec, type Extension } from '@codemirror/state';
+ import { EditorView, keymap } from '@codemirror/view';
+-import { vim } from '@replit/codemirror-vim';
++import { CodeMirror, vim } from '@replit/codemirror-vim';
+ import { basicSetup } from '@uiw/codemirror-extensions-basic-setup';
+ import { xcodeDark, xcodeLight } from '@uiw/codemirror-theme-xcode';
+ import type { NoteStore } from '../store/store.js';
+@@ -30,6 +24,41 @@ import {
+ 
+ export type ThemeMode = 'light' | 'dark';
+ 
++/**
++ * Route vim's `u` / `<C-r>` to the note store's Yorkie-native history.
++ *
++ * CodeMirror's own history extension is disabled (see `buildExtensions`), and
++ * `@replit/codemirror-vim` implements those keys by calling
++ * `CodeMirror.commands.undo/redo`, which delegate to `@codemirror/commands`'
++ * `undo(view)` — a no-op without the history extension. The vim action reads
++ * `CodeMirror.commands` at call time, so replacing the entry here is enough.
++ * The store is resolved from the view's own facet, so editors that are not
++ * notes (none today) fall through to the original command.
++ */
++const defaultVimHistory = {
++  undo: CodeMirror.commands.undo,
++  redo: CodeMirror.commands.redo,
++};
++let vimHistoryRouted = false;
++function routeVimHistoryToStore(): void {
++  if (vimHistoryRouted) return;
++  vimHistoryRouted = true;
++  const route =
++    (kind: 'undo' | 'redo') =>
++    (cm: CodeMirror): void => {
++      const store: NoteStore | undefined = cm.cm6.state.facet(noteStoreFacet);
++      // A read-only mount has nothing local to revert (and no write
++      // permission), so it falls through with the rest.
++      if (store && cm.cm6.state.facet(EditorView.editable)) {
++        store[kind]();
++        return;
++      }
++      defaultVimHistory[kind](cm);
++    };
++  CodeMirror.commands.undo = route('undo');
++  CodeMirror.commands.redo = route('redo');
++}
++
+ /**
+  * Pane layout mode (mirrors CodePair's editor modes):
+  * - `edit` — editor only
+@@ -65,7 +94,10 @@ export interface NoteEditorAPI {
+   toggleLink(): void;
+   /** Insert a `rows`×`cols` markdown table skeleton at the cursor. */
+   insertTable(rows: number, cols: number): void;
+-  /** Undo the last local edit. */
++  /**
++   * Undo this client's last edit through the store's history. In a
++   * collaborative session a peer's concurrent edit is preserved.
++   */
+   undo(): void;
+   /** Redo the last undone local edit. */
+   redo(): void;
+@@ -102,6 +134,7 @@ export function initialize(
+   readOnly = false,
+   viewMode: NoteViewMode = 'both',
+ ): NoteEditorAPI {
++  routeVimHistoryToStore();
+   container.style.display = 'flex';
+   container.style.alignItems = 'stretch';
+   container.style.height = '100%';
+@@ -158,11 +191,52 @@ export function initialize(
+   let currentKeymap: NoteKeymap = 'default';
+ 
+   // Compartments so theme / keymap switches reconfigure in place instead of
+-  // rebuilding the whole EditorState — a full rebuild would drop the undo
+-  // history (basicSetup's history()), silently disabling undo after a toggle.
++  // rebuilding the whole EditorState — a full rebuild would drop the editor's
++  // view state (selection, scroll, plugin state) on every toggle.
+   const themeCompartment = new Compartment();
+   const keymapCompartment = new Compartment();
+ 
++  // Undo/redo live in the store (Yorkie `doc.history`), not in CodeMirror, so
++  // that undo reverts only this client's ops and leaves a peer's concurrent
++  // edit intact. The reverted text arrives back through the store's remote
++  // subscription, which `noteSync` applies. Refresh the toolbar afterwards:
++  // the store's depth changed, and the resulting transaction may land before
++  // the pop is visible, so we don't rely on the docChanged listener alone.
++  const runHistory = (kind: 'undo' | 'redo') => {
++    store[kind]();
++    selectionCb?.(computeActiveFormats(view.state));
++  };
++  // Mirrors @codemirror/commands' historyKeymap, minus the selection-undo
++  // entries (Yorkie has no selection history). Read-only mounts get no
++  // binding at all — the document is not writable, so there is nothing local
++  // to revert.
++  const historyKeymap: Extension = readOnly
++    ? []
++    : keymap.of([
++        {
++          key: 'Mod-z',
++          run: () => {
++            runHistory('undo');
++            return true;
++          },
++        },
++        {
++          key: 'Mod-y',
++          mac: 'Mod-Shift-z',
++          run: () => {
++            runHistory('redo');
++            return true;
++          },
++        },
++        {
++          key: 'Mod-Shift-z',
++          run: () => {
++            runHistory('redo');
++            return true;
++          },
++        },
++      ]);
++
+   const keymapExt = (): Extension => {
+     // CodeMirror deliberately leaves Tab out of the default keymap (so keyboard
+     // users can tab out of the editor). Bind it explicitly for indent/outdent.
+@@ -196,7 +270,17 @@ export function initialize(
+ 
+   const buildExtensions = (mode: ThemeMode): Extension[] => [
+     keymapCompartment.of(keymapExt()),
+-    basicSetup({ highlightSelectionMatches: false }),
++    // After the keymap compartment so vim keeps its own history keys (`u`,
++    // `<C-r>`), which route to the store via `routeVimHistoryToStore`.
++    historyKeymap,
++    // CodeMirror's history is off: it can only restore a local snapshot, which
++    // in a collaborative session overwrites whatever a peer typed in the
++    // meantime. Yorkie's reverse-op undo is used instead.
++    basicSetup({
++      highlightSelectionMatches: false,
++      history: false,
++      historyKeymap: false,
++    }),
+     markdown(),
+     themeCompartment.of(themeExt(mode)),
+     EditorView.lineWrapping,
+@@ -318,7 +402,7 @@ export function initialize(
+       if (mode === currentTheme) return;
+       currentTheme = mode;
+       // Reconfigure the theme compartment in place; a full state rebuild would
+-      // discard the undo history (see the compartment comment above).
++      // reset the view state (see the compartment comment above).
+       view.dispatch({
+         effects: themeCompartment.reconfigure(themeExt(mode)),
+       });
+@@ -331,8 +415,8 @@ export function initialize(
+     setKeymap: (mode: NoteKeymap) => {
+       if (mode === currentKeymap) return;
+       currentKeymap = mode;
+-      // Reconfigure the keymap compartment in place so the undo history (and
+-      // the current selection) survive a Default <-> Vim switch.
++      // Reconfigure the keymap compartment in place so the current selection
++      // survives a Default <-> Vim switch.
+       view.dispatch({
+         effects: keymapCompartment.reconfigure(keymapExt()),
+       });
+@@ -345,15 +429,15 @@ export function initialize(
+     toggleLink: () => toggleLink(view),
+     insertTable: (rows, cols) => insertTable(view, rows, cols),
+     undo: () => {
+-      undo(view);
++      runHistory('undo');
+       view.focus();
+     },
+     redo: () => {
+-      redo(view);
++      runHistory('redo');
+       view.focus();
+     },
+-    canUndo: () => undoDepth(view.state) > 0,
+-    canRedo: () => redoDepth(view.state) > 0,
++    canUndo: () => store.canUndo(),
++    canRedo: () => store.canRedo(),
+     getActiveFormats: () => computeActiveFormats(view.state),
+     onSelectionChange: (cb) => {
+       selectionCb = cb;
+diff --git a/packages/notes/src/view/note-sync.test.ts b/packages/notes/src/view/note-sync.test.ts
+index 3be9d5186..c384875b9 100644
+--- a/packages/notes/src/view/note-sync.test.ts
++++ b/packages/notes/src/view/note-sync.test.ts
+@@ -5,6 +5,24 @@ import { MemNoteStore } from '../store/memory.js';
+ import type { NoteRemoteChange, NoteStore } from '../store/store.js';
+ import { noteStoreFacet, noteSync } from './note-sync.js';
+ 
++/** NoteStore stub; `over` supplies only the members a test cares about. */
++function stubStore(over: Partial<NoteStore>): NoteStore {
++  return {
++    getText: () => '',
++    editText: () => {},
++    batch: (fn) => fn(),
++    undo: () => {},
++    redo: () => {},
++    canUndo: () => false,
++    canRedo: () => false,
++    subscribeRemote: () => () => {},
++    setLocalSelection: () => {},
++    getPeerSelections: () => [],
++    subscribePresence: () => () => {},
++    ...over,
++  };
++}
++
+ function mount(store: NoteStore) {
+   const view = new EditorView({
+     state: EditorState.create({
+@@ -24,18 +42,48 @@ describe('noteSync', () => {
+     view.destroy();
+   });
+ 
++  it('groups a transaction\'s edits into one store batch', () => {
++    // The store's undo unit is the batch, so all changes carried by one
++    // CodeMirror transaction must land inside a single batch() — otherwise a
++    // multi-change command (e.g. insertTable) would need several undos.
++    const backing = new MemNoteStore('AAAA BBBB');
++    let depth = 0;
++    let maxDepth = 0;
++    const editDepths: number[] = [];
++    const store = stubStore({
++      getText: () => backing.getText(),
++      editText: (f, t, i) => {
++        editDepths.push(depth);
++        backing.editText(f, t, i);
++      },
++      batch: (fn) => {
++        depth++;
++        maxDepth = Math.max(maxDepth, depth);
++        try { fn(); } finally { depth--; }
++      },
++    });
++    const view = mount(store);
++    view.dispatch({
++      changes: [
++        { from: 0, to: 0, insert: 'XY' },
++        { from: 5, to: 9, insert: 'Z' },
++      ],
++      userEvent: 'input.type',
++    });
++    expect(editDepths).toEqual([1, 1]);
++    expect(maxDepth).toBe(1);
++    view.destroy();
++  });
++
+   it('applies remote edits into the editor without echoing back', () => {
+     // A store that lets the test emit a remote change on demand.
+     let emit: (c: NoteRemoteChange) => void = () => {};
+     const backing = new MemNoteStore('hello');
+-    const store: NoteStore = {
++    const store = stubStore({
+       getText: () => backing.getText(),
+       editText: (f, t, i) => backing.editText(f, t, i),
+       subscribeRemote: (l) => { emit = l; return () => {}; },
+-      setLocalSelection: () => {},
+-      getPeerSelections: () => [],
+-      subscribePresence: () => () => {},
+-    };
++    });
+     const view = mount(store);
+     const before = backing.getText();
+     emit({ type: 'edits', changes: [{ from: 5, to: 5, insert: ' world' }] });
+@@ -47,14 +95,10 @@ describe('noteSync', () => {
+ 
+   it('applies a full replacement', () => {
+     let emit: (c: NoteRemoteChange) => void = () => {};
+-    const store: NoteStore = {
++    const store = stubStore({
+       getText: () => 'old',
+-      editText: () => {},
+       subscribeRemote: (l) => { emit = l; return () => {}; },
+-      setLocalSelection: () => {},
+-      getPeerSelections: () => [],
+-      subscribePresence: () => () => {},
+-    };
++    });
+     const view = mount(store);
+     emit({ type: 'replace', content: 'brand new' });
+     expect(view.state.doc.toString()).toBe('brand new');
+diff --git a/packages/notes/src/view/note-sync.ts b/packages/notes/src/view/note-sync.ts
+index cfb8ca704..0b4f004cb 100644
+--- a/packages/notes/src/view/note-sync.ts
++++ b/packages/notes/src/view/note-sync.ts
+@@ -53,17 +53,28 @@ class NoteSyncPluginValue implements cmView.PluginValue {
+ 
+   update(update: cmView.ViewUpdate): void {
+     if (!update.docChanged) return;
+-    for (const tr of update.transactions) {
+-      if (tr.annotation(cmState.Transaction.remote)) continue;
+-      const events = ['input', 'delete', 'move', 'undo', 'redo'];
+-      if (!events.some((e) => tr.isUserEvent(e))) continue;
+-      let adj = 0;
+-      tr.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
+-        const insertText = inserted.toJSON().join('\n');
+-        this.store.editText(fromA + adj, toA + adj, insertText);
+-        adj += insertText.length - (toA - fromA);
+-      });
+-    }
++    // One ViewUpdate = one undo unit. `batch()` collapses every edit below
++    // into a single store change, so a multi-change transaction (or a command
++    // that dispatches several, e.g. insertTable) undoes in one step instead of
++    // unwinding change by change. An update whose transactions are all
++    // filtered out below leaves the batch empty, which records nothing.
++    this.store.batch(() => {
++      for (const tr of update.transactions) {
++        if (tr.annotation(cmState.Transaction.remote)) continue;
++        // 'undo'/'redo' stay in the list purely as a safety net: CodeMirror's
++        // own history is disabled (Yorkie owns undo), so nothing should emit
++        // them — but if something did, the edit must still reach the store
++        // rather than silently desync the view from the model.
++        const events = ['input', 'delete', 'move', 'undo', 'redo'];
++        if (!events.some((e) => tr.isUserEvent(e))) continue;
++        let adj = 0;
++        tr.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
++          const insertText = inserted.toJSON().join('\n');
++          this.store.editText(fromA + adj, toA + adj, insertText);
++          adj += insertText.length - (toA - fromA);
++        });
++      }
++    });
+   }
+ 
+   destroy(): void {
+diff --git a/packages/notes/src/view/remote-selection.test.ts b/packages/notes/src/view/remote-selection.test.ts
+index 474e6bcb8..0596c08ee 100644
+--- a/packages/notes/src/view/remote-selection.test.ts
++++ b/packages/notes/src/view/remote-selection.test.ts
+@@ -10,6 +10,11 @@ function storeWithPeers(peers: NotePeerSelection[]): NoteStore & { setLocal: Ret
+   return {
+     getText: () => 'hello world',
+     editText: () => {},
++    batch: (fn: () => void) => fn(),
++    undo: () => {},
++    redo: () => {},
++    canUndo: () => false,
++    canRedo: () => false,
+     subscribeRemote: () => () => {},
+     setLocalSelection: setLocal,
+     getPeerSelections: () => peers,

@@ -1,0 +1,807 @@
+diff --git a/docs/design/README.md b/docs/design/README.md
+index 9933b0a18..77ae140f0 100644
+--- a/docs/design/README.md
++++ b/docs/design/README.md
+@@ -104,6 +104,7 @@ Infrastructure, frontend/backend, and cross-cutting concerns.
+ 
+ | Document                                               | Description                                                                                        |
+ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
++| [documents-last-modified.md](documents-last-modified.md) | Documents-list last-modified ordering — stable Postgres `Document.updatedAt` fed by Yorkie `DocumentRootChanged` event webhook (HMAC-signed), replacing the flaky per-request admin call that made the list reshuffle every 5s |
+ | [frontend.md](frontend.md)                             | Frontend package — app architecture, Yorkie integration, presence system, auth flow                |
+ | [backend.md](backend.md)                               | Backend package — NestJS modules, API reference, auth system, database schema, security            |
+ | [sharing.md](sharing.md)                               | URL-based token sharing with anonymous access and role-based permissions                           |
+diff --git a/docs/design/documents-last-modified.md b/docs/design/documents-last-modified.md
+new file mode 100644
+index 000000000..f879f86e0
+--- /dev/null
++++ b/docs/design/documents-last-modified.md
+@@ -0,0 +1,81 @@
++---
++title: documents-last-modified
++target-version: 0.5.0
++---
++
++# Documents List — Last-Modified Ordering
++
++## Summary
++
++The documents list orders by "last modified". Content edits, however, flow
++**client → Yorkie only** — the NestJS backend is not on the edit path, so
++Postgres has no edit signal (`Document` historically had `createdAt` only).
++
++The list previously synthesized `updatedAt` per request from Yorkie's admin
++`GetDocuments` call. That call is slow and variable (authenticated presence
++query against a sharded MongoDB) and straddles the backend's 800 ms timeout,
++so `updatedAt` flipped between the real Yorkie value and a `createdAt`
++fallback on each 5 s poll — the list visibly reshuffled. (Confirmed on the
++live cluster: gateway RTT ~25 ms, but the admin query timed out ~every poll.)
++
++This design moves last-modified into a stable Postgres column fed by Yorkie's
++**event webhook**, and demotes the admin call to editor-avatars only.
++
++## Goals / Non-Goals
++
++**Goals**
++- Stable documents-list ordering that still reflects real edit recency.
++- No per-request dependency on the flaky Yorkie admin call for ordering.
++
++**Non-Goals**
++- Self-healing missed webhooks (backend down mid-edit) — accept small
++  staleness; a periodic Yorkie→PG sync can be layered later.
++- Fixing the underlying Yorkie admin-query latency (separate concern; the
++  "currently editing" avatars remain best-effort over it).
++
++## Proposal Details
++
++### Data model
++`Document.updatedAt DateTime @default(now())` — set **explicitly** (not
++Prisma `@updatedAt`). Migration backfills existing rows `= createdAt`. List
++endpoints order by `[{ updatedAt: desc }, { createdAt: desc }]`.
++
++### Ingestion — Yorkie event webhook (yorkie 0.7.12)
++- Event `DocumentRootChanged`, fired on real root-content operations (not
++  presence/attach/watch).
++- Body: `{ type, attributes: { key: "<type>-<id>", issuedAt } }`.
++- Auth: `X-Signature-256: sha256=<hex>`, `HMAC-SHA256(rawBody, project.SecretKey)`.
++  The signing key **is** the project secret key, already held by the backend
++  as `YORKIE_SECRET_KEY` — no new secret. Raw request bytes are captured via a
++  `bodyParser.json({ verify })` hook (HMAC must run over exact bytes).
++- Endpoint `POST /internal/yorkie/events` — no JWT, `YorkieSignatureGuard`,
++  `@SkipThrottle`. Parses the key (`parseYorkieDocKey`), then
++  `DocumentService.touchUpdatedAt(id, issuedAt)`.
++- Delivery is at-least-once, unordered, retried → `touchUpdatedAt` is
++  **monotonic** (`updateMany where updatedAt < at`) and idempotent; unknown
++  keys / other events / missing docs are 200-swallowed so Yorkie won't retry.
++
++### Read path
++`attachMeta` sources `updatedAt` from the DB column and uses
++`YorkieAdminService.getEditors` purely for the avatars. The frontend keeps its
++`updatedAt desc` default sort, which is now stable because the value is.
++
++### Ops
++Register the webhook on the Yorkie project (internal cluster URL, no public
++exposure):
++
++```
++yorkie project update <project> \
++  --event-webhook-url http://wafflebase.wafflebase.svc.cluster.local:3000/internal/yorkie/events \
++  --event-webhook-events DocumentRootChanged
++```
++
++## Risks and Mitigation
++
++- **Duplicate / out-of-order events** → monotonic advance-only update absorbs.
++- **Missed webhook** (backend down) → `updatedAt` slightly stale; acceptable,
++  future periodic sync self-heals.
++- **Forged requests** → HMAC signature verification is mandatory; the endpoint
++  refuses to run when `YORKIE_SECRET_KEY` is unset.
++- **`pdf` documents** have no CRDT edits → no webhook → stay at `createdAt`,
++  which is correct.
+diff --git a/docs/tasks/README.md b/docs/tasks/README.md
+index 4923c0edc..92d9113d6 100644
+--- a/docs/tasks/README.md
++++ b/docs/tasks/README.md
+@@ -23,6 +23,7 @@ Track task-specific plan/review and lessons files using the active/archive layou
+ | slides gradient fill (2026-07-11) | [20260711-slides-gradient-fill-todo.md](./active/20260711-slides-gradient-fill-todo.md) | [20260711-slides-gradient-fill-lessons.md](./active/20260711-slides-gradient-fill-lessons.md) |
+ | data validation list (2026-07-10) | [20260710-data-validation-list-todo.md](./active/20260710-data-validation-list-todo.md) | [20260710-data-validation-list-lessons.md](./active/20260710-data-validation-list-lessons.md) |
+ | pptx layout background (2026-07-10) | [20260710-pptx-layout-background-todo.md](./active/20260710-pptx-layout-background-todo.md) | [20260710-pptx-layout-background-lessons.md](./active/20260710-pptx-layout-background-lessons.md) |
++| docs list updatedAt webhook (2026-07-10) | [20260710-docs-list-updatedat-webhook-todo.md](./active/20260710-docs-list-updatedat-webhook-todo.md) | [20260710-docs-list-updatedat-webhook-lessons.md](./active/20260710-docs-list-updatedat-webhook-lessons.md) |
+ | sheet data validation checkbox (2026-07-10) | [20260710-sheet-data-validation-checkbox-todo.md](./active/20260710-sheet-data-validation-checkbox-todo.md) | [20260710-sheet-data-validation-checkbox-lessons.md](./active/20260710-sheet-data-validation-checkbox-lessons.md) |
+ | slides charts (2026-07-09) | [20260709-slides-charts-todo.md](./active/20260709-slides-charts-todo.md) | [20260709-slides-charts-lessons.md](./active/20260709-slides-charts-lessons.md) |
+ | devops storage secrets (2026-07-08) | [20260708-devops-storage-secrets-todo.md](./active/20260708-devops-storage-secrets-todo.md) | - |
+diff --git a/docs/tasks/active/20260710-docs-list-updatedat-webhook-lessons.md b/docs/tasks/active/20260710-docs-list-updatedat-webhook-lessons.md
+new file mode 100644
+index 000000000..65e8a43f1
+--- /dev/null
++++ b/docs/tasks/active/20260710-docs-list-updatedat-webhook-lessons.md
+@@ -0,0 +1,37 @@
++# Lessons — Documents list `updatedAt` via Yorkie event webhook
++
++## Debug root cause with the live system, not just the code
++
++The two API samples the user pasted were byte-identical and stable — which
++looked like it *disproved* a per-request `updatedAt` flip. Reading the code
++alone couldn't resolve it. `kubectl logs` on the backend pod showed the
++`getSummaries` 800ms timeout firing ~every 5s poll, and a `port-forward` +
++timed `curl` proved the gateway RTT was ~25ms — so the slowness was the
++authenticated presence query straddling the 800ms cut, exactly the flip.
++The identical samples were just two "timeout → fallback" polls. **Measure the
++running system before committing to a mechanism.**
++
++## Don't propose a store you can't fill
++
++The first fix idea ("persist `updatedAt` in Postgres") was hollow until the
++user pushed: edits live only in Yorkie, so Postgres had no signal to write.
++The real design work was *how the value gets there* — the webhook — not the
++column. Verify the data flow feeding a field before proposing the field.
++
++## Verify the external contract from source, not memory
++
++Yorkie's event-webhook contract (event name `DocumentRootChanged`, payload
++shape, `X-Signature-256` = `sha256=hex(HMAC-SHA256(rawBody, project.SecretKey))`,
++at-least-once + throttled delivery) was read from the pinned `v0.7.12` tag via
++`gh api`, not guessed. The signing key being the *project secret key* is what
++let us reuse the existing `YORKIE_SECRET_KEY` with no new secret.
++
++## Implementation notes
++
++- HMAC must run over the **raw request bytes** — captured via
++  `bodyParser.json({ verify })`, not a re-serialized `@Body()` object.
++- Webhook receivers must be **idempotent + monotonic** (advance-only
++  `updateMany where updatedAt < at`) because delivery is at-least-once and
++  unordered; and **200-swallow** unrecognized input so the sender won't retry.
++- Prisma `@updatedAt` is the wrong tool when the app isn't on the write path —
++  use a plain `DateTime` column set explicitly.
+diff --git a/docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md b/docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md
+new file mode 100644
+index 000000000..788d30fcb
+--- /dev/null
++++ b/docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md
+@@ -0,0 +1,79 @@
++# Documents list `updatedAt` via Yorkie event webhook
++
++## Problem
++
++The documents list reorders every ~5s. Root cause (confirmed against the
++live cluster with `kubectl`): the list is sorted by `updatedAt`, which is
++layered on at request time from Yorkie's admin `GetDocuments`. That call
++times out at the backend's 800ms cut on essentially every poll (573
++timeouts / 68h; ~5.8s spacing = every refetch). The gateway RTT is ~25ms,
++so the slowness is the authenticated presence query against Yorkie's
++sharded MongoDB, and it straddles the 800ms cut — so `updatedAt` flips
++between the real Yorkie value and the `createdAt` fallback per poll, and
++the frontend re-sorts each time.
++
++Content edits are recorded **only in Yorkie** (the NestJS backend is not on
++the edit path), so Postgres has no last-modified signal today (`Document`
++has `createdAt` only).
++
++## Approach (Option A)
++
++Feed real edit times into Postgres via Yorkie's **event webhook**
++(`DocumentRootChanged`, fired on actual root-content operations). The list
++then reads/sorts a stable Postgres `updatedAt`; the flaky admin call is
++demoted to editor-avatars only and no longer affects ordering.
++
++Yorkie 0.7.12 contract (verified from source):
++- Event `DocumentRootChanged`; payload
++  `{ type, attributes: { key: "<type>-<id>", issuedAt } }`.
++- Header `X-Signature-256: sha256=<hex>`, `HMAC-SHA256(rawBody, project.SecretKey)`.
++  Signing key = project SecretKey = backend's existing `YORKIE_SECRET_KEY`.
++- At-least-once, throttled per document, retried w/ backoff → receiver must
++  be idempotent + monotonic.
++
++## Tasks
++
++- [x] Prisma: add `Document.updatedAt DateTime @default(now())` (manual, **not**
++      `@updatedAt`); migration backfills existing rows `= createdAt`.
++- [x] `yorkie-doc-key.ts`: add `parseYorkieDocKey(key) → { type, id } | null`.
++- [x] `DocumentService.touchUpdatedAt(id, at)` — monotonic advance-only
++      (`updateMany where updatedAt < at`), idempotent, no-op on missing doc.
++- [x] HMAC signature guard reading `req.rawBody` + `X-Signature-256`,
++      timing-safe compare against `YORKIE_SECRET_KEY`; reject if key unset.
++- [x] `main.ts`: capture raw body via `bodyParser.json({ verify })`.
++- [x] `POST /internal/yorkie/events` controller (no JWT, signature guard,
++      `@SkipThrottle`): handle `DocumentRootChanged`, parse key, touch;
++      200-swallow unknown keys/other events.
++- [x] `attachMeta`: source `updatedAt` from the DB column; keep `editors`
++      from the (best-effort) summary. Sort both list endpoints by
++      `[{ updatedAt: desc }, { createdAt: desc }]`.
++- [ ] **Ops (post-merge, needs cluster access)**: register webhook on the
++      Yorkie project (internal svc URL) — see design doc. Until this runs,
++      `updatedAt` stays at `createdAt` but the list is already stable.
++- [x] Tests: `parseYorkieDocKey` round-trip; guard valid/invalid/missing sig;
++      `touchUpdatedAt`/event handling (controller unit). *(DB-backed e2e for
++      the advance-only path deferred; covered by unit + monotonic SQL.)*
++
++## Review
++
++- Backend `build` + `pnpm verify:fast` green (EXIT=0). 19 new unit tests pass.
++- No frontend change needed: the list already sorts `updatedAt desc`; that
++  value is now stable from Postgres, so the flip disappears. The 5s poll now
++  only refreshes editor avatars.
++- Migration `20260710000000_add_document_updated_at` adds the column + backfill.
++
++## Non-Goals / follow-ups
++
++- Webhook loss self-heal (backend down during edit) — accept small staleness
++  initially; a periodic Yorkie→PG sync (Option C) or read-time touch can be
++  layered later.
++- Live "editing" avatars still use Yorkie presence (decorative; failure no
++  longer affects ordering). Fixing the 800ms admin-query latency itself is
++  separate.
++
++## Verification
++
++- `pnpm verify:fast` green.
++- e2e: signed webhook advances `updatedAt`; unsigned/bad-sig rejected.
++- Manual: list order stable across polls in `pnpm dev`; editing a doc floats
++  it to the top after the next webhook.
+diff --git a/packages/backend/prisma/migrations/20260710000000_add_document_updated_at/migration.sql b/packages/backend/prisma/migrations/20260710000000_add_document_updated_at/migration.sql
+new file mode 100644
+index 000000000..f80a6a002
+--- /dev/null
++++ b/packages/backend/prisma/migrations/20260710000000_add_document_updated_at/migration.sql
+@@ -0,0 +1,7 @@
++-- AlterTable
++ALTER TABLE "Document" ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
++
++-- Backfill existing rows to their creation time so list ordering is stable
++-- before any Yorkie edit webhook has been received. New rows keep the
++-- CURRENT_TIMESTAMP default (≈ createdAt) until their first edit.
++UPDATE "Document" SET "updatedAt" = "createdAt";
+diff --git a/packages/backend/prisma/schema.prisma b/packages/backend/prisma/schema.prisma
+index 683b79abd..97b6b8a48 100644
+--- a/packages/backend/prisma/schema.prisma
++++ b/packages/backend/prisma/schema.prisma
+@@ -45,6 +45,12 @@ model Document {
+   authorID  Int?
+   author    User?    @relation(fields: [authorID], references: [id])
+   createdAt DateTime @default(now())
++  // Last-modified time. Set explicitly from Yorkie's `DocumentRootChanged`
++  // event webhook (see document/yorkie-event.controller.ts) — NOT Prisma's
++  // `@updatedAt`, since content edits never pass through this backend. Used
++  // to order the documents list; defaults to creation time until the first
++  // edit webhook arrives.
++  updatedAt DateTime @default(now())
+   shareLinks ShareLink[]
+   workspaceId String
+   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+diff --git a/packages/backend/src/document/document.controller.ts b/packages/backend/src/document/document.controller.ts
+index e2250b647..d0def6fcb 100644
+--- a/packages/backend/src/document/document.controller.ts
++++ b/packages/backend/src/document/document.controller.ts
+@@ -29,10 +29,13 @@ import { yorkieDocKey } from '../yorkie/yorkie-doc-key';
+ import { FileService } from '../file/file.service';
+ import { VALID_FILE_ID_PATTERN } from '../file/file.constants';
+ 
+-type DocumentListItem = DocumentWithAuthor & {
++type DocumentListItem = Omit<DocumentWithAuthor, 'updatedAt'> & {
+   editors?: PresenceUser[];
+-  // Last-modified time (ISO). Read from Yorkie's `updated_at`, falling back
+-  // to the Postgres `createdAt` when Yorkie has no record of the document.
++  // Last-modified time (ISO). Sourced from the Postgres `Document.updatedAt`
++  // column, which the Yorkie `DocumentRootChanged` event webhook advances on
++  // each edit (see yorkie-event.controller.ts). Stable across requests, unlike
++  // the per-request Yorkie admin call — so the list order no longer flips when
++  // that call times out.
+   updatedAt: string;
+ };
+ 
+@@ -50,15 +53,19 @@ export class DocumentController {
+     docs: DocumentWithAuthor[],
+   ): Promise<DocumentListItem[]> {
+     if (docs.length === 0) return [];
++    // The Yorkie admin call now supplies only the decorative "currently
++    // editing" avatars — it is best-effort and its failure/timeout no longer
++    // affects ordering, which reads the stable Postgres `updatedAt`.
+     const keys = docs.map((d) => yorkieDocKey(d.type, d.id));
+-    const summaries = await this.yorkieAdminService.getSummaries(keys);
++    const editorsByKey = await this.yorkieAdminService.getEditors(keys);
+     return docs.map((d, i) => {
+-      const summary = summaries.get(keys[i]);
++      const { updatedAt, ...rest } = d;
+       const item: DocumentListItem = {
+-        ...d,
+-        updatedAt: summary?.updatedAt ?? d.createdAt.toISOString(),
++        ...rest,
++        updatedAt: updatedAt.toISOString(),
+       };
+-      if (summary?.editors.length) item.editors = summary.editors;
++      const editors = editorsByKey.get(keys[i]);
++      if (editors?.length) item.editors = editors;
+       return item;
+     });
+   }
+@@ -107,7 +114,7 @@ export class DocumentController {
+     await this.workspaceService.assertMember(workspaceId, userId);
+     const docs = await this.documentService.listDocumentsWithAuthor({
+       where: { workspaceId },
+-      orderBy: { createdAt: 'desc' },
++      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+     });
+     return this.attachMeta(docs);
+   }
+@@ -139,7 +146,7 @@ export class DocumentController {
+     const workspaceIds = workspaces.map((w) => w.id);
+     const docs = await this.documentService.listDocumentsWithAuthor({
+       where: { workspaceId: { in: workspaceIds } },
+-      orderBy: { createdAt: 'desc' },
++      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+     });
+     return this.attachMeta(docs);
+   }
+diff --git a/packages/backend/src/document/document.module.ts b/packages/backend/src/document/document.module.ts
+index 01501974e..8cb1292ea 100644
+--- a/packages/backend/src/document/document.module.ts
++++ b/packages/backend/src/document/document.module.ts
+@@ -1,6 +1,8 @@
+ import { Module } from '@nestjs/common';
+ import { DocumentController } from './document.controller';
+ import { DocumentFileController } from './document-file.controller';
++import { YorkieEventController } from './yorkie-event.controller';
++import { YorkieSignatureGuard } from './yorkie-signature.guard';
+ import { DocumentService } from './document.service';
+ import { UserService } from 'src/user/user.service';
+ import { PrismaService } from 'src/database/prisma.service';
+@@ -10,7 +12,16 @@ import { ShareLinkModule } from '../share-link/share-link.module';
+ 
+ @Module({
+   imports: [WorkspaceModule, FileModule, ShareLinkModule],
+-  controllers: [DocumentController, DocumentFileController],
+-  providers: [DocumentService, UserService, PrismaService],
++  controllers: [
++    DocumentController,
++    DocumentFileController,
++    YorkieEventController,
++  ],
++  providers: [
++    DocumentService,
++    UserService,
++    PrismaService,
++    YorkieSignatureGuard,
++  ],
+ })
+ export class DocumentModule {}
+diff --git a/packages/backend/src/document/document.service.ts b/packages/backend/src/document/document.service.ts
+index 52a3c2d58..64560ebeb 100644
+--- a/packages/backend/src/document/document.service.ts
++++ b/packages/backend/src/document/document.service.ts
+@@ -39,7 +39,9 @@ export class DocumentService {
+     take?: number;
+     cursor?: Prisma.DocumentWhereUniqueInput;
+     where?: Prisma.DocumentWhereInput;
+-    orderBy?: Prisma.DocumentOrderByWithRelationInput;
++    orderBy?:
++      | Prisma.DocumentOrderByWithRelationInput
++      | Prisma.DocumentOrderByWithRelationInput[];
+   }): Promise<Document[]> {
+     const { skip, take, cursor, where, orderBy } = params;
+     return this.prisma.document.findMany({
+@@ -61,7 +63,9 @@ export class DocumentService {
+     take?: number;
+     cursor?: Prisma.DocumentWhereUniqueInput;
+     where?: Prisma.DocumentWhereInput;
+-    orderBy?: Prisma.DocumentOrderByWithRelationInput;
++    orderBy?:
++      | Prisma.DocumentOrderByWithRelationInput
++      | Prisma.DocumentOrderByWithRelationInput[];
+   }): Promise<DocumentWithAuthor[]> {
+     const { skip, take, cursor, where, orderBy } = params;
+     return this.prisma.document.findMany({
+@@ -99,4 +103,19 @@ export class DocumentService {
+       where,
+     });
+   }
++
++  /**
++   * Advance a document's `updatedAt` to `at`, but only if it moves the time
++   * forward. Used by the Yorkie `DocumentRootChanged` event webhook, whose
++   * delivery is at-least-once, unordered, and retried — so this must be
++   * idempotent and monotonic. A missing document (deleted, or a key we don't
++   * track) is a silent no-op. Returns the number of rows updated (0 or 1).
++   */
++  async touchUpdatedAt(id: string, at: Date): Promise<number> {
++    const { count } = await this.prisma.document.updateMany({
++      where: { id, updatedAt: { lt: at } },
++      data: { updatedAt: at },
++    });
++    return count;
++  }
+ }
+diff --git a/packages/backend/src/document/yorkie-event.controller.spec.ts b/packages/backend/src/document/yorkie-event.controller.spec.ts
+new file mode 100644
+index 000000000..0e7bfe93c
+--- /dev/null
++++ b/packages/backend/src/document/yorkie-event.controller.spec.ts
+@@ -0,0 +1,59 @@
++import { YorkieEventController } from './yorkie-event.controller';
++import { DocumentService } from './document.service';
++
++describe('YorkieEventController', () => {
++  let touchUpdatedAt: jest.Mock;
++  let controller: YorkieEventController;
++
++  beforeEach(() => {
++    touchUpdatedAt = jest.fn().mockResolvedValue(1);
++    controller = new YorkieEventController({
++      touchUpdatedAt,
++    } as unknown as DocumentService);
++  });
++
++  it('advances updatedAt to the event issue time on DocumentRootChanged', async () => {
++    await controller.handleEvent({
++      type: 'DocumentRootChanged',
++      attributes: { key: 'slides-abc', issuedAt: '2026-07-10T06:03:13.331Z' },
++    });
++    expect(touchUpdatedAt).toHaveBeenCalledWith(
++      'abc',
++      new Date('2026-07-10T06:03:13.331Z'),
++    );
++  });
++
++  it('ignores event types other than DocumentRootChanged', async () => {
++    await controller.handleEvent({
++      type: 'DocumentWatched',
++      attributes: { key: 'slides-abc', issuedAt: '2026-07-10T06:03:13.331Z' },
++    });
++    expect(touchUpdatedAt).not.toHaveBeenCalled();
++  });
++
++  it('ignores keys with an unrecognized prefix', async () => {
++    await controller.handleEvent({
++      type: 'DocumentRootChanged',
++      attributes: { key: 'bogus-abc', issuedAt: '2026-07-10T06:03:13.331Z' },
++    });
++    expect(touchUpdatedAt).not.toHaveBeenCalled();
++  });
++
++  it('falls back to now() when issuedAt is missing or unparseable', async () => {
++    const before = Date.now();
++    await controller.handleEvent({
++      type: 'DocumentRootChanged',
++      attributes: { key: 'sheet-xyz' },
++    });
++    expect(touchUpdatedAt).toHaveBeenCalledTimes(1);
++    const [id, at] = touchUpdatedAt.mock.calls[0] as [string, Date];
++    expect(id).toBe('xyz');
++    expect(at.getTime()).toBeGreaterThanOrEqual(before);
++  });
++
++  it('always answers ok so Yorkie does not retry', async () => {
++    expect(await controller.handleEvent({ type: 'DocumentRootChanged' })).toEqual(
++      { ok: true },
++    );
++  });
++});
+diff --git a/packages/backend/src/document/yorkie-event.controller.ts b/packages/backend/src/document/yorkie-event.controller.ts
+new file mode 100644
+index 000000000..ab5cc3cbb
+--- /dev/null
++++ b/packages/backend/src/document/yorkie-event.controller.ts
+@@ -0,0 +1,59 @@
++import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
++import { SkipThrottle } from '@nestjs/throttler';
++import { DocumentService } from './document.service';
++import { parseYorkieDocKey } from '../yorkie/yorkie-doc-key';
++import { YorkieSignatureGuard } from './yorkie-signature.guard';
++
++/**
++ * Shape of Yorkie's event-webhook body (yorkie 0.7.12,
++ * `api/types/event_webhook.go`). Typed loosely and validated by hand so an
++ * unexpected/extra field never turns into a 4xx — Yorkie retries on failure,
++ * and we would rather swallow-and-200 anything we don't recognize than
++ * trigger a retry storm.
++ */
++interface YorkieEventBody {
++  type?: string;
++  attributes?: { key?: string; issuedAt?: string };
++}
++
++/** The only webhook event type yorkie emits (fired on real root edits). */
++const DOCUMENT_ROOT_CHANGED = 'DocumentRootChanged';
++
++/**
++ * Receives Yorkie document event webhooks and mirrors the last-edit time into
++ * Postgres (`Document.updatedAt`), which is what the documents list orders by.
++ * This is how content edits — which flow client → Yorkie only, never through
++ * this backend — become visible to the list without a per-request Yorkie admin
++ * call. Authenticated by HMAC signature ({@link YorkieSignatureGuard}); not
++ * behind the JWT guard. `@SkipThrottle` so bursts of edit events aren't
++ * rate-limited away.
++ */
++@Controller('internal/yorkie')
++@SkipThrottle()
++@UseGuards(YorkieSignatureGuard)
++export class YorkieEventController {
++  constructor(private readonly documentService: DocumentService) {}
++
++  @Post('events')
++  @HttpCode(200)
++  async handleEvent(@Body() body: YorkieEventBody): Promise<{ ok: true }> {
++    if (body?.type !== DOCUMENT_ROOT_CHANGED) {
++      return { ok: true };
++    }
++
++    const key = body.attributes?.key;
++    const parsed = key ? parseYorkieDocKey(key) : null;
++    if (!parsed) {
++      return { ok: true };
++    }
++
++    // Trust Yorkie's issue time as the edit time; fall back to now() if it is
++    // missing or unparseable. `touchUpdatedAt` only moves the time forward, so
++    // out-of-order / duplicate deliveries are harmless.
++    const issuedMs = Date.parse(body.attributes?.issuedAt ?? '');
++    const at = Number.isNaN(issuedMs) ? new Date() : new Date(issuedMs);
++
++    await this.documentService.touchUpdatedAt(parsed.id, at);
++    return { ok: true };
++  }
++}
+diff --git a/packages/backend/src/document/yorkie-signature.guard.spec.ts b/packages/backend/src/document/yorkie-signature.guard.spec.ts
+new file mode 100644
+index 000000000..b557baabe
+--- /dev/null
++++ b/packages/backend/src/document/yorkie-signature.guard.spec.ts
+@@ -0,0 +1,87 @@
++import {
++  ServiceUnavailableException,
++  UnauthorizedException,
++} from '@nestjs/common';
++import { ConfigService } from '@nestjs/config';
++import { ExecutionContext } from '@nestjs/common';
++import { createHmac } from 'crypto';
++import { YorkieSignatureGuard } from './yorkie-signature.guard';
++
++const SECRET = 'test-secret-key';
++
++function makeGuard(secret?: string): YorkieSignatureGuard {
++  const config = {
++    get: (key: string) =>
++      key === 'YORKIE_SECRET_KEY' ? secret : undefined,
++  } as unknown as ConfigService;
++  return new YorkieSignatureGuard(config);
++}
++
++function contextFor(
++  rawBody: Buffer | undefined,
++  signature: string | undefined,
++): ExecutionContext {
++  const req = {
++    rawBody,
++    header: (name: string) =>
++      name.toLowerCase() === 'x-signature-256' ? signature : undefined,
++  };
++  return {
++    switchToHttp: () => ({ getRequest: () => req }),
++  } as unknown as ExecutionContext;
++}
++
++function sign(body: Buffer, secret: string): string {
++  return `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`;
++}
++
++describe('YorkieSignatureGuard', () => {
++  const body = Buffer.from(
++    JSON.stringify({
++      type: 'DocumentRootChanged',
++      attributes: { key: 'sheet-1', issuedAt: '2026-07-10T00:00:00.000Z' },
++    }),
++  );
++
++  it('accepts a correctly signed request', () => {
++    const guard = makeGuard(SECRET);
++    expect(guard.canActivate(contextFor(body, sign(body, SECRET)))).toBe(true);
++  });
++
++  it('rejects a signature computed with the wrong key', () => {
++    const guard = makeGuard(SECRET);
++    expect(() =>
++      guard.canActivate(contextFor(body, sign(body, 'wrong-key'))),
++    ).toThrow(UnauthorizedException);
++  });
++
++  it('rejects when the body was tampered with after signing', () => {
++    const guard = makeGuard(SECRET);
++    const sig = sign(body, SECRET);
++    const tampered = Buffer.from(body.toString().replace('sheet-1', 'sheet-2'));
++    expect(() => guard.canActivate(contextFor(tampered, sig))).toThrow(
++      UnauthorizedException,
++    );
++  });
++
++  it('rejects a missing signature header', () => {
++    const guard = makeGuard(SECRET);
++    expect(() => guard.canActivate(contextFor(body, undefined))).toThrow(
++      UnauthorizedException,
++    );
++  });
++
++  it('rejects when the raw body was not captured', () => {
++    const guard = makeGuard(SECRET);
++    expect(() =>
++      guard.canActivate(contextFor(undefined, sign(body, SECRET))),
++    ).toThrow(UnauthorizedException);
++  });
++
++  it('refuses to authenticate when no secret is configured', () => {
++    const guard = makeGuard(undefined);
++    expect(() =>
++      guard.canActivate(contextFor(body, sign(body, SECRET))),
++    ).toThrow(ServiceUnavailableException);
++  });
++});
+diff --git a/packages/backend/src/document/yorkie-signature.guard.ts b/packages/backend/src/document/yorkie-signature.guard.ts
+new file mode 100644
+index 000000000..8d099a79a
+--- /dev/null
++++ b/packages/backend/src/document/yorkie-signature.guard.ts
+@@ -0,0 +1,64 @@
++import {
++  CanActivate,
++  ExecutionContext,
++  Injectable,
++  Logger,
++  ServiceUnavailableException,
++  UnauthorizedException,
++} from '@nestjs/common';
++import { ConfigService } from '@nestjs/config';
++import { createHmac, timingSafeEqual } from 'crypto';
++import type { Request } from 'express';
++
++/**
++ * Verifies Yorkie event-webhook requests. Yorkie signs the request body with
++ * `HMAC-SHA256(rawBody, project.SecretKey)` and sends it as
++ * `X-Signature-256: sha256=<hex>` (see yorkie `pkg/webhook/client.go`). The
++ * signing key is the project's secret key, which this backend already holds
++ * as `YORKIE_SECRET_KEY` for the admin service — so no new secret is needed.
++ *
++ * The raw request bytes are captured by the `verify` hook wired into
++ * `bodyParser.json` in `main.ts`; HMAC must run over the exact bytes, not a
++ * re-serialized object.
++ */
++@Injectable()
++export class YorkieSignatureGuard implements CanActivate {
++  private readonly logger = new Logger(YorkieSignatureGuard.name);
++  private readonly secretKey?: string;
++
++  constructor(configService: ConfigService) {
++    this.secretKey = configService.get<string>('YORKIE_SECRET_KEY');
++  }
++
++  canActivate(context: ExecutionContext): boolean {
++    if (!this.secretKey) {
++      // Without the shared secret we cannot authenticate the caller; refuse
++      // rather than trust an unsigned request to mutate `updatedAt`.
++      this.logger.error(
++        'YORKIE_SECRET_KEY is not configured; rejecting event webhook',
++      );
++      throw new ServiceUnavailableException('Webhook verification unavailable');
++    }
++
++    const req = context
++      .switchToHttp()
++      .getRequest<Request & { rawBody?: Buffer }>();
++
++    const header = req.header('x-signature-256');
++    const rawBody = req.rawBody;
++    if (!header || !rawBody) {
++      throw new UnauthorizedException('Missing webhook signature');
++    }
++
++    const expected = `sha256=${createHmac('sha256', this.secretKey)
++      .update(rawBody)
++      .digest('hex')}`;
++
++    const a = Buffer.from(header);
++    const b = Buffer.from(expected);
++    if (a.length !== b.length || !timingSafeEqual(a, b)) {
++      throw new UnauthorizedException('Invalid webhook signature');
++    }
++    return true;
++  }
++}
+diff --git a/packages/backend/src/main.ts b/packages/backend/src/main.ts
+index ef8b6c76d..2beb07a2e 100644
+--- a/packages/backend/src/main.ts
++++ b/packages/backend/src/main.ts
+@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
+ import { NestFactory } from '@nestjs/core';
+ import * as bodyParser from 'body-parser';
+ import * as cookieParser from 'cookie-parser';
++import type { IncomingMessage } from 'http';
+ import { Logger } from 'nestjs-pino';
+ import { AppModule } from './app.module';
+ 
+@@ -31,7 +32,18 @@ async function bootstrap() {
+   if (Number.isFinite(trustProxy) && trustProxy > 0) {
+     app.getHttpAdapter().getInstance().set('trust proxy', trustProxy);
+   }
+-  app.use(bodyParser.json({ limit: JSON_BODY_LIMIT }));
++  // Stash the raw request bytes so the Yorkie event-webhook guard can verify
++  // its HMAC signature over the exact payload (a re-serialized object would
++  // not match). Cheap — just holds a reference to the buffer body-parser
++  // already read.
++  app.use(
++    bodyParser.json({
++      limit: JSON_BODY_LIMIT,
++      verify: (req: IncomingMessage & { rawBody?: Buffer }, _res, buf) => {
++        req.rawBody = buf;
++      },
++    }),
++  );
+   app.use(bodyParser.urlencoded({ limit: JSON_BODY_LIMIT, extended: true }));
+   app.use(cookieParser());
+   app.useGlobalPipes(
+diff --git a/packages/backend/src/yorkie/yorkie-doc-key.spec.ts b/packages/backend/src/yorkie/yorkie-doc-key.spec.ts
+index a431f8db4..a0046c833 100644
+--- a/packages/backend/src/yorkie/yorkie-doc-key.spec.ts
++++ b/packages/backend/src/yorkie/yorkie-doc-key.spec.ts
+@@ -1,4 +1,8 @@
+-import { yorkieDocKeyPrefix, yorkieDocKey } from './yorkie-doc-key';
++import {
++  yorkieDocKeyPrefix,
++  yorkieDocKey,
++  parseYorkieDocKey,
++} from './yorkie-doc-key';
+ 
+ describe('yorkie-doc-key', () => {
+   it('maps each known type to its prefix', () => {
+@@ -16,3 +20,31 @@ describe('yorkie-doc-key', () => {
+     expect(() => yorkieDocKeyPrefix('bogus')).toThrow('Unknown document type');
+   });
+ });
++
++describe('parseYorkieDocKey', () => {
++  it('round-trips every known type', () => {
++    for (const type of ['sheet', 'doc', 'slides', 'pdf'] as const) {
++      const id = 'a1b2-c3d4';
++      expect(parseYorkieDocKey(yorkieDocKey(type, id))).toEqual({ type, id });
++    }
++  });
++
++  it('keeps an id that itself contains a hyphen intact', () => {
++    // Document ids are UUIDs (hyphen-rich); only the first prefix is stripped.
++    expect(parseYorkieDocKey('slides-dc73f0ca-f267-441c-8ecb-8ed975515cf8')).toEqual(
++      { type: 'slides', id: 'dc73f0ca-f267-441c-8ecb-8ed975515cf8' },
++    );
++  });
++
++  it('returns null for an unknown prefix', () => {
++    expect(parseYorkieDocKey('unknown-123')).toBeNull();
++  });
++
++  it('returns null for a bare prefix with no id', () => {
++    expect(parseYorkieDocKey('sheet-')).toBeNull();
++  });
++
++  it('returns null for an empty string', () => {
++    expect(parseYorkieDocKey('')).toBeNull();
++  });
++});
+diff --git a/packages/backend/src/yorkie/yorkie-doc-key.ts b/packages/backend/src/yorkie/yorkie-doc-key.ts
+index 23b33e3d8..ecaa95f25 100644
+--- a/packages/backend/src/yorkie/yorkie-doc-key.ts
++++ b/packages/backend/src/yorkie/yorkie-doc-key.ts
+@@ -36,3 +36,20 @@ export function yorkieDocKeyPrefix(type: string): string {
+ export function yorkieDocKey(type: string, id: string): string {
+   return `${yorkieDocKeyPrefix(type)}${id}`;
+ }
++
++/**
++ * Inverse of {@link yorkieDocKey}: split a Yorkie document key back into its
++ * `{ type, id }`. Returns `null` for keys whose prefix matches no known
++ * document type, so callers (e.g. the event webhook) can safely ignore
++ * unrecognized keys instead of throwing on external input.
++ */
++export function parseYorkieDocKey(
++  key: string,
++): { type: DocumentTypeLike; id: string } | null {
++  for (const [type, prefix] of Object.entries(YORKIE_DOC_KEY_PREFIXES)) {
++    if (key.startsWith(prefix) && key.length > prefix.length) {
++      return { type: type as DocumentTypeLike, id: key.slice(prefix.length) };
++    }
++  }
++  return null;
++}
