@@ -12,10 +12,10 @@ index 9933b0a18..77ae140f0 100644
  | [sharing.md](sharing.md)                               | URL-based token sharing with anonymous access and role-based permissions                           |
 diff --git a/docs/design/documents-last-modified.md b/docs/design/documents-last-modified.md
 new file mode 100644
-index 000000000..f879f86e0
+index 000000000..c7e9ea0c9
 --- /dev/null
 +++ b/docs/design/documents-last-modified.md
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,104 @@
 +---
 +title: documents-last-modified
 +target-version: 0.5.0
@@ -88,15 +88,38 @@ index 000000000..f879f86e0
 +  --event-webhook-events DocumentRootChanged
 +```
 +
++### Non-content updates
++Rename / move never touch Yorkie, so no webhook fires. `DocumentService.updateDocument`
++therefore sets `updatedAt = now()` explicitly on every metadata update, so a
++rename still floats the document to the top like any edit.
++
++### Clock skew
++`issuedAt` is Yorkie's server clock. The webhook clamps it to `min(issuedAt, now())`
++before storing — a future-skewed event must not pin `updatedAt` ahead, which
++(with the monotonic guard) would reject every later real edit until wall-clock
++caught up.
++
 +## Risks and Mitigation
 +
 +- **Duplicate / out-of-order events** → monotonic advance-only update absorbs.
-+- **Missed webhook** (backend down) → `updatedAt` slightly stale; acceptable,
-+  future periodic sync self-heals.
 +- **Forged requests** → HMAC signature verification is mandatory; the endpoint
 +  refuses to run when `YORKIE_SECRET_KEY` is unset.
 +- **`pdf` documents** have no CRDT edits → no webhook → stay at `createdAt`,
 +  which is correct.
++- **Backfill of pre-deploy edit history** → the migration seeds existing rows to
++  `createdAt`, discarding any real Yorkie `updated_at`. Low impact in the current
++  deployment (the live admin read times out on ~every poll today, so the list
++  already effectively shows `createdAt` order), but not authoritative against a
++  healthy Yorkie. **Follow-up:** a one-time / periodic reconciliation job that
++  batch-reads Yorkie `updated_at` → `touchUpdatedAt` (Option C) both seeds
++  history and self-heals missed webhooks.
++- **Missed webhook** (backend down mid-edit, or Yorkie retries exhausted) →
++  `updatedAt` stays stale for that doc with no in-app recovery until its next
++  edit. Same reconciliation follow-up closes this.
++- **Deploy sequencing** → the list query reads/sorts the new column, so
++  `prisma migrate deploy` must run before the new image serves traffic, and the
++  Yorkie project webhook must be registered (see ops step) or `updatedAt` never
++  advances. Both are release-runbook items, not code paths.
 diff --git a/docs/tasks/README.md b/docs/tasks/README.md
 index 4923c0edc..92d9113d6 100644
 --- a/docs/tasks/README.md
@@ -154,10 +177,10 @@ index 000000000..65e8a43f1
 +  use a plain `DateTime` column set explicitly.
 diff --git a/docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md b/docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md
 new file mode 100644
-index 000000000..788d30fcb
+index 000000000..4bc1e86f6
 --- /dev/null
 +++ b/docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,103 @@
 +# Documents list `updatedAt` via Yorkie event webhook
 +
 +## Problem
@@ -216,11 +239,35 @@ index 000000000..788d30fcb
 +
 +## Review
 +
-+- Backend `build` + `pnpm verify:fast` green (EXIT=0). 19 new unit tests pass.
++- Backend `build` + `pnpm verify:fast` green (EXIT=0). 20 new unit tests pass.
 +- No frontend change needed: the list already sorts `updatedAt desc`; that
 +  value is now stable from Postgres, so the flip disappears. The 5s poll now
 +  only refreshes editor avatars.
 +- Migration `20260710000000_add_document_updated_at` adds the column + backfill.
++
++### Code review (high effort, workflow-backed) — outcomes
++
++Applied:
++- Rename/move now bumps `updatedAt` (`updateDocument` sets `now()`) — a metadata
++  edit floats the doc up; content edits still come via webhook.
++- `rawBody` capture scoped to the webhook path in `main.ts` — no longer retains
++  25MB import buffers on every JSON request.
++- Webhook clamps `issuedAt` to `min(issuedAt, now())` — a clock-skewed future
++  event can't pin `updatedAt` ahead and freeze ordering.
++
++Second review pass (post-fix) — applied:
++- Empty / no-op PATCH no longer bumps `updatedAt` (`updateDocument` skips the
++  bump when `data` is empty), so an empty-body PATCH can't re-sort a doc to the
++  top. Added `document.service.spec.ts` for both branches.
++- Simplified `attachMeta` (`{ ...d, updatedAt: d.updatedAt.toISOString() }`).
++
++Deferred (documented in design Risks):
++- Backfill of pre-deploy Yorkie `updated_at` + self-heal for missed webhooks →
++  reconciliation job (Option C). Low impact now (live admin read already times
++  out ~every poll, so today's list is effectively `createdAt` order); tracked as
++  follow-up.
++- Deploy sequencing (migrate-before-serve, webhook registration) → release
++  runbook items, not code.
 +
 +## Non-Goals / follow-ups
 +
@@ -268,7 +315,7 @@ index 683b79abd..97b6b8a48 100644
    workspaceId String
    workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 diff --git a/packages/backend/src/document/document.controller.ts b/packages/backend/src/document/document.controller.ts
-index e2250b647..d0def6fcb 100644
+index e2250b647..1ee8c03cf 100644
 --- a/packages/backend/src/document/document.controller.ts
 +++ b/packages/backend/src/document/document.controller.ts
 @@ -29,10 +29,13 @@ import { yorkieDocKey } from '../yorkie/yorkie-doc-key';
@@ -288,7 +335,7 @@ index e2250b647..d0def6fcb 100644
    updatedAt: string;
  };
  
-@@ -50,15 +53,19 @@ export class DocumentController {
+@@ -50,15 +53,18 @@ export class DocumentController {
      docs: DocumentWithAuthor[],
    ): Promise<DocumentListItem[]> {
      if (docs.length === 0) return [];
@@ -300,12 +347,10 @@ index e2250b647..d0def6fcb 100644
 +    const editorsByKey = await this.yorkieAdminService.getEditors(keys);
      return docs.map((d, i) => {
 -      const summary = summaries.get(keys[i]);
-+      const { updatedAt, ...rest } = d;
        const item: DocumentListItem = {
--        ...d,
+         ...d,
 -        updatedAt: summary?.updatedAt ?? d.createdAt.toISOString(),
-+        ...rest,
-+        updatedAt: updatedAt.toISOString(),
++        updatedAt: d.updatedAt.toISOString(),
        };
 -      if (summary?.editors.length) item.editors = summary.editors;
 +      const editors = editorsByKey.get(keys[i]);
@@ -313,7 +358,7 @@ index e2250b647..d0def6fcb 100644
        return item;
      });
    }
-@@ -107,7 +114,7 @@ export class DocumentController {
+@@ -107,7 +113,7 @@ export class DocumentController {
      await this.workspaceService.assertMember(workspaceId, userId);
      const docs = await this.documentService.listDocumentsWithAuthor({
        where: { workspaceId },
@@ -322,7 +367,7 @@ index e2250b647..d0def6fcb 100644
      });
      return this.attachMeta(docs);
    }
-@@ -139,7 +146,7 @@ export class DocumentController {
+@@ -139,7 +145,7 @@ export class DocumentController {
      const workspaceIds = workspaces.map((w) => w.id);
      const docs = await this.documentService.listDocumentsWithAuthor({
        where: { workspaceId: { in: workspaceIds } },
@@ -363,8 +408,45 @@ index 01501974e..8cb1292ea 100644
 +  ],
  })
  export class DocumentModule {}
+diff --git a/packages/backend/src/document/document.service.spec.ts b/packages/backend/src/document/document.service.spec.ts
+new file mode 100644
+index 000000000..c671067ad
+--- /dev/null
++++ b/packages/backend/src/document/document.service.spec.ts
+@@ -0,0 +1,31 @@
++import { DocumentService } from './document.service';
++import { PrismaService } from 'src/database/prisma.service';
++
++describe('DocumentService.updateDocument', () => {
++  let update: jest.Mock;
++  let service: DocumentService;
++
++  beforeEach(() => {
++    update = jest.fn().mockResolvedValue({ id: 'd1' });
++    service = new DocumentService({
++      document: { update },
++    } as unknown as PrismaService);
++  });
++
++  it('advances updatedAt on a real metadata update (rename)', async () => {
++    await service.updateDocument({ where: { id: 'd1' }, data: { title: 'New' } });
++    const arg = update.mock.calls[0][0] as {
++      data: { title?: string; updatedAt?: Date };
++    };
++    expect(arg.data.title).toBe('New');
++    expect(arg.data.updatedAt).toBeInstanceOf(Date);
++  });
++
++  it('does not bump updatedAt for an empty / no-op update', async () => {
++    // An empty-body PATCH must not re-sort the doc to the top of the list.
++    await service.updateDocument({ where: { id: 'd1' }, data: {} });
++    const arg = update.mock.calls[0][0] as { data: Record<string, unknown> };
++    expect(arg.data).not.toHaveProperty('updatedAt');
++    expect(Object.keys(arg.data)).toHaveLength(0);
++  });
++});
 diff --git a/packages/backend/src/document/document.service.ts b/packages/backend/src/document/document.service.ts
-index 52a3c2d58..64560ebeb 100644
+index 52a3c2d58..2a01647b9 100644
 --- a/packages/backend/src/document/document.service.ts
 +++ b/packages/backend/src/document/document.service.ts
 @@ -39,7 +39,9 @@ export class DocumentService {
@@ -389,7 +471,27 @@ index 52a3c2d58..64560ebeb 100644
    }): Promise<DocumentWithAuthor[]> {
      const { skip, take, cursor, where, orderBy } = params;
      return this.prisma.document.findMany({
-@@ -99,4 +103,19 @@ export class DocumentService {
+@@ -86,10 +90,15 @@ export class DocumentService {
+     data: Prisma.DocumentUpdateInput;
+   }): Promise<Document> {
+     const { data, where } = params;
+-    return this.prisma.document.update({
+-      data,
+-      where,
+-    });
++    // A real metadata update (rename, move) is a modification, so advance
++    // `updatedAt` — content edits arrive via the Yorkie webhook, but title/
++    // workspace changes never touch Yorkie and would otherwise leave the doc
++    // stuck at its old "Last modified" time and list position. Skip the bump
++    // when there is nothing to update, so an empty / no-op PATCH does not
++    // spuriously re-sort the document to the top of the list.
++    const nextData =
++      Object.keys(data).length > 0 ? { ...data, updatedAt: new Date() } : data;
++    return this.prisma.document.update({ data: nextData, where });
+   }
+ 
+   async deleteDocument(
+@@ -99,4 +108,19 @@ export class DocumentService {
        where,
      });
    }
@@ -411,10 +513,10 @@ index 52a3c2d58..64560ebeb 100644
  }
 diff --git a/packages/backend/src/document/yorkie-event.controller.spec.ts b/packages/backend/src/document/yorkie-event.controller.spec.ts
 new file mode 100644
-index 000000000..0e7bfe93c
+index 000000000..2d9c23d36
 --- /dev/null
 +++ b/packages/backend/src/document/yorkie-event.controller.spec.ts
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,71 @@
 +import { YorkieEventController } from './yorkie-event.controller';
 +import { DocumentService } from './document.service';
 +
@@ -456,6 +558,18 @@ index 000000000..0e7bfe93c
 +    expect(touchUpdatedAt).not.toHaveBeenCalled();
 +  });
 +
++  it('clamps a future-skewed issuedAt to now() so it cannot pin updatedAt ahead', async () => {
++    const before = Date.now();
++    await controller.handleEvent({
++      type: 'DocumentRootChanged',
++      attributes: { key: 'sheet-xyz', issuedAt: '2999-01-01T00:00:00.000Z' },
++    });
++    const [, at] = touchUpdatedAt.mock.calls[0] as [string, Date];
++    // Stored time is now(), not the year-2999 value.
++    expect(at.getTime()).toBeGreaterThanOrEqual(before);
++    expect(at.getTime()).toBeLessThan(Date.parse('2999-01-01T00:00:00.000Z'));
++  });
++
 +  it('falls back to now() when issuedAt is missing or unparseable', async () => {
 +    const before = Date.now();
 +    await controller.handleEvent({
@@ -476,10 +590,10 @@ index 000000000..0e7bfe93c
 +});
 diff --git a/packages/backend/src/document/yorkie-event.controller.ts b/packages/backend/src/document/yorkie-event.controller.ts
 new file mode 100644
-index 000000000..ab5cc3cbb
+index 000000000..6f478dae4
 --- /dev/null
 +++ b/packages/backend/src/document/yorkie-event.controller.ts
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,63 @@
 +import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 +import { SkipThrottle } from '@nestjs/throttler';
 +import { DocumentService } from './document.service';
@@ -529,11 +643,15 @@ index 000000000..ab5cc3cbb
 +      return { ok: true };
 +    }
 +
-+    // Trust Yorkie's issue time as the edit time; fall back to now() if it is
-+    // missing or unparseable. `touchUpdatedAt` only moves the time forward, so
-+    // out-of-order / duplicate deliveries are harmless.
++    // Trust Yorkie's issue time as the edit time, but clamp it to now() and
++    // fall back to now() if missing/unparseable. `touchUpdatedAt` only moves
++    // the time forward, so a clock-skewed *future* issuedAt would otherwise pin
++    // updatedAt ahead and make the monotonic guard reject every later real
++    // edit until wall-clock caught up. Out-of-order / duplicate deliveries stay
++    // harmless.
++    const now = Date.now();
 +    const issuedMs = Date.parse(body.attributes?.issuedAt ?? '');
-+    const at = Number.isNaN(issuedMs) ? new Date() : new Date(issuedMs);
++    const at = new Date(Number.isNaN(issuedMs) ? now : Math.min(issuedMs, now));
 +
 +    await this.documentService.touchUpdatedAt(parsed.id, at);
 +    return { ok: true };
@@ -703,7 +821,7 @@ index 000000000..8d099a79a
 +  }
 +}
 diff --git a/packages/backend/src/main.ts b/packages/backend/src/main.ts
-index ef8b6c76d..2beb07a2e 100644
+index ef8b6c76d..ebab139a7 100644
 --- a/packages/backend/src/main.ts
 +++ b/packages/backend/src/main.ts
 @@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
@@ -714,20 +832,37 @@ index ef8b6c76d..2beb07a2e 100644
  import { Logger } from 'nestjs-pino';
  import { AppModule } from './app.module';
  
-@@ -31,7 +32,18 @@ async function bootstrap() {
+@@ -18,6 +19,13 @@ import { AppModule } from './app.module';
+  */
+ const JSON_BODY_LIMIT = process.env.BACKEND_JSON_BODY_LIMIT ?? '25mb';
+ 
++/**
++ * The only route whose raw request bytes must be retained (for the Yorkie
++ * event-webhook HMAC check). Must match the controller path in
++ * `document/yorkie-event.controller.ts`.
++ */
++const YORKIE_WEBHOOK_PATH = '/internal/yorkie/events';
++
+ async function bootstrap() {
+   const app = await NestFactory.create(AppModule, { bufferLogs: true });
+   app.useLogger(app.get(Logger));
+@@ -31,7 +39,21 @@ async function bootstrap() {
    if (Number.isFinite(trustProxy) && trustProxy > 0) {
      app.getHttpAdapter().getInstance().set('trust proxy', trustProxy);
    }
 -  app.use(bodyParser.json({ limit: JSON_BODY_LIMIT }));
 +  // Stash the raw request bytes so the Yorkie event-webhook guard can verify
 +  // its HMAC signature over the exact payload (a re-serialized object would
-+  // not match). Cheap — just holds a reference to the buffer body-parser
-+  // already read.
++  // not match). Scoped to the webhook path only: retaining the buffer on every
++  // JSON request would roughly double peak memory on the 25MB content-import
++  // routes, which never need it.
 +  app.use(
 +    bodyParser.json({
 +      limit: JSON_BODY_LIMIT,
 +      verify: (req: IncomingMessage & { rawBody?: Buffer }, _res, buf) => {
-+        req.rawBody = buf;
++        if (req.url?.split('?', 1)[0] === YORKIE_WEBHOOK_PATH) {
++          req.rawBody = buf;
++        }
 +      },
 +    }),
 +  );

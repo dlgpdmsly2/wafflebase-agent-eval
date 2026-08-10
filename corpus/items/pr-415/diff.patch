@@ -1,8 +1,8 @@
 diff --git a/packages/backend/src/datasource/datasource.service.spec.ts b/packages/backend/src/datasource/datasource.service.spec.ts
-index e36cc3a8a..ba20c7619 100644
+index e36cc3a8a..d984d59fa 100644
 --- a/packages/backend/src/datasource/datasource.service.spec.ts
 +++ b/packages/backend/src/datasource/datasource.service.spec.ts
-@@ -126,14 +126,11 @@ describe('DataSourceService', () => {
+@@ -126,14 +126,10 @@ describe('DataSourceService', () => {
      });
  
      expect(client.connect).toHaveBeenCalledTimes(1);
@@ -16,14 +16,13 @@ index e36cc3a8a..ba20c7619 100644
 -    );
 +    expect(client.query).toHaveBeenNthCalledWith(1, "SET statement_timeout = '30000'");
 +    expect(client.query).toHaveBeenNthCalledWith(2, "SET TimeZone = 'UTC'");
-+    expect(client.query).toHaveBeenNthCalledWith(3, "SET DateStyle = 'ISO'");
-+    expect(client.query).toHaveBeenNthCalledWith(4, "SET lc_monetary = 'C'");
-+    expect(client.query).toHaveBeenNthCalledWith(5, 'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001');
++    expect(client.query).toHaveBeenNthCalledWith(3, "SET DateStyle = 'ISO, MDY'");
++    expect(client.query).toHaveBeenNthCalledWith(4, 'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001');
      expect(client.end).toHaveBeenCalledTimes(1);
  
      expect(result.columns).toEqual([{ name: 'id', dataTypeID: 23 }]);
 diff --git a/packages/backend/src/datasource/datasource.service.ts b/packages/backend/src/datasource/datasource.service.ts
-index c415f42bd..030b2d639 100644
+index c415f42bd..2e190c597 100644
 --- a/packages/backend/src/datasource/datasource.service.ts
 +++ b/packages/backend/src/datasource/datasource.service.ts
 @@ -3,7 +3,7 @@ import {
@@ -62,24 +61,20 @@ index c415f42bd..030b2d639 100644
  @Injectable()
  export class DataSourceService {
    constructor(private prisma: PrismaService) {}
-@@ -119,10 +139,12 @@ export class DataSourceService {
-     try {
+@@ -120,9 +140,9 @@ export class DataSourceService {
        await client.connect();
  
--      // Set statement timeout
+       // Set statement timeout
 -      await client.query(
 -        `SET statement_timeout = '${QUERY_TIMEOUT_MS}'`,
 -      );
-+      // Normalize output formatting only (not input parsing): UTC, ISO dates,
-+      // and C money — so results are deterministic across server locales.
 +      await client.query(`SET statement_timeout = '${QUERY_TIMEOUT_MS}'`);
 +      await client.query(`SET TimeZone = 'UTC'`);
-+      await client.query(`SET DateStyle = 'ISO'`);
-+      await client.query(`SET lc_monetary = 'C'`);
++      await client.query(`SET DateStyle = 'ISO, MDY'`);
  
        // Wrap with LIMIT to enforce max rows
        const wrappedQuery = `SELECT * FROM (${dto.query}) AS _q LIMIT ${MAX_ROWS + 1}`;
-@@ -181,6 +203,7 @@ export class DataSourceService {
+@@ -181,6 +201,7 @@ export class DataSourceService {
        password: decrypt(ds.password),
        ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false,
        connectionTimeoutMillis: 10_000,

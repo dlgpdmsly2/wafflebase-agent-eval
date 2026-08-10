@@ -252,6 +252,517 @@ index 000000000..98474a64e
 +- Demo iframe liveness check (3 hardcoded shared tokens) — deferred by user.
 +- No dedicated `/docs/.../comments` page exists; comments card points at
 +  `writing-a-document`. Consider a comments doc page later.
+diff --git a/packages/documentation/.vitepress/config.ts b/packages/documentation/.vitepress/config.ts
+index e419086c8..d856a5460 100644
+--- a/packages/documentation/.vitepress/config.ts
++++ b/packages/documentation/.vitepress/config.ts
+@@ -49,7 +49,7 @@ if (gaId) {
+ export default defineConfig({
+   title: "Wafflebase Docs",
+   description:
+-    "Documentation for Wafflebase — collaborative spreadsheet and document editor",
++    "Documentation for Wafflebase — collaborative spreadsheets, documents, and presentations",
+   base: "/docs/",
+ 
+   head,
+@@ -81,6 +81,7 @@ export default defineConfig({
+             text: "Collaboration & Sharing",
+             link: "/guide/collaboration",
+           },
++          { text: "Import & Export", link: "/guide/import-export" },
+         ],
+       },
+       {
+@@ -89,6 +90,7 @@ export default defineConfig({
+           { text: "Build a Budget", link: "/sheets/build-a-budget" },
+           { text: "Formulas", link: "/sheets/formulas" },
+           { text: "Charts & Pivot Tables", link: "/sheets/charts" },
++          { text: "External Datasources", link: "/sheets/datasources" },
+           {
+             text: "Keyboard Shortcuts",
+             link: "/sheets/keyboard-shortcuts",
+diff --git a/packages/documentation/README.md b/packages/documentation/README.md
+index 0713a601c..bd8a4a223 100644
+--- a/packages/documentation/README.md
++++ b/packages/documentation/README.md
+@@ -8,8 +8,9 @@ VitePress-based documentation site for Wafflebase. Serves user guides and develo
+ 
+ | Page | Description |
+ |------|-------------|
+-| [Getting Started](guide/getting-started.md) | Sign in, create sheets or documents, first steps |
++| [Getting Started](guide/getting-started.md) | Sign in, create sheets, docs, or slides, first steps |
+ | [Collaboration](guide/collaboration.md) | Share documents, real-time editing, permissions |
++| [Import & Export](guide/import-export.md) | XLSX/DOCX/PPTX import, DOCX/PPTX/PDF export, CLI automation |
+ 
+ ### Sheets
+ 
+@@ -18,6 +19,7 @@ VitePress-based documentation site for Wafflebase. Serves user guides and develo
+ | [Build a Budget](sheets/build-a-budget.md) | Learn formulas, formatting, and layout |
+ | [Formulas](sheets/formulas.md) | Formula syntax, function reference, examples |
+ | [Charts](sheets/charts.md) | Chart types, creation, editing, pivot tables |
++| [External Datasources](sheets/datasources.md) | Connect PostgreSQL, run SQL, read-only result tabs |
+ | [Keyboard Shortcuts](sheets/keyboard-shortcuts.md) | Spreadsheet shortcut reference |
+ 
+ ### Docs
+@@ -27,6 +29,14 @@ VitePress-based documentation site for Wafflebase. Serves user guides and develo
+ | [Writing a Document](docs-editor/writing-a-document.md) | Text editing, formatting, page layout |
+ | [Keyboard Shortcuts](docs-editor/keyboard-shortcuts.md) | Document editor shortcut reference |
+ 
++### Slides
++
++| Page | Description |
++|------|-------------|
++| [Build a Deck](slides/build-a-deck.md) | Slides, elements, themes, presenting |
++| [Themes & Layouts](slides/themes-and-layouts.md) | Theme system and slide layouts |
++| [Keyboard Shortcuts](slides/keyboard-shortcuts.md) | Presentation editor shortcut reference |
++
+ ### Developers
+ 
+ | Page | Description |
+@@ -50,7 +60,7 @@ Site configuration is in `.vitepress/config.ts`:
+ 
+ - **Base path**: `/docs/` (deployed as subpath of the main site)
+ - **Search**: Local search provider (no external service)
+-- **Navigation**: Four sidebar sections — Guide, Sheets, Docs, and Developers
++- **Navigation**: Five sidebar sections — Guide, Sheets, Docs, Slides, and Developers
+ - **Theme**: Default VitePress theme with custom CSS overrides
+ 
+ ## Tech Stack
+diff --git a/packages/documentation/developers/rest-api.md b/packages/documentation/developers/rest-api.md
+index 0bc4810f1..b80566532 100644
+--- a/packages/documentation/developers/rest-api.md
++++ b/packages/documentation/developers/rest-api.md
+@@ -1,6 +1,6 @@
+ # REST API
+ 
+-The Wafflebase REST API lets you read and write spreadsheet and document data programmatically. All endpoints are under `/api/v1/`.
++The Wafflebase REST API lets you read and write spreadsheet, document, and presentation data programmatically. All endpoints are under `/api/v1/`.
+ 
+ ## Authentication
+ 
+@@ -32,17 +32,17 @@ Replace `:workspaceId` with your workspace ID.
+ 
+ ## API Surface by Document Type
+ 
+-A workspace holds two kinds of documents — **sheets** (spreadsheets) and **docs** (word-processor documents). The endpoints below are grouped accordingly:
++A workspace holds three kinds of documents — **sheets** (spreadsheets), **docs** (word-processor documents), and **slides** (presentations). The endpoints below are grouped accordingly:
+ 
+-| Section | Sheet | Doc |
+-|---------|:-----:|:---:|
+-| [Documents](#documents) | ✅ | ✅ |
+-| [Images](#images) | ✅ | ✅ |
+-| [Tabs](#tabs-sheets-only) | ✅ | — |
+-| [Cells](#cells-sheets-only) | ✅ | — |
+-| [Document Content](#document-content-docs-only) | — | ✅ |
++| Section | Sheet | Doc | Slides |
++|---------|:-----:|:---:|:------:|
++| [Documents](#documents) | ✅ | ✅ | ✅ |
++| [Images](#images) | ✅ | ✅ | ✅ |
++| [Tabs](#tabs-sheets-only) | ✅ | — | — |
++| [Cells](#cells-sheets-only) | ✅ | — | — |
++| [Document Content](#document-content-docs-and-slides) | — | ✅ | ✅ |
+ 
+-Calling a sheet-only endpoint on a doc — or a doc-only endpoint on a sheet — returns `HTTP 409` with code `TYPE_MISMATCH`.
++Calling an endpoint against the wrong document type — e.g. a tabs/cells call on a doc, or a content call on a sheet — returns `HTTP 409` with code `TYPE_MISMATCH`.
+ 
+ ## Documents
+ 
+@@ -79,12 +79,19 @@ curl -X POST \
+   -H "Content-Type: application/json" \
+   -d '{"title": "Meeting Notes", "type": "doc"}' \
+   https://api.wafflebase.io/api/v1/workspaces/:wid/documents
++
++# Create a slides deck
++curl -X POST \
++  -H "Authorization: Bearer wfb_..." \
++  -H "Content-Type: application/json" \
++  -d '{"title": "Launch Deck", "type": "slides"}' \
++  https://api.wafflebase.io/api/v1/workspaces/:wid/documents
+ ```
+ 
+ | Field | Type | Required | Description |
+ |-------|------|----------|-------------|
+ | `title` | string | Yes | Document title |
+-| `type` | string | No | `"sheet"` (default) or `"doc"` |
++| `type` | string | No | `"sheet"` (default), `"doc"`, or `"slides"` |
+ 
+ ### Get Document
+ 
+@@ -114,7 +121,7 @@ DELETE /api/v1/workspaces/:wid/documents/:did
+ 
+ ## Images
+ 
+-Workspace-scoped image storage. Images are stored under the workspace and may be referenced by both sheets and docs.
++Workspace-scoped image storage. Images are stored under the workspace and may be referenced by sheets, docs, and slides.
+ 
+ ### Upload Image
+ 
+@@ -279,11 +286,11 @@ curl -X PATCH \
+   .../tabs/:tid/cells
+ ```
+ 
+-## Document Content (docs only)
++## Document Content (docs and slides)
+ 
+-Read or replace the full content tree of a **doc** (word-processor) document. The content is the live Yorkie CRDT document — collaborators in the editor see updates from `PUT` immediately.
++Read or replace the full content tree of a **doc** (word-processor) or **slides** (presentation) document. The content is the live Yorkie CRDT document — collaborators in the editor see updates from `PUT` immediately.
+ 
+-Calling these endpoints against a sheet returns `HTTP 409` with code `TYPE_MISMATCH`.
++Calling these endpoints against a sheet returns `HTTP 409` with code `TYPE_MISMATCH`. The body shape depends on the document type: docs use the block-tree `Document` JSON described below, while slides use the deck's `SlidesDocument` JSON (slides, elements, theme). Read the content first to see the exact shape before writing it back.
+ 
+ ### Get Document Content
+ 
+diff --git a/packages/documentation/docs-editor/writing-a-document.md b/packages/documentation/docs-editor/writing-a-document.md
+index 343607874..e0ecf9b53 100644
+--- a/packages/documentation/docs-editor/writing-a-document.md
++++ b/packages/documentation/docs-editor/writing-a-document.md
+@@ -69,6 +69,25 @@ Insert a table from the toolbar to lay out structured content. Click the **Table
+ 
+ When a table is taller than the remaining space on a page, its rows split across the page boundary automatically.
+ 
++## Images
++
++Click the **Insert image** button in the toolbar and choose:
++
++- **Upload from computer** — pick an image file from your device.
++- **By URL…** — paste the address of an image on the web.
++
++You can also drag an image file straight onto the page, or paste one copied
++from another app.
++
++Once an image is placed, click it to select it. Eight square handles appear
++around the edges:
++
++- Drag a **corner** handle to resize while keeping the aspect ratio (hold
++  **Shift** to resize freely).
++- Drag a **side** handle to stretch one dimension.
++- **Arrow keys** nudge the image a pixel at a time (**Shift** for larger steps).
++- **Delete** / **Backspace** removes it; **Esc** deselects.
++
+ ## Pagination
+ 
+ Documents use a page-based layout similar to a printed document. Pages default to A4 with standard margins, and text flows across pages as you type.
+@@ -77,6 +96,26 @@ Documents use a page-based layout similar to a printed document. Pages default t
+ - The editor renders one page per "sheet" so you can scroll through the deck of pages exactly as they will print or export.
+ - Export to PDF preserves the same pagination — what you see on screen matches the exported document.
+ 
++## Headers & Footers
++
++Add content that repeats on every page — a title, a date, or a page number.
++
++- **Double-click** the margin area above the body (header) or below it (footer)
++  to start editing it. Click back into the body, or press **Esc**, to leave.
++- While editing a header or footer, click **Insert page number** in the toolbar
++  to drop in a number that updates automatically on each page.
++
++A header or footer applies to the whole document. Tables, page breaks, and
++horizontal rules can't be placed inside them.
++
++## Spell Check
++
++Misspelled words are underlined with a red squiggle as you type — spell check
++is on by default. Right-click an underlined word to see suggestions and click
++one to replace it.
++
++Spell check currently covers English (Latin-script) words in the body text.
++
+ ## Undo and Redo
+ 
+ - **⌘+Z** / **Ctrl+Z** — Undo the last action
+diff --git a/packages/documentation/guide/collaboration.md b/packages/documentation/guide/collaboration.md
+index b64959d98..672233dba 100644
+--- a/packages/documentation/guide/collaboration.md
++++ b/packages/documentation/guide/collaboration.md
+@@ -1,6 +1,6 @@
+ # Collaboration & Sharing
+ 
+-Wafflebase lets multiple people edit the same sheet or document at the same time. Share via link — no account required for recipients.
++Wafflebase lets multiple people edit the same sheet, document, or presentation at the same time. Share via link — no account required for recipients.
+ 
+ ## Share a Document
+ 
+@@ -39,6 +39,57 @@ When a collaborator opens your shared link, you'll see:
+ Each collaborator gets a unique color. If your collaborators sign in with GitHub, their name will appear next to their cursor.
+ :::
+ 
++## Comments & Mentions
++
++Leave feedback without changing the content. Comments work on cells in sheets
++and on selected text in documents.
++
++### Add a comment
++
++**In a sheet:**
++
++1. Select the cell you want to comment on
++2. Right-click and choose **Insert comment**, or press **⌘+Option+M** /
++   **Ctrl+Alt+M**
++3. Type your comment and click **Comment**
++
++**In a document:**
++
++1. Select the text you want to comment on
++2. Right-click and choose **Insert comment**, press **⌘+Option+M** /
++   **Ctrl+Alt+M**, or click the comment icon in the toolbar
++3. Type your comment and click **Comment**
++
++The commented text is highlighted so everyone can see where the discussion is.
++
++### Reply, resolve, edit
++
++- **Reply** — Open a comment and click **Reply** to continue the thread.
++- **Resolve** — Hover the thread and click the check (✓) to resolve it.
++  Resolved threads are tucked away but never lost.
++- **Edit / Delete** — Hover your own comment and use the **⋯** menu. Deleting
++  the first comment removes the whole thread.
++
++### The comments panel (documents)
++
++In a document, click the comment icon in the toolbar — or press
++**⌘+Option+Shift+M** / **Ctrl+Alt+Shift+M** — to open the comments panel. It
++lists every thread under **Open** and **Resolved** tabs; click a thread to jump
++to its text. If the text a comment was attached to is later deleted, the thread
++moves to an orphaned list so the conversation is preserved.
++
++### Mention a teammate
++
++Type **@** inside a comment to mention a workspace member. An autocomplete list
++appears — keep typing to filter, then use **↑ / ↓** and **Enter** (or **Tab**)
++to pick someone. The mention is inserted as a blue chip so it stands out in the
++thread.
++
++::: tip
++Mentions highlight who a comment is for. Only people who are members of the
++workspace can be mentioned.
++:::
++
+ ## How Conflicts Work
+ 
+ What happens if two people edit the same cell or text at the same time?
+diff --git a/packages/documentation/guide/import-export.md b/packages/documentation/guide/import-export.md
+new file mode 100644
+index 000000000..8aee7dac2
+--- /dev/null
++++ b/packages/documentation/guide/import-export.md
+@@ -0,0 +1,78 @@
++# Import & Export
++
++Wafflebase reads and writes the file formats your team already uses, so you
++can bring existing work in and take finished work out. Nothing is locked to
++the platform.
++
++## At a glance
++
++| Product | Import | Export |
++|---------|--------|--------|
++| **Sheets** | Excel (`.xlsx`) | — *(CSV/JSON via [CLI](../developers/cli))* |
++| **Docs** | Word (`.docx`) | Word (`.docx`), PDF (`.pdf`) |
++| **Slides** | PowerPoint (`.pptx`) | PowerPoint (`.pptx`), PDF (`.pdf`) |
++
++Import always creates a **new** document; it never overwrites an open one.
++Export downloads a file from the document you are editing.
++
++## Importing files
++
++From your workspace, open the **New** menu and choose an import option:
++
++- **Import XLSX** — creates a new spreadsheet from an Excel workbook. Each
++  sheet in the workbook becomes a tab. Values, formulas, and basic cell
++  formatting are brought across.
++- **Import DOCX** — creates a new document from a Word file, mapping
++  paragraphs, headings, lists, tables, and inline formatting into the editor.
++- **Import PPTX** — creates a new deck from a PowerPoint file: slides,
++  text boxes, shapes, images, tables, and theme colors are converted to
++  native Wafflebase elements.
++
++Large files show a progress indicator while they are parsed and any embedded
++images are uploaded into your workspace.
++
++## Exporting files
++
++### Docs
++
++In the document editor, open the **Export** menu (the download icon in the
++header) and choose:
++
++- **Word (`.docx`)** — the full document, including tables and headers/footers.
++- **PDF (`.pdf`)** — a paginated, print-ready PDF that mirrors the on-screen
++  page layout.
++
++### Slides
++
++In the presentation editor, open the **Export** menu and choose:
++
++- **PowerPoint (`.pptx`)** — an editable deck with slides, shapes, text,
++  images, tables, and the theme preserved as DrawingML.
++- **PDF (`.pdf`)** — one slide per page, ready to share or print.
++
++### Sheets
++
++Spreadsheets export to CSV or JSON through the
++[command-line tool](../developers/cli) (`wafflebase sheets …`). A built-in
++download menu in the grid editor is on the roadmap.
++
++## Fidelity notes
++
++Wafflebase aims for a faithful round-trip, but the source formats are large
++and some constructs have no exact equivalent:
++
++- **PPTX/DOCX import is best-effort.** Common content — text, lists, tables,
++  shapes, images, and theme colors — converts cleanly. Rare or
++  application-specific features (embedded objects, macros, exotic effects) may
++  be simplified or dropped.
++- **Fonts** referenced by an imported file must be available in Wafflebase to
++  render identically; otherwise a close fallback is substituted.
++- **Re-exporting** a file you imported will not be byte-identical to the
++  original, but preserves the structure and content faithfully.
++
++## Automating with the CLI
++
++Every import/export path above is also scriptable. See the
++[CLI reference](../developers/cli) for `docs export`, `docs import`,
++`slides export`, `slides import`, and the `sheets` cell import/export
++commands — useful for batch conversions and pipelines.
+diff --git a/packages/documentation/sheets/datasources.md b/packages/documentation/sheets/datasources.md
+new file mode 100644
+index 000000000..176b7cc86
+--- /dev/null
++++ b/packages/documentation/sheets/datasources.md
+@@ -0,0 +1,47 @@
++# External Datasources
++
++A **datasource** connects a spreadsheet to an external PostgreSQL database. You
++write a SQL query and its results appear in a read-only tab, right next to your
++regular editable sheets.
++
++## Connect a database
++
++1. Click the **+** at the end of the tab bar and choose **New DataSource**.
++2. In the **Select DataSource** dialog, fill in the connection details:
++   - **Name** — a label for the connection
++   - **Host** and **Port** (defaults to `5432`)
++   - **Database**, **Username**, and **Password**
++   - **SSL** — toggle on if your database requires it
++3. Click **Test Connection** to confirm the credentials work, then save.
++
++A new tab is added with a database icon to distinguish it from sheet tabs.
++
++## Run a query
++
++The datasource tab has a SQL editor at the top and a results grid below it.
++
++1. Type a `SELECT` query — for example, `SELECT * FROM users LIMIT 100`.
++2. Click **Execute**, or press **⌘+Enter** / **Ctrl+Enter**.
++
++The results load into the grid below: the first row holds the column names and
++each following row is a record. Re-run the query with **Execute** whenever you
++want fresh data — results don't refresh automatically.
++
++::: tip
++Queries are capped at 10,000 rows and a 30-second runtime, so add a `LIMIT`
++clause when exploring large tables.
++:::
++
++## Working with results
++
++- The results grid is **read-only** — it reflects the database, so you can't
++  edit, sort, or filter the cells in place. Shape the data with SQL instead.
++- Reference query results from other tabs with formulas, just like any sheet,
++  to build summaries and dashboards on top of live data.
++
++## Good to know
++
++- Datasources connect to **PostgreSQL** databases.
++- The connection belongs to the person who created it. Collaborators can see the
++  query and its last results, but run their own connection to execute it.
++- Only the latest query for a tab is saved.
+diff --git a/packages/documentation/slides/build-a-deck.md b/packages/documentation/slides/build-a-deck.md
+index 93235b744..6b30ad06d 100644
+--- a/packages/documentation/slides/build-a-deck.md
++++ b/packages/documentation/slides/build-a-deck.md
+@@ -54,6 +54,56 @@ In presentation mode:
+ - `←` / `Page Up` — go back
+ - `Esc` — exit
+ 
++## Add a Table
++
++Click the **Insert table** button in the toolbar and drag across the grid
++picker to choose the number of rows and columns, then click to drop the table
++on the slide.
++
++- **Double-click** a cell to edit its text; the text-formatting toolbar appears
++  while you type.
++- **Tab** / **Shift+Tab** move between cells — pressing Tab in the last cell
++  adds a new row.
++- **Right-click** a cell for structure changes: **Insert row above/below**,
++  **Insert column left/right**, **Delete row/column**, and **Merge cells** /
++  **Unmerge cells**.
++
++## Connect Shapes
++
++Use connectors to link shapes — handy for flowcharts and diagrams. Click the
++**Line** dropdown in the toolbar and pick a tool:
++
++- **Line** and **Arrow** — straight connectors.
++- **Elbow connector** — right-angled routing.
++- **Curved connector** — a smooth curve.
++
++Drag from the start point to the end point. As you approach a shape, connection
++points appear and the endpoint snaps to it, so the connector stays attached when
++you later move the shape. To change the routing of a selected connector,
++right-click it and choose **Straight**, **Elbow**, or **Curved**.
++
++## Animations & Transitions
++
++Open the **Motion** panel from the right sidebar to add motion to a deck.
++
++**Slide transitions** (how one slide gives way to the next):
++
++1. In the **Transition** section, pick a type — Fade, Dissolve, Slide, Flip,
++   Cube, Wipe, or Push.
++2. Choose a speed (Slow / Medium / Fast).
++3. Click **Apply to all slides** to use the same transition everywhere.
++
++**Object animations** (how an element enters, exits, or is emphasized):
++
++1. Select an element on the slide.
++2. In the **Animation** section, click **+ Add animation**.
++3. Pick a **Category** (Entrance, Exit, or Emphasis) and an **Effect**, then set
++   when it runs with **Start** — **On Click**, **With Previous**, or **After
++   Previous**. Fine-tune **Duration**, **Delay**, and **Easing** as needed.
++
++Click the **▶ Play** button to preview the animations right in the editor.
++They also run when you present the deck.
++
+ ## What's Next
+ 
+ - [Themes & Layouts](./themes-and-layouts) — Catalog of themes, layouts, and placeholders
+diff --git a/packages/documentation/slides/themes-and-layouts.md b/packages/documentation/slides/themes-and-layouts.md
+index b4334ed52..ccbea2926 100644
+--- a/packages/documentation/slides/themes-and-layouts.md
++++ b/packages/documentation/slides/themes-and-layouts.md
+@@ -14,9 +14,18 @@ Each theme defines:
+ 
+ ## Built-in Themes
+ 
+-Wafflebase ships with several Google-Slides-parity themes covering light, dark, and accent variations. Open the **Theme** panel from the right sidebar to see thumbnails and apply one with a click.
+-
+-You can switch themes at any time. The theme picker shows a live preview of the active deck under each theme.
++Wafflebase ships with **23 built-in themes** covering neutral, light,
++editorial, vibrant, and dark looks. Open the **Theme** panel from the right
++sidebar to see thumbnails and apply one with a click.
++
++- **Simple Light** *(default)* and **Simple Dark** — neutral baselines
++- Streamline, Swiss, Paradigm, Material, Shift, Momentum, Focus, Luxe, Modern
++  Writer, Coral, Spearmint, Pop, Tropic, Marina, Geometric, Plum, Slate,
++  Forest, Spotlight, Beach Day
++- **Wafflebase** — the Wafflebase brand palette
++
++New decks start on **Simple Light**. You can switch themes at any time — the
++theme picker shows a live preview of the active deck under each one.
+ 
+ ## Layouts
+ 
 diff --git a/packages/frontend/src/app/docs/export-utils.ts b/packages/frontend/src/app/docs/export-utils.ts
 index bc9b68abf..00c6a6a7c 100644
 --- a/packages/frontend/src/app/docs/export-utils.ts
