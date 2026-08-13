@@ -1,0 +1,69 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "cbf8d6abd91b",
+ "pair_key_vintage": "harvest.mjs at main 5326723 (the vintage the worksheet was generated on)",
+ "pair_key_at_801": "cbf8d6abd91b",
+ "pair_key_moved": false,
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "worksheet_row": 6,
+ "verdict": "same",
+ "verdict_raw": "y",
+ "label_source": "gold",
+ "annotators": [
+  "dlgpdmsly2"
+ ],
+ "confidence": null,
+ "confidence_absent_reason": "the `--worksheet` format has no confidence field; the annotator recorded none",
+ "evidence": null,
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel lens",
+   "panel summary",
+   "coderabbit title"
+  ],
+  "not_shown": [
+   "coderabbit detail prose",
+   "panel evidence",
+   "the diff"
+  ],
+  "coderabbit_detail_available": false,
+  "note": "`--worksheet` prints titles only. The verdict rests on the two summaries and the two locations."
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/frontend/src/app/home/features-section.tsx",
+  "line": 75,
+  "summary": "Two secondary feature cards now point at the identical docs URL, and the comments/mentions content actually lives on a different docs page",
+  "severity": "minor",
+  "lens": "design-fit",
+  "finding_key": "packages/frontend/src/app/home/features-section.tsx::two secondary feature cards now point at the identical docs url, and the comments/mentions content actually lives on a different docs page"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/frontend/src/app/home/features-section.tsx",
+  "line": 71,
+  "summary_at_label_time": "Point this card at the comments guide, or narrow the copy.",
+  "summary_at_801": "Point this card at the comments guide, or narrow the copy.",
+  "severity": "minor",
+  "finding_key": "packages/frontend/src/app/home/features-section.tsx::point this card at the comments guide, or narrow the copy.",
+  "detail_len_at_label_time": 304,
+  "detail_len_at_801": 304
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "still_maybe_at_801": true,
+ "needs_readjudication": false,
+ "readjudication_reason": null,
+ "notes": "Transcribed verbatim from `benchmark-handoff/adjudication/maybe-worksheet-k2.md` (generated 2026-08-12 by `inspect-maybes.mjs --worksheet --min-score 0.7`). Verdict vocabulary mapped y->same, n->different, unsure->insufficient-basis.",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "reread": {
+  "reread": false,
+  "reason": "human and model already agreed under the original rubric, and the pair is not rubric-sensitive (either one claim with one fix, or findings in different files)"
+ }
+}

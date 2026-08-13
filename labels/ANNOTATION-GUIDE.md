@@ -219,3 +219,128 @@ overwrite (labels are correctable; the store overwrites on `put`).
   read-through true-negatives (§ this task). Each is a clean, tested, merged
   change; `true_defects: []`. `pr-493` additionally has a captured panel approval
   corroborating it (used as corroboration, not as the label — §0).
+
+---
+
+## 10. Pair labels — "are these two findings the same defect?"
+
+*Added 2026-08-13. A **pair label** is a different record from §1's two: it judges a
+PAIR of findings from different arms, and it lives at
+`labels/<cv>/pairs/<pair_key>.json`. It exists because `matchFindings` never merges a
+`maybe`, so every undecided cross-arm pair counts as two unique catches and the
+complementarity overlap is reported as a band. A label resolves the pair; it does not
+resolve a threshold (decision 24 stands).*
+
+### 10.1 The key
+
+`pair_key` is `sha256(file|line|summary of BOTH sides)`, truncated to 12 hex —
+`inspect-maybes.mjs`'s `pairKey`. **Deliberately not `finding-match.mjs`'s
+`contentDigest`**, which keys a single finding and is the matcher's business: a human
+label's key must not move when the matcher is refactored.
+
+⚠ **The key DOES move when a finding's text is re-parsed.** `wafflebase#801` repaired a
+CodeRabbit title (`/node_modules/` → a real sentence) and six of the first 23 pair keys
+changed. Records therefore carry **both** `pair_key` and `pair_key_at_801`, and a
+consumer must index on both — otherwise it will write a second label for a pair that
+already has one, under the other vintage's key, and count the pair twice.
+
+### 10.2 The question, and the test that decides it
+
+> **`same`** — the two findings are about the SAME DEFECT. Not *"both are about this
+> file"*, not *"both are worth fixing"* — the same underlying problem, however
+> differently worded.
+> **`different`** — different defects that happen to share a location.
+> **`insufficient-basis`** — you would need to read the code to tell. Use it freely.
+
+**The operational test, agreed 2026-08-12:**
+
+> **After you make the edit one reviewer is asking for, does the other reviewer's comment
+> still stand?** Discharged too → **one defect**. Survives → **different defects that
+> share a location**.
+
+Three riders, each from a real case:
+
+1. If a reviewer offers **two alternative fixes**, either one discharging the other
+   comment makes it `same`.
+2. **Contradictory prescriptions to the same lines are `different`** — no single edit
+   satisfies both.
+3. If whether the fix discharges the other comment **depends on a fact in the code that
+   neither text states**, the answer is `insufficient-basis`, not a guess.
+
+### 10.3 Worked examples
+
+*These are the cases where two annotators actually diverged, decided explicitly. They are
+the rubric — the sentence above is only its summary.*
+
+**A. `same` — different lines, one edit.** *(pr-549, `list-empty-bullet-plugin.ts`)*
+Panel at `:182`: *"silent shortcut omits upstream `list`'s 4-space indented-code guard"*,
+its evidence naming `isEmptyBulletLine` and the missing `sCount - blkIndent >= 4` check.
+CodeRabbit at `:31`: *"missing over-indent guard in `isEmptyBulletLine`"*.
+→ **`same`.** Add the `>= 4` check to `isEmptyBulletLine` and both comments are answered.
+**Different line numbers are not evidence of different defects** — one names the caller,
+the other the helper.
+
+**B. `different` — one code branch, two defects.** *(pr-549, same file)*
+Panel at `:196`: the silent branch's paragraph-interruption behaviour *is only tested
+inside a list*. CodeRabbit at `:31`: the *missing over-indent guard* (the same finding as
+A).
+→ **`different`.** Adding the guard does not add the test; adding the test does not add
+the guard. **This is the subtle form of the "both are about this file" exclusion: same
+mechanism, same branch, two edits.** Note that A and B pair the SAME CodeRabbit finding
+with two different panel findings and get different answers — that is the labeler
+working, not drifting.
+
+**C. `different` — contradictory prescriptions.** *(pr-429, homepage todo)*
+CodeRabbit at `:39`: tick the checkboxes for lines 62–70, *the work is done*. Panel at
+`:69`: work item 3 in that range *was never implemented*.
+→ **`different`.** Both say the doc misstates reality, and they say it in opposite
+directions. No single edit satisfies both, so they cannot be one defect — even though
+they concern overlapping lines of one file.
+
+**D. `different` — same file, disjoint claims.** *(pr-429, same doc)*
+CodeRabbit at `:1`: the status field still reads `planning`, and four export paths are
+missing package prefixes. Panel at `:69`: the unimplemented work item.
+→ **`different`.** Genuinely arguable — "the task doc is stale" is one theme — but the
+edits are disjoint and neither discharges the other.
+
+**E. 🔴 The recorded disagreement — read this one before trusting the rule.**
+*(pr-605, `yorkie-note-store.ts`)*
+CodeRabbit at `:48`: keep the test-only undo-stack accessor out of `canUndo()` so
+production uses the public `doc.history.canUndo()` contract. Panel at `:106`: `undoFloor`
+is an absolute stack depth against a stack that can shrink, so undo stops early. (And at
+`:49`: no `markUndoBaseline()` re-base hook.)
+
+- **Read as `same`:** the panel's own evidence says the floor's consumer *is* `canUndo()`.
+  Take CodeRabbit's edit and `canUndo()` stops consulting the depth, so the symptom goes.
+- **Read as `different`:** these are two problems in one *mechanism* — an encapsulation
+  violation and an unsound comparison — and "same mechanism" is close to the *"both are
+  about this file"* case the rule excludes. CodeRabbit's remedy is about which contract is
+  read, not about the floor's soundness.
+
+**The stored label is `same`** (`058344a36138`, `62003b7ce8c2`), held by the human on
+re-read. **Under the rule as written the narrower `different` reading is at least as
+faithful**, and the fact that would settle it — *does anything other than `canUndo()`
+consume `undoFloor`?* — **is in neither text**, which by rider 3 makes a strong case for
+`insufficient-basis`. Recorded rather than resolved. **This pair is the best candidate in
+the set for a second annotator.**
+
+### 10.4 What must not change
+
+**Rejecting unrelated pairs confidently.** On the first blind run the `different` class
+was the one both annotators agreed on completely — **5 of 5**, including three pairs where
+one CodeRabbit finding fans out across three panel findings in a *different file*, admitted
+to the queue only by `locationScore`'s 0.6 basename-agreement fallback. Any future
+sharpening of this rubric must leave that behaviour intact. **A labeler that never says
+`different` is broken**, and roughly half of a real queue is same-file-different-subject.
+
+### 10.5 Provenance for pair labels
+
+As §6–§8, with two additions:
+
+- **`rubric`** — which definition was applied. `one-fix-discharges-both` from 2026-08-12;
+  labels made before that carry the original worksheet wording and are marked
+  `worksheet-original` under `supersedes`.
+- **`supersedes`** — when a verdict is re-adjudicated, the previous verdict, its rubric
+  and its basis are kept, not overwritten. §8 says re-adjudicate and overwrite; that is
+  right for the *verdict* and wrong for the *audit trail*, because two published
+  agreement numbers against two gold vintages are only checkable if both are visible.

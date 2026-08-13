@@ -1,0 +1,69 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "8ab4b6ecd984",
+ "pair_key_vintage": "harvest.mjs at main 5326723 (the vintage the worksheet was generated on)",
+ "pair_key_at_801": "8ab4b6ecd984",
+ "pair_key_moved": false,
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-415",
+ "worksheet_row": 22,
+ "verdict": "different",
+ "verdict_raw": "n",
+ "label_source": "gold",
+ "annotators": [
+  "dlgpdmsly2"
+ ],
+ "confidence": null,
+ "confidence_absent_reason": "the `--worksheet` format has no confidence field; the annotator recorded none",
+ "evidence": "totally different files",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel lens",
+   "panel summary",
+   "coderabbit title"
+  ],
+  "not_shown": [
+   "coderabbit detail prose",
+   "panel evidence",
+   "the diff"
+  ],
+  "coderabbit_detail_available": false,
+  "note": "`--worksheet` prints titles only. The verdict rests on the two summaries and the two locations."
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "docs/design/sheets/datasource.md",
+  "line": 156,
+  "summary": "Datasource design doc not updated for the new per-connection session settings and custom pg type-parser policy",
+  "severity": "major",
+  "lens": "design-fit",
+  "finding_key": "docs/design/sheets/datasource.md::datasource design doc not updated for the new per-connection session settings and custom pg type-parser policy"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/src/datasource/datasource.service.ts",
+  "line": 143,
+  "summary_at_label_time": "Avoid using `SET DateStyle` to normalize output",
+  "summary_at_801": "Avoid using `SET DateStyle` to normalize output",
+  "severity": "major",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::avoid using `set datestyle` to normalize output",
+  "detail_len_at_label_time": 0,
+  "detail_len_at_801": 481
+ },
+ "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+ "still_maybe_at_801": true,
+ "needs_readjudication": false,
+ "readjudication_reason": null,
+ "notes": "Transcribed verbatim from `benchmark-handoff/adjudication/maybe-worksheet-k2.md` (generated 2026-08-12 by `inspect-maybes.mjs --worksheet --min-score 0.7`). Verdict vocabulary mapped y->same, n->different, unsure->insufficient-basis.",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "reread": {
+  "reread": false,
+  "reason": "human and model already agreed under the original rubric, and the pair is not rubric-sensitive (either one claim with one fix, or findings in different files)"
+ }
+}
