@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "7363cedf9d4f",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-471",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "An unbounded `toUpperCase()` on the per-repaint render path against a doc note to mark superseded.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+  "line": 166,
+  "summary": "Unbounded `value.toUpperCase()` on the per-repaint render path over attacker/collaborator-controlled cell text",
+  "evidence": "`isCheckboxChecked` is called once per visible checkbox per repaint from `gridcanvas.ts:1042` with the raw cell value (`cell?.v`). The new fallback at data-validation.ts:166 short-circuits only on the exact strings `TRUE`/`FALSE`; every other value now allocates a full uppercased copy of the string on each frame. Cell values are not length-bounded anywhere I could find in packages/sheets (no MaxCell/maxLength constant), and they can be supplied by a remote collaborator (Yorkie doc), an xlsx import, or a paste — the very sources this change cites as motivation. A peer who writes a multi-megabyte string into a cell covered by a checkbox rule causes a per-frame O(n) allocation + case-map in the other participants' render loop (jank / memory churn), where the pre-change code did a length-short-circuited `===`. Impact is client-side resource consumption only, not data exposure; I did not build a PoC, hence low confidence. A length guard (e.g. skip the fallback when `value.length > CHECKBOX_TRUE.length`) removes the vector entirely, since no value longer than 5 chars can uppercase to `TRUE`.",
+  "severity": "minor",
+  "lens": "security",
+  "finding_key": "packages/sheets/src/model/worksheet/data-validation.ts::unbounded `value.touppercase()` on the per-repaint render path over attacker/collaborator-controlled cell text"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+  "line": 25,
+  "summary": "Mark the old scope note as superseded.",
+  "detail": "**Mark the old scope note as superseded.** The “no custom `checkedValue`” wording is narrower than the implemented contract: exact matching applies when either custom value is configured. Keep this historical plan text, but mark it superseded and point readers to `docs/design/sheets/data-validation.md`. Based on learnings, outdated behavior text in `docs/tasks/active/` should be marked superseded and linked to the authoritative design document.",
+  "severity": "minor",
+  "finding_key": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md::mark the old scope note as superseded."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:6d875f999c40e43aefb3f3ce3987dcda2b565bfbfffec056aaf2152b16eacf1f",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.09) — needs adjudication",
+  "score": 0.34545454545454546
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

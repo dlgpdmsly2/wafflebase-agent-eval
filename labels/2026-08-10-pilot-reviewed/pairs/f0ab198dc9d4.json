@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "f0ab198dc9d4",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-415",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The datasource design doc was not updated for the new session settings and raw-text type parser. Unrelated to the MONEY assertion.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "docs/design/sheets/datasource.md",
+  "line": 156,
+  "summary": "Datasource design doc not updated for the new per-connection session settings and custom pg type-parser policy",
+  "evidence": "`docs/design/sheets/datasource.md` §'Query Execution' enumerates exactly the connection/execution contract this diff changes (statement timeout, wrapping, max rows) but is not amended with the new `SET TimeZone = 'UTC'` / `SET DateStyle = 'ISO, MDY'` session statements, nor with the decision that DATE/TIMESTAMP/TIMESTAMPTZ are returned as raw Postgres text rather than JS `Date` (an intentional, user-visible value-semantics change: timestamptz values are now rendered in UTC regardless of the source DB timezone). Limitation #9 ('No column type mapping') and the medium-term 'Column type awareness' item are the parts the change touches and neither reflects the new behavior.",
+  "severity": "major",
+  "lens": "design-fit",
+  "finding_key": "docs/design/sheets/datasource.md::datasource design doc not updated for the new per-connection session settings and custom pg type-parser policy"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/test/database.e2e-spec.ts",
+  "line": 244,
+  "summary": "The `MONEY` assertion is locale-dependent and may fail on non-US clusters.",
+  "detail": "**The `MONEY` assertion is locale-dependent and may fail on non-US clusters.** PostgreSQL formats the `money` type using the database's `lc_monetary` setting, which dictates the currency symbol and digit grouping. Since the test asserts the exact string `$1,234.56`, it will fail on databases configured with different locales. Either set `lc_monetary` to `en_US.UTF-8` in the test setup or avoid asserting the formatted string output.",
+  "severity": "minor",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::the `money` assertion is locale-dependent and may fail on non-us clusters."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.25) — needs adjudication",
+  "score": 0.425
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

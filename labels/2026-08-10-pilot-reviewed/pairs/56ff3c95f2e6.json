@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "56ff3c95f2e6",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-415",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "`toCell` is a general formatter placed inside a Store implementation and consumed by backend tests — a layering objection. Unrelated to the MONEY assertion.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/sheets/src/store/readonly.ts",
+  "line": 32,
+  "summary": "Generic value→cell-string formatter placed inside a Store implementation file and exported package-wide, then consumed by backend tests",
+  "evidence": "`toCell` is a general-purpose serialization helper but lives in `store/readonly.ts` (a Store implementation) and is re-exported from `packages/sheets/src/index.ts`. `packages/backend/test/database.e2e-spec.ts:8` now imports it, so backend datasource assertions are coupled to the sheet engine's display formatting. A small shared formatting module (or asserting raw values in backend and formatting in sheets' own tests) would keep the layering cleaner. No pre-existing equivalent helper was found (grepped for toDisplay/valueToString/toCellValue/stringify), so this is placement, not duplication.",
+  "severity": "minor",
+  "lens": "design-fit",
+  "finding_key": "packages/sheets/src/store/readonly.ts::generic value→cell-string formatter placed inside a store implementation file and exported package-wide, then consumed by backend tests"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/test/database.e2e-spec.ts",
+  "line": 244,
+  "summary": "The `MONEY` assertion is locale-dependent and may fail on non-US clusters.",
+  "detail": "**The `MONEY` assertion is locale-dependent and may fail on non-US clusters.** PostgreSQL formats the `money` type using the database's `lc_monetary` setting, which dictates the currency symbol and digit grouping. Since the test asserts the exact string `$1,234.56`, it will fail on databases configured with different locales. Either set `lc_monetary` to `en_US.UTF-8` in the test setup or avoid asserting the formatted string output.",
+  "severity": "minor",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::the `money` assertion is locale-dependent and may fail on non-us clusters."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

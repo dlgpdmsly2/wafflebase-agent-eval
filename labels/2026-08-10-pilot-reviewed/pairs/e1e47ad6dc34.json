@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "e1e47ad6dc34",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-605",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The two NoteStore implementations now diverge observably on undo — MemNoteStore emits a whole-document replace, YorkieNoteStore incremental edits. Unrelated to checklist state.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/notes/src/store/memory.ts",
+  "line": 56,
+  "summary": "The two NoteStore implementations now diverge observably on undo: MemNoteStore emits a whole-document `replace`, YorkieNoteStore emits incremental `edits`",
+  "evidence": "MemNoteStore.undo/redo emit `{ type: 'replace', content }` (memory.ts:56, 64), which noteSync applies as a full 0..doc.length replacement (note-sync.ts:32-38), resetting selection/decorations; YorkieNoteStore's undo arrives as incremental `edits`. The interface doc in store.ts:54-58 describes one contract for both. Slides deliberately kept MemSlidesStore on snapshot undo (slides-native-undo.md:44-47), so precedent exists, but the notes engine's non-collaborative path (`src/node.ts` exports MemNoteStore as the public store) now behaves differently from production under the same API.",
+  "severity": "minor",
+  "lens": "design-fit",
+  "finding_key": "packages/notes/src/store/memory.ts::the two notestore implementations now diverge observably on undo: memnotestore emits a whole-document `replace`, yorkienotestore emits incremental `edits`"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260730-notes-native-undo-todo.md",
+  "line": 64,
+  "summary": "Check off completed migration tasks before archiving.",
+  "detail": "**Check off completed migration tasks before archiving.** The implementation and companion lessons document are present, but every task remains unchecked. Mark completed items as `[x]`. Keep this document under `docs/tasks/active/` until merge, then archive it with `pnpm tasks:archive`. Based on learnings, active task plans are complete only when the companion lessons file exists and all plan items are checked off; do not add a `Status: SHIPPED` banner while the PR is open.",
+  "severity": "minor",
+  "finding_key": "docs/tasks/active/20260730-notes-native-undo-todo.md::check off completed migration tasks before archiving."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.17) — needs adjudication",
+  "score": 0.3833333333333333
+ },
+ "labeled_at_utc": "2026-08-13T06:51:21.515Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

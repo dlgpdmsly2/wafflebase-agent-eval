@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "b8ecc5777399",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-549",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "CodeRabbit does REFERENCE a missing test here — 'tick item 4 once the missing test noted below is added' — but the edit it asks for is to the checkboxes, and the missing test is its own separate comment at preview.test.ts:151. Adding the test does not tick items 2, 3 and 5; ticking them does not add the test.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/notes/src/view/preview.test.ts",
+  "line": 187,
+  "summary": "No test for the top-level lone-dash case (`Heading\\n-`), the change's most visible CommonMark deviation — the project's own task plan lists it as required",
+  "evidence": "The rewritten `lheading` rule rejects any single-`-` underline (list-empty-bullet-plugin.ts:113 `const isLoneDash = marker === DASH && runLength === 1;`), so `Heading\\n-` no longer renders `<h2>Heading</h2>` at top level — a deliberate global behavior change, not scoped to nested lists. The new tests only cover `- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---`, and `- 1\\n  - 2`; none renders a paragraph followed by a lone `-` outside a list. docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:61-62 explicitly lists \"top-level lone dash\" among the planned unit tests, and it is missing. Nothing would catch a regression (or an unintended rendering, e.g. lazy `Heading<br>-` text vs. a list) in that path.",
+  "severity": "major",
+  "lens": "test-adequacy",
+  "finding_key": "packages/notes/src/view/preview.test.ts::no test for the top-level lone-dash case (`heading\\n-`), the change's most visible commonmark deviation — the project's own task plan lists it as required"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+  "line": 58,
+  "summary": "Stale checklist: several items are already done in this PR.",
+  "detail": "**Stale checklist: several items are already done in this PR.** Cross-referencing the sibling files in this PR: `list-empty-bullet-plugin.ts` was added, it's wired into `preview.ts` (import + `md.use`), and `docs/design/notes/notes.md` documents the deviation — yet the corresponding checkboxes here remain unchecked. Please tick off items 2, 3, and 5 (and 4 once the missing test noted below is added) so the plan accurately reflects delivered work. Based on learnings, \"these docs are considered complete only when the companion `*-lessons.md` file exists and all plan items in the doc are checked off.\"",
+  "severity": "nit",
+  "finding_key": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md::stale checklist: several items are already done in this pr."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T06:36:23.380Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

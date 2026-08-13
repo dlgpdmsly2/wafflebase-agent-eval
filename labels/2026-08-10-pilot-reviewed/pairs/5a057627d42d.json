@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "5a057627d42d",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-524",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The promote gate accepting any `agent-review-*` check run without verifying the producing App, against the stalled notification's wording.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "scripts/agent/checks.mjs",
+  "line": 7,
+  "summary": "The promote gate accepts any `agent-review-*` check run without verifying the producing App, so a token with checks:write can forge panel approval",
+  "evidence": "`checkPassed` (scripts/agent/checks.mjs:7) filters check runs by `r.name` only. mark-ready.mjs:135-146 feeds it the raw `/commits/{sha}/check-runs` list and its comment claims \"the author agent cannot forge them\". The review-panel's own guard does verify provenance — agent-review-panel.yml:334 and :358 both require `r.app.slug === 'github-actions'` precisely so \"a stray same-prefixed check from some other installed app can't inflate the counter\" — so the gate script is the weaker, unguarded entry point to the same evidence. Any actor with checks:write can POST a check run named `agent-review-security` / `agent-review-correctness` with conclusion `success` on the PR head SHA and satisfy gate 2, promoting a PR the panel blocked. The reachable holder of such a token is the unscoped App token in agent-iterate-ci.yml:59 (see the least-privilege finding), which is handed to a Bash-enabled, injection-reachable agent that this diff brings to life. Blast radius is bounded by main's required human approval (agent-implement.yml:116-118), which is why this is major rather than critical.",
+  "severity": "major",
+  "lens": "security",
+  "finding_key": "scripts/agent/checks.mjs::the promote gate accepts any `agent-review-*` check run without verifying the producing app, so a token with checks:write can forge panel approval"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": ".github/workflows/agent-review-panel.yml",
+  "line": 459,
+  "summary": "Make the stalled notification match all failure modes.",
+  "detail": "**Make the stalled notification match all failure modes.** With `fix` failures now entering this job, Line 479 can report that the review panel failed and produced no verdicts even when the panel succeeded and only the fixer failed. Use a generic pipeline-stalled message or select the message based on which dependency failed.",
+  "severity": "minor",
+  "finding_key": ".github/workflows/agent-review-panel.yml::make the stalled notification match all failure modes."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0.6, content 0.06) — needs adjudication",
+  "score": 0.33125
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "054be61fb007",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "No e2e test exercises the webhook over real HTTP. CodeRabbit's finding here is one test's time-dependent expected date, not the absence of e2e coverage.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/document/yorkie-signature.guard.spec.ts",
+  "line": 1,
+  "summary": "No end-to-end test exercises the webhook over real HTTP, so the guard's dependency on the main.ts raw-body hook is unverified",
+  "evidence": "yorkie-signature.guard.spec.ts fabricates the ExecutionContext and injects `rawBody` by hand (lines 21-31), and yorkie-event.controller.spec.ts calls `handleEvent` directly with the guard bypassed. Nothing asserts that a real `POST /internal/yorkie/events` (a) receives a populated `req.rawBody` from the bodyParser `verify` hook and (b) rejects an unsigned/wrongly-signed request through the actual guard/route pipeline. `packages/backend/test/*.e2e-spec.ts` contains no reference to the route, the controller, or the `x-signature-256` header. The security of this endpoint rests entirely on the main.ts↔controller path agreement (main.ts:27 vs yorkie-event.controller.ts:31,37), which no lane checks.",
+  "severity": "minor",
+  "lens": "security",
+  "finding_key": "packages/backend/src/document/yorkie-signature.guard.spec.ts::no end-to-end test exercises the webhook over real http, so the guard's dependency on the main.ts raw-body hook is unverified"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/src/document/yorkie-event.controller.spec.ts",
+  "line": 15,
+  "summary": "Use a past date in the `issuedAt` test to avoid time-dependent failures.",
+  "detail": "**Use a past date in the `issuedAt` test to avoid time-dependent failures.** The test expects `touchUpdatedAt` to be called with `new Date('2026-07-10T06:03:13.331Z')`, but the controller clamps `issuedAt` to `now()` via `Math.min(issuedMs, now)`. If the test executes before that exact UTC moment, the clamp kicks in and `touchUpdatedAt` receives `now()` instead — causing a flaky failure. Using a clearly historical date eliminates this fragility.",
+  "severity": "minor",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.spec.ts::use a past date in the `issuedat` test to avoid time-dependent failures."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0.6, content 0.21) — needs adjudication",
+  "score": 0.40714285714285714
+ },
+ "labeled_at_utc": "2026-08-13T06:51:21.515Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "ff56f292e547",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The v1 list was not updated for the new ordering and returns the raw updatedAt Date. Unrelated.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/api/v1/documents.controller.ts",
+  "line": 29,
+  "summary": "Public API v1 document list was not updated for the new ordering contract and now leaks the raw `updatedAt` Date",
+  "evidence": "packages/backend/src/api/v1/documents.controller.ts:29-38 still calls `documentService.documents({ where })` with no `orderBy` and returns the raw Prisma rows. After this change those rows carry the new `updatedAt` column (serialized as a Date/ISO string with different semantics from the internal list's explicitly-mapped `updatedAt`), and the API list ordering is now inconsistent with `/documents` and `/workspaces/:id/documents`, which sort by `[{updatedAt:desc},{createdAt:desc}]` (packages/backend/src/document/document.controller.ts:116,148).",
+  "severity": "minor",
+  "lens": "blast-radius",
+  "finding_key": "packages/backend/src/api/v1/documents.controller.ts::public api v1 document list was not updated for the new ordering contract and now leaks the raw `updatedat` date"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/design/documents-last-modified.md",
+  "line": 73,
+  "summary": "Document the empty-PATCH exception.",
+  "detail": "**Document the empty-PATCH exception.** This says every metadata update bumps `updatedAt`, but the implementation intentionally skips the bump for empty PATCH requests. Qualify this as “every non-empty metadata update” to keep the design contract accurate.",
+  "severity": "minor",
+  "finding_key": "docs/design/documents-last-modified.md::document the empty-patch exception."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.10) — needs adjudication",
+  "score": 0.35
+ },
+ "labeled_at_utc": "2026-08-13T06:51:21.515Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "3ee931dfe93c",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-605",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "An untested unsubscribe against an unbounded snapshot stack. Different defects in one file.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/notes/src/store/memory.ts",
+  "line": 78,
+  "summary": "MemNoteStore's new unsubscribe (listener removal) is untested",
+  "evidence": "`subscribeRemote` changed from a no-op returning `() => {}` to a real listener registry with a removing unsubscribe (memory.ts:78-83). memory.test.ts's new 'emits the reverted text to remote subscribers' test never calls the returned unsubscribe and then asserts no further events, so a broken unsubscribe (leaked listener) would pass.",
+  "severity": "nit",
+  "lens": "test-adequacy",
+  "finding_key": "packages/notes/src/store/memory.ts::memnotestore's new unsubscribe (listener removal) is untested"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/notes/src/store/memory.ts",
+  "line": 97,
+  "summary": "Consider capping the snapshot history.",
+  "detail": "**Consider capping the snapshot history.** `undoStack` stores one full-text snapshot per un-batched edit and never drops old entries. A long editing session in a large note keeps every historical version in memory. A fixed cap keeps memory bounded and matches typical editor behavior.",
+  "severity": "nit",
+  "finding_key": "packages/notes/src/store/memory.ts::consider capping the snapshot history."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.5
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

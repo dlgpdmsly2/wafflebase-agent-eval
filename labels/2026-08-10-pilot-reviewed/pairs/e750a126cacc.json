@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "e750a126cacc",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-415",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "`SET TimeZone = 'UTC'` changes the semantics of user queries. This is very close to CodeRabbit's OTHER finding about `SET DateStyle`, but the CodeRabbit finding paired here is the MONEY locale assertion, which it does not touch.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/datasource/datasource.service.ts",
+  "line": 144,
+  "summary": "`SET TimeZone = 'UTC'` silently changes the semantics of user queries, not just output formatting",
+  "evidence": "Line 144 sets the session TimeZone for every executeQuery. This is not purely a rendering concern: `now()`, `current_date`, `date_trunc('day', tstz_col)`, `tstz AT TIME ZONE ...` and any grouping/filtering on timestamptz now evaluate in UTC instead of the server's configured default timezone, so previously-correct user queries can return different rows/aggregates after this change. If only display formatting was intended, formatting the value (or setting only DateStyle) would avoid changing query results.",
+  "severity": "minor",
+  "lens": "correctness",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::`set timezone = 'utc'` silently changes the semantics of user queries, not just output formatting"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/test/database.e2e-spec.ts",
+  "line": 244,
+  "summary": "The `MONEY` assertion is locale-dependent and may fail on non-US clusters.",
+  "detail": "**The `MONEY` assertion is locale-dependent and may fail on non-US clusters.** PostgreSQL formats the `money` type using the database's `lc_monetary` setting, which dictates the currency symbol and digit grouping. Since the test asserts the exact string `$1,234.56`, it will fail on databases configured with different locales. Either set `lc_monetary` to `en_US.UTF-8` in the test setup or avoid asserting the formatted string output.",
+  "severity": "minor",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::the `money` assertion is locale-dependent and may fail on non-us clusters."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.08) — needs adjudication",
+  "score": 0.3416666666666667
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

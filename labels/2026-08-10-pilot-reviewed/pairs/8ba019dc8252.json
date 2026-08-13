@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "8ba019dc8252",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The SSL toggle disables certificate verification while the new doc presents it as a security control. Unrelated to the todo's status line.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/datasource/datasource.service.ts",
+  "line": 204,
+  "summary": "Datasource \"SSL\" option disables TLS certificate verification (`rejectUnauthorized: false`), while the newly added doc presents it as a security toggle",
+  "evidence": "`createClient` builds the pg client with `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (datasource.service.ts:204). Enabling SSL therefore encrypts but does not authenticate the server: an attacker on the path between the Wafflebase backend and the customer's PostgreSQL host presents any self-signed certificate and transparently MITMs the connection, capturing the decrypted DB username/password (decrypt() at line 203) and all query results. The change under review adds packages/documentation/sheets/datasources.md:12 (\"**SSL** — toggle on if your database requires it\"), which tells users to rely on a control that does not validate certificates.",
+  "severity": "major",
+  "lens": "security",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::datasource \"ssl\" option disables tls certificate verification (`rejectunauthorized: false`), while the newly added doc presents it as a security toggle"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+  "line": 1,
+  "summary": "Update stale status field and fix incomplete export paths.",
+  "detail": "**Update stale status field and fix incomplete export paths.** The status at Line 3 still reads `**planning**` despite the Review section later stating Phase 1 is implemented and verified. Update to reflect current state (e.g., `**in progress / review**` or `**Phase 1 complete, Phase 2 in progress**`). The export paths at Lines 25–28 are missing their package prefixes: - `export/docx-exporter.ts` → `packages/docs/src/export/docx-exporter.ts` - `export/pdf-exporter.ts` → `packages/docs/src/export/pdf-exporter.ts` - `export/pptx/` → `packages/slides/src/export/pptx/` - `export/pdf.ts` → `packages/slides/src/export/pdf.ts`",
+  "severity": "major",
+  "finding_key": "docs/tasks/active/20260628-homepage-refresh-todo.md::update stale status field and fix incomplete export paths."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.00) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "c7bf41abe9a4",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-524",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The `allowed_bots` list also allow-listing a bare registrable login, against the stalled notification's wording.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": ".github/workflows/agent-iterate-ci.yml",
+  "line": 160,
+  "summary": "allowed_bots list is wider than needed: it adds the bare login `yorkie-agent` alongside `yorkie-agent[bot]`",
+  "evidence": "`allowed_bots: \"yorkie-agent[bot],yorkie-agent\"` (also agent-review-panel.yml:413) allow-lists two distinct login strings for one identity. Only the App's actual actor login (`<slug>[bot]`) is needed. If claude-code-action compares the raw actor login against the list — I could not read the action source from this checkout to confirm which normalisation it applies — the second entry also allow-lists a plain account login `yorkie-agent`, a name any GitHub user can register, widening the gate for no benefit. Keep only the `[bot]` form. Note also that the slug is asserted nowhere else in the repo (grep finds these two lines only), so it is an unverified constant.",
+  "severity": "minor",
+  "lens": "security",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::allowed_bots list is wider than needed: it adds the bare login `yorkie-agent` alongside `yorkie-agent[bot]`"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": ".github/workflows/agent-review-panel.yml",
+  "line": 459,
+  "summary": "Make the stalled notification match all failure modes.",
+  "detail": "**Make the stalled notification match all failure modes.** With `fix` failures now entering this job, Line 479 can report that the review panel failed and produced no verdicts even when the panel succeeded and only the fixer failed. Use a generic pipeline-stalled message or select the message based on which dependency failed.",
+  "severity": "minor",
+  "finding_key": ".github/workflows/agent-review-panel.yml::make the stalled notification match all failure modes."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

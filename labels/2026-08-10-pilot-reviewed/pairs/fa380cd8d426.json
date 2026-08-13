@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "fa380cd8d426",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-471",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "medium",
+ "evidence": "The panel's primary claim is a missing paired `-lessons.md` file; CodeRabbit's is the duplicate `## Review` heading. The panel's EVIDENCE mentions the duplicate heading in passing, but a finding should not become `same` with everything its evidence touches.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+  "line": 69,
+  "summary": "Active task doc has no paired lessons file yet, though repo convention pairs -todo.md with -lessons.md",
+  "evidence": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md exists but docs/tasks/active/20260712-checkbox-validation-bugfix-lessons.md does not (glob returned no matches). The file's own final section says '## Review\\n\\n(filled after implementation)' twice (duplicated heading), and the plan is fully checked off, suggesting the lessons file should likely accompany it or the duplicate stub section should be cleaned up before archiving.",
+  "severity": "nit",
+  "lens": "docs",
+  "finding_key": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md::active task doc has no paired lessons file yet, though repo convention pairs -todo.md with -lessons.md"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+  "line": 67,
+  "summary": "Remove the duplicate empty `Review` section.",
+  "detail": "**Remove the duplicate empty `Review` section.** `## Review` already exists at Line 40; Lines 67-69 add a second heading with only a placeholder, triggering MD024. Remove it or replace it with a real section.",
+  "severity": "minor",
+  "finding_key": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md::remove the duplicate empty `review` section."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:6d875f999c40e43aefb3f3ce3987dcda2b565bfbfffec056aaf2152b16eacf1f",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.5
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

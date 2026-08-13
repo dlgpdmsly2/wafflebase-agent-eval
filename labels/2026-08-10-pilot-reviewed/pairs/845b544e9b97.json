@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "845b544e9b97",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "A stale frontend doc comment attributing Last modified to Yorkie. A different file from the design doc's empty-PATCH sentence.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/frontend/src/app/documents/document-list-utils.ts",
+  "line": 41,
+  "summary": "Frontend doc comment still says the \"Last modified\" value comes from Yorkie",
+  "evidence": "packages/frontend/src/app/documents/document-list-utils.ts:41 — \"The value used for the 'Last modified' column: Yorkie's `updatedAt`, ...\". The backend now sources it from the Postgres `Document.updatedAt` column (packages/backend/src/document/document.controller.ts:64); the comment describes the removed contract.",
+  "severity": "minor",
+  "lens": "blast-radius",
+  "finding_key": "packages/frontend/src/app/documents/document-list-utils.ts::frontend doc comment still says the \"last modified\" value comes from yorkie"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/design/documents-last-modified.md",
+  "line": 73,
+  "summary": "Document the empty-PATCH exception.",
+  "detail": "**Document the empty-PATCH exception.** This says every metadata update bumps `updatedAt`, but the implementation intentionally skips the bump for empty PATCH requests. Qualify this as “every non-empty metadata update” to keep the design contract accurate.",
+  "severity": "minor",
+  "finding_key": "docs/design/documents-last-modified.md::document the empty-patch exception."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.33) — needs adjudication",
+  "score": 0.4666666666666667
+ },
+ "labeled_at_utc": "2026-08-13T06:51:21.515Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

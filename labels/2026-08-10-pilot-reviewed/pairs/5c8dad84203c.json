@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "5c8dad84203c",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "CodeRabbit asks for the `**planning**` status line to be updated and for four export paths in the todo to gain package prefixes. The panel objects that the PPTX export feature is scope creep in this PR. Neither edit produces the other.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+  "line": 88,
+  "summary": "PPTX editor export is scope creep relative to the stated task (homepage content refresh + documentation parity)",
+  "evidence": "The originating task is \"Homepage Refresh — content + interop section\" with a Phase 2 documentation-parity section; it explicitly states \"content + one new section only\". The PPTX editor export wiring (pptx-actions.ts, slides-export-button.tsx, safeFilename ext union) is an unrelated product-feature change bundled into the same PR, recorded only as a mid-flight \"new user request\" (todo lines 106-114). It would be cleaner as its own PR against the slides-pptx-export design doc.",
+  "severity": "minor",
+  "lens": "design-fit",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::pptx editor export is scope creep relative to the stated task (homepage content refresh + documentation parity)"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+  "line": 1,
+  "summary": "Update stale status field and fix incomplete export paths.",
+  "detail": "**Update stale status field and fix incomplete export paths.** The status at Line 3 still reads `**planning**` despite the Review section later stating Phase 1 is implemented and verified. Update to reflect current state (e.g., `**in progress / review**` or `**Phase 1 complete, Phase 2 in progress**`). The export paths at Lines 25–28 are missing their package prefixes: - `export/docx-exporter.ts` → `packages/docs/src/export/docx-exporter.ts` - `export/pdf-exporter.ts` → `packages/docs/src/export/pdf-exporter.ts` - `export/pptx/` → `packages/slides/src/export/pptx/` - `export/pdf.ts` → `packages/slides/src/export/pdf.ts`",
+  "severity": "major",
+  "finding_key": "docs/tasks/active/20260628-homepage-refresh-todo.md::update stale status field and fix incomplete export paths."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.50) — needs adjudication",
+  "score": 0.55
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

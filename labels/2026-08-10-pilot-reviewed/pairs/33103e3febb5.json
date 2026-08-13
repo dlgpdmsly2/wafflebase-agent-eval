@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "33103e3febb5",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The subject is the controller's list ordering and `attachMeta`, whose remedy is a controller unit test — not the webhook e2e coverage CodeRabbit's bullet contradicts itself about. Same rule as 3c91f7c7e442: the absences named are not the same absence.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/document/document.controller.spec.ts",
+  "line": 13,
+  "summary": "The central behavior change — list ordering and `updatedAt` now sourced from Postgres instead of the Yorkie admin call — has no test at all",
+  "evidence": "document.controller.ts:52-70 rewrote `attachMeta` (uses `d.updatedAt.toISOString()` and `yorkieAdminService.getEditors`) and lines 116/148 changed `orderBy` to `[{updatedAt:'desc'},{createdAt:'desc'}]`. The only spec for this controller, document.controller.spec.ts, covers just `createDocument` fileId gating; its mock even still stubs the now-unused `getSummaries` (line 13) rather than `getEditors`, so nothing would fail if `attachMeta` regressed (e.g. reverted to Yorkie's updatedAt, dropped editors, or lost the orderBy). Searched packages/backend/src/**/*.spec.ts and packages/backend/test/*.e2e-spec.ts for `updatedAt`/`getEditors` assertions — the e2e files only stub the service, they assert nothing about ordering.",
+  "severity": "major",
+  "lens": "test-adequacy",
+  "finding_key": "packages/backend/src/document/document.controller.spec.ts::the central behavior change — list ordering and `updatedat` now sourced from postgres instead of the yorkie admin call — has no test at all"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md",
+  "line": 98,
+  "summary": "Resolve the contradictory e2e test status.",
+  "detail": "**Resolve the contradictory e2e test status.** The Tasks section says DB-backed e2e coverage is deferred (Lines 53-55), but this Verification section claims e2e coverage exists. Either add the missing e2e test or change this bullet to describe the current unit-test coverage.",
+  "severity": "minor",
+  "finding_key": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::resolve the contradictory e2e test status."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.00) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

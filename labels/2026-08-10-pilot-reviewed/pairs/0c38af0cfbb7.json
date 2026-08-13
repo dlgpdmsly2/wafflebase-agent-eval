@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "0c38af0cfbb7",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-415",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "`toCell` has no coverage in the sheets suite and its `Date` branch is exercised nowhere. Unrelated to the MONEY assertion.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/sheets/src/store/readonly.ts",
+  "line": 32,
+  "summary": "New exported `toCell` (and the ReadOnlyStore change that uses it) has no test in the sheets suite; its `Date` branch is exercised nowhere",
+  "evidence": "`toCell` is a newly exported public API of packages/sheets and is now the conversion used by `ReadOnlyStore.loadQueryResults` (readonly.ts:73). I globbed packages/sheets/test/**/*.test.ts (53 files; store tests are cell-index, find-edge, store) and grepped for `toCell`/`ReadOnlyStore` across packages: the only usages are src/index.ts, readonly.ts, frontend/datasource-view.tsx, and the Postgres-gated backend e2e spec. So the fast sheets vitest lane has zero coverage of it, and all coverage lives in `describeDb(...)`, which is skipped when DATABASE_URL is unset. Worse, the `val instanceof Date` branch is now unreachable in the e2e coverage too, since the new type parser returns DATE/TIMESTAMP/TIMESTAMPTZ as raw strings — no test in the repo passes a Date to toCell.",
+  "severity": "major",
+  "lens": "test-adequacy",
+  "finding_key": "packages/sheets/src/store/readonly.ts::new exported `tocell` (and the readonlystore change that uses it) has no test in the sheets suite; its `date` branch is exercised nowhere"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/test/database.e2e-spec.ts",
+  "line": 244,
+  "summary": "The `MONEY` assertion is locale-dependent and may fail on non-US clusters.",
+  "detail": "**The `MONEY` assertion is locale-dependent and may fail on non-US clusters.** PostgreSQL formats the `money` type using the database's `lc_monetary` setting, which dictates the currency symbol and digit grouping. Since the test asserts the exact string `$1,234.56`, it will fail on databases configured with different locales. Either set `lc_monetary` to `en_US.UTF-8` in the test setup or avoid asserting the formatted string output.",
+  "severity": "minor",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::the `money` assertion is locale-dependent and may fail on non-us clusters."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.11) — needs adjudication",
+  "score": 0.3555555555555555
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

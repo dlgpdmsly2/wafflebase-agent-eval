@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "d169b5c16efd",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-549",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "A placeholder 'Follow-ups' section in the lessons file against missing fence language tags in the todo and design docs. Adjacent housekeeping, different edits.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md",
+  "line": 24,
+  "summary": "Lessons file's 'Follow-ups' section is a placeholder, inconsistent with the fact that the design doc already records the fix as shipped.",
+  "evidence": "'## Follow-ups\n\n- (fill in during/after review)' in docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md line 23-24, while docs/design/notes/notes.md already records the fix under heading '... — shipped (issue #517)'.",
+  "severity": "nit",
+  "lens": "docs",
+  "finding_key": "docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md::lessons file's 'follow-ups' section is a placeholder, inconsistent with the fact that the design doc already records the fix as shipped."
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+  "line": 8,
+  "summary": "Fenced blocks showing markdown examples have no language tag (markdownlint MD040).",
+  "detail": "**Fenced blocks showing markdown examples have no language tag (markdownlint MD040).** Both fences render the raw `- 1 / - ` example snippet without an info string; tagging them silences the lint warning consistently. - `docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md#L8-L11`: add a language (e.g. `text` or `markdown`) to the fence opening. - `docs/design/notes/notes.md#L281-L285`: same fix for this fence.",
+  "severity": "nit",
+  "finding_key": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md::fenced blocks showing markdown examples have no language tag (markdownlint md040)."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.00) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

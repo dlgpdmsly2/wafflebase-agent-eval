@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "e47790b6e83b",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Raw-body capture uses an exact-string URL match while Express routing is case-insensitive and slash-tolerant. Unrelated to the fence tag.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/main.ts",
+  "line": 51,
+  "summary": "Raw-body capture keyed on an exact-string URL match while Express route matching is case-insensitive and trailing-slash-tolerant — security-critical wiring that can silently drift",
+  "evidence": "main.ts:51 gates the capture on `req.url?.split('?', 1)[0] === '/internal/yorkie/events'`, but the Nest/Express router (default `caseSensitive: false`, `strict: false`) also matches `/Internal/Yorkie/Events` and `/internal/yorkie/events/`. Those variants reach the controller with `rawBody === undefined`, and the guard then throws `UnauthorizedException` (yorkie-signature.guard.ts:49-51) — so the mismatch fails *closed* and is not a bypass today. It is still fragile: adding `setGlobalPrefix`, an ingress path rewrite, or renaming the controller path silently turns every legitimate webhook into a 401 (Yorkie retry storm), and the pressure to 'fix' that is pressure to weaken the guard. Deriving the constant from the controller path, or matching case-insensitively with the trailing slash normalized, removes the coupling.",
+  "severity": "minor",
+  "lens": "security",
+  "finding_key": "packages/backend/src/main.ts::raw-body capture keyed on an exact-string url match while express route matching is case-insensitive and trailing-slash-tolerant — security-critical wiring that can silently drift"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/design/documents-last-modified.md",
+  "line": 67,
+  "summary": "Specify the fenced block language.",
+  "detail": "**Specify the fenced block language.** Markdownlint reports MD040 here. Mark this command block as `shell` so documentation checks pass.",
+  "severity": "minor",
+  "finding_key": "docs/design/documents-last-modified.md::specify the fenced block language."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.08) — needs adjudication",
+  "score": 0.3416666666666667
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "0265c23fb64e",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-549",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Both concern test coverage of this change, but the panel's claim is that two of the five new tests are pre-existing-behaviour guards, and CodeRabbit's is that one specific case (top-level lone dash) is absent. Adding the missing test does not make the vacuous guards meaningful.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/notes/src/view/preview.test.ts",
+  "line": 175,
+  "summary": "Two of the five new tests are pre-existing-behavior guards that would also have passed before the change, so effective new-behavior coverage is narrower than it appears",
+  "evidence": "'still renders the blank-line workaround correctly' (`- 1\\n\\n  - `) and 'leaves a non-empty nested list unchanged' (`- 1\\n  - 2`) both rendered correctly under stock markdown-it (per docs/tasks/.../20260724-notes-empty-bullet-setext-todo.md:22-23, the blank line is the reporter's existing workaround). They are useful regression guards but not coverage of the new code paths; only the first two tests can actually fail without the fix.",
+  "severity": "minor",
+  "lens": "test-adequacy",
+  "finding_key": "packages/notes/src/view/preview.test.ts::two of the five new tests are pre-existing-behavior guards that would also have passed before the change, so effective new-behavior coverage is narrower than it appears"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/notes/src/view/preview.test.ts",
+  "line": 151,
+  "summary": "Missing test for the \"top-level lone dash\" case called out in the plan.",
+  "detail": "**Missing test for the \"top-level lone dash\" case called out in the plan.** The todo doc's Steps/Acceptance-criteria list a top-level lone dash as a case to cover (e.g., a paragraph immediately followed by a top-level `-` line, not nested under a list item), but none of the added tests exercise it. Worth adding one to confirm the plugin's paragraph-interrupt relaxation behaves correctly outside the nested-list context too.",
+  "severity": "nit",
+  "finding_key": "packages/notes/src/view/preview.test.ts::missing test for the \"top-level lone dash\" case called out in the plan."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 1, content 0.00) — needs adjudication",
+  "score": 0.5
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

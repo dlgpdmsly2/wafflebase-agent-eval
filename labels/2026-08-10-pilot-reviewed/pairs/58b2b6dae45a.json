@@ -1,0 +1,76 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "58b2b6dae45a",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/document/document.service.spec.ts",
+  "line": 17,
+  "summary": "updateDocument spec never asserts the `where` clause is forwarded",
+  "evidence": "Both tests read only `update.mock.calls[0][0].data`; a bug that dropped or rewrote `where` (now that the call was rewritten to `update({ data: nextData, where })`) would go unnoticed.",
+  "severity": "nit",
+  "lens": "test-adequacy",
+  "finding_key": "packages/backend/src/document/document.service.spec.ts::updatedocument spec never asserts the `where` clause is forwarded"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/src/document/document.service.ts",
+  "line": 93,
+  "summary": "Consider using `findUniqueOrThrow` for the empty-data path instead of `prisma.document.update({ data: {} })`.",
+  "detail": "**Consider using `findUniqueOrThrow` for the empty-data path instead of `prisma.document.update({ data: {} })`.** When `data` is empty, the current code calls `prisma.document.update({ data: {}, where })`. Prisma 6.6.0 may reject an empty `data` object at the client-validation level or generate invalid SQL (an `UPDATE` with no `SET` columns). The test mocks `prisma.document.update` so it wouldn't catch a real runtime failure. Returning the existing row via `findUniqueOrThrow` avoids the risk entirely and skips a needless write.",
+  "severity": "nit",
+  "finding_key": "packages/backend/src/document/document.service.ts::consider using `finduniqueorthrow` for the empty-data path instead of `prisma.document.update({ data: {} })`."
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.50) — needs adjudication",
+  "score": 0.55
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "labeled_at_utc": "2026-08-13T05:57:56.051Z",
+ "verdict": "different",
+ "verdict_raw": "n",
+ "label_source": "gold",
+ "annotators": [
+  "dlgpdmsly2"
+ ],
+ "harness": "worksheet",
+ "confidence": null,
+ "confidence_absent_reason": "the worksheet format has no confidence field; the annotator recorded none",
+ "evidence": null,
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel lens",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "the model's sealed verdicts"
+  ],
+  "set": "enriched-validation-22 (>=2 shared significant tokens)"
+ },
+ "model_comparison": {
+  "model": "claude-opus-5",
+  "model_verdict": "different",
+  "model_confidence": "high",
+  "agrees": true,
+  "contaminated": false
+ }
+}

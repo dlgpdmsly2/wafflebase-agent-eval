@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "9cda6a69f31c",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "InteropSection has no automated assertion. Unrelated.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/frontend/src/app/home/interop-section.tsx",
+  "line": 31,
+  "summary": "New InteropSection has no test/visual assertion in any automated lane",
+  "evidence": "New presentational section mounted in `page.tsx`; grep for `interop|InteropSection` finds only src, design docs and the task todo — no test and no entry in the browser visual/interaction lane (no home-page fixtures found under scripts/ or any browser test dir). The claimed verification in docs/tasks/active/20260628-homepage-refresh-todo.md:172 is a manual puppeteer smoke, not a repeatable check. Low value for a static marketing section, hence nit.",
+  "severity": "nit",
+  "lens": "test-adequacy",
+  "finding_key": "packages/frontend/src/app/home/interop-section.tsx::new interopsection has no test/visual assertion in any automated lane"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+  "line": 146,
+  "summary": "Clarify Phase 2 completion status.",
+  "detail": "**Clarify Phase 2 completion status.** The status at Line 148 says \"Phase 2 (docs) in progress,\" yet all Phase 2 checkboxes (Lines 93–134) are marked `[x]` complete. If Phase 2 is fully done, update the status to match. If docs work remains open, uncheck the relevant items.",
+  "severity": "nit",
+  "finding_key": "docs/tasks/active/20260628-homepage-refresh-todo.md::clarify phase 2 completion status."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T06:36:23.380Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

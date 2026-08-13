@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "81aac6722032",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-415",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Both criticise assertions in the same all-types loop, which is why the matcher hesitated. But CodeRabbit's is that the MONEY row is environment-dependent, and the panel's is that the `dataTypeID` line asserts pg's own catalog and cannot fail for any change to the code. Fixing the locale dependence leaves the vacuous OID assertion exactly where it is.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/test/database.e2e-spec.ts",
+  "line": 300,
+  "summary": "`expect(columns[0].dataTypeID).toBe(expectedOid)` in the all-types loop asserts PostgreSQL's own OIDs, not any behaviour of the code under test",
+  "evidence": "Inside the 'check correct cell values for all pg built-in types' loop the first assertion compares the OID reported by pg for `CREATE TABLE (val <type>)` against `types.builtins.<TYPE>` — i.e. pg-types constants against pg's catalog. It cannot fail for any change in datasource.service.ts and is effectively a self-check of the pg library. The adjacent `toCell(rows[0].val)` assertion is the one carrying real signal; the OID line is padding.",
+  "severity": "nit",
+  "lens": "test-adequacy",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::`expect(columns[0].datatypeid).tobe(expectedoid)` in the all-types loop asserts postgresql's own oids, not any behaviour of the code under test"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/test/database.e2e-spec.ts",
+  "line": 244,
+  "summary": "The `MONEY` assertion is locale-dependent and may fail on non-US clusters.",
+  "detail": "**The `MONEY` assertion is locale-dependent and may fail on non-US clusters.** PostgreSQL formats the `money` type using the database's `lc_monetary` setting, which dictates the currency symbol and digit grouping. Since the test asserts the exact string `$1,234.56`, it will fail on databases configured with different locales. Either set `lc_monetary` to `en_US.UTF-8` in the test setup or avoid asserting the formatted string output.",
+  "severity": "minor",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::the `money` assertion is locale-dependent and may fail on non-us clusters."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 1, content 0.08) — needs adjudication",
+  "score": 0.5416666666666666
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

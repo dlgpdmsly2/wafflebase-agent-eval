@@ -1,0 +1,71 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "04b78c5c3cd6",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-524",
+ "rubric": "one-fix-discharges-both",
+ "panel": {
+  "arm": "panel",
+  "file": ".github/workflows/agent-review-panel.yml",
+  "line": 339,
+  "summary": "The MAX_REVIEW_ROUNDS bound the diff now relies on is erasable by the very agent it constrains (force-push resets it; the paging comment and label are deletable)",
+  "evidence": "The round bound counts commits currently on the PR whose lens checks failed (agent-review-panel.yml:335-343), and the comment at :329-332 calls it \"unforgeable\". But the fix job's App token has contents:write (line 379) and agent/ branches carry no protection — only `main` is verified protected (agent-implement.yml:82-118), and grep finds no ruleset covering agent/**. A single rebase/squash force-push replaces the SHAs the failed `agent-review-*` check runs are attached to, so `failedRounds` drops back to 0 and the autonomous loop restarts unbounded. \"do NOT force-push\" (line 426) is prompt text, not enforcement, and the same agent also holds issues:write, so it can delete the `<!-- agent-review-paged -->` latch comment (line 324) and remove the `agent:needs-human-review` label. Before this diff the fix step never ran, so the bound was never exercised; the `allowed_bots` addition is what makes it load-bearing.",
+  "severity": "major",
+  "lens": "security",
+  "finding_key": ".github/workflows/agent-review-panel.yml::the max_review_rounds bound the diff now relies on is erasable by the very agent it constrains (force-push resets it; the paging comment and label are deletable)"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": ".github/workflows/agent-review-panel.yml",
+  "line": 459,
+  "summary": "Make the stalled notification match all failure modes.",
+  "detail": "**Make the stalled notification match all failure modes.** With `fix` failures now entering this job, Line 479 can report that the review panel failed and produced no verdicts even when the panel succeeded and only the fixer failed. Use a generic pipeline-stalled message or select the message based on which dependency failed.",
+  "severity": "minor",
+  "finding_key": ".github/workflows/agent-review-panel.yml::make the stalled notification match all failure modes."
+ },
+ "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 1, content 0.23) — needs adjudication",
+  "score": 0.6153846153846154
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "labeled_at_utc": "2026-08-13T05:57:56.063Z",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "harness": "in-session",
+ "confidence": "high",
+ "evidence": "Panel: the MAX_REVIEW_ROUNDS bound is erasable by force-push, so the autonomous loop restarts unbounded. CodeRabbit: the stalled notification's message. Same workflow file, unrelated defects.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs"
+  ],
+  "set": "fresh-validation-20 (strongest maybes outside the original 23)"
+ },
+ "validation": {
+  "note": "no human verdict exists for this pair. The labeler's measured behaviour on pairs that DO have one: `same` precision 11/12, recall 11/14.",
+  "same_class_precision": "11/12",
+  "falsifier_fired": true
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "92d498f0f56b",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-605",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "medium",
+ "evidence": "PARTIAL overlap, judged `different` on the rule. The panel's finding is compound: an unbounded snapshot stack AND whole-document `replace` semantics on undo. CodeRabbit's cap discharges the first and leaves the second — an independent defect about selection/decoration loss — so the comment still stands. Contrast 6c8b2076d047, which is the same claim with nothing left over.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/notes/src/store/memory.ts",
+  "line": 11,
+  "summary": "MemNoteStore keeps an unbounded stack of full-text snapshots and replaces the whole document on undo",
+  "evidence": "`pushUndo` (memory.ts, `private pushUndo`) appends a full copy of the note text on every un-batched `editText` and every mutating `batch`, with no cap and no eviction — one whole-document string per keystroke, retained for the life of the store. The class comment justifies it as \"cheap enough for a note\", which is only true for short sessions. Separately, `undo()`/`redo()` emit `{ type: 'replace', content }`, which `note-sync.applyRemote` turns into a `from: 0, to: doc.length` replacement of the entire document — that discards CodeMirror's per-change mapping (selection/scroll land wherever a whole-doc replace maps them) where the Yorkie store emits precise `edits`. Impact is bounded today because MemNoteStore is only referenced from tests and the package export surface (grep: only editor.test.ts, note-sync.test.ts, memory.test.ts, index.ts, node.ts).",
+  "severity": "minor",
+  "lens": "correctness",
+  "finding_key": "packages/notes/src/store/memory.ts::memnotestore keeps an unbounded stack of full-text snapshots and replaces the whole document on undo"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/notes/src/store/memory.ts",
+  "line": 97,
+  "summary": "Consider capping the snapshot history.",
+  "detail": "**Consider capping the snapshot history.** `undoStack` stores one full-text snapshot per un-batched edit and never drops old entries. A long editing session in a large note keeps every historical version in memory. A fixed cap keeps memory bounded and matches typical editor behavior.",
+  "severity": "nit",
+  "finding_key": "packages/notes/src/store/memory.ts::consider capping the snapshot history."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.5
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

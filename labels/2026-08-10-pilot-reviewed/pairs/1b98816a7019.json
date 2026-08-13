@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "1b98816a7019",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-549",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Local `asciiTrim` diverges from upstream lheading's `.trim()` on non-ASCII whitespace. A code-fidelity defect; CodeRabbit's finding is checklist hygiene.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+  "line": 21,
+  "summary": "Local `asciiTrim` diverges from upstream lheading's `String.prototype.trim()`",
+  "evidence": "The forked rule builds heading content with `asciiTrim(state.getLines(...))` (line 134-136) and the comment claims markdown-it uses an `asciiTrim` here. markdown-it 14's `rules_block/lheading.mjs` uses plain `.trim()`, which also strips non-ASCII whitespace (NBSP U+00A0, U+2028, U+FEFF). With this reimplementation a setext heading whose text ends in a NBSP keeps that character in the rendered `<h2>`, a silent divergence from stock rendering. node_modules was not installed in the worktree so the upstream source could not be confirmed here.",
+  "severity": "minor",
+  "lens": "correctness",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::local `asciitrim` diverges from upstream lheading's `string.prototype.trim()`"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+  "line": 58,
+  "summary": "Stale checklist: several items are already done in this PR.",
+  "detail": "**Stale checklist: several items are already done in this PR.** Cross-referencing the sibling files in this PR: `list-empty-bullet-plugin.ts` was added, it's wired into `preview.ts` (import + `md.use`), and `docs/design/notes/notes.md` documents the deviation — yet the corresponding checkboxes here remain unchecked. Please tick off items 2, 3, and 5 (and 4 once the missing test noted below is added) so the plan accurately reflects delivered work. Based on learnings, \"these docs are considered complete only when the companion `*-lessons.md` file exists and all plan items in the doc are checked off.\"",
+  "severity": "nit",
+  "finding_key": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md::stale checklist: several items are already done in this pr."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T06:36:23.380Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

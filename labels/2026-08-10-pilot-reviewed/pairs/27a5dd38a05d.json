@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "27a5dd38a05d",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Unauthenticated, throttle-exempt webhook accepting 25MB bodies. Unrelated to the doc contradiction.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/document/yorkie-event.controller.ts",
+  "line": 32,
+  "summary": "Unauthenticated, throttle-exempt webhook endpoint accepts up to 25MB bodies — unbounded pre-auth resource consumption",
+  "evidence": "`@SkipThrottle()` (yorkie-event.controller.ts:32) removes the only global rate limit (ThrottlerGuard registered as APP_GUARD in app.module.ts:113, 120 req/60s). The route needs no JWT/API key, so any client that can reach the backend port hits it. Express body-parser runs *before* guards, and main.ts:47-56 applies `limit: JSON_BODY_LIMIT` (25MB default) to all JSON routes including this one, and additionally *retains* the raw buffer (`req.rawBody = buf`) only for this path — so each request pins the full 25MB buffer plus the parsed object until the guard rejects it, and the guard then computes an HMAC over those 25MB before rejecting. Attack: send many concurrent `POST /internal/yorkie/events` requests with 25MB JSON bodies and a garbage `X-Signature-256`; every request is fully buffered, doubled in memory, and HMAC'd with no rate limit → memory/CPU exhaustion of the backend. Nothing in the repo restricts the path at an ingress (no manifests present; the same process serves the public API on the same port). Mitigation would be a small per-route body limit (webhook payloads are a few hundred bytes) and/or a generous-but-finite throttle instead of a blanket skip.",
+  "severity": "major",
+  "lens": "security",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::unauthenticated, throttle-exempt webhook endpoint accepts up to 25mb bodies — unbounded pre-auth resource consumption"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md",
+  "line": 98,
+  "summary": "Resolve the contradictory e2e test status.",
+  "detail": "**Resolve the contradictory e2e test status.** The Tasks section says DB-backed e2e coverage is deferred (Lines 53-55), but this Verification section claims e2e coverage exists. Either add the missing e2e test or change this bullet to describe the current unit-test coverage.",
+  "severity": "minor",
+  "finding_key": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::resolve the contradictory e2e test status."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.08) — needs adjudication",
+  "score": 0.3384615384615385
+ },
+ "labeled_at_utc": "2026-08-13T06:48:05.692Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

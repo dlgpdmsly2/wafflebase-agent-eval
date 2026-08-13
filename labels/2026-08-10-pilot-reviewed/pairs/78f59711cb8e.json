@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "78f59711cb8e",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-605",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "CodeRabbit asks for the migration checklist in the todo to be ticked off. The panel reports that MemNoteStore's undo/redo stacks grow without bound. Ticking boxes changes no code.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/notes/src/store/memory.ts",
+  "line": 97,
+  "summary": "MemNoteStore's undo/redo stacks grow without bound, one full text snapshot per edit",
+  "evidence": "`pushUndo` (memory.ts:97) appends a complete copy of the document text on every edit and the stacks are never trimmed, so N edits on an M-byte note retain O(N*M) bytes for the process lifetime — a client-side memory-exhaustion vector if MemNoteStore is ever mounted on user-supplied content. Today `grep MemNoteStore` finds only test files plus the `packages/notes/src/node.ts` export, so there is no production consumer; capping the stack (as CodeMirror's history does with minDepth) would remove the hazard before one appears.",
+  "severity": "nit",
+  "lens": "security",
+  "finding_key": "packages/notes/src/store/memory.ts::memnotestore's undo/redo stacks grow without bound, one full text snapshot per edit"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260730-notes-native-undo-todo.md",
+  "line": 64,
+  "summary": "Check off completed migration tasks before archiving.",
+  "detail": "**Check off completed migration tasks before archiving.** The implementation and companion lessons document are present, but every task remains unchecked. Mark completed items as `[x]`. Keep this document under `docs/tasks/active/` until merge, then archive it with `pnpm tasks:archive`. Based on learnings, active task plans are complete only when the companion lessons file exists and all plan items are checked off; do not add a `Status: SHIPPED` banner while the PR is open.",
+  "severity": "minor",
+  "finding_key": "docs/tasks/active/20260730-notes-native-undo-todo.md::check off completed migration tasks before archiving."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.25) — needs adjudication",
+  "score": 0.425
+ },
+ "labeled_at_utc": "2026-08-13T06:51:21.515Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

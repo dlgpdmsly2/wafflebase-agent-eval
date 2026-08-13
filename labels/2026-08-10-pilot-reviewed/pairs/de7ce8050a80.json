@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "de7ce8050a80",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The new datasources doc asserts a per-collaborator-connection security model the backend does not enforce. A documentation-vs-code contradiction in a different file; CodeRabbit's finding is checkbox state in the todo.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/documentation/sheets/datasources.md",
+  "line": 45,
+  "summary": "New datasources doc states a security model the code does not enforce: collaborators DO execute queries with the creator's stored credentials",
+  "evidence": "datasources.md says \"The connection belongs to the person who created it. Collaborators can see the query and its last results, but run their own connection to execute it.\" The backend contradicts this: `POST /datasources/:id/query` gates only on `assertMember(ds.workspaceId, userId)` (packages/backend/src/datasource/datasource.controller.ts:139-144) and then runs the query with the stored, server-decrypted password of the creator (datasource.service.ts:133-152, 203). Any workspace member — including a low-privilege invitee — can run arbitrary SELECTs (and, with the validator bypass above, writes) against the creator's production database. Publishing the opposite as documented behaviour leads self-hosters to store privileged credentials under a false isolation assumption.",
+  "severity": "major",
+  "lens": "security",
+  "finding_key": "packages/documentation/sheets/datasources.md::new datasources doc states a security model the code does not enforce: collaborators do execute queries with the creator's stored credentials"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+  "line": 39,
+  "summary": "Synchronize checkboxes with actual completion status and close resolved decisions.",
+  "detail": "**Synchronize checkboxes with actual completion status and close resolved decisions.** The work-item checkboxes remain `[ ]` unchecked despite the Review section (Lines 150–159) confirming completion. Update to `[x]` for: - Fix broken link (Line 42) - Refresh Features secondary cards (Lines 46–60) - New Interop section (Lines 62–70) - Design doc + verify (Lines 72–77) The \"Open decisions\" (Lines 79–85) are all resolved per Lines 163–166. Move them to a \"Decisions confirmed\" section or remove them to avoid confusion.",
+  "severity": "major",
+  "finding_key": "docs/tasks/active/20260628-homepage-refresh-todo.md::synchronize checkboxes with actual completion status and close resolved decisions."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.00) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T06:36:23.380Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

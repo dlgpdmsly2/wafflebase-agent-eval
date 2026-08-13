@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "8e649daef489",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-524",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The fix job checking out a mutable branch while findings are attested against `head_sha`, against the stalled notification's wording.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": ".github/workflows/agent-review-panel.yml",
+  "line": 386,
+  "summary": "The fix job checks out the mutable branch while the findings it acts on are attested against head_sha, unlike the review job which deliberately pins the SHA",
+  "evidence": "agent-review-panel.yml:89-94 pins `ref: workflow_run.head_sha` with an explicit comment that checking out the branch \"would review a different commit than the one attested\". The fix job at line 386 checks out `ref: ${{ github.event.workflow_run.head_branch }}` while its findings come from check runs on `head_sha` (line 353-358), so if the branch advanced the agent edits and pushes on top of a tree the panel never saw, with review-attested findings as its only frame. Impact is limited because mark-ready re-evaluates gates against the live `pr.headRefOid` (scripts/agent/mark-ready.mjs:128,146), so it is an attestation/TOCTOU inconsistency rather than a promotion bypass.",
+  "severity": "minor",
+  "lens": "security",
+  "finding_key": ".github/workflows/agent-review-panel.yml::the fix job checks out the mutable branch while the findings it acts on are attested against head_sha, unlike the review job which deliberately pins the sha"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": ".github/workflows/agent-review-panel.yml",
+  "line": 459,
+  "summary": "Make the stalled notification match all failure modes.",
+  "detail": "**Make the stalled notification match all failure modes.** With `fix` failures now entering this job, Line 479 can report that the review panel failed and produced no verdicts even when the panel succeeded and only the fixer failed. Use a generic pipeline-stalled message or select the message based on which dependency failed.",
+  "severity": "minor",
+  "finding_key": ".github/workflows/agent-review-panel.yml::make the stalled notification match all failure modes."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.5
+ },
+ "labeled_at_utc": "2026-08-13T05:58:36.671Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

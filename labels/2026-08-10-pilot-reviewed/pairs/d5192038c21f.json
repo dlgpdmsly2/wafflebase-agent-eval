@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "d5192038c21f",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-415",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "medium",
+ "evidence": "Both touch how timestamps reach the caller as text, so this is the closest pair in the group. But CodeRabbit's defect is that a SESSION SETTING changes input parsing for user queries; the panel's is that `format.ts` recognises only two date regexes and drops the time component on anything else. Applying CodeRabbit's fix as written — remove `SET DateStyle`, control formatting in getTypeParser — leaves those regexes untouched, so the formatter still mis-renders. It becomes `same` only under a broad reading where 'control formatting in getTypeParser' is taken to include picking a form format.ts already parses, which CodeRabbit never states.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/sheets/src/model/worksheet/format.ts",
+  "line": 40,
+  "summary": "Sheets date formatter does not recognise the new TIMESTAMPTZ raw text form (`2025-06-15 05:30:00+00`) that query cells now carry",
+  "evidence": "packages/sheets/src/model/worksheet/format.ts:24-66 recognises only `YYYY-MM-DD` and `YYYY-MM-DD HH:MM:SS`; anything else falls through to `new Date(value)` with `hasTime: false` (:62-66), which drops the time component on render. Previously TIMESTAMPTZ arrived as a JS Date and was serialised to an ISO 'Z' string; with the new raw-text parser it arrives as `2025-06-15 05:30:00+00`, matching neither regex. Only bites when a date number-format is applied to a query-result cell, hence medium confidence.",
+  "severity": "minor",
+  "lens": "blast-radius",
+  "finding_key": "packages/sheets/src/model/worksheet/format.ts::sheets date formatter does not recognise the new timestamptz raw text form (`2025-06-15 05:30:00+00`) that query cells now carry"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/src/datasource/datasource.service.ts",
+  "line": 143,
+  "summary": "Avoid using `SET DateStyle` to normalize output",
+  "detail": "**Avoid using `SET DateStyle` to normalize output** This session setting alters input parsing semantics, not just output formatting. Under `'ISO, MDY'`, ambiguous literals like `'01/02/2025'::date` are parsed as January 2nd within this session, overriding the database's default interpretation for these queries. This introduces inconsistent results for valid user queries sent via `executeQuery()`. Rely on the custom `getTypeParser` implementation for formatting control instead.",
+  "severity": "major",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::avoid using `set datestyle` to normalize output"
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.20) — needs adjudication",
+  "score": 0.4
+ },
+ "labeled_at_utc": "2026-08-13T06:36:23.380Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "314b04211106",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "The v1 list is unordered and exposes updatedAt undocumented. Unrelated.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/backend/src/api/v1/documents.controller.ts",
+  "line": 29,
+  "summary": "REST v1 documents list left unordered and now silently exposes the new updatedAt field; rest-api.md not updated",
+  "evidence": "The v1 list call (api/v1/documents.controller.ts:29-38) passes no `orderBy` at all, so the public API list order still diverges from the UI list's new `[{updatedAt desc},{createdAt desc}]`, while the raw Prisma row it returns now includes the new `updatedAt` column. docs/design/rest-api.md's Document schema (line ~61) documents only `createdAt`, so the API surface change is undocumented.",
+  "severity": "minor",
+  "lens": "design-fit",
+  "finding_key": "packages/backend/src/api/v1/documents.controller.ts::rest v1 documents list left unordered and now silently exposes the new updatedat field; rest-api.md not updated"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "packages/backend/src/document/yorkie-event.controller.spec.ts",
+  "line": 15,
+  "summary": "Use a past date in the `issuedAt` test to avoid time-dependent failures.",
+  "detail": "**Use a past date in the `issuedAt` test to avoid time-dependent failures.** The test expects `touchUpdatedAt` to be called with `new Date('2026-07-10T06:03:13.331Z')`, but the controller clamps `issuedAt` to `now()` via `Math.min(issuedMs, now)`. If the test executes before that exact UTC moment, the clamp kicks in and `touchUpdatedAt` receives `now()` instead — causing a flaky failure. Using a clearly historical date eliminates this fragility.",
+  "severity": "minor",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.spec.ts::use a past date in the `issuedat` test to avoid time-dependent failures."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (location 0, content 0.17) — needs adjudication",
+  "score": 0.3833333333333333
+ },
+ "labeled_at_utc": "2026-08-13T06:51:21.515Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

@@ -1,0 +1,68 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "3ef24e574d37",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-549",
+ "rubric": "one-fix-discharges-both",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Quadratic backtracking in the hand-rolled trim regex on attacker-controlled note text. Unrelated to checklist state.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding"
+  ],
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "arm": "panel",
+  "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+  "line": 20,
+  "summary": "Hand-rolled trim regex backtracks quadratically (ReDoS) on attacker-controlled note content, replacing upstream's linear `.trim()`",
+  "evidence": "`ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` (lines 19-20) is applied at line 134 to `state.getLines(startLine, nextLine, state.blkIndent, false)` — the full setext-heading paragraph body, i.e. untrusted note text. The first alternative is cheap (`^` without `m` only matches at index 0), but the second, `[ws]+$`, is unanchored at the start: `String.replace` with the `g` flag retries at every offset, and at each offset inside a whitespace run of length k it greedily consumes the rest of the run, fails `$` on the following non-whitespace char, and backtracks one char at a time — O(k) per offset, O(k^2) total. Attack: any workspace member with write access stores content like `x` + `' '.repeat(200000)` + `y\\n===` (or the same run on a line above `---`). When a victim opens the note, `NotePreview.render()` (packages/notes/src/view/preview.ts:165) calls `md.render()`, `lheading` matches (level set at line 108) and the trim at line 134 burns ~1e10 backtracking steps, hanging the victim's tab — and re-hanging on every subsequent re-render. Upstream markdown-it's `lheading` trims linearly here, so this quadratic path is introduced by the change. Fix: trim by index scan, or use non-global start-anchored matches, or `String.prototype.trim()`.",
+  "severity": "major",
+  "lens": "security",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled trim regex backtracks quadratically (redos) on attacker-controlled note content, replacing upstream's linear `.trim()`"
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+  "line": 58,
+  "summary": "Stale checklist: several items are already done in this PR.",
+  "detail": "**Stale checklist: several items are already done in this PR.** Cross-referencing the sibling files in this PR: `list-empty-bullet-plugin.ts` was added, it's wired into `preview.ts` (import + `md.use`), and `docs/design/notes/notes.md` documents the deviation — yet the corresponding checkboxes here remain unchecked. Please tick off items 2, 3, and 5 (and 4 once the missing test noted below is added) so the plan accurately reflects delivered work. Based on learnings, \"these docs are considered complete only when the companion `*-lessons.md` file exists and all plan items in the doc are checked off.\"",
+  "severity": "nit",
+  "finding_key": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md::stale checklist: several items are already done in this pr."
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.3
+ },
+ "labeled_at_utc": "2026-08-13T06:36:23.380Z",
+ "harness": "in-session",
+ "rubric_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it for batches 1-4. The verdicts themselves are unchanged.",
+ "pair_key_vintage_backfilled": "added 2026-08-13; label-maybes.mjs record() omitted it. Recovered from produced_against.repo_head, identical on all 297, and cross-checked against the records that already carried it."
+}

@@ -1,0 +1,77 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "d38ad086d984",
+ "pair_key_vintage": "harvest.mjs at wafflebase#801 de4dde47b",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-549",
+ "rubric": "one-fix-discharges-both",
+ "panel": {
+  "arm": "panel",
+  "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+  "line": 56,
+  "summary": "Todo checklist marks implementation steps as not-yet-done, but the corresponding artifacts already exist in the tree.",
+  "evidence": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md lines 55-59 list '- [ ] Add packages/notes/src/view/list-empty-bullet-plugin.ts', '- [ ] Wire it into preview.ts', '- [ ] Unit tests in preview.test.ts', '- [ ] Note the deviation in docs/design/notes/notes.md' as unchecked, yet packages/notes/src/view/list-empty-bullet-plugin.ts exists, is imported in preview.ts:12 (import { listEmptyBulletPlugin } from './list-empty-bullet-plugin.js';), and docs/design/notes/notes.md:276-297 already documents the deviation under 'Empty nested bullet vs setext heading — shipped (issue #517)'. The task doc's progress tracking is stale relative to the rest of the change.",
+  "severity": "nit",
+  "lens": "docs",
+  "finding_key": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md::todo checklist marks implementation steps as not-yet-done, but the corresponding artifacts already exist in the tree."
+ },
+ "coderabbit": {
+  "arm": "coderabbit",
+  "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+  "line": 58,
+  "summary": "Stale checklist: several items are already done in this PR.",
+  "detail": "**Stale checklist: several items are already done in this PR.** Cross-referencing the sibling files in this PR: `list-empty-bullet-plugin.ts` was added, it's wired into `preview.ts` (import + `md.use`), and `docs/design/notes/notes.md` documents the deviation — yet the corresponding checkboxes here remain unchecked. Please tick off items 2, 3, and 5 (and 4 once the missing test noted below is added) so the plan accurately reflects delivered work. Based on learnings, \"these docs are considered complete only when the companion `*-lessons.md` file exists and all plan items in the doc are checked off.\"",
+  "severity": "nit",
+  "finding_key": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md::stale checklist: several items are already done in this pr."
+ },
+ "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "reason": "partial evidence (anchors name disjoint symbols) — needs adjudication",
+  "score": 0.5
+ },
+ "produced_against": {
+  "repo_head": "de4dde47be012f80a6b935a5f72ad256198a3f64",
+  "note": "wafflebase#801, unmerged at label time"
+ },
+ "labeled_at_utc": "2026-08-13T05:57:56.051Z",
+ "verdict": "same",
+ "verdict_raw": "y",
+ "label_source": "gold",
+ "annotators": [
+  "dlgpdmsly2"
+ ],
+ "harness": "worksheet",
+ "confidence": null,
+ "confidence_absent_reason": "the worksheet format has no confidence field; the annotator recorded none",
+ "evidence": null,
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel lens",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "score/tokens/loc/symbolOverlap",
+   "the model's sealed verdicts"
+  ],
+  "set": "enriched-validation-22 (>=2 shared significant tokens)"
+ },
+ "model_comparison": {
+  "model": "claude-opus-5",
+  "model_verdict": "same",
+  "model_confidence": "high",
+  "agrees": true,
+  "contaminated": true,
+  "contamination_note": "the author described this pair's verdict in chat before the human answered, so it is excluded from the primary agreement number and reported apart"
+ }
+}
