@@ -1,0 +1,2261 @@
+{
+  "schema_version": 1,
+  "bound": "lower",
+  "linkage": "complete",
+  "k_runs": 3,
+  "run_ids": [
+    "pilot-01__k1",
+    "pilot-01__k2",
+    "pilot-01__k3"
+  ],
+  "reviewer": {
+    "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+    "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+    "corpus_version": "2026-08-10-pilot-reviewed"
+  },
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "items": [
+    "pr-415",
+    "pr-429",
+    "pr-465",
+    "pr-471",
+    "pr-524",
+    "pr-549",
+    "pr-605"
+  ],
+  "coderabbit_retest_pairs": {
+    "n": 0,
+    "reason": "every corpus item has exactly one finding-bearing CodeRabbit review, so no retest pair exists; CodeRabbit cannot be re-run",
+    "one_armed": true
+  },
+  "jaccard": {
+    "population": "reported",
+    "per_pair": [
+      {
+        "runs": [
+          "pilot-01__k1",
+          "pilot-01__k2"
+        ],
+        "items_compared": [
+          "pr-415",
+          "pr-429",
+          "pr-465",
+          "pr-471",
+          "pr-524",
+          "pr-549",
+          "pr-605"
+        ],
+        "overall": {
+          "k": 88,
+          "n": 201,
+          "ratio": 0.43781094527363185,
+          "both": 88,
+          "either": 201,
+          "bound": "lower"
+        },
+        "by_severity": {
+          "critical": {
+            "k": 0,
+            "n": 3,
+            "ratio": 0,
+            "both": 0,
+            "either": 3,
+            "bound": "lower"
+          },
+          "major": {
+            "k": 27,
+            "n": 47,
+            "ratio": 0.574468085106383,
+            "both": 27,
+            "either": 47,
+            "bound": "lower"
+          },
+          "minor": {
+            "k": 58,
+            "n": 125,
+            "ratio": 0.464,
+            "both": 58,
+            "either": 125,
+            "bound": "lower"
+          },
+          "nit": {
+            "k": 3,
+            "n": 26,
+            "ratio": 0.11538461538461539,
+            "both": 3,
+            "either": 26,
+            "bound": "lower"
+          }
+        },
+        "per_item": [
+          {
+            "item_id": "pr-415",
+            "k": 17,
+            "n": 33,
+            "ratio": 0.5151515151515151,
+            "both": 17,
+            "either": 33,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 26,
+              "pilot-01__k2": 24
+            },
+            "unmerged": {
+              "maybe_cross_run": 353,
+              "maybe_within_run": 8,
+              "match_held_apart": 19
+            }
+          },
+          {
+            "item_id": "pr-429",
+            "k": 12,
+            "n": 30,
+            "ratio": 0.4,
+            "both": 12,
+            "either": 30,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 19,
+              "pilot-01__k2": 23
+            },
+            "unmerged": {
+              "maybe_cross_run": 211,
+              "maybe_within_run": 4,
+              "match_held_apart": 5
+            }
+          },
+          {
+            "item_id": "pr-465",
+            "k": 20,
+            "n": 41,
+            "ratio": 0.4878048780487805,
+            "both": 20,
+            "either": 41,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 33,
+              "pilot-01__k2": 28
+            },
+            "unmerged": {
+              "maybe_cross_run": 600,
+              "maybe_within_run": 3,
+              "match_held_apart": 11
+            }
+          },
+          {
+            "item_id": "pr-471",
+            "k": 10,
+            "n": 25,
+            "ratio": 0.4,
+            "both": 10,
+            "either": 25,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 21,
+              "pilot-01__k2": 14
+            },
+            "unmerged": {
+              "maybe_cross_run": 124,
+              "maybe_within_run": 3,
+              "match_held_apart": 12
+            }
+          },
+          {
+            "item_id": "pr-524",
+            "k": 6,
+            "n": 16,
+            "ratio": 0.375,
+            "both": 6,
+            "either": 16,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 9,
+              "pilot-01__k2": 13
+            },
+            "unmerged": {
+              "maybe_cross_run": 104,
+              "maybe_within_run": 17,
+              "match_held_apart": 4
+            }
+          },
+          {
+            "item_id": "pr-549",
+            "k": 9,
+            "n": 23,
+            "ratio": 0.391304347826087,
+            "both": 9,
+            "either": 23,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 12,
+              "pilot-01__k2": 20
+            },
+            "unmerged": {
+              "maybe_cross_run": 175,
+              "maybe_within_run": 7,
+              "match_held_apart": 9
+            }
+          },
+          {
+            "item_id": "pr-605",
+            "k": 14,
+            "n": 33,
+            "ratio": 0.42424242424242425,
+            "both": 14,
+            "either": 33,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 22,
+              "pilot-01__k2": 25
+            },
+            "unmerged": {
+              "maybe_cross_run": 374,
+              "maybe_within_run": 10,
+              "match_held_apart": 21
+            }
+          }
+        ],
+        "unmerged": {
+          "maybe_cross_run": 1941,
+          "maybe_within_run": 52,
+          "match_held_apart": 81
+        },
+        "grouping": {
+          "classes": 201,
+          "gate": {
+            "same-run": 3133,
+            "cross-source": 3186,
+            "defaulted": 0,
+            "lens_unreadable": 0
+          },
+          "pairs": {
+            "compared": 6319,
+            "match": 169,
+            "maybe": 1993,
+            "no": 4157
+          },
+          "linkage": "complete"
+        }
+      },
+      {
+        "runs": [
+          "pilot-01__k1",
+          "pilot-01__k3"
+        ],
+        "items_compared": [
+          "pr-415",
+          "pr-429",
+          "pr-465",
+          "pr-471",
+          "pr-524",
+          "pr-549",
+          "pr-605"
+        ],
+        "overall": {
+          "k": 85,
+          "n": 196,
+          "ratio": 0.4336734693877551,
+          "both": 85,
+          "either": 196,
+          "bound": "lower"
+        },
+        "by_severity": {
+          "critical": {
+            "k": 0,
+            "n": 1,
+            "ratio": 0,
+            "both": 0,
+            "either": 1,
+            "bound": "lower"
+          },
+          "major": {
+            "k": 27,
+            "n": 50,
+            "ratio": 0.54,
+            "both": 27,
+            "either": 50,
+            "bound": "lower"
+          },
+          "minor": {
+            "k": 51,
+            "n": 116,
+            "ratio": 0.4396551724137931,
+            "both": 51,
+            "either": 116,
+            "bound": "lower"
+          },
+          "nit": {
+            "k": 7,
+            "n": 29,
+            "ratio": 0.2413793103448276,
+            "both": 7,
+            "either": 29,
+            "bound": "lower"
+          }
+        },
+        "per_item": [
+          {
+            "item_id": "pr-415",
+            "k": 15,
+            "n": 38,
+            "ratio": 0.39473684210526316,
+            "both": 15,
+            "either": 38,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 26,
+              "pilot-01__k3": 27
+            },
+            "unmerged": {
+              "maybe_cross_run": 378,
+              "maybe_within_run": 6,
+              "match_held_apart": 16
+            }
+          },
+          {
+            "item_id": "pr-429",
+            "k": 12,
+            "n": 29,
+            "ratio": 0.41379310344827586,
+            "both": 12,
+            "either": 29,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 19,
+              "pilot-01__k3": 22
+            },
+            "unmerged": {
+              "maybe_cross_run": 159,
+              "maybe_within_run": 7,
+              "match_held_apart": 9
+            }
+          },
+          {
+            "item_id": "pr-465",
+            "k": 19,
+            "n": 41,
+            "ratio": 0.4634146341463415,
+            "both": 19,
+            "either": 41,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 33,
+              "pilot-01__k3": 27
+            },
+            "unmerged": {
+              "maybe_cross_run": 585,
+              "maybe_within_run": 6,
+              "match_held_apart": 15
+            }
+          },
+          {
+            "item_id": "pr-471",
+            "k": 11,
+            "n": 28,
+            "ratio": 0.39285714285714285,
+            "both": 11,
+            "either": 28,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 21,
+              "pilot-01__k3": 18
+            },
+            "unmerged": {
+              "maybe_cross_run": 173,
+              "maybe_within_run": 3,
+              "match_held_apart": 9
+            }
+          },
+          {
+            "item_id": "pr-524",
+            "k": 6,
+            "n": 12,
+            "ratio": 0.5,
+            "both": 6,
+            "either": 12,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 9,
+              "pilot-01__k3": 9
+            },
+            "unmerged": {
+              "maybe_cross_run": 66,
+              "maybe_within_run": 13,
+              "match_held_apart": 6
+            }
+          },
+          {
+            "item_id": "pr-549",
+            "k": 10,
+            "n": 18,
+            "ratio": 0.5555555555555556,
+            "both": 10,
+            "either": 18,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 12,
+              "pilot-01__k3": 16
+            },
+            "unmerged": {
+              "maybe_cross_run": 140,
+              "maybe_within_run": 4,
+              "match_held_apart": 3
+            }
+          },
+          {
+            "item_id": "pr-605",
+            "k": 12,
+            "n": 30,
+            "ratio": 0.4,
+            "both": 12,
+            "either": 30,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k1": 22,
+              "pilot-01__k3": 20
+            },
+            "unmerged": {
+              "maybe_cross_run": 275,
+              "maybe_within_run": 5,
+              "match_held_apart": 20
+            }
+          }
+        ],
+        "unmerged": {
+          "maybe_cross_run": 1776,
+          "maybe_within_run": 44,
+          "match_held_apart": 78
+        },
+        "grouping": {
+          "classes": 196,
+          "gate": {
+            "same-run": 2999,
+            "cross-source": 3102,
+            "defaulted": 0,
+            "lens_unreadable": 0
+          },
+          "pairs": {
+            "compared": 6101,
+            "match": 163,
+            "maybe": 1820,
+            "no": 4118
+          },
+          "linkage": "complete"
+        }
+      },
+      {
+        "runs": [
+          "pilot-01__k2",
+          "pilot-01__k3"
+        ],
+        "items_compared": [
+          "pr-415",
+          "pr-429",
+          "pr-465",
+          "pr-471",
+          "pr-524",
+          "pr-549",
+          "pr-605"
+        ],
+        "overall": {
+          "k": 86,
+          "n": 200,
+          "ratio": 0.43,
+          "both": 86,
+          "either": 200,
+          "bound": "lower"
+        },
+        "by_severity": {
+          "critical": {
+            "k": 0,
+            "n": 4,
+            "ratio": 0,
+            "both": 0,
+            "either": 4,
+            "bound": "lower"
+          },
+          "major": {
+            "k": 28,
+            "n": 47,
+            "ratio": 0.5957446808510638,
+            "both": 28,
+            "either": 47,
+            "bound": "lower"
+          },
+          "minor": {
+            "k": 54,
+            "n": 116,
+            "ratio": 0.46551724137931033,
+            "both": 54,
+            "either": 116,
+            "bound": "lower"
+          },
+          "nit": {
+            "k": 4,
+            "n": 33,
+            "ratio": 0.12121212121212122,
+            "both": 4,
+            "either": 33,
+            "bound": "lower"
+          }
+        },
+        "per_item": [
+          {
+            "item_id": "pr-415",
+            "k": 16,
+            "n": 35,
+            "ratio": 0.45714285714285713,
+            "both": 16,
+            "either": 35,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k2": 24,
+              "pilot-01__k3": 27
+            },
+            "unmerged": {
+              "maybe_cross_run": 349,
+              "maybe_within_run": 12,
+              "match_held_apart": 17
+            }
+          },
+          {
+            "item_id": "pr-429",
+            "k": 13,
+            "n": 32,
+            "ratio": 0.40625,
+            "both": 13,
+            "either": 32,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k2": 23,
+              "pilot-01__k3": 22
+            },
+            "unmerged": {
+              "maybe_cross_run": 211,
+              "maybe_within_run": 5,
+              "match_held_apart": 14
+            }
+          },
+          {
+            "item_id": "pr-465",
+            "k": 14,
+            "n": 41,
+            "ratio": 0.34146341463414637,
+            "both": 14,
+            "either": 41,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k2": 28,
+              "pilot-01__k3": 27
+            },
+            "unmerged": {
+              "maybe_cross_run": 531,
+              "maybe_within_run": 3,
+              "match_held_apart": 10
+            }
+          },
+          {
+            "item_id": "pr-471",
+            "k": 9,
+            "n": 23,
+            "ratio": 0.391304347826087,
+            "both": 9,
+            "either": 23,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k2": 14,
+              "pilot-01__k3": 18
+            },
+            "unmerged": {
+              "maybe_cross_run": 111,
+              "maybe_within_run": 0,
+              "match_held_apart": 6
+            }
+          },
+          {
+            "item_id": "pr-524",
+            "k": 6,
+            "n": 16,
+            "ratio": 0.375,
+            "both": 6,
+            "either": 16,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k2": 13,
+              "pilot-01__k3": 9
+            },
+            "unmerged": {
+              "maybe_cross_run": 102,
+              "maybe_within_run": 14,
+              "match_held_apart": 6
+            }
+          },
+          {
+            "item_id": "pr-549",
+            "k": 13,
+            "n": 23,
+            "ratio": 0.5652173913043478,
+            "both": 13,
+            "either": 23,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k2": 20,
+              "pilot-01__k3": 16
+            },
+            "unmerged": {
+              "maybe_cross_run": 233,
+              "maybe_within_run": 9,
+              "match_held_apart": 12
+            }
+          },
+          {
+            "item_id": "pr-605",
+            "k": 15,
+            "n": 30,
+            "ratio": 0.5,
+            "both": 15,
+            "either": 30,
+            "bound": "lower",
+            "findings": {
+              "pilot-01__k2": 25,
+              "pilot-01__k3": 20
+            },
+            "unmerged": {
+              "maybe_cross_run": 311,
+              "maybe_within_run": 9,
+              "match_held_apart": 20
+            }
+          }
+        ],
+        "unmerged": {
+          "maybe_cross_run": 1848,
+          "maybe_within_run": 52,
+          "match_held_apart": 85
+        },
+        "grouping": {
+          "classes": 200,
+          "gate": {
+            "same-run": 2998,
+            "cross-source": 3099,
+            "defaulted": 0,
+            "lens_unreadable": 0
+          },
+          "pairs": {
+            "compared": 6097,
+            "match": 171,
+            "maybe": 1900,
+            "no": 4026
+          },
+          "linkage": "complete"
+        }
+      }
+    ],
+    "across_pairs": {
+      "values": [
+        0.43781094527363185,
+        0.4336734693877551,
+        0.43
+      ],
+      "n": 3,
+      "min": 0.43,
+      "max": 0.43781094527363185,
+      "range": 0.007810945273631853,
+      "mean": 0.4338281382204623
+    },
+    "across_pairs_by_severity": {
+      "critical": {
+        "values": [
+          0,
+          0,
+          0
+        ],
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "range": 0,
+        "mean": 0,
+        "classes": [
+          3,
+          1,
+          4
+        ]
+      },
+      "major": {
+        "values": [
+          0.574468085106383,
+          0.54,
+          0.5957446808510638
+        ],
+        "n": 3,
+        "min": 0.54,
+        "max": 0.5957446808510638,
+        "range": 0.055744680851063766,
+        "mean": 0.5700709219858157,
+        "classes": [
+          47,
+          50,
+          47
+        ]
+      },
+      "minor": {
+        "values": [
+          0.464,
+          0.4396551724137931,
+          0.46551724137931033
+        ],
+        "n": 3,
+        "min": 0.4396551724137931,
+        "max": 0.46551724137931033,
+        "range": 0.025862068965517238,
+        "mean": 0.45639080459770115,
+        "classes": [
+          125,
+          116,
+          116
+        ]
+      },
+      "nit": {
+        "values": [
+          0.11538461538461539,
+          0.2413793103448276,
+          0.12121212121212122
+        ],
+        "n": 3,
+        "min": 0.11538461538461539,
+        "max": 0.2413793103448276,
+        "range": 0.1259946949602122,
+        "mean": 0.1593253489805214,
+        "classes": [
+          26,
+          29,
+          33
+        ]
+      }
+    },
+    "unmerged_total": {
+      "maybe_cross_run": 5565,
+      "maybe_within_run": 148,
+      "match_held_apart": 244
+    },
+    "within_run_duplicate_locations": [
+      {
+        "run_id": "pilot-01__k1",
+        "locations": 19,
+        "records_involved": 43,
+        "cross_lens": 16,
+        "placeable": 140,
+        "n": 142
+      },
+      {
+        "run_id": "pilot-01__k2",
+        "locations": 15,
+        "records_involved": 35,
+        "cross_lens": 14,
+        "placeable": 146,
+        "n": 147
+      },
+      {
+        "run_id": "pilot-01__k3",
+        "locations": 16,
+        "records_involved": 34,
+        "cross_lens": 16,
+        "placeable": 137,
+        "n": 139
+      }
+    ]
+  },
+  "recurrence": {
+    "k_runs": 3,
+    "overall": {
+      "n_classes": 245,
+      "k_runs": 3,
+      "in_k": {
+        "1": 118,
+        "2": 71,
+        "3": 56
+      },
+      "in_all": {
+        "k": 56,
+        "n": 245,
+        "ratio": 0.22857142857142856
+      },
+      "in_one": {
+        "k": 118,
+        "n": 245,
+        "ratio": 0.4816326530612245
+      },
+      "severity_disagreement": {
+        "k": 35,
+        "n": 245,
+        "ratio": 0.14285714285714285
+      },
+      "bound": "lower"
+    },
+    "by_severity": {
+      "critical": {
+        "n_classes": 4,
+        "k_runs": 3,
+        "in_k": {
+          "1": 4,
+          "2": 0,
+          "3": 0
+        },
+        "in_all": {
+          "k": 0,
+          "n": 4,
+          "ratio": 0
+        },
+        "in_one": {
+          "k": 4,
+          "n": 4,
+          "ratio": 1
+        },
+        "severity_disagreement": {
+          "k": 0,
+          "n": 4,
+          "ratio": 0
+        },
+        "bound": "lower"
+      },
+      "major": {
+        "n_classes": 58,
+        "k_runs": 3,
+        "in_k": {
+          "1": 21,
+          "2": 14,
+          "3": 23
+        },
+        "in_all": {
+          "k": 23,
+          "n": 58,
+          "ratio": 0.39655172413793105
+        },
+        "in_one": {
+          "k": 21,
+          "n": 58,
+          "ratio": 0.3620689655172414
+        },
+        "severity_disagreement": {
+          "k": 15,
+          "n": 58,
+          "ratio": 0.25862068965517243
+        },
+        "bound": "lower"
+      },
+      "minor": {
+        "n_classes": 148,
+        "k_runs": 3,
+        "in_k": {
+          "1": 65,
+          "2": 52,
+          "3": 31
+        },
+        "in_all": {
+          "k": 31,
+          "n": 148,
+          "ratio": 0.20945945945945946
+        },
+        "in_one": {
+          "k": 65,
+          "n": 148,
+          "ratio": 0.4391891891891892
+        },
+        "severity_disagreement": {
+          "k": 20,
+          "n": 148,
+          "ratio": 0.13513513513513514
+        },
+        "bound": "lower"
+      },
+      "nit": {
+        "n_classes": 35,
+        "k_runs": 3,
+        "in_k": {
+          "1": 28,
+          "2": 5,
+          "3": 2
+        },
+        "in_all": {
+          "k": 2,
+          "n": 35,
+          "ratio": 0.05714285714285714
+        },
+        "in_one": {
+          "k": 28,
+          "n": 35,
+          "ratio": 0.8
+        },
+        "severity_disagreement": {
+          "k": 0,
+          "n": 35,
+          "ratio": 0
+        },
+        "bound": "lower"
+      }
+    },
+    "per_item": [
+      {
+        "item_id": "pr-415",
+        "k_runs": 3,
+        "n_classes": 41,
+        "in_k": {
+          "1": 17,
+          "2": 12,
+          "3": 12
+        },
+        "in_all": {
+          "k": 12,
+          "n": 41,
+          "ratio": 0.2926829268292683
+        },
+        "in_one": {
+          "k": 17,
+          "n": 41,
+          "ratio": 0.4146341463414634
+        },
+        "severity_disagreement": {
+          "k": 7,
+          "n": 41,
+          "ratio": 0.17073170731707318
+        },
+        "bound": "lower"
+      },
+      {
+        "item_id": "pr-429",
+        "k_runs": 3,
+        "n_classes": 39,
+        "in_k": {
+          "1": 21,
+          "2": 11,
+          "3": 7
+        },
+        "in_all": {
+          "k": 7,
+          "n": 39,
+          "ratio": 0.1794871794871795
+        },
+        "in_one": {
+          "k": 21,
+          "n": 39,
+          "ratio": 0.5384615384615384
+        },
+        "severity_disagreement": {
+          "k": 3,
+          "n": 39,
+          "ratio": 0.07692307692307693
+        },
+        "bound": "lower"
+      },
+      {
+        "item_id": "pr-465",
+        "k_runs": 3,
+        "n_classes": 50,
+        "in_k": {
+          "1": 23,
+          "2": 16,
+          "3": 11
+        },
+        "in_all": {
+          "k": 11,
+          "n": 50,
+          "ratio": 0.22
+        },
+        "in_one": {
+          "k": 23,
+          "n": 50,
+          "ratio": 0.46
+        },
+        "severity_disagreement": {
+          "k": 8,
+          "n": 50,
+          "ratio": 0.16
+        },
+        "bound": "lower"
+      },
+      {
+        "item_id": "pr-471",
+        "k_runs": 3,
+        "n_classes": 33,
+        "in_k": {
+          "1": 19,
+          "2": 8,
+          "3": 6
+        },
+        "in_all": {
+          "k": 6,
+          "n": 33,
+          "ratio": 0.18181818181818182
+        },
+        "in_one": {
+          "k": 19,
+          "n": 33,
+          "ratio": 0.5757575757575758
+        },
+        "severity_disagreement": {
+          "k": 4,
+          "n": 33,
+          "ratio": 0.12121212121212122
+        },
+        "bound": "lower"
+      },
+      {
+        "item_id": "pr-524",
+        "k_runs": 3,
+        "n_classes": 19,
+        "in_k": {
+          "1": 11,
+          "2": 4,
+          "3": 4
+        },
+        "in_all": {
+          "k": 4,
+          "n": 19,
+          "ratio": 0.21052631578947367
+        },
+        "in_one": {
+          "k": 11,
+          "n": 19,
+          "ratio": 0.5789473684210527
+        },
+        "severity_disagreement": {
+          "k": 1,
+          "n": 19,
+          "ratio": 0.05263157894736842
+        },
+        "bound": "lower"
+      },
+      {
+        "item_id": "pr-549",
+        "k_runs": 3,
+        "n_classes": 25,
+        "in_k": {
+          "1": 9,
+          "2": 9,
+          "3": 7
+        },
+        "in_all": {
+          "k": 7,
+          "n": 25,
+          "ratio": 0.28
+        },
+        "in_one": {
+          "k": 9,
+          "n": 25,
+          "ratio": 0.36
+        },
+        "severity_disagreement": {
+          "k": 6,
+          "n": 25,
+          "ratio": 0.24
+        },
+        "bound": "lower"
+      },
+      {
+        "item_id": "pr-605",
+        "k_runs": 3,
+        "n_classes": 38,
+        "in_k": {
+          "1": 18,
+          "2": 11,
+          "3": 9
+        },
+        "in_all": {
+          "k": 9,
+          "n": 38,
+          "ratio": 0.23684210526315788
+        },
+        "in_one": {
+          "k": 18,
+          "n": 38,
+          "ratio": 0.47368421052631576
+        },
+        "severity_disagreement": {
+          "k": 6,
+          "n": 38,
+          "ratio": 0.15789473684210525
+        },
+        "bound": "lower"
+      }
+    ],
+    "unmerged": {
+      "maybe_cross_run": 5565,
+      "maybe_within_run": 74,
+      "match_held_apart": 264
+    },
+    "matcher_gate": {
+      "within_run_gate": "lens-and-file",
+      "probe_classes": 2,
+      "probed": true,
+      "records_with_top_level_lens": 0,
+      "records_with_namespaced_lens": 428,
+      "n": 428
+    },
+    "gate_census": {
+      "same-run": 4565,
+      "cross-source": 9387,
+      "defaulted": 0,
+      "lens_unreadable": 0
+    },
+    "grouping": {
+      "classes": 245,
+      "pairs": {
+        "compared": 13952,
+        "match": 503,
+        "maybe": 5639,
+        "no": 7810
+      },
+      "linkage": "complete",
+      "intra_group_non_match": 0,
+      "unattributed": 0,
+      "skipped": 0
+    }
+  },
+  "verifier": {
+    "per_pair": [
+      {
+        "runs": [
+          "pilot-01__k1",
+          "pilot-01__k2"
+        ],
+        "classes_in_both": 88,
+        "agreement": {
+          "n": 20,
+          "raw_agreement": {
+            "k": 20,
+            "n": 20,
+            "ratio": 1
+          },
+          "observed": 1,
+          "expected": 0.9049999999999999,
+          "kappa": 1,
+          "kappa_undefined_reason": null,
+          "categories": [
+            "confirmed-high",
+            "confirmed-low"
+          ],
+          "marginals": {
+            "a": {
+              "confirmed-high": 19,
+              "confirmed-low": 1
+            },
+            "b": {
+              "confirmed-high": 19,
+              "confirmed-low": 1
+            }
+          },
+          "caveat": "κ is chance-corrected agreement and is uninformative when one outcome dominates: read it ONLY beside raw agreement and the marginal distribution printed with it. On the pilot data one outcome (confirmed-high) holds ~93% of all verdicts and there is not one refutation, so κ near 0 or undefined is the expected result and says nothing about the verifier's stability."
+        },
+        "excluded": {
+          "not-run": 131,
+          "split": 0
+        },
+        "outside_vocabulary": []
+      },
+      {
+        "runs": [
+          "pilot-01__k1",
+          "pilot-01__k3"
+        ],
+        "classes_in_both": 85,
+        "agreement": {
+          "n": 17,
+          "raw_agreement": {
+            "k": 17,
+            "n": 17,
+            "ratio": 1
+          },
+          "observed": 1,
+          "expected": 0.8892733564013842,
+          "kappa": 1,
+          "kappa_undefined_reason": null,
+          "categories": [
+            "confirmed-high",
+            "confirmed-low"
+          ],
+          "marginals": {
+            "a": {
+              "confirmed-high": 16,
+              "confirmed-low": 1
+            },
+            "b": {
+              "confirmed-high": 16,
+              "confirmed-low": 1
+            }
+          },
+          "caveat": "κ is chance-corrected agreement and is uninformative when one outcome dominates: read it ONLY beside raw agreement and the marginal distribution printed with it. On the pilot data one outcome (confirmed-high) holds ~93% of all verdicts and there is not one refutation, so κ near 0 or undefined is the expected result and says nothing about the verifier's stability."
+        },
+        "excluded": {
+          "not-run": 128,
+          "split": 0
+        },
+        "outside_vocabulary": []
+      },
+      {
+        "runs": [
+          "pilot-01__k2",
+          "pilot-01__k3"
+        ],
+        "classes_in_both": 86,
+        "agreement": {
+          "n": 16,
+          "raw_agreement": {
+            "k": 16,
+            "n": 16,
+            "ratio": 1
+          },
+          "observed": 1,
+          "expected": 0.8828125,
+          "kappa": 1,
+          "kappa_undefined_reason": null,
+          "categories": [
+            "confirmed-high",
+            "confirmed-low"
+          ],
+          "marginals": {
+            "a": {
+              "confirmed-high": 15,
+              "confirmed-low": 1
+            },
+            "b": {
+              "confirmed-high": 15,
+              "confirmed-low": 1
+            }
+          },
+          "caveat": "κ is chance-corrected agreement and is uninformative when one outcome dominates: read it ONLY beside raw agreement and the marginal distribution printed with it. On the pilot data one outcome (confirmed-high) holds ~93% of all verdicts and there is not one refutation, so κ near 0 or undefined is the expected result and says nothing about the verifier's stability."
+        },
+        "excluded": {
+          "not-run": 130,
+          "split": 0
+        },
+        "outside_vocabulary": []
+      }
+    ],
+    "no_pooled_figure": "the pairs share classes, so pooling them would triple-count and inflate n; read the per-pair figures",
+    "population_note": "the verifier runs on blocking severity only — a null verification means it never looked, and is excluded from the denominator rather than counted as agreement"
+  },
+  "gate": {
+    "per_item": [
+      {
+        "item_id": "pr-415",
+        "n_runs": 3,
+        "verdicts": [
+          {
+            "run_id": "pilot-01__k1",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 5,
+            "failed_rows": [
+              "correctness:failure",
+              "test-adequacy:failure",
+              "design-fit:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 8
+          },
+          {
+            "run_id": "pilot-01__k2",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 5,
+            "failed_rows": [
+              "correctness:failure",
+              "design-fit:failure",
+              "test-adequacy:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 6
+          },
+          {
+            "run_id": "pilot-01__k3",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 5,
+            "failed_rows": [
+              "correctness:failure",
+              "test-adequacy:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 6
+          }
+        ],
+        "agrees": true,
+        "unknown_runs": []
+      },
+      {
+        "item_id": "pr-429",
+        "n_runs": 3,
+        "verdicts": [
+          {
+            "run_id": "pilot-01__k1",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "correctness:failure",
+              "test-adequacy:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 5
+          },
+          {
+            "run_id": "pilot-01__k2",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "correctness:failure",
+              "test-adequacy:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 8
+          },
+          {
+            "run_id": "pilot-01__k3",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "correctness:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 3
+          }
+        ],
+        "agrees": true,
+        "unknown_runs": []
+      },
+      {
+        "item_id": "pr-465",
+        "n_runs": 3,
+        "verdicts": [
+          {
+            "run_id": "pilot-01__k1",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "correctness:failure",
+              "test-adequacy:failure",
+              "design-fit:failure",
+              "security:failure",
+              "blast-radius:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 11
+          },
+          {
+            "run_id": "pilot-01__k2",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "correctness:failure",
+              "test-adequacy:failure",
+              "design-fit:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 7
+          },
+          {
+            "run_id": "pilot-01__k3",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "correctness:failure",
+              "test-adequacy:failure",
+              "design-fit:failure",
+              "security:failure",
+              "blast-radius:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 9
+          }
+        ],
+        "agrees": true,
+        "unknown_runs": []
+      },
+      {
+        "item_id": "pr-471",
+        "n_runs": 3,
+        "verdicts": [
+          {
+            "run_id": "pilot-01__k1",
+            "gate": "clean",
+            "gate_basis": "no-lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [],
+            "lane_gate": "clean",
+            "lane_basis": "no-record-gates",
+            "gating_records": 0
+          },
+          {
+            "run_id": "pilot-01__k2",
+            "gate": "clean",
+            "gate_basis": "no-lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [],
+            "lane_gate": "clean",
+            "lane_basis": "no-record-gates",
+            "gating_records": 0
+          },
+          {
+            "run_id": "pilot-01__k3",
+            "gate": "clean",
+            "gate_basis": "no-lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [],
+            "lane_gate": "clean",
+            "lane_basis": "no-record-gates",
+            "gating_records": 0
+          }
+        ],
+        "agrees": true,
+        "unknown_runs": []
+      },
+      {
+        "item_id": "pr-524",
+        "n_runs": 3,
+        "verdicts": [
+          {
+            "run_id": "pilot-01__k1",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 2,
+            "failed_rows": [
+              "correctness:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 4
+          },
+          {
+            "run_id": "pilot-01__k2",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 2,
+            "failed_rows": [
+              "correctness:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 7
+          },
+          {
+            "run_id": "pilot-01__k3",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 2,
+            "failed_rows": [
+              "correctness:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 4
+          }
+        ],
+        "agrees": true,
+        "unknown_runs": []
+      },
+      {
+        "item_id": "pr-549",
+        "n_runs": 3,
+        "verdicts": [
+          {
+            "run_id": "pilot-01__k1",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "correctness:failure",
+              "design-fit:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 3
+          },
+          {
+            "run_id": "pilot-01__k2",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "test-adequacy:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 2
+          },
+          {
+            "run_id": "pilot-01__k3",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "design-fit:failure",
+              "test-adequacy:failure",
+              "security:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 3
+          }
+        ],
+        "agrees": true,
+        "unknown_runs": []
+      },
+      {
+        "item_id": "pr-605",
+        "n_runs": 3,
+        "verdicts": [
+          {
+            "run_id": "pilot-01__k1",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "test-adequacy:failure",
+              "correctness:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 4
+          },
+          {
+            "run_id": "pilot-01__k2",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "test-adequacy:failure",
+              "security:failure",
+              "blast-radius:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 4
+          },
+          {
+            "run_id": "pilot-01__k3",
+            "gate": "gated",
+            "gate_basis": "lens-check-failed",
+            "rows": 6,
+            "gating_rows": 6,
+            "failed_rows": [
+              "test-adequacy:failure",
+              "security:failure",
+              "blast-radius:failure"
+            ],
+            "lane_gate": "gated",
+            "lane_basis": "record-gates",
+            "gating_records": 5
+          }
+        ],
+        "agrees": true,
+        "unknown_runs": []
+      }
+    ],
+    "agreement": {
+      "k": 7,
+      "n": 7,
+      "ratio": 1
+    },
+    "items_undecidable": [],
+    "lane_census": [
+      {
+        "run_id": "pilot-01__k1",
+        "findings": 142,
+        "lanes": {
+          "blocking": 35,
+          "(none)": 106,
+          "backlog": 1
+        },
+        "gating_records": 35
+      },
+      {
+        "run_id": "pilot-01__k2",
+        "findings": 147,
+        "lanes": {
+          "blocking": 34,
+          "(none)": 112,
+          "backlog": 1
+        },
+        "gating_records": 34
+      },
+      {
+        "run_id": "pilot-01__k3",
+        "findings": 139,
+        "lanes": {
+          "blocking": 30,
+          "(none)": 106,
+          "backlog": 3
+        },
+        "gating_records": 30
+      }
+    ],
+    "route_cross_check": {
+      "item_runs_compared": 21,
+      "agreed": 21
+    },
+    "lens_cross_check": {
+      "compared": 111,
+      "agreed": 111,
+      "disagreements": []
+    }
+  },
+  "stages": {
+    "detection": {
+      "available": true,
+      "jaccard": {
+        "per_pair": [
+          {
+            "runs": [
+              "pilot-01__k1",
+              "pilot-01__k2"
+            ],
+            "available": true,
+            "items_compared": [
+              "pr-415",
+              "pr-429",
+              "pr-465",
+              "pr-471",
+              "pr-524",
+              "pr-549",
+              "pr-605"
+            ],
+            "overall": {
+              "k": 100,
+              "n": 214,
+              "ratio": 0.4672897196261682,
+              "both": 100,
+              "either": 214,
+              "bound": "lower"
+            },
+            "by_severity": {
+              "critical": {
+                "k": 0,
+                "n": 3,
+                "ratio": 0,
+                "both": 0,
+                "either": 3,
+                "bound": "lower"
+              },
+              "major": {
+                "k": 40,
+                "n": 65,
+                "ratio": 0.6153846153846154,
+                "both": 40,
+                "either": 65,
+                "bound": "lower"
+              },
+              "minor": {
+                "k": 57,
+                "n": 119,
+                "ratio": 0.4789915966386555,
+                "both": 57,
+                "either": 119,
+                "bound": "lower"
+              },
+              "nit": {
+                "k": 3,
+                "n": 27,
+                "ratio": 0.1111111111111111,
+                "both": 3,
+                "either": 27,
+                "bound": "lower"
+              }
+            },
+            "unmerged": {
+              "maybe_cross_run": 2382,
+              "maybe_within_run": 70,
+              "match_held_apart": 121
+            }
+          },
+          {
+            "runs": [
+              "pilot-01__k1",
+              "pilot-01__k3"
+            ],
+            "available": true,
+            "items_compared": [
+              "pr-415",
+              "pr-429",
+              "pr-465",
+              "pr-471",
+              "pr-524",
+              "pr-549",
+              "pr-605"
+            ],
+            "overall": {
+              "k": 102,
+              "n": 210,
+              "ratio": 0.4857142857142857,
+              "both": 102,
+              "either": 210,
+              "bound": "lower"
+            },
+            "by_severity": {
+              "critical": {
+                "k": 0,
+                "n": 1,
+                "ratio": 0,
+                "both": 0,
+                "either": 1,
+                "bound": "lower"
+              },
+              "major": {
+                "k": 42,
+                "n": 68,
+                "ratio": 0.6176470588235294,
+                "both": 42,
+                "either": 68,
+                "bound": "lower"
+              },
+              "minor": {
+                "k": 53,
+                "n": 112,
+                "ratio": 0.4732142857142857,
+                "both": 53,
+                "either": 112,
+                "bound": "lower"
+              },
+              "nit": {
+                "k": 7,
+                "n": 29,
+                "ratio": 0.2413793103448276,
+                "both": 7,
+                "either": 29,
+                "bound": "lower"
+              }
+            },
+            "unmerged": {
+              "maybe_cross_run": 2273,
+              "maybe_within_run": 61,
+              "match_held_apart": 118
+            }
+          },
+          {
+            "runs": [
+              "pilot-01__k2",
+              "pilot-01__k3"
+            ],
+            "available": true,
+            "items_compared": [
+              "pr-415",
+              "pr-429",
+              "pr-465",
+              "pr-471",
+              "pr-524",
+              "pr-549",
+              "pr-605"
+            ],
+            "overall": {
+              "k": 100,
+              "n": 212,
+              "ratio": 0.4716981132075472,
+              "both": 100,
+              "either": 212,
+              "bound": "lower"
+            },
+            "by_severity": {
+              "critical": {
+                "k": 0,
+                "n": 4,
+                "ratio": 0,
+                "both": 0,
+                "either": 4,
+                "bound": "lower"
+              },
+              "major": {
+                "k": 42,
+                "n": 64,
+                "ratio": 0.65625,
+                "both": 42,
+                "either": 64,
+                "bound": "lower"
+              },
+              "minor": {
+                "k": 54,
+                "n": 111,
+                "ratio": 0.4864864864864865,
+                "both": 54,
+                "either": 111,
+                "bound": "lower"
+              },
+              "nit": {
+                "k": 4,
+                "n": 33,
+                "ratio": 0.12121212121212122,
+                "both": 4,
+                "either": 33,
+                "bound": "lower"
+              }
+            },
+            "unmerged": {
+              "maybe_cross_run": 2306,
+              "maybe_within_run": 63,
+              "match_held_apart": 122
+            }
+          }
+        ],
+        "across_pairs": {
+          "values": [
+            0.4672897196261682,
+            0.4857142857142857,
+            0.4716981132075472
+          ],
+          "n": 3,
+          "min": 0.4672897196261682,
+          "max": 0.4857142857142857,
+          "range": 0.01842456608811749,
+          "mean": 0.47490070618266705
+        }
+      },
+      "pairs_unscorable": [],
+      "recurrence": {
+        "overall": {
+          "n_classes": 263,
+          "k_runs": 3,
+          "in_k": {
+            "1": 122,
+            "2": 74,
+            "3": 67
+          },
+          "in_all": {
+            "k": 67,
+            "n": 263,
+            "ratio": 0.25475285171102663
+          },
+          "in_one": {
+            "k": 122,
+            "n": 263,
+            "ratio": 0.46387832699619774
+          },
+          "severity_disagreement": {
+            "k": 46,
+            "n": 263,
+            "ratio": 0.17490494296577946
+          },
+          "bound": "lower"
+        },
+        "by_severity": {
+          "critical": {
+            "n_classes": 4,
+            "k_runs": 3,
+            "in_k": {
+              "1": 4,
+              "2": 0,
+              "3": 0
+            },
+            "in_all": {
+              "k": 0,
+              "n": 4,
+              "ratio": 0
+            },
+            "in_one": {
+              "k": 4,
+              "n": 4,
+              "ratio": 1
+            },
+            "severity_disagreement": {
+              "k": 0,
+              "n": 4,
+              "ratio": 0
+            },
+            "bound": "lower"
+          },
+          "major": {
+            "n_classes": 80,
+            "k_runs": 3,
+            "in_k": {
+              "1": 26,
+              "2": 20,
+              "3": 34
+            },
+            "in_all": {
+              "k": 34,
+              "n": 80,
+              "ratio": 0.425
+            },
+            "in_one": {
+              "k": 26,
+              "n": 80,
+              "ratio": 0.325
+            },
+            "severity_disagreement": {
+              "k": 26,
+              "n": 80,
+              "ratio": 0.325
+            },
+            "bound": "lower"
+          },
+          "minor": {
+            "n_classes": 142,
+            "k_runs": 3,
+            "in_k": {
+              "1": 62,
+              "2": 49,
+              "3": 31
+            },
+            "in_all": {
+              "k": 31,
+              "n": 142,
+              "ratio": 0.21830985915492956
+            },
+            "in_one": {
+              "k": 62,
+              "n": 142,
+              "ratio": 0.43661971830985913
+            },
+            "severity_disagreement": {
+              "k": 20,
+              "n": 142,
+              "ratio": 0.14084507042253522
+            },
+            "bound": "lower"
+          },
+          "nit": {
+            "n_classes": 37,
+            "k_runs": 3,
+            "in_k": {
+              "1": 30,
+              "2": 5,
+              "3": 2
+            },
+            "in_all": {
+              "k": 2,
+              "n": 37,
+              "ratio": 0.05405405405405406
+            },
+            "in_one": {
+              "k": 30,
+              "n": 37,
+              "ratio": 0.8108108108108109
+            },
+            "severity_disagreement": {
+              "k": 0,
+              "n": 37,
+              "ratio": 0
+            },
+            "bound": "lower"
+          }
+        }
+      },
+      "lane_figures": null,
+      "lane_note": "the sampled population is structurally pre-annotation: no lane, so no lane-derived figure"
+    },
+    "attribution": [
+      {
+        "run_id": "pilot-01__k1",
+        "sampled": 158,
+        "reported": 142,
+        "delta": -16,
+        "per_item": [
+          {
+            "item_id": "pr-415",
+            "sampled": 29,
+            "reported": 26,
+            "delta": -3
+          },
+          {
+            "item_id": "pr-429",
+            "sampled": 24,
+            "reported": 19,
+            "delta": -5
+          },
+          {
+            "item_id": "pr-465",
+            "sampled": 34,
+            "reported": 33,
+            "delta": -1
+          },
+          {
+            "item_id": "pr-471",
+            "sampled": 22,
+            "reported": 21,
+            "delta": -1
+          },
+          {
+            "item_id": "pr-524",
+            "sampled": 9,
+            "reported": 9,
+            "delta": 0
+          },
+          {
+            "item_id": "pr-549",
+            "sampled": 17,
+            "reported": 12,
+            "delta": -5
+          },
+          {
+            "item_id": "pr-605",
+            "sampled": 23,
+            "reported": 22,
+            "delta": -1
+          }
+        ],
+        "per_lens": {
+          "correctness": {
+            "sampled": 38,
+            "reported": 35
+          },
+          "blast-radius": {
+            "sampled": 28,
+            "reported": 23
+          },
+          "test-adequacy": {
+            "sampled": 29,
+            "reported": 24
+          },
+          "design-fit": {
+            "sampled": 32,
+            "reported": 29
+          },
+          "security": {
+            "sampled": 27,
+            "reported": 27
+          },
+          "docs": {
+            "sampled": 4,
+            "reported": 4
+          }
+        }
+      },
+      {
+        "run_id": "pilot-01__k2",
+        "sampled": 161,
+        "reported": 147,
+        "delta": -14,
+        "per_item": [
+          {
+            "item_id": "pr-415",
+            "sampled": 26,
+            "reported": 24,
+            "delta": -2
+          },
+          {
+            "item_id": "pr-429",
+            "sampled": 25,
+            "reported": 23,
+            "delta": -2
+          },
+          {
+            "item_id": "pr-465",
+            "sampled": 30,
+            "reported": 28,
+            "delta": -2
+          },
+          {
+            "item_id": "pr-471",
+            "sampled": 16,
+            "reported": 14,
+            "delta": -2
+          },
+          {
+            "item_id": "pr-524",
+            "sampled": 15,
+            "reported": 13,
+            "delta": -2
+          },
+          {
+            "item_id": "pr-549",
+            "sampled": 24,
+            "reported": 20,
+            "delta": -4
+          },
+          {
+            "item_id": "pr-605",
+            "sampled": 25,
+            "reported": 25,
+            "delta": 0
+          }
+        ],
+        "per_lens": {
+          "correctness": {
+            "sampled": 36,
+            "reported": 31
+          },
+          "design-fit": {
+            "sampled": 29,
+            "reported": 28
+          },
+          "test-adequacy": {
+            "sampled": 30,
+            "reported": 27
+          },
+          "blast-radius": {
+            "sampled": 25,
+            "reported": 20
+          },
+          "security": {
+            "sampled": 36,
+            "reported": 36
+          },
+          "docs": {
+            "sampled": 5,
+            "reported": 5
+          }
+        }
+      },
+      {
+        "run_id": "pilot-01__k3",
+        "sampled": 156,
+        "reported": 139,
+        "delta": -17,
+        "per_item": [
+          {
+            "item_id": "pr-415",
+            "sampled": 29,
+            "reported": 27,
+            "delta": -2
+          },
+          {
+            "item_id": "pr-429",
+            "sampled": 25,
+            "reported": 22,
+            "delta": -3
+          },
+          {
+            "item_id": "pr-465",
+            "sampled": 32,
+            "reported": 27,
+            "delta": -5
+          },
+          {
+            "item_id": "pr-471",
+            "sampled": 18,
+            "reported": 18,
+            "delta": 0
+          },
+          {
+            "item_id": "pr-524",
+            "sampled": 9,
+            "reported": 9,
+            "delta": 0
+          },
+          {
+            "item_id": "pr-549",
+            "sampled": 20,
+            "reported": 16,
+            "delta": -4
+          },
+          {
+            "item_id": "pr-605",
+            "sampled": 23,
+            "reported": 20,
+            "delta": -3
+          }
+        ],
+        "per_lens": {
+          "correctness": {
+            "sampled": 35,
+            "reported": 31
+          },
+          "test-adequacy": {
+            "sampled": 30,
+            "reported": 25
+          },
+          "blast-radius": {
+            "sampled": 25,
+            "reported": 22
+          },
+          "design-fit": {
+            "sampled": 27,
+            "reported": 24
+          },
+          "security": {
+            "sampled": 31,
+            "reported": 29
+          },
+          "docs": {
+            "sampled": 8,
+            "reported": 8
+          }
+        }
+      }
+    ]
+  },
+  "completeness": {
+    "verdict": "complete",
+    "reasons": [],
+    "corpus_item_count": 7
+  },
+  "stats": {
+    "records": {
+      "reported": 428,
+      "sampled": 475,
+      "per_run": [
+        {
+          "run_id": "pilot-01__k1",
+          "reported": 142,
+          "sampled": 158
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "reported": 147,
+          "sampled": 161
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "reported": 139,
+          "sampled": 156
+        }
+      ]
+    },
+    "pairwise_comparisons": 21,
+    "severity_census": {
+      "critical": 4,
+      "major": 100,
+      "minor": 258,
+      "nit": 66
+    },
+    "verification_census": {
+      "not-run": 331,
+      "confirmed-high": 89,
+      "confirmed-low": 6,
+      "errored": 2
+    },
+    "blocking_without_verification": 7
+  }
+}

@@ -1,0 +1,1901 @@
+{
+  "schema_version": 1,
+  "population": "reported",
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "completeness": {
+    "verdict": "complete",
+    "reasons": [],
+    "corpus_item_count": 7,
+    "by_arm": [
+      {
+        "arm": "coderabbit",
+        "items_scored": 7,
+        "items_scored_ids": [
+          "pr-415",
+          "pr-429",
+          "pr-465",
+          "pr-471",
+          "pr-524",
+          "pr-549",
+          "pr-605"
+        ],
+        "items_not_read": []
+      },
+      {
+        "arm": "panel",
+        "items_scored": 7,
+        "items_scored_ids": [
+          "pr-415",
+          "pr-429",
+          "pr-465",
+          "pr-471",
+          "pr-524",
+          "pr-549",
+          "pr-605"
+        ],
+        "items_not_read": []
+      }
+    ],
+    "items_comparable": [
+      "pr-415",
+      "pr-429",
+      "pr-465",
+      "pr-471",
+      "pr-524",
+      "pr-549",
+      "pr-605"
+    ],
+    "run": {
+      "run_id": "pilot-01__k3",
+      "status": "complete",
+      "item_count": 7,
+      "items_ok": 7,
+      "items_error": 0,
+      "notes": ""
+    }
+  },
+  "segments": [
+    {
+      "arm": "coderabbit",
+      "gate_state": "no-gate-in-arm",
+      "population": "reported",
+      "items": [
+        {
+          "gate_state": "no-gate-in-arm",
+          "arm": "coderabbit",
+          "item_id": "pr-415",
+          "run_id": null,
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 3,
+          "diff_lines": 273,
+          "per_100_diff_lines": 1.098901098901099,
+          "severity": {
+            "n": 3,
+            "stated": {
+              "n": 3,
+              "counts": {
+                "critical": 0,
+                "major": 1,
+                "minor": 1,
+                "nit": 1
+              },
+              "share": {
+                "critical": 0,
+                "major": 0.3333333333333333,
+                "minor": 0.3333333333333333,
+                "nit": 0.3333333333333333
+              },
+              "nit_ratio": {
+                "k": 2,
+                "n": 3,
+                "ratio": 0.6666666666666666
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 3,
+            "counts": {
+              "resolved": 3,
+              "unresolved": 0,
+              "unresolvable": 0
+            },
+            "basis": {
+              "file-and-line-in-item": 3
+            },
+            "rate": {
+              "k": 3,
+              "n": 3,
+              "ratio": 1
+            }
+          },
+          "scope": {
+            "n": 3,
+            "counts": {
+              "in-diff": 3,
+              "outside-diff": 0,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 3
+            },
+            "rate": {
+              "k": 3,
+              "n": 3,
+              "ratio": 1
+            }
+          },
+          "restatement": {
+            "n": 3,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 3,
+              "unknown": 0
+            },
+            "basis": {
+              "single-round": 3
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 3,
+            "gating": {
+              "gates": 0,
+              "does-not-gate": 0,
+              "unknown": 0,
+              "not-applicable": 3
+            },
+            "basis": {
+              "no-gate-in-arm": 3
+            }
+          },
+          "window": {
+            "in-window": 3
+          }
+        },
+        {
+          "gate_state": "no-gate-in-arm",
+          "arm": "coderabbit",
+          "item_id": "pr-429",
+          "run_id": null,
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 7,
+          "diff_lines": 792,
+          "per_100_diff_lines": 0.8838383838383838,
+          "severity": {
+            "n": 7,
+            "stated": {
+              "n": 7,
+              "counts": {
+                "critical": 0,
+                "major": 2,
+                "minor": 2,
+                "nit": 3
+              },
+              "share": {
+                "critical": 0,
+                "major": 0.2857142857142857,
+                "minor": 0.2857142857142857,
+                "nit": 0.42857142857142855
+              },
+              "nit_ratio": {
+                "k": 5,
+                "n": 7,
+                "ratio": 0.7142857142857143
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 7,
+            "counts": {
+              "resolved": 7,
+              "unresolved": 0,
+              "unresolvable": 0
+            },
+            "basis": {
+              "file-and-line-in-item": 7
+            },
+            "rate": {
+              "k": 7,
+              "n": 7,
+              "ratio": 1
+            }
+          },
+          "scope": {
+            "n": 7,
+            "counts": {
+              "in-diff": 7,
+              "outside-diff": 0,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 7
+            },
+            "rate": {
+              "k": 7,
+              "n": 7,
+              "ratio": 1
+            }
+          },
+          "restatement": {
+            "n": 7,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 7,
+              "unknown": 0
+            },
+            "basis": {
+              "single-round": 7
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 7,
+            "gating": {
+              "gates": 0,
+              "does-not-gate": 0,
+              "unknown": 0,
+              "not-applicable": 7
+            },
+            "basis": {
+              "no-gate-in-arm": 7
+            }
+          },
+          "window": {
+            "in-window": 7
+          }
+        },
+        {
+          "gate_state": "no-gate-in-arm",
+          "arm": "coderabbit",
+          "item_id": "pr-465",
+          "run_id": null,
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 4,
+          "findings": 6,
+          "diff_lines": 725,
+          "per_100_diff_lines": 0.8275862068965517,
+          "severity": {
+            "n": 6,
+            "stated": {
+              "n": 6,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 4,
+                "nit": 2
+              },
+              "share": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0.6666666666666666,
+                "nit": 0.3333333333333333
+              },
+              "nit_ratio": {
+                "k": 6,
+                "n": 6,
+                "ratio": 1
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 6,
+            "counts": {
+              "resolved": 6,
+              "unresolved": 0,
+              "unresolvable": 0
+            },
+            "basis": {
+              "file-and-line-in-item": 6
+            },
+            "rate": {
+              "k": 6,
+              "n": 6,
+              "ratio": 1
+            }
+          },
+          "scope": {
+            "n": 6,
+            "counts": {
+              "in-diff": 6,
+              "outside-diff": 0,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 6
+            },
+            "rate": {
+              "k": 6,
+              "n": 6,
+              "ratio": 1
+            }
+          },
+          "restatement": {
+            "n": 6,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 6,
+              "unknown": 0
+            },
+            "basis": {
+              "single-round": 6
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 6,
+            "gating": {
+              "gates": 0,
+              "does-not-gate": 0,
+              "unknown": 0,
+              "not-applicable": 6
+            },
+            "basis": {
+              "no-gate-in-arm": 6
+            }
+          },
+          "window": {
+            "in-window": 6
+          }
+        },
+        {
+          "gate_state": "no-gate-in-arm",
+          "arm": "coderabbit",
+          "item_id": "pr-471",
+          "run_id": null,
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 2,
+          "findings": 2,
+          "diff_lines": 160,
+          "per_100_diff_lines": 1.25,
+          "severity": {
+            "n": 2,
+            "stated": {
+              "n": 2,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 2,
+                "nit": 0
+              },
+              "share": {
+                "critical": 0,
+                "major": 0,
+                "minor": 1,
+                "nit": 0
+              },
+              "nit_ratio": {
+                "k": 2,
+                "n": 2,
+                "ratio": 1
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 2,
+            "counts": {
+              "resolved": 2,
+              "unresolved": 0,
+              "unresolvable": 0
+            },
+            "basis": {
+              "file-and-line-in-item": 2
+            },
+            "rate": {
+              "k": 2,
+              "n": 2,
+              "ratio": 1
+            }
+          },
+          "scope": {
+            "n": 2,
+            "counts": {
+              "in-diff": 2,
+              "outside-diff": 0,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 2
+            },
+            "rate": {
+              "k": 2,
+              "n": 2,
+              "ratio": 1
+            }
+          },
+          "restatement": {
+            "n": 2,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 2,
+              "unknown": 0
+            },
+            "basis": {
+              "single-round": 2
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 2,
+            "gating": {
+              "gates": 0,
+              "does-not-gate": 0,
+              "unknown": 0,
+              "not-applicable": 2
+            },
+            "basis": {
+              "no-gate-in-arm": 2
+            }
+          },
+          "window": {
+            "in-window": 2
+          }
+        },
+        {
+          "gate_state": "no-gate-in-arm",
+          "arm": "coderabbit",
+          "item_id": "pr-524",
+          "run_id": null,
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 1,
+          "diff_lines": 22,
+          "per_100_diff_lines": 4.545454545454546,
+          "severity": {
+            "n": 1,
+            "stated": {
+              "n": 1,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 1,
+                "nit": 0
+              },
+              "share": {
+                "critical": 0,
+                "major": 0,
+                "minor": 1,
+                "nit": 0
+              },
+              "nit_ratio": {
+                "k": 1,
+                "n": 1,
+                "ratio": 1
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 1,
+            "counts": {
+              "resolved": 1,
+              "unresolved": 0,
+              "unresolvable": 0
+            },
+            "basis": {
+              "file-and-line-in-item": 1
+            },
+            "rate": {
+              "k": 1,
+              "n": 1,
+              "ratio": 1
+            }
+          },
+          "scope": {
+            "n": 1,
+            "counts": {
+              "in-diff": 1,
+              "outside-diff": 0,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 1
+            },
+            "rate": {
+              "k": 1,
+              "n": 1,
+              "ratio": 1
+            }
+          },
+          "restatement": {
+            "n": 1,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 1,
+              "unknown": 0
+            },
+            "basis": {
+              "single-round": 1
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 1,
+            "gating": {
+              "gates": 0,
+              "does-not-gate": 0,
+              "unknown": 0,
+              "not-applicable": 1
+            },
+            "basis": {
+              "no-gate-in-arm": 1
+            }
+          },
+          "window": {
+            "in-window": 1
+          }
+        },
+        {
+          "gate_state": "no-gate-in-arm",
+          "arm": "coderabbit",
+          "item_id": "pr-549",
+          "run_id": null,
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 5,
+          "diff_lines": 385,
+          "per_100_diff_lines": 1.2987012987012987,
+          "severity": {
+            "n": 5,
+            "stated": {
+              "n": 5,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 1,
+                "nit": 4
+              },
+              "share": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0.2,
+                "nit": 0.8
+              },
+              "nit_ratio": {
+                "k": 5,
+                "n": 5,
+                "ratio": 1
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 5,
+            "counts": {
+              "resolved": 5,
+              "unresolved": 0,
+              "unresolvable": 0
+            },
+            "basis": {
+              "file-and-line-in-item": 5
+            },
+            "rate": {
+              "k": 5,
+              "n": 5,
+              "ratio": 1
+            }
+          },
+          "scope": {
+            "n": 5,
+            "counts": {
+              "in-diff": 5,
+              "outside-diff": 0,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 5
+            },
+            "rate": {
+              "k": 5,
+              "n": 5,
+              "ratio": 1
+            }
+          },
+          "restatement": {
+            "n": 5,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 5,
+              "unknown": 0
+            },
+            "basis": {
+              "single-round": 5
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 5,
+            "gating": {
+              "gates": 0,
+              "does-not-gate": 0,
+              "unknown": 0,
+              "not-applicable": 5
+            },
+            "basis": {
+              "no-gate-in-arm": 5
+            }
+          },
+          "window": {
+            "in-window": 5
+          }
+        },
+        {
+          "gate_state": "no-gate-in-arm",
+          "arm": "coderabbit",
+          "item_id": "pr-605",
+          "run_id": null,
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 6,
+          "diff_lines": 1004,
+          "per_100_diff_lines": 0.5976095617529881,
+          "severity": {
+            "n": 6,
+            "stated": {
+              "n": 6,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 2,
+                "nit": 4
+              },
+              "share": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0.3333333333333333,
+                "nit": 0.6666666666666666
+              },
+              "nit_ratio": {
+                "k": 6,
+                "n": 6,
+                "ratio": 1
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 6,
+            "counts": {
+              "resolved": 6,
+              "unresolved": 0,
+              "unresolvable": 0
+            },
+            "basis": {
+              "file-and-line-in-item": 6
+            },
+            "rate": {
+              "k": 6,
+              "n": 6,
+              "ratio": 1
+            }
+          },
+          "scope": {
+            "n": 6,
+            "counts": {
+              "in-diff": 6,
+              "outside-diff": 0,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 6
+            },
+            "rate": {
+              "k": 6,
+              "n": 6,
+              "ratio": 1
+            }
+          },
+          "restatement": {
+            "n": 6,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 6,
+              "unknown": 0
+            },
+            "basis": {
+              "single-round": 6
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 6,
+            "gating": {
+              "gates": 0,
+              "does-not-gate": 0,
+              "unknown": 0,
+              "not-applicable": 6
+            },
+            "basis": {
+              "no-gate-in-arm": 6
+            }
+          },
+          "window": {
+            "in-window": 6
+          }
+        }
+      ],
+      "summary": {
+        "items_scored": 7,
+        "items_excluded": [],
+        "findings": 30,
+        "findings_per_item": {
+          "n": 7,
+          "min": 1,
+          "median": 5,
+          "max": 7,
+          "mean": 4.285714285714286
+        },
+        "per_100_diff_lines": {
+          "pooled": 0.8925914906277893,
+          "pooled_diff_lines": 3361,
+          "per_item": {
+            "n": 7,
+            "min": 0.5976095617529881,
+            "median": 1.098901098901099,
+            "max": 4.545454545454546,
+            "mean": 1.500298727934981
+          }
+        },
+        "severity": {
+          "n": 30,
+          "stated": {
+            "n": 30,
+            "counts": {
+              "critical": 0,
+              "major": 3,
+              "minor": 13,
+              "nit": 14
+            },
+            "share": {
+              "critical": 0,
+              "major": 0.1,
+              "minor": 0.43333333333333335,
+              "nit": 0.4666666666666667
+            },
+            "nit_ratio": {
+              "k": 27,
+              "n": 30,
+              "ratio": 0.9
+            }
+          },
+          "unstated": {
+            "n": 0,
+            "counts": {
+              "critical": 0,
+              "major": 0,
+              "minor": 0,
+              "nit": 0
+            },
+            "share": null,
+            "nit_ratio": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          }
+        },
+        "localization": {
+          "k": 30,
+          "n": 30,
+          "ratio": 1
+        },
+        "localization_counts": {
+          "resolved": 30,
+          "unresolved": 0,
+          "unresolvable": 0
+        },
+        "scope": {
+          "k": 30,
+          "n": 30,
+          "ratio": 1
+        },
+        "restatement": {
+          "k": 0,
+          "n": 0,
+          "ratio": null
+        }
+      }
+    },
+    {
+      "arm": "panel",
+      "gate_state": "on",
+      "population": "reported",
+      "items": [
+        {
+          "gate_state": "on",
+          "arm": "panel",
+          "item_id": "pr-415",
+          "run_id": "pilot-01__k3",
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 27,
+          "diff_lines": 273,
+          "per_100_diff_lines": 9.89010989010989,
+          "severity": {
+            "n": 27,
+            "stated": {
+              "n": 27,
+              "counts": {
+                "critical": 1,
+                "major": 6,
+                "minor": 17,
+                "nit": 3
+              },
+              "share": {
+                "critical": 0.037037037037037035,
+                "major": 0.2222222222222222,
+                "minor": 0.6296296296296297,
+                "nit": 0.1111111111111111
+              },
+              "nit_ratio": {
+                "k": 20,
+                "n": 27,
+                "ratio": 0.7407407407407407
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 27,
+            "counts": {
+              "resolved": 24,
+              "unresolved": 0,
+              "unresolvable": 3
+            },
+            "basis": {
+              "file-and-line-in-item": 24,
+              "file-not-in-item": 3
+            },
+            "rate": {
+              "k": 24,
+              "n": 27,
+              "ratio": 0.8888888888888888
+            }
+          },
+          "scope": {
+            "n": 27,
+            "counts": {
+              "in-diff": 20,
+              "outside-diff": 7,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 20,
+              "line-outside-hunks": 4,
+              "file-not-in-item": 3
+            },
+            "rate": {
+              "k": 20,
+              "n": 27,
+              "ratio": 0.7407407407407407
+            }
+          },
+          "restatement": {
+            "n": 27,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 27,
+              "unknown": 0
+            },
+            "basis": {
+              "arm-records-no-rounds": 27
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 27,
+            "gating": {
+              "gates": 6,
+              "does-not-gate": 21,
+              "unknown": 0,
+              "not-applicable": 0
+            },
+            "basis": {
+              "lane-blocking": 6,
+              "non-blocking-severity": 20,
+              "lane-backlog": 1
+            }
+          },
+          "window": {}
+        },
+        {
+          "gate_state": "on",
+          "arm": "panel",
+          "item_id": "pr-429",
+          "run_id": "pilot-01__k3",
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 22,
+          "diff_lines": 792,
+          "per_100_diff_lines": 2.7777777777777777,
+          "severity": {
+            "n": 22,
+            "stated": {
+              "n": 22,
+              "counts": {
+                "critical": 0,
+                "major": 4,
+                "minor": 11,
+                "nit": 7
+              },
+              "share": {
+                "critical": 0,
+                "major": 0.18181818181818182,
+                "minor": 0.5,
+                "nit": 0.3181818181818182
+              },
+              "nit_ratio": {
+                "k": 18,
+                "n": 22,
+                "ratio": 0.8181818181818182
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 22,
+            "counts": {
+              "resolved": 18,
+              "unresolved": 1,
+              "unresolvable": 3
+            },
+            "basis": {
+              "no-line": 1,
+              "file-and-line-in-item": 18,
+              "file-not-in-item": 3
+            },
+            "rate": {
+              "k": 18,
+              "n": 22,
+              "ratio": 0.8181818181818182
+            }
+          },
+          "scope": {
+            "n": 22,
+            "counts": {
+              "in-diff": 18,
+              "outside-diff": 3,
+              "unknown": 1
+            },
+            "basis": {
+              "no-line": 1,
+              "line-in-hunk": 18,
+              "file-not-in-item": 3
+            },
+            "rate": {
+              "k": 18,
+              "n": 22,
+              "ratio": 0.8181818181818182
+            }
+          },
+          "restatement": {
+            "n": 22,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 22,
+              "unknown": 0
+            },
+            "basis": {
+              "arm-records-no-rounds": 22
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 22,
+            "gating": {
+              "gates": 3,
+              "does-not-gate": 19,
+              "unknown": 0,
+              "not-applicable": 0
+            },
+            "basis": {
+              "non-blocking-severity": 18,
+              "lane-blocking": 3,
+              "lane-backlog": 1
+            }
+          },
+          "window": {}
+        },
+        {
+          "gate_state": "on",
+          "arm": "panel",
+          "item_id": "pr-465",
+          "run_id": "pilot-01__k3",
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 27,
+          "diff_lines": 725,
+          "per_100_diff_lines": 3.724137931034482,
+          "severity": {
+            "n": 27,
+            "stated": {
+              "n": 27,
+              "counts": {
+                "critical": 0,
+                "major": 9,
+                "minor": 13,
+                "nit": 5
+              },
+              "share": {
+                "critical": 0,
+                "major": 0.3333333333333333,
+                "minor": 0.48148148148148145,
+                "nit": 0.18518518518518517
+              },
+              "nit_ratio": {
+                "k": 18,
+                "n": 27,
+                "ratio": 0.6666666666666666
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 27,
+            "counts": {
+              "resolved": 16,
+              "unresolved": 0,
+              "unresolvable": 11
+            },
+            "basis": {
+              "file-and-line-in-item": 16,
+              "file-not-in-item": 11
+            },
+            "rate": {
+              "k": 16,
+              "n": 27,
+              "ratio": 0.5925925925925926
+            }
+          },
+          "scope": {
+            "n": 27,
+            "counts": {
+              "in-diff": 16,
+              "outside-diff": 11,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 16,
+              "file-not-in-item": 11
+            },
+            "rate": {
+              "k": 16,
+              "n": 27,
+              "ratio": 0.5925925925925926
+            }
+          },
+          "restatement": {
+            "n": 27,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 27,
+              "unknown": 0
+            },
+            "basis": {
+              "arm-records-no-rounds": 27
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 27,
+            "gating": {
+              "gates": 9,
+              "does-not-gate": 18,
+              "unknown": 0,
+              "not-applicable": 0
+            },
+            "basis": {
+              "lane-blocking": 9,
+              "non-blocking-severity": 18
+            }
+          },
+          "window": {}
+        },
+        {
+          "gate_state": "on",
+          "arm": "panel",
+          "item_id": "pr-471",
+          "run_id": "pilot-01__k3",
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 18,
+          "diff_lines": 160,
+          "per_100_diff_lines": 11.25,
+          "severity": {
+            "n": 18,
+            "stated": {
+              "n": 18,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 11,
+                "nit": 7
+              },
+              "share": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0.6111111111111112,
+                "nit": 0.3888888888888889
+              },
+              "nit_ratio": {
+                "k": 18,
+                "n": 18,
+                "ratio": 1
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 18,
+            "counts": {
+              "resolved": 12,
+              "unresolved": 1,
+              "unresolvable": 5
+            },
+            "basis": {
+              "file-and-line-in-item": 12,
+              "file-not-in-item": 5,
+              "no-file": 1
+            },
+            "rate": {
+              "k": 12,
+              "n": 18,
+              "ratio": 0.6666666666666666
+            }
+          },
+          "scope": {
+            "n": 18,
+            "counts": {
+              "in-diff": 12,
+              "outside-diff": 5,
+              "unknown": 1
+            },
+            "basis": {
+              "line-in-hunk": 12,
+              "file-not-in-item": 5,
+              "no-file": 1
+            },
+            "rate": {
+              "k": 12,
+              "n": 18,
+              "ratio": 0.6666666666666666
+            }
+          },
+          "restatement": {
+            "n": 18,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 18,
+              "unknown": 0
+            },
+            "basis": {
+              "arm-records-no-rounds": 18
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 18,
+            "gating": {
+              "gates": 0,
+              "does-not-gate": 18,
+              "unknown": 0,
+              "not-applicable": 0
+            },
+            "basis": {
+              "non-blocking-severity": 18
+            }
+          },
+          "window": {}
+        },
+        {
+          "gate_state": "on",
+          "arm": "panel",
+          "item_id": "pr-524",
+          "run_id": "pilot-01__k3",
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 9,
+          "diff_lines": 22,
+          "per_100_diff_lines": 40.909090909090914,
+          "severity": {
+            "n": 9,
+            "stated": {
+              "n": 9,
+              "counts": {
+                "critical": 0,
+                "major": 4,
+                "minor": 4,
+                "nit": 1
+              },
+              "share": {
+                "critical": 0,
+                "major": 0.4444444444444444,
+                "minor": 0.4444444444444444,
+                "nit": 0.1111111111111111
+              },
+              "nit_ratio": {
+                "k": 5,
+                "n": 9,
+                "ratio": 0.5555555555555556
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 9,
+            "counts": {
+              "resolved": 9,
+              "unresolved": 0,
+              "unresolvable": 0
+            },
+            "basis": {
+              "file-and-line-in-item": 9
+            },
+            "rate": {
+              "k": 9,
+              "n": 9,
+              "ratio": 1
+            }
+          },
+          "scope": {
+            "n": 9,
+            "counts": {
+              "in-diff": 4,
+              "outside-diff": 5,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 4,
+              "line-outside-hunks": 5
+            },
+            "rate": {
+              "k": 4,
+              "n": 9,
+              "ratio": 0.4444444444444444
+            }
+          },
+          "restatement": {
+            "n": 9,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 9,
+              "unknown": 0
+            },
+            "basis": {
+              "arm-records-no-rounds": 9
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 9,
+            "gating": {
+              "gates": 4,
+              "does-not-gate": 5,
+              "unknown": 0,
+              "not-applicable": 0
+            },
+            "basis": {
+              "lane-blocking": 4,
+              "non-blocking-severity": 5
+            }
+          },
+          "window": {}
+        },
+        {
+          "gate_state": "on",
+          "arm": "panel",
+          "item_id": "pr-549",
+          "run_id": "pilot-01__k3",
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 16,
+          "diff_lines": 385,
+          "per_100_diff_lines": 4.1558441558441555,
+          "severity": {
+            "n": 16,
+            "stated": {
+              "n": 16,
+              "counts": {
+                "critical": 0,
+                "major": 3,
+                "minor": 9,
+                "nit": 4
+              },
+              "share": {
+                "critical": 0,
+                "major": 0.1875,
+                "minor": 0.5625,
+                "nit": 0.25
+              },
+              "nit_ratio": {
+                "k": 13,
+                "n": 16,
+                "ratio": 0.8125
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 16,
+            "counts": {
+              "resolved": 15,
+              "unresolved": 0,
+              "unresolvable": 1
+            },
+            "basis": {
+              "file-and-line-in-item": 15,
+              "file-not-in-item": 1
+            },
+            "rate": {
+              "k": 15,
+              "n": 16,
+              "ratio": 0.9375
+            }
+          },
+          "scope": {
+            "n": 16,
+            "counts": {
+              "in-diff": 15,
+              "outside-diff": 1,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 15,
+              "file-not-in-item": 1
+            },
+            "rate": {
+              "k": 15,
+              "n": 16,
+              "ratio": 0.9375
+            }
+          },
+          "restatement": {
+            "n": 16,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 16,
+              "unknown": 0
+            },
+            "basis": {
+              "arm-records-no-rounds": 16
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 16,
+            "gating": {
+              "gates": 3,
+              "does-not-gate": 13,
+              "unknown": 0,
+              "not-applicable": 0
+            },
+            "basis": {
+              "non-blocking-severity": 13,
+              "lane-blocking": 3
+            }
+          },
+          "window": {}
+        },
+        {
+          "gate_state": "on",
+          "arm": "panel",
+          "item_id": "pr-605",
+          "run_id": "pilot-01__k3",
+          "poolable": true,
+          "exclusions": [],
+          "item_status": "ok",
+          "item_reason": null,
+          "population_state": "present",
+          "dropped": 0,
+          "findings": 20,
+          "diff_lines": 1004,
+          "per_100_diff_lines": 1.9920318725099602,
+          "severity": {
+            "n": 20,
+            "stated": {
+              "n": 20,
+              "counts": {
+                "critical": 0,
+                "major": 6,
+                "minor": 11,
+                "nit": 3
+              },
+              "share": {
+                "critical": 0,
+                "major": 0.3,
+                "minor": 0.55,
+                "nit": 0.15
+              },
+              "nit_ratio": {
+                "k": 14,
+                "n": 20,
+                "ratio": 0.7
+              }
+            },
+            "unstated": {
+              "n": 0,
+              "counts": {
+                "critical": 0,
+                "major": 0,
+                "minor": 0,
+                "nit": 0
+              },
+              "share": null,
+              "nit_ratio": {
+                "k": 0,
+                "n": 0,
+                "ratio": null
+              }
+            }
+          },
+          "localization": {
+            "n": 20,
+            "counts": {
+              "resolved": 19,
+              "unresolved": 0,
+              "unresolvable": 1
+            },
+            "basis": {
+              "file-and-line-in-item": 19,
+              "file-not-in-item": 1
+            },
+            "rate": {
+              "k": 19,
+              "n": 20,
+              "ratio": 0.95
+            }
+          },
+          "scope": {
+            "n": 20,
+            "counts": {
+              "in-diff": 18,
+              "outside-diff": 2,
+              "unknown": 0
+            },
+            "basis": {
+              "line-in-hunk": 18,
+              "line-outside-hunks": 1,
+              "file-not-in-item": 1
+            },
+            "rate": {
+              "k": 18,
+              "n": 20,
+              "ratio": 0.9
+            }
+          },
+          "restatement": {
+            "n": 20,
+            "counts": {
+              "restated": 0,
+              "restated-per-arm-label": 0,
+              "not-restated": 0,
+              "not-applicable": 20,
+              "unknown": 0
+            },
+            "basis": {
+              "arm-records-no-rounds": 20
+            },
+            "rate": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          },
+          "gating": {
+            "n": 20,
+            "gating": {
+              "gates": 5,
+              "does-not-gate": 15,
+              "unknown": 0,
+              "not-applicable": 0
+            },
+            "basis": {
+              "non-blocking-severity": 14,
+              "lane-backlog": 1,
+              "lane-blocking": 5
+            }
+          },
+          "window": {}
+        }
+      ],
+      "summary": {
+        "items_scored": 7,
+        "items_excluded": [],
+        "findings": 139,
+        "findings_per_item": {
+          "n": 7,
+          "min": 9,
+          "median": 20,
+          "max": 27,
+          "mean": 19.857142857142858
+        },
+        "per_100_diff_lines": {
+          "pooled": 4.135673906575424,
+          "pooled_diff_lines": 3361,
+          "per_item": {
+            "n": 7,
+            "min": 1.9920318725099602,
+            "median": 4.1558441558441555,
+            "max": 40.909090909090914,
+            "mean": 10.671284648052453
+          }
+        },
+        "severity": {
+          "n": 139,
+          "stated": {
+            "n": 139,
+            "counts": {
+              "critical": 1,
+              "major": 32,
+              "minor": 76,
+              "nit": 30
+            },
+            "share": {
+              "critical": 0.007194244604316547,
+              "major": 0.2302158273381295,
+              "minor": 0.5467625899280576,
+              "nit": 0.2158273381294964
+            },
+            "nit_ratio": {
+              "k": 106,
+              "n": 139,
+              "ratio": 0.762589928057554
+            }
+          },
+          "unstated": {
+            "n": 0,
+            "counts": {
+              "critical": 0,
+              "major": 0,
+              "minor": 0,
+              "nit": 0
+            },
+            "share": null,
+            "nit_ratio": {
+              "k": 0,
+              "n": 0,
+              "ratio": null
+            }
+          }
+        },
+        "localization": {
+          "k": 113,
+          "n": 139,
+          "ratio": 0.8129496402877698
+        },
+        "localization_counts": {
+          "resolved": 113,
+          "unresolved": 2,
+          "unresolvable": 24
+        },
+        "scope": {
+          "k": 103,
+          "n": 139,
+          "ratio": 0.7410071942446043
+        },
+        "restatement": {
+          "k": 0,
+          "n": 0,
+          "ratio": null
+        }
+      }
+    }
+  ]
+}

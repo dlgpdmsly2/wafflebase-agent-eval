@@ -1,0 +1,1190 @@
+{
+  "schema_version": 2,
+  "scorer_id": "cost-latency-v1",
+  "scope": "cross-run",
+  "reviewer": {
+    "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+    "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0"
+  },
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "run_ids": [
+    "pilot-01__k1",
+    "pilot-01__k2",
+    "pilot-01__k3"
+  ],
+  "completeness": {
+    "verdict": "complete",
+    "reasons": [],
+    "corpus_item_count": 7,
+    "items_priced_in_every_replicate": [
+      "pr-415",
+      "pr-429",
+      "pr-465",
+      "pr-471",
+      "pr-524",
+      "pr-549",
+      "pr-605"
+    ],
+    "totals_caveat": "every total here is recomputed from the envelopes present; an item deleted from the store takes its spend out of both this figure and run.json's"
+  },
+  "panel": {
+    "unit": "usd_per_review_metered",
+    "latency_interval": "panel-process-elapsed-on-offline-replay",
+    "replicates": [
+      {
+        "run_id": "pilot-01__k1",
+        "status": "complete",
+        "item_count": 7,
+        "items_ok": 7,
+        "items_error": 0,
+        "items": [
+          {
+            "item_id": "pr-415",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 4.573933500000001,
+            "turns": 230,
+            "calls": 16,
+            "wall_ms": 506264,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 273,
+            "size_bucket": "M",
+            "measured_at": "2026-08-10T08:45:32.440Z"
+          },
+          {
+            "item_id": "pr-429",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 6.360157599999999,
+            "turns": 325,
+            "calls": 14,
+            "wall_ms": 674419,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 792,
+            "size_bucket": "L",
+            "measured_at": "2026-08-10T08:53:59.079Z"
+          },
+          {
+            "item_id": "pr-465",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 6.248249399999999,
+            "turns": 327,
+            "calls": 18,
+            "wall_ms": 659329,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 725,
+            "size_bucket": "L",
+            "measured_at": "2026-08-10T09:05:13.887Z"
+          },
+          {
+            "item_id": "pr-471",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 2.3517468,
+            "turns": 100,
+            "calls": 6,
+            "wall_ms": 418059,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 160,
+            "size_bucket": "M",
+            "measured_at": "2026-08-10T09:16:13.612Z"
+          },
+          {
+            "item_id": "pr-524",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 2.3317534,
+            "turns": 74,
+            "calls": 6,
+            "wall_ms": 575214,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 22,
+            "size_bucket": "S",
+            "measured_at": "2026-08-10T08:27:04.128Z"
+          },
+          {
+            "item_id": "pr-549",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 3.8583824,
+            "turns": 189,
+            "calls": 14,
+            "wall_ms": 557075,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 385,
+            "size_bucket": "L",
+            "measured_at": "2026-08-10T09:23:12.060Z"
+          },
+          {
+            "item_id": "pr-605",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 7.1829781,
+            "turns": 250,
+            "calls": 12,
+            "wall_ms": 1128782,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 1004,
+            "size_bucket": "L",
+            "measured_at": "2026-08-10T09:32:29.538Z"
+          }
+        ],
+        "spend": {
+          "total_usd": 32.9072012,
+          "ok_items_usd": 32.9072012,
+          "error_items_usd": 0,
+          "n_ok": 7,
+          "n_error": 0,
+          "stored_total_usd": 32.9072012,
+          "stored_total_agrees": true
+        },
+        "review": {
+          "cost_usd": {
+            "n": 7,
+            "min": 2.3317534,
+            "median": 4.573933500000001,
+            "max": 7.1829781,
+            "mean": 4.701028742857143,
+            "range": 4.8512246999999995,
+            "spread_over_min": 2.08050503968387
+          },
+          "turns": {
+            "n": 7,
+            "min": 74,
+            "median": 230,
+            "max": 327,
+            "mean": 213.57142857142858,
+            "range": 253,
+            "spread_over_min": 3.418918918918919
+          },
+          "calls": {
+            "n": 7,
+            "min": 6,
+            "median": 14,
+            "max": 18,
+            "mean": 12.285714285714286,
+            "range": 12,
+            "spread_over_min": 2
+          },
+          "wall_ms": {
+            "n": 7,
+            "min": 418059,
+            "median": 575214,
+            "max": 1128782,
+            "mean": 645591.7142857143,
+            "range": 710723,
+            "spread_over_min": 1.7000542985559455
+          },
+          "items_wall_ms_sum": 4519142,
+          "n_timed": 7
+        },
+        "cost_vs_size": {
+          "n": 7,
+          "min_n": 3,
+          "intercept_usd": 2.2034375846946994,
+          "slope_usd_per_1000_lines": 5.201766767967005,
+          "fixed_share": 0.4687139145963861,
+          "reason": null
+        },
+        "cost_size_order": {
+          "n_items": 7,
+          "pairs": 21,
+          "concordant": 20,
+          "discordant": 1,
+          "tied": 0,
+          "tau": 0.9047619047619048
+        },
+        "wall_size_order": {
+          "n_items": 7,
+          "pairs": 21,
+          "concordant": 18,
+          "discordant": 3,
+          "tied": 0,
+          "tau": 0.7142857142857143
+        },
+        "duration_source": {
+          "n": 7,
+          "counts": {
+            "review-timing.json": 7,
+            "absent": 0,
+            "not-run": 0
+          },
+          "unrecognised": {}
+        }
+      },
+      {
+        "run_id": "pilot-01__k2",
+        "status": "complete",
+        "item_count": 7,
+        "items_ok": 7,
+        "items_error": 0,
+        "items": [
+          {
+            "item_id": "pr-415",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 3.6549188,
+            "turns": 179,
+            "calls": 13,
+            "wall_ms": 431006,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 273,
+            "size_bucket": "M",
+            "measured_at": "2026-08-11T02:21:10.691Z"
+          },
+          {
+            "item_id": "pr-429",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 5.321225699999999,
+            "turns": 290,
+            "calls": 16,
+            "wall_ms": 496369,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 792,
+            "size_bucket": "L",
+            "measured_at": "2026-08-11T02:28:22.055Z"
+          },
+          {
+            "item_id": "pr-465",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 5.511006,
+            "turns": 278,
+            "calls": 15,
+            "wall_ms": 663035,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 725,
+            "size_bucket": "L",
+            "measured_at": "2026-08-11T02:36:38.788Z"
+          },
+          {
+            "item_id": "pr-471",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 2.4537265999999995,
+            "turns": 113,
+            "calls": 7,
+            "wall_ms": 433856,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 160,
+            "size_bucket": "M",
+            "measured_at": "2026-08-11T02:47:42.190Z"
+          },
+          {
+            "item_id": "pr-524",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 2.5611068,
+            "turns": 105,
+            "calls": 9,
+            "wall_ms": 522877,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 22,
+            "size_bucket": "S",
+            "measured_at": "2026-08-11T02:54:56.417Z"
+          },
+          {
+            "item_id": "pr-549",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 3.2957034,
+            "turns": 162,
+            "calls": 11,
+            "wall_ms": 647955,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 385,
+            "size_bucket": "L",
+            "measured_at": "2026-08-11T03:03:39.658Z"
+          },
+          {
+            "item_id": "pr-605",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 6.734700199999999,
+            "turns": 236,
+            "calls": 10,
+            "wall_ms": 1062745,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 1004,
+            "size_bucket": "L",
+            "measured_at": "2026-08-11T03:14:27.996Z"
+          }
+        ],
+        "spend": {
+          "total_usd": 29.532387500000002,
+          "ok_items_usd": 29.532387500000002,
+          "error_items_usd": 0,
+          "n_ok": 7,
+          "n_error": 0,
+          "stored_total_usd": 29.532387500000002,
+          "stored_total_agrees": true
+        },
+        "review": {
+          "cost_usd": {
+            "n": 7,
+            "min": 2.4537265999999995,
+            "median": 3.6549188,
+            "max": 6.734700199999999,
+            "mean": 4.2189125,
+            "range": 4.280973599999999,
+            "spread_over_min": 1.7446823945259429
+          },
+          "turns": {
+            "n": 7,
+            "min": 105,
+            "median": 179,
+            "max": 290,
+            "mean": 194.71428571428572,
+            "range": 185,
+            "spread_over_min": 1.7619047619047619
+          },
+          "calls": {
+            "n": 7,
+            "min": 7,
+            "median": 11,
+            "max": 16,
+            "mean": 11.571428571428571,
+            "range": 9,
+            "spread_over_min": 1.2857142857142858
+          },
+          "wall_ms": {
+            "n": 7,
+            "min": 431006,
+            "median": 522877,
+            "max": 1062745,
+            "mean": 608263.2857142857,
+            "range": 631739,
+            "spread_over_min": 1.4657313355266517
+          },
+          "items_wall_ms_sum": 4257843,
+          "n_timed": 7
+        },
+        "cost_vs_size": {
+          "n": 7,
+          "min_n": 3,
+          "intercept_usd": 2.103256509413035,
+          "slope_usd_per_1000_lines": 4.4063052466851405,
+          "fixed_share": 0.4985304884642748,
+          "reason": null
+        },
+        "cost_size_order": {
+          "n_items": 7,
+          "pairs": 21,
+          "concordant": 18,
+          "discordant": 3,
+          "tied": 0,
+          "tau": 0.7142857142857143
+        },
+        "wall_size_order": {
+          "n_items": 7,
+          "pairs": 21,
+          "concordant": 15,
+          "discordant": 6,
+          "tied": 0,
+          "tau": 0.42857142857142855
+        },
+        "duration_source": {
+          "n": 7,
+          "counts": {
+            "review-timing.json": 7,
+            "absent": 0,
+            "not-run": 0
+          },
+          "unrecognised": {}
+        }
+      },
+      {
+        "run_id": "pilot-01__k3",
+        "status": "complete",
+        "item_count": 7,
+        "items_ok": 7,
+        "items_error": 0,
+        "items": [
+          {
+            "item_id": "pr-415",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 4.1731795,
+            "turns": 200,
+            "calls": 16,
+            "wall_ms": 556844,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 273,
+            "size_bucket": "M",
+            "measured_at": "2026-08-11T03:32:42.850Z"
+          },
+          {
+            "item_id": "pr-429",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 4.3687836,
+            "turns": 235,
+            "calls": 12,
+            "wall_ms": 444452,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 792,
+            "size_bucket": "L",
+            "measured_at": "2026-08-11T03:42:00.059Z"
+          },
+          {
+            "item_id": "pr-465",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 6.8145079,
+            "turns": 338,
+            "calls": 19,
+            "wall_ms": 692626,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 725,
+            "size_bucket": "L",
+            "measured_at": "2026-08-11T03:49:24.877Z"
+          },
+          {
+            "item_id": "pr-471",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 1.9905906,
+            "turns": 85,
+            "calls": 6,
+            "wall_ms": 243928,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 160,
+            "size_bucket": "M",
+            "measured_at": "2026-08-11T04:00:57.877Z"
+          },
+          {
+            "item_id": "pr-524",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 1.892289,
+            "turns": 80,
+            "calls": 6,
+            "wall_ms": 388356,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 22,
+            "size_bucket": "S",
+            "measured_at": "2026-08-11T04:05:02.181Z"
+          },
+          {
+            "item_id": "pr-549",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 3.6798414999999993,
+            "turns": 177,
+            "calls": 12,
+            "wall_ms": 600624,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 385,
+            "size_bucket": "L",
+            "measured_at": "2026-08-11T04:52:06.115Z"
+          },
+          {
+            "item_id": "pr-605",
+            "status": "ok",
+            "reason": null,
+            "poolable": true,
+            "cost_usd": 7.5734788,
+            "turns": 290,
+            "calls": 14,
+            "wall_ms": 1087187,
+            "duration_source": "review-timing.json",
+            "wall_measured": true,
+            "diff_lines": 1004,
+            "size_bucket": "L",
+            "measured_at": "2026-08-11T05:02:07.137Z"
+          }
+        ],
+        "spend": {
+          "total_usd": 30.4926709,
+          "ok_items_usd": 30.4926709,
+          "error_items_usd": 0,
+          "n_ok": 7,
+          "n_error": 0,
+          "stored_total_usd": 30.4926709,
+          "stored_total_agrees": true
+        },
+        "review": {
+          "cost_usd": {
+            "n": 7,
+            "min": 1.892289,
+            "median": 4.1731795,
+            "max": 7.5734788,
+            "mean": 4.356095842857143,
+            "range": 5.6811898,
+            "spread_over_min": 3.002284429069767
+          },
+          "turns": {
+            "n": 7,
+            "min": 80,
+            "median": 200,
+            "max": 338,
+            "mean": 200.71428571428572,
+            "range": 258,
+            "spread_over_min": 3.225
+          },
+          "calls": {
+            "n": 7,
+            "min": 6,
+            "median": 12,
+            "max": 19,
+            "mean": 12.142857142857142,
+            "range": 13,
+            "spread_over_min": 2.1666666666666665
+          },
+          "wall_ms": {
+            "n": 7,
+            "min": 243928,
+            "median": 556844,
+            "max": 1087187,
+            "mean": 573431,
+            "range": 843259,
+            "spread_over_min": 3.456999606441245
+          },
+          "items_wall_ms_sum": 4014017,
+          "n_timed": 7
+        },
+        "cost_vs_size": {
+          "n": 7,
+          "min_n": 3,
+          "intercept_usd": 1.7745658909534665,
+          "slope_usd_per_1000_lines": 5.376587225029972,
+          "fixed_share": 0.4073753092148535,
+          "reason": null
+        },
+        "cost_size_order": {
+          "n_items": 7,
+          "pairs": 21,
+          "concordant": 19,
+          "discordant": 2,
+          "tied": 0,
+          "tau": 0.8095238095238095
+        },
+        "wall_size_order": {
+          "n_items": 7,
+          "pairs": 21,
+          "concordant": 17,
+          "discordant": 4,
+          "tied": 0,
+          "tau": 0.6190476190476191
+        },
+        "duration_source": {
+          "n": 7,
+          "counts": {
+            "review-timing.json": 7,
+            "absent": 0,
+            "not-run": 0
+          },
+          "unrecognised": {}
+        }
+      }
+    ],
+    "per_item": [
+      {
+        "item_id": "pr-415",
+        "diff_lines": 273,
+        "size_bucket": "M",
+        "replicates": 3,
+        "replicates_excluded": [],
+        "cost_usd": {
+          "n": 3,
+          "min": 3.6549188,
+          "median": 4.1731795,
+          "max": 4.573933500000001,
+          "mean": 4.1340106,
+          "range": 0.9190147000000009,
+          "spread_over_min": 0.25144599655675
+        },
+        "wall_ms": {
+          "n": 3,
+          "min": 431006,
+          "median": 506264,
+          "max": 556844,
+          "mean": 498038,
+          "range": 125838,
+          "spread_over_min": 0.2919634529449706
+        },
+        "n_timed": 3,
+        "turns": {
+          "n": 3,
+          "min": 179,
+          "median": 200,
+          "max": 230,
+          "mean": 203,
+          "range": 51,
+          "spread_over_min": 0.2849162011173184
+        },
+        "calls": {
+          "n": 3,
+          "min": 13,
+          "median": 16,
+          "max": 16,
+          "mean": 15,
+          "range": 3,
+          "spread_over_min": 0.23076923076923078
+        }
+      },
+      {
+        "item_id": "pr-429",
+        "diff_lines": 792,
+        "size_bucket": "L",
+        "replicates": 3,
+        "replicates_excluded": [],
+        "cost_usd": {
+          "n": 3,
+          "min": 4.3687836,
+          "median": 5.321225699999999,
+          "max": 6.360157599999999,
+          "mean": 5.350055633333334,
+          "range": 1.9913739999999986,
+          "spread_over_min": 0.45581886912411923
+        },
+        "wall_ms": {
+          "n": 3,
+          "min": 444452,
+          "median": 496369,
+          "max": 674419,
+          "mean": 538413.3333333334,
+          "range": 229967,
+          "spread_over_min": 0.5174169539117836
+        },
+        "n_timed": 3,
+        "turns": {
+          "n": 3,
+          "min": 235,
+          "median": 290,
+          "max": 325,
+          "mean": 283.3333333333333,
+          "range": 90,
+          "spread_over_min": 0.3829787234042553
+        },
+        "calls": {
+          "n": 3,
+          "min": 12,
+          "median": 14,
+          "max": 16,
+          "mean": 14,
+          "range": 4,
+          "spread_over_min": 0.3333333333333333
+        }
+      },
+      {
+        "item_id": "pr-465",
+        "diff_lines": 725,
+        "size_bucket": "L",
+        "replicates": 3,
+        "replicates_excluded": [],
+        "cost_usd": {
+          "n": 3,
+          "min": 5.511006,
+          "median": 6.248249399999999,
+          "max": 6.8145079,
+          "mean": 6.1912544333333335,
+          "range": 1.3035018999999997,
+          "spread_over_min": 0.23652703335833777
+        },
+        "wall_ms": {
+          "n": 3,
+          "min": 659329,
+          "median": 663035,
+          "max": 692626,
+          "mean": 671663.3333333334,
+          "range": 33297,
+          "spread_over_min": 0.05050134303208262
+        },
+        "n_timed": 3,
+        "turns": {
+          "n": 3,
+          "min": 278,
+          "median": 327,
+          "max": 338,
+          "mean": 314.3333333333333,
+          "range": 60,
+          "spread_over_min": 0.2158273381294964
+        },
+        "calls": {
+          "n": 3,
+          "min": 15,
+          "median": 18,
+          "max": 19,
+          "mean": 17.333333333333332,
+          "range": 4,
+          "spread_over_min": 0.26666666666666666
+        }
+      },
+      {
+        "item_id": "pr-471",
+        "diff_lines": 160,
+        "size_bucket": "M",
+        "replicates": 3,
+        "replicates_excluded": [],
+        "cost_usd": {
+          "n": 3,
+          "min": 1.9905906,
+          "median": 2.3517468,
+          "max": 2.4537265999999995,
+          "mean": 2.2653546666666666,
+          "range": 0.46313599999999955,
+          "spread_over_min": 0.23266260777077896
+        },
+        "wall_ms": {
+          "n": 3,
+          "min": 243928,
+          "median": 418059,
+          "max": 433856,
+          "mean": 365281,
+          "range": 189928,
+          "spread_over_min": 0.7786232002886098
+        },
+        "n_timed": 3,
+        "turns": {
+          "n": 3,
+          "min": 85,
+          "median": 100,
+          "max": 113,
+          "mean": 99.33333333333333,
+          "range": 28,
+          "spread_over_min": 0.32941176470588235
+        },
+        "calls": {
+          "n": 3,
+          "min": 6,
+          "median": 6,
+          "max": 7,
+          "mean": 6.333333333333333,
+          "range": 1,
+          "spread_over_min": 0.16666666666666666
+        }
+      },
+      {
+        "item_id": "pr-524",
+        "diff_lines": 22,
+        "size_bucket": "S",
+        "replicates": 3,
+        "replicates_excluded": [],
+        "cost_usd": {
+          "n": 3,
+          "min": 1.892289,
+          "median": 2.3317534,
+          "max": 2.5611068,
+          "mean": 2.2617164,
+          "range": 0.6688178,
+          "spread_over_min": 0.3534437921480281
+        },
+        "wall_ms": {
+          "n": 3,
+          "min": 388356,
+          "median": 522877,
+          "max": 575214,
+          "mean": 495482.3333333333,
+          "range": 186858,
+          "spread_over_min": 0.4811513147730433
+        },
+        "n_timed": 3,
+        "turns": {
+          "n": 3,
+          "min": 74,
+          "median": 80,
+          "max": 105,
+          "mean": 86.33333333333333,
+          "range": 31,
+          "spread_over_min": 0.4189189189189189
+        },
+        "calls": {
+          "n": 3,
+          "min": 6,
+          "median": 6,
+          "max": 9,
+          "mean": 7,
+          "range": 3,
+          "spread_over_min": 0.5
+        }
+      },
+      {
+        "item_id": "pr-549",
+        "diff_lines": 385,
+        "size_bucket": "L",
+        "replicates": 3,
+        "replicates_excluded": [],
+        "cost_usd": {
+          "n": 3,
+          "min": 3.2957034,
+          "median": 3.6798414999999993,
+          "max": 3.8583824,
+          "mean": 3.6113090999999997,
+          "range": 0.5626790000000002,
+          "spread_over_min": 0.17073107974461543
+        },
+        "wall_ms": {
+          "n": 3,
+          "min": 557075,
+          "median": 600624,
+          "max": 647955,
+          "mean": 601884.6666666666,
+          "range": 90880,
+          "spread_over_min": 0.16313781806758515
+        },
+        "n_timed": 3,
+        "turns": {
+          "n": 3,
+          "min": 162,
+          "median": 177,
+          "max": 189,
+          "mean": 176,
+          "range": 27,
+          "spread_over_min": 0.16666666666666666
+        },
+        "calls": {
+          "n": 3,
+          "min": 11,
+          "median": 12,
+          "max": 14,
+          "mean": 12.333333333333334,
+          "range": 3,
+          "spread_over_min": 0.2727272727272727
+        }
+      },
+      {
+        "item_id": "pr-605",
+        "diff_lines": 1004,
+        "size_bucket": "L",
+        "replicates": 3,
+        "replicates_excluded": [],
+        "cost_usd": {
+          "n": 3,
+          "min": 6.734700199999999,
+          "median": 7.1829781,
+          "max": 7.5734788,
+          "mean": 7.163719033333333,
+          "range": 0.8387786000000013,
+          "spread_over_min": 0.12454579641124952
+        },
+        "wall_ms": {
+          "n": 3,
+          "min": 1062745,
+          "median": 1087187,
+          "max": 1128782,
+          "mean": 1092904.6666666667,
+          "range": 66037,
+          "spread_over_min": 0.06213814226366626
+        },
+        "n_timed": 3,
+        "turns": {
+          "n": 3,
+          "min": 236,
+          "median": 250,
+          "max": 290,
+          "mean": 258.6666666666667,
+          "range": 54,
+          "spread_over_min": 0.2288135593220339
+        },
+        "calls": {
+          "n": 3,
+          "min": 10,
+          "median": 12,
+          "max": 14,
+          "mean": 12,
+          "range": 4,
+          "spread_over_min": 0.4
+        }
+      }
+    ],
+    "by_size_bucket": [
+      {
+        "size_bucket": "L",
+        "items": [
+          "pr-429",
+          "pr-465",
+          "pr-549",
+          "pr-605"
+        ],
+        "item_count": 4,
+        "observations": 12,
+        "diff_lines": {
+          "n": 4,
+          "min": 385,
+          "median": 758.5,
+          "max": 1004,
+          "mean": 726.5,
+          "range": 619,
+          "spread_over_min": 1.6077922077922078
+        },
+        "cost_usd": {
+          "n": 12,
+          "min": 3.2957034,
+          "median": 5.8796276999999995,
+          "max": 7.5734788,
+          "mean": 5.57908455,
+          "range": 4.2777754,
+          "spread_over_min": 1.2979855529475135
+        },
+        "wall_ms": {
+          "n": 12,
+          "min": 444452,
+          "median": 661182,
+          "max": 1128782,
+          "mean": 726216.5,
+          "range": 684330,
+          "spread_over_min": 1.539716324822478
+        },
+        "n_timed": 12
+      },
+      {
+        "size_bucket": "M",
+        "items": [
+          "pr-415",
+          "pr-471"
+        ],
+        "item_count": 2,
+        "observations": 6,
+        "diff_lines": {
+          "n": 2,
+          "min": 160,
+          "median": 216.5,
+          "max": 273,
+          "mean": 216.5,
+          "range": 113,
+          "spread_over_min": 0.70625
+        },
+        "cost_usd": {
+          "n": 6,
+          "min": 1.9905906,
+          "median": 3.0543226999999997,
+          "max": 4.573933500000001,
+          "mean": 3.1996826333333335,
+          "range": 2.5833429000000008,
+          "spread_over_min": 1.2977771019314572
+        },
+        "wall_ms": {
+          "n": 6,
+          "min": 243928,
+          "median": 432431,
+          "max": 556844,
+          "mean": 431659.5,
+          "range": 312916,
+          "spread_over_min": 1.282821160342396
+        },
+        "n_timed": 6
+      },
+      {
+        "size_bucket": "S",
+        "items": [
+          "pr-524"
+        ],
+        "item_count": 1,
+        "observations": 3,
+        "diff_lines": {
+          "n": 1,
+          "min": 22,
+          "median": 22,
+          "max": 22,
+          "mean": 22,
+          "range": 0,
+          "spread_over_min": 0
+        },
+        "cost_usd": {
+          "n": 3,
+          "min": 1.892289,
+          "median": 2.3317534,
+          "max": 2.5611068,
+          "mean": 2.2617164,
+          "range": 0.6688178,
+          "spread_over_min": 0.3534437921480281
+        },
+        "wall_ms": {
+          "n": 3,
+          "min": 388356,
+          "median": 522877,
+          "max": 575214,
+          "mean": 495482.3333333333,
+          "range": 186858,
+          "spread_over_min": 0.4811513147730433
+        },
+        "n_timed": 3
+      }
+    ],
+    "review_wall_ms": {
+      "n": 21,
+      "min": 243928,
+      "median": 557075,
+      "max": 1128782,
+      "mean": 609095.3333333334,
+      "range": 884854,
+      "spread_over_min": 3.627521235774491
+    },
+    "review_cost_usd": {
+      "n": 21,
+      "min": 1.892289,
+      "median": 4.1731795,
+      "max": 7.5734788,
+      "mean": 4.425345695238095,
+      "range": 5.6811898,
+      "spread_over_min": 3.002284429069767
+    },
+    "replicate_spend_usd": {
+      "n": 3,
+      "min": 29.532387500000002,
+      "median": 30.4926709,
+      "max": 32.9072012,
+      "mean": 30.97741986666667,
+      "range": 3.3748137000000007,
+      "spread_over_min": 0.11427500401042755
+    },
+    "duration_source": {
+      "n": 21,
+      "counts": {
+        "review-timing.json": 21,
+        "absent": 0,
+        "not-run": 0
+      },
+      "unrecognised": {}
+    }
+  },
+  "coderabbit": {
+    "unit": "amortised_usd_per_pr",
+    "cost": {
+      "basis": "flat-subscription",
+      "metered": false,
+      "comparable_to_panel_cost": false,
+      "amortised_usd_per_pr": null,
+      "inputs": null,
+      "reason": "a flat subscription has no per-review price; an amortised one needs BOTH a list price and the pull-request volume it is spread over, and neither is in the store"
+    },
+    "latency": {
+      "requested": true,
+      "measured": true,
+      "n_items": 7,
+      "self_timed": {
+        "interval": "coderabbit-start-marker-to-first-finding",
+        "ms": {
+          "n": 7,
+          "min": 154000,
+          "median": 409000,
+          "max": 864000,
+          "mean": 417714.28571428574,
+          "range": 710000,
+          "spread_over_min": 4.6103896103896105
+        },
+        "n": 7,
+        "n_items": 7,
+        "n_measured": 7
+      },
+      "push_proxy": {
+        "interval": "earliest-check-run-start-to-first-finding",
+        "ms": {
+          "n": 5,
+          "min": 167000,
+          "median": 402000,
+          "max": 891000,
+          "mean": 413600,
+          "range": 724000,
+          "spread_over_min": 4.335329341317365
+        },
+        "n": 5,
+        "n_items": 7,
+        "n_measured": 7
+      },
+      "triggers": {
+        "automatic": 5,
+        "on-demand": 2,
+        "unknown": 0
+      },
+      "census": {
+        "n": 7,
+        "ended": 7,
+        "triggers": {
+          "automatic": 5,
+          "on-demand": 2,
+          "unknown": 0
+        },
+        "self_timed": {
+          "measured": 7,
+          "poolable": 7,
+          "absent": {
+            "findings-unavailable": 0,
+            "no-finding": 0,
+            "no-review-commit": 0,
+            "finding-unplaceable": 0,
+            "no-in-window-finding": 0,
+            "posted-at-absent": 0,
+            "issue-comments-unavailable": 0,
+            "no-start-marker": 0,
+            "check-runs-unavailable": 0,
+            "no-check-run": 0,
+            "check-run-start-absent": 0,
+            "start-after-finding": 0
+          }
+        },
+        "push_proxy": {
+          "measured": 7,
+          "poolable": 5,
+          "absent": {
+            "findings-unavailable": 0,
+            "no-finding": 0,
+            "no-review-commit": 0,
+            "finding-unplaceable": 0,
+            "no-in-window-finding": 0,
+            "posted-at-absent": 0,
+            "issue-comments-unavailable": 0,
+            "no-start-marker": 0,
+            "check-runs-unavailable": 0,
+            "no-check-run": 0,
+            "check-run-start-absent": 0,
+            "start-after-finding": 0
+          }
+        }
+      },
+      "reason": null
+    }
+  },
+  "cost_per_real_finding": null,
+  "declared_gaps": [
+    {
+      "metric": "cost_per_real_finding",
+      "value": null,
+      "reason": "it needs CONFIRMED-REAL findings and no adjudicated labels exist yet. The available substitute — cost divided by all findings — is the worst option on the table precisely because it looks like this metric and would be quoted as it, while a reviewer that raised twice as many false findings would score twice as cheap",
+      "unblocked_by": "adjudicated labels"
+    }
+  ]
+}
