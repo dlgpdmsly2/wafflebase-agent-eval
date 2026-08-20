@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "scorer_id": "validity-v1",
+  "scope": "cross-run",
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "population": "reported",
+  "min_n": 5,
+  "min_n_source": "spec §4.1 default, imported from segmentation.mjs",
+  "levels": {
+    "claim": "one thing a reviewer said, identified by its finding_key (`file::summary`). Counted as `distinct_finding_keys`",
+    "label": "one judgement written to disk about one claim — one file per (arm, finding_key). Counted as `labelled_findings`, and it is the precision denominator",
+    "defect_class": "several claims a matcher grouped as one defect, carried on a label as `class_id`. Never counted here as a claim",
+    "reading": "one time an adjudicator actually read something. Counted as `readings` (distinct class_id + unbundled), and it is the only level a claim about INDEPENDENCE may use"
+  },
+  "segment_grammar": "metric=<metric id>/arm=<arm>/tier=<label_source>/<stratum basis>=<stratum>",
+  "availability_vocabulary": [
+    "present",
+    "suppressed",
+    "not-computed",
+    "not-measurable"
+  ],
+  "severity_weights": {
+    "critical": 4,
+    "major": 3,
+    "minor": 2,
+    "nit": 1
+  },
+  "severity_weights_source": "derived from severity.mjs KNOWN's ordering, checked against spec §3.3's 4/3/2/1 at import",
+  "parse_vintage": {
+    "current": "harvest.mjs@sha256:73890e38146dfc30d0230863410699785c41dfe98487526f8daee651462f9c7d",
+    "basis": "the content hash of the module whose output a CodeRabbit finding_key hashes"
+  },
+  "labels": {
+    "total": 0,
+    "unreadable": [],
+    "unreadable_count": 0,
+    "census": {
+      "n": 0,
+      "schema": {
+        "item-label": 0,
+        "finding-label": 0
+      },
+      "label_source": {
+        "gold": 0,
+        "silver": 0,
+        "distant": 0
+      },
+      "arm": {
+        "panel": 0,
+        "coderabbit": 0
+      },
+      "confidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "is_real": {
+        "true": 0,
+        "false": 0
+      },
+      "verdict_label": {
+        "block": 0,
+        "approve": 0,
+        "borderline": 0
+      },
+      "mode": {
+        "human": 0,
+        "model": 0
+      },
+      "items": 0,
+      "bundled": 0,
+      "readings": 0
+    }
+  },
+  "metrics": [
+    {
+      "id": "precision",
+      "computable": true,
+      "unit": "labelled findings",
+      "spec": "spec §3.3 — real ÷ (real + not-real), over the findings one arm raised and an adjudicator judged",
+      "availability": null,
+      "reason": null
+    },
+    {
+      "id": "severity_weighted_precision",
+      "computable": true,
+      "unit": "summed severity weight over labelled findings",
+      "spec": "spec §3.3 — Σ(weight of real claims) ÷ Σ(weight of all claims), weighted by the ANNOTATOR's severity",
+      "availability": null,
+      "reason": null
+    },
+    {
+      "id": "relative_recall",
+      "computable": true,
+      "unit": "confirmed-real findings in the cross-arm union",
+      "spec": "spec §3.3 — real defects this arm found ÷ all confirmed real defects. A BAND: the union's overlap is unresolved",
+      "availability": null,
+      "reason": null
+    },
+    {
+      "id": "fp_profile",
+      "computable": true,
+      "unit": "false findings, grouped",
+      "spec": "spec §3.3 — where the wrong claims cluster. Qualitative; every share carries its denominator and is suppressed below min_n",
+      "availability": null,
+      "reason": null
+    },
+    {
+      "id": "absolute_recall",
+      "computable": false,
+      "unit": null,
+      "spec": null,
+      "availability": "not-measurable",
+      "reason": "absolute recall needs every real defect the pull request contains, INCLUDING the ones no reviewer raised — the item label's `true_defects[]`, populated from human review or a revert. The pilot corpus has none, and a set built from what reviewers found cannot contain what they missed. This is a property of the corpus, not a gap in this scorer"
+    },
+    {
+      "id": "miss_profile",
+      "computable": false,
+      "unit": null,
+      "spec": null,
+      "availability": "not-measurable",
+      "reason": "the miss profile describes the kinds of real defect an arm systematically misses, so it is cut over the same `true_defects[]` absolute recall needs — defects found outside both arms, which this corpus does not contain. A corpus property, not a gap in this scorer, and it does not become measurable by adjudicating more findings"
+    }
+  ],
+  "refusals": [
+    {
+      "metric": "absolute_recall",
+      "availability": "not-measurable",
+      "permanent": true,
+      "reason": "absolute recall needs every real defect the pull request contains, INCLUDING the ones no reviewer raised — the item label's `true_defects[]`, populated from human review or a revert. The pilot corpus has none, and a set built from what reviewers found cannot contain what they missed. This is a property of the corpus, not a gap in this scorer",
+      "what_would_change_it": "item labels carrying a non-empty true_defects[] on this corpus, sourced from outside both arms — a corpus-building task, not an adjudication one"
+    },
+    {
+      "metric": "miss_profile",
+      "availability": "not-measurable",
+      "permanent": true,
+      "reason": "the miss profile describes the kinds of real defect an arm systematically misses, so it is cut over the same `true_defects[]` absolute recall needs — defects found outside both arms, which this corpus does not contain. A corpus property, not a gap in this scorer, and it does not become measurable by adjudicating more findings",
+      "what_would_change_it": "the same corpus property absolute recall needs; neither becomes measurable without it"
+    }
+  ],
+  "arms": [
+    {
+      "arm": "coderabbit",
+      "claims_supplied": true,
+      "claims": {
+        "replicates": 1,
+        "run_ids": [
+          null
+        ],
+        "records": 30,
+        "distinct_finding_keys": 30,
+        "distinct_keys_by_stated_severity": {
+          "critical": 0,
+          "major": 3,
+          "minor": 13,
+          "nit": 14,
+          "severity-unstated": 0,
+          "stated-severity-varies": 0
+        }
+      },
+      "labels": 0,
+      "join": {
+        "counts": {
+          "joined": 0,
+          "unmatched": 0,
+          "stale-parse": 0,
+          "parse-vintage-unknown": 0,
+          "claims-not-supplied": 0
+        },
+        "unmatched_keys": [],
+        "stale_parse_keys": []
+      },
+      "claim_population": "pending",
+      "unlabelled_claims": 30,
+      "label_sources": {
+        "gold": 0,
+        "silver": 0,
+        "distant": 0
+      },
+      "tiers_scored": []
+    },
+    {
+      "arm": "panel",
+      "claims_supplied": true,
+      "claims": {
+        "replicates": 3,
+        "run_ids": [
+          "pilot-01__k1",
+          "pilot-01__k2",
+          "pilot-01__k3"
+        ],
+        "records": 428,
+        "distinct_finding_keys": 426,
+        "distinct_keys_by_stated_severity": {
+          "critical": 4,
+          "major": 98,
+          "minor": 258,
+          "nit": 66,
+          "severity-unstated": 0,
+          "stated-severity-varies": 0
+        }
+      },
+      "labels": 0,
+      "join": {
+        "counts": {
+          "joined": 0,
+          "unmatched": 0,
+          "stale-parse": 0,
+          "parse-vintage-unknown": 0,
+          "claims-not-supplied": 0
+        },
+        "unmatched_keys": [],
+        "stale_parse_keys": []
+      },
+      "claim_population": "pending",
+      "unlabelled_claims": 426,
+      "label_sources": {
+        "gold": 0,
+        "silver": 0,
+        "distant": 0
+      },
+      "tiers_scored": []
+    }
+  ],
+  "cells": [],
+  "relative_recall": [],
+  "fp_profile": [],
+  "completeness": {
+    "verdict": "partial",
+    "reasons": [
+      "coderabbit: 30 of 30 distinct claim(s) carry no label, so every zero-denominator cell on this arm is not-computed rather than not-measurable",
+      "panel: 426 of 426 distinct claim(s) carry no label, so every zero-denominator cell on this arm is not-computed rather than not-measurable",
+      "no finding label exists for this corpus version, so every figure is not-computed — the honest result of a store nobody has adjudicated yet"
+    ]
+  }
+}
