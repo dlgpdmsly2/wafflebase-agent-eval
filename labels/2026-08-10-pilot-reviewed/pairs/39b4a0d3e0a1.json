@@ -1,0 +1,171 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "39b4a0d3e0a1",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A concerns missing test coverage for the new frontend PPTX export adapter in packages/frontend/src/app/slides/pptx-actions.ts; Finding B concerns stale unchecked checkboxes and unresolved \"Open decisions\" in a docs todo markdown file. Different files and problems — fixing either leaves the other untouched.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-429",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::new `exportslidespptxanddownload` ships with no test at all",
+  "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+  "line": 85,
+  "summary": "New `exportSlidesPptxAndDownload` ships with no test at all",
+  "evidence": "The new frontend export path (blob MIME `application/vnd...presentationml.presentation`, `safeFilename(title,\"pptx\")`, and the `fetchImage` adapter that wraps `docsImageFetcher` and falls back to `mime: \"image/png\"` when `blob.type` is empty) has no test. I globbed all frontend test files (`packages/frontend/**/*{test,spec}*`) — there is no `pptx-actions`, `pdf-actions`, `docx-actions` or `export-utils` test; grep for `exportPptx` finds tests only in `packages/slides/test/export/pptx/*` and `packages/cli/test/slides-export.test.ts`, which exercise the library/CLI paths, not this adapter. The adapter's own logic (arrayBuffer→Uint8Array, mime fallback, progress forwarding) is therefore uncovered and can regress silently; frontend also has no tsc lane, so nothing checks it.",
+  "severity": "major",
+  "severity_raw": "major",
+  "gating": "gates",
+  "gating_basis": "lane-blocking",
+  "panel": {
+   "lens": "test-adequacy",
+   "lane": "blocking",
+   "novelty": {
+    "origin": "introduced",
+    "addedBy": "2500a59b4035fd2b3cc88625f5c821ff07eac43d",
+    "contentSha": "2500a59b4035fd2b3cc88625f5c821ff07eac43d",
+    "alsoAt": null
+   },
+   "unsettled": false,
+   "verification": "confirmed-high",
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "major",
+    "confidence": "high",
+    "claimType": "absence",
+    "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+    "line": 85,
+    "summary": "New `exportSlidesPptxAndDownload` ships with no test at all",
+    "evidence": "The new frontend export path (blob MIME `application/vnd...presentationml.presentation`, `safeFilename(title,\"pptx\")`, and the `fetchImage` adapter that wraps `docsImageFetcher` and falls back to `mime: \"image/png\"` when `blob.type` is empty) has no test. I globbed all frontend test files (`packages/frontend/**/*{test,spec}*`) — there is no `pptx-actions`, `pdf-actions`, `docx-actions` or `export-utils` test; grep for `exportPptx` finds tests only in `packages/slides/test/export/pptx/*` and `packages/cli/test/slides-export.test.ts`, which exercise the library/CLI paths, not this adapter. The adapter's own logic (arrayBuffer→Uint8Array, mime fallback, progress forwarding) is therefore uncovered and can regress silently; frontend also has no tsc lane, so nothing checks it.",
+    "searchedFor": [
+     "Grep exportPptx (repo-wide)",
+     "Grep safeFilename (repo-wide)",
+     "Glob packages/frontend/**/*{test,spec}*",
+     "Glob/inspect packages/frontend/tests/app/slides/**"
+    ],
+    "lane": "blocking",
+    "novelty": {
+     "origin": "introduced",
+     "addedBy": "2500a59b4035fd2b3cc88625f5c821ff07eac43d",
+     "contentSha": "2500a59b4035fd2b3cc88625f5c821ff07eac43d",
+     "alsoAt": null
+    },
+    "verification": "confirmed-high",
+    "lens": "test-adequacy"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-429",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "docs/tasks/active/20260628-homepage-refresh-todo.md::synchronize checkboxes with actual completion status and close resolved decisions.",
+  "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+  "line": 39,
+  "summary": "Synchronize checkboxes with actual completion status and close resolved decisions.",
+  "evidence": "_📐 Maintainability & Code Quality_ | _🟠 Major_ | _⚡ Quick win_\n\n**Synchronize checkboxes with actual completion status and close resolved decisions.**\n\nThe work-item checkboxes remain `[ ]` unchecked despite the Review section (Lines 150–159) confirming completion. Update to `[x]` for:\n- Fix broken link (Line 42)\n- Refresh Features secondary cards (Lines 46–60)\n- New Interop section (Lines 62–70)\n- Design doc + verify (Lines 72–77)\n\nThe \"Open decisions\" (Lines 79–85) are all resolved per Lines 163–166. Move them to a \"Decisions confirmed\" section or remove them to avoid confusion.\n\n<details>\n<summary>🧰 Tools</summary>\n\n<details>\n<summary>🪛 LanguageTool</summary>\n\n[grammar] ~68-~68: Ensure spelling is correct\nContext: ...ides) and **Export** (DOCX, PPTX, PDF). lucide file icons. - [ ] Add one row to the Wh...\n\n(QB_NEW_EN_ORTHOGRAPHY_ERROR_IDS_1)\n\n---\n\n[grammar] ~81-~81: Ensure spelling is correct\nContext: ... coding)  1. Interop section placement: UseCases → **Interop** → Why (proposed) — OK? 2....\n\n(QB_NEW_EN_ORTHOGRAPHY_ERROR_IDS_1)\n\n</details>\n\n</details>\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@docs/tasks/active/20260628-homepage-refresh-todo.md` around lines 39 - 85,\nThe task checklist is stale: the work items in this document should reflect the\ncompleted review status, and the unresolved-decision notes should be removed or\nrenamed. Update the checkboxes in the work item list to checked for the\ncompleted sections (Fix broken link, Refresh Features secondary cards, New\nInterop section, and Design doc + verify), and move the current “Open decisions”\nentries to a confirmed/closed section or delete them. Use the existing headings\nlike “Work items” and “Open decisions” to locate the affected content.\n```\n\n</details>\n\n<!-- cr-indicator-types:refactor_suggestion -->\n\n<!-- cr-comment:v1:f425be5343a26dff58077cb8 -->\n\n<!-- This is an auto-generated comment by CodeRabbit -->\n\n✅ Addressed in commits 33571a6 to c0f7bc0",
+  "severity": "major",
+  "severity_raw": "major",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "inline-comment",
+   "tier": "",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "maintainability & code quality",
+   "effort": "quick win",
+   "lens": "",
+   "stated_severity": "major",
+   "severity_basis": "header-field",
+   "comment_id": "3488182851",
+   "review_id": "4587801262",
+   "posted_at": "2026-06-28T16:28:21Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/429#discussion_r3488182851",
+   "at_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "current_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "raw": {
+    "category": "maintainability & code quality",
+    "vocabulary": "chill",
+    "severity": "major",
+    "severityRaw": "major",
+    "effort": "quick win",
+    "vintage": "three-field",
+    "lens": "",
+    "summary": "Synchronize checkboxes with actual completion status and close resolved decisions.",
+    "detail": "**Synchronize checkboxes with actual completion status and close resolved decisions.** The work-item checkboxes remain `[ ]` unchecked despite the Review section (Lines 150–159) confirming completion. Update to `[x]` for: - Fix broken link (Line 42) - Refresh Features secondary cards (Lines 46–60) - New Interop section (Lines 62–70) - Design doc + verify (Lines 72–77) The \"Open decisions\" (Lines 79–85) are all resolved per Lines 163–166. Move them to a \"Decisions confirmed\" section or remove them to avoid confusion.",
+    "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+    "line": 39,
+    "evidence": "_📐 Maintainability & Code Quality_ | _🟠 Major_ | _⚡ Quick win_\n\n**Synchronize checkboxes with actual completion status and close resolved decisions.**\n\nThe work-item checkboxes remain `[ ]` unchecked despite the Review section (Lines 150–159) confirming completion. Update to `[x]` for:\n- Fix broken link (Line 42)\n- Refresh Features secondary cards (Lines 46–60)\n- New Interop section (Lines 62–70)\n- Design doc + verify (Lines 72–77)\n\nThe \"Open decisions\" (Lines 79–85) are all resolved per Lines 163–166. Move them to a \"Decisions confirmed\" section or remove them to avoid confusion.\n\n<details>\n<summary>🧰 Tools</summary>\n\n<details>\n<summary>🪛 LanguageTool</summary>\n\n[grammar] ~68-~68: Ensure spelling is correct\nContext: ...ides) and **Export** (DOCX, PPTX, PDF). lucide file icons. - [ ] Add one row to the Wh...\n\n(QB_NEW_EN_ORTHOGRAPHY_ERROR_IDS_1)\n\n---\n\n[grammar] ~81-~81: Ensure spelling is correct\nContext: ... coding)  1. Interop section placement: UseCases → **Interop** → Why (proposed) — OK? 2....\n\n(QB_NEW_EN_ORTHOGRAPHY_ERROR_IDS_1)\n\n</details>\n\n</details>\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@docs/tasks/active/20260628-homepage-refresh-todo.md` around lines 39 - 85,\nThe task checklist is stale: the work items in this document should reflect the\ncompleted review status, and the unresolved-decision notes should be removed or\nrenamed. Update the checkboxes in the work item list to checked for the\ncompleted sections (Fix broken link, Refresh Features secondary cards, New\nInterop section, and Design doc + verify), and move the current “Open decisions”\nentries to a confirmed/closed section or delete them. Use the existing headings\nlike “Work items” and “Open decisions” to locate the affected content.\n```\n\n</details>\n\n<!-- cr-indicator-types:refactor_suggestion -->\n\n<!-- cr-comment:v1:f425be5343a26dff58077cb8 -->\n\n<!-- This is an auto-generated comment by CodeRabbit -->\n\n✅ Addressed in commits 33571a6 to c0f7bc0"
+   }
+  }
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:03.971Z"
+}

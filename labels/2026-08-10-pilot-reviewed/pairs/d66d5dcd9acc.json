@@ -1,0 +1,152 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "d66d5dcd9acc",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A is about incorrect dialog-flow steps in packages/documentation/sheets/datasources.md; Finding B is about stale unchecked checkboxes and open decisions in docs/tasks/active/20260628-homepage-refresh-todo.md. Different files and unrelated edits — fixing one leaves the other standing.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-429",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/documentation/sheets/datasources.md::datasources doc conflates two separate dialogs into one step, describing connection-detail fields as being in the 'select datasource' dialog when they are actually in a second 'new datasource connection' dialog reached via a 'new connection' button.",
+  "file": "packages/documentation/sheets/datasources.md",
+  "line": 10,
+  "summary": "Datasources doc conflates two separate dialogs into one step, describing connection-detail fields as being in the 'Select DataSource' dialog when they are actually in a second 'New DataSource Connection' dialog reached via a 'New Connection' button.",
+  "evidence": "\"1. Click the + at the end of the tab bar and choose New DataSource.\\n2. In the Select DataSource dialog, fill in the connection details...\" — but per packages/frontend/src/components/datasource-selector.tsx, clicking 'New DataSource' opens a 'Select DataSource' picker dialog (title: 'Select DataSource', description: 'Choose an existing connection or create a new one') with no connection fields; the user must click a separate 'New Connection' button to open packages/frontend/src/components/datasource-dialog.tsx, titled 'New DataSource Connection', which actually contains Host/Port/Database/Username/Password/SSL and the 'Test Connection' button. The doc's step 2 skips this intermediate click.",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "does-not-gate",
+  "gating_basis": "non-blocking-severity",
+  "panel": {
+   "lens": "docs",
+   "lane": null,
+   "novelty": null,
+   "unsettled": false,
+   "verification": null,
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "minor",
+    "confidence": "medium",
+    "summary": "Datasources doc conflates two separate dialogs into one step, describing connection-detail fields as being in the 'Select DataSource' dialog when they are actually in a second 'New DataSource Connection' dialog reached via a 'New Connection' button.",
+    "claimType": "presence",
+    "file": "packages/documentation/sheets/datasources.md",
+    "line": 10,
+    "evidence": "\"1. Click the + at the end of the tab bar and choose New DataSource.\\n2. In the Select DataSource dialog, fill in the connection details...\" — but per packages/frontend/src/components/datasource-selector.tsx, clicking 'New DataSource' opens a 'Select DataSource' picker dialog (title: 'Select DataSource', description: 'Choose an existing connection or create a new one') with no connection fields; the user must click a separate 'New Connection' button to open packages/frontend/src/components/datasource-dialog.tsx, titled 'New DataSource Connection', which actually contains Host/Port/Database/Username/Password/SSL and the 'Test Connection' button. The doc's step 2 skips this intermediate click.",
+    "lens": "docs"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-429",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "docs/tasks/active/20260628-homepage-refresh-todo.md::synchronize checkboxes with actual completion status and close resolved decisions.",
+  "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+  "line": 39,
+  "summary": "Synchronize checkboxes with actual completion status and close resolved decisions.",
+  "evidence": "_📐 Maintainability & Code Quality_ | _🟠 Major_ | _⚡ Quick win_\n\n**Synchronize checkboxes with actual completion status and close resolved decisions.**\n\nThe work-item checkboxes remain `[ ]` unchecked despite the Review section (Lines 150–159) confirming completion. Update to `[x]` for:\n- Fix broken link (Line 42)\n- Refresh Features secondary cards (Lines 46–60)\n- New Interop section (Lines 62–70)\n- Design doc + verify (Lines 72–77)\n\nThe \"Open decisions\" (Lines 79–85) are all resolved per Lines 163–166. Move them to a \"Decisions confirmed\" section or remove them to avoid confusion.\n\n<details>\n<summary>🧰 Tools</summary>\n\n<details>\n<summary>🪛 LanguageTool</summary>\n\n[grammar] ~68-~68: Ensure spelling is correct\nContext: ...ides) and **Export** (DOCX, PPTX, PDF). lucide file icons. - [ ] Add one row to the Wh...\n\n(QB_NEW_EN_ORTHOGRAPHY_ERROR_IDS_1)\n\n---\n\n[grammar] ~81-~81: Ensure spelling is correct\nContext: ... coding)  1. Interop section placement: UseCases → **Interop** → Why (proposed) — OK? 2....\n\n(QB_NEW_EN_ORTHOGRAPHY_ERROR_IDS_1)\n\n</details>\n\n</details>\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@docs/tasks/active/20260628-homepage-refresh-todo.md` around lines 39 - 85,\nThe task checklist is stale: the work items in this document should reflect the\ncompleted review status, and the unresolved-decision notes should be removed or\nrenamed. Update the checkboxes in the work item list to checked for the\ncompleted sections (Fix broken link, Refresh Features secondary cards, New\nInterop section, and Design doc + verify), and move the current “Open decisions”\nentries to a confirmed/closed section or delete them. Use the existing headings\nlike “Work items” and “Open decisions” to locate the affected content.\n```\n\n</details>\n\n<!-- cr-indicator-types:refactor_suggestion -->\n\n<!-- cr-comment:v1:f425be5343a26dff58077cb8 -->\n\n<!-- This is an auto-generated comment by CodeRabbit -->\n\n✅ Addressed in commits 33571a6 to c0f7bc0",
+  "severity": "major",
+  "severity_raw": "major",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "inline-comment",
+   "tier": "",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "maintainability & code quality",
+   "effort": "quick win",
+   "lens": "",
+   "stated_severity": "major",
+   "severity_basis": "header-field",
+   "comment_id": "3488182851",
+   "review_id": "4587801262",
+   "posted_at": "2026-06-28T16:28:21Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/429#discussion_r3488182851",
+   "at_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "current_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "raw": {
+    "category": "maintainability & code quality",
+    "vocabulary": "chill",
+    "severity": "major",
+    "severityRaw": "major",
+    "effort": "quick win",
+    "vintage": "three-field",
+    "lens": "",
+    "summary": "Synchronize checkboxes with actual completion status and close resolved decisions.",
+    "detail": "**Synchronize checkboxes with actual completion status and close resolved decisions.** The work-item checkboxes remain `[ ]` unchecked despite the Review section (Lines 150–159) confirming completion. Update to `[x]` for: - Fix broken link (Line 42) - Refresh Features secondary cards (Lines 46–60) - New Interop section (Lines 62–70) - Design doc + verify (Lines 72–77) The \"Open decisions\" (Lines 79–85) are all resolved per Lines 163–166. Move them to a \"Decisions confirmed\" section or remove them to avoid confusion.",
+    "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+    "line": 39,
+    "evidence": "_📐 Maintainability & Code Quality_ | _🟠 Major_ | _⚡ Quick win_\n\n**Synchronize checkboxes with actual completion status and close resolved decisions.**\n\nThe work-item checkboxes remain `[ ]` unchecked despite the Review section (Lines 150–159) confirming completion. Update to `[x]` for:\n- Fix broken link (Line 42)\n- Refresh Features secondary cards (Lines 46–60)\n- New Interop section (Lines 62–70)\n- Design doc + verify (Lines 72–77)\n\nThe \"Open decisions\" (Lines 79–85) are all resolved per Lines 163–166. Move them to a \"Decisions confirmed\" section or remove them to avoid confusion.\n\n<details>\n<summary>🧰 Tools</summary>\n\n<details>\n<summary>🪛 LanguageTool</summary>\n\n[grammar] ~68-~68: Ensure spelling is correct\nContext: ...ides) and **Export** (DOCX, PPTX, PDF). lucide file icons. - [ ] Add one row to the Wh...\n\n(QB_NEW_EN_ORTHOGRAPHY_ERROR_IDS_1)\n\n---\n\n[grammar] ~81-~81: Ensure spelling is correct\nContext: ... coding)  1. Interop section placement: UseCases → **Interop** → Why (proposed) — OK? 2....\n\n(QB_NEW_EN_ORTHOGRAPHY_ERROR_IDS_1)\n\n</details>\n\n</details>\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@docs/tasks/active/20260628-homepage-refresh-todo.md` around lines 39 - 85,\nThe task checklist is stale: the work items in this document should reflect the\ncompleted review status, and the unresolved-decision notes should be removed or\nrenamed. Update the checkboxes in the work item list to checked for the\ncompleted sections (Fix broken link, Refresh Features secondary cards, New\nInterop section, and Design doc + verify), and move the current “Open decisions”\nentries to a confirmed/closed section or delete them. Use the existing headings\nlike “Work items” and “Open decisions” to locate the affected content.\n```\n\n</details>\n\n<!-- cr-indicator-types:refactor_suggestion -->\n\n<!-- cr-comment:v1:f425be5343a26dff58077cb8 -->\n\n<!-- This is an auto-generated comment by CodeRabbit -->\n\n✅ Addressed in commits 33571a6 to c0f7bc0"
+   }
+  }
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:03.997Z"
+}

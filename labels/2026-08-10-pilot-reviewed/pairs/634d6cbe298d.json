@@ -1,0 +1,157 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "634d6cbe298d",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-605",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A concerns a weak negative test for read-only history suppression in packages/notes/src/view/editor.test.ts; Finding B concerns application code relying on the SDK's `getUndoStackForTest()` helper for `undoFloor` in a different package's test/store. Fixing either leaves the other untouched.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-605",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/notes/src/view/editor.test.ts::'leaves history unbound on a read-only mount' is a negative test with no positive control",
+  "file": "packages/notes/src/view/editor.test.ts",
+  "line": 139,
+  "summary": "'leaves history unbound on a read-only mount' is a negative test with no positive control",
+  "evidence": "The test dispatches a Ctrl-z keydown on `.cm-content` of a read-only mount and asserts `store.getText()` is unchanged. Nothing in the test proves the synthetic keydown would ever have reached CodeMirror's keymap on this mount (no focus, editable=false, jsdom); the assertion also holds if the event is simply ignored for unrelated reasons, so it does not specifically demonstrate that `historyKeymap: readOnly ? [] : ...` is what suppressed the undo. It also never covers the vim read-only fall-through added in editor.ts:52-56.",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "does-not-gate",
+  "gating_basis": "non-blocking-severity",
+  "panel": {
+   "lens": "test-adequacy",
+   "lane": null,
+   "novelty": null,
+   "unsettled": false,
+   "verification": null,
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "minor",
+    "confidence": "medium",
+    "claimType": "presence",
+    "file": "packages/notes/src/view/editor.test.ts",
+    "line": 139,
+    "summary": "'leaves history unbound on a read-only mount' is a negative test with no positive control",
+    "evidence": "The test dispatches a Ctrl-z keydown on `.cm-content` of a read-only mount and asserts `store.getText()` is unchanged. Nothing in the test proves the synthetic keydown would ever have reached CodeMirror's keymap on this mount (no focus, editable=false, jsdom); the assertion also holds if the event is simply ignored for unrelated reasons, so it does not specifically demonstrate that `historyKeymap: readOnly ? [] : ...` is what suppressed the undo. It also never covers the vim read-only fall-through added in editor.ts:52-56.",
+    "searchedFor": [
+     "read packages/notes/src/view/editor.test.ts:107-154"
+    ],
+    "lens": "test-adequacy"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-605",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "packages/frontend/src/app/notes/notes-undo-integration.test.ts::avoid depending on `doc.getundostackfortest()` outside tests.",
+  "file": "packages/frontend/src/app/notes/notes-undo-integration.test.ts",
+  "line": 98,
+  "summary": "Avoid depending on `doc.getUndoStackForTest()` outside tests.",
+  "evidence": "**Avoid depending on `doc.getUndoStackForTest()` outside tests.** `Document.getUndoStackForTest()` is exposed in `@yorkie-js/sdk` 0.7.13, but its `ForTest` suffix indicates it is a test helper, not the stable public history API. Keeping the store’s `undoFloor` calculation tied to this helper makes application code brittle to future SDK changes.",
+  "severity": "nit",
+  "severity_raw": "nit",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "review-body",
+   "tier": "nitpick",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "data integrity & integration",
+   "effort": "quick win",
+   "lens": "",
+   "stated_severity": "trivial",
+   "severity_basis": "header-field",
+   "comment_id": null,
+   "review_id": "4829504855",
+   "posted_at": "2026-07-31T14:44:11Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/605#pullrequestreview-4829504855",
+   "at_commit": "1c3ce8e82bf55665337e9315909909c6c67a29d7",
+   "current_commit": "1c3ce8e82bf55665337e9315909909c6c67a29d7",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "1c3ce8e82bf55665337e9315909909c6c67a29d7",
+   "raw": {
+    "tier": "nitpick",
+    "file": "packages/frontend/src/app/notes/notes-undo-integration.test.ts",
+    "locator": "98-113",
+    "category": "data integrity & integration",
+    "vocabulary": "chill",
+    "severity": "nit",
+    "severityRaw": "trivial",
+    "effort": "quick win",
+    "vintage": "three-field",
+    "lens": "",
+    "summary": "Avoid depending on `doc.getUndoStackForTest()` outside tests.",
+    "detail": "**Avoid depending on `doc.getUndoStackForTest()` outside tests.** `Document.getUndoStackForTest()` is exposed in `@yorkie-js/sdk` 0.7.13, but its `ForTest` suffix indicates it is a test helper, not the stable public history API. Keeping the store’s `undoFloor` calculation tied to this helper makes application code brittle to future SDK changes.",
+    "line": 98,
+    "evidence": "**Avoid depending on `doc.getUndoStackForTest()` outside tests.** `Document.getUndoStackForTest()` is exposed in `@yorkie-js/sdk` 0.7.13, but its `ForTest` suffix indicates it is a test helper, not the stable public history API. Keeping the store’s `undoFloor` calculation tied to this helper makes application code brittle to future SDK changes."
+   }
+  }
+ },
+ "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:03.979Z"
+}

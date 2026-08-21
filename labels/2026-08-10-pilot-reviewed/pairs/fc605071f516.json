@@ -1,0 +1,165 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "fc605071f516",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-415",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A concerns array date/time OIDs missing from RAW_TEXT_OIDS in datasource.service.ts causing timezone-shifted parsing; Finding B concerns a locale-dependent MONEY ($1,234.56) string assertion in an e2e test. Neither fix discharges the other.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-415",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::array date/time oids are not covered by raw_text_oids, so timestamp[]/date[]/timestamptz[] columns are still parsed into js dates using the node runtime timezone",
+  "file": "packages/backend/src/datasource/datasource.service.ts",
+  "line": 21,
+  "summary": "Array date/time OIDs are not covered by RAW_TEXT_OIDS, so timestamp[]/date[]/timestamptz[] columns are still parsed into JS Dates using the Node runtime timezone",
+  "evidence": "RAW_TEXT_OIDS only contains the scalar types.builtins.DATE (1082), TIMESTAMP (1114) and TIMESTAMPTZ (1184). The array OIDs (_date 1182, _timestamp 1115, _timestamptz 1185) still fall through to getDefaultParser, which parses each element with the same local-timezone-shifting parser the comment on lines 19-20 says it is fixing. For a `timestamp without time zone` array the default parser interprets each naive value as *local* time, so `toCell` (JSON.stringify -> Date#toJSON -> UTC ISO) yields a value shifted by the Node runtime offset — exactly the bug the change claims to remove, still present for array columns. Also produces an inconsistent cell rendering (raw pg text for scalars, JSON ISO array for arrays).",
+  "severity": "major",
+  "severity_raw": "major",
+  "gating": "gates",
+  "gating_basis": "lane-blocking",
+  "panel": {
+   "lens": "correctness",
+   "lane": "blocking",
+   "novelty": {
+    "origin": "introduced",
+    "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+    "contentSha": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+    "alsoAt": null
+   },
+   "unsettled": false,
+   "verification": "confirmed-high",
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "major",
+    "confidence": "medium",
+    "claimType": "presence",
+    "file": "packages/backend/src/datasource/datasource.service.ts",
+    "line": 21,
+    "summary": "Array date/time OIDs are not covered by RAW_TEXT_OIDS, so timestamp[]/date[]/timestamptz[] columns are still parsed into JS Dates using the Node runtime timezone",
+    "evidence": "RAW_TEXT_OIDS only contains the scalar types.builtins.DATE (1082), TIMESTAMP (1114) and TIMESTAMPTZ (1184). The array OIDs (_date 1182, _timestamp 1115, _timestamptz 1185) still fall through to getDefaultParser, which parses each element with the same local-timezone-shifting parser the comment on lines 19-20 says it is fixing. For a `timestamp without time zone` array the default parser interprets each naive value as *local* time, so `toCell` (JSON.stringify -> Date#toJSON -> UTC ISO) yields a value shifted by the Node runtime offset — exactly the bug the change claims to remove, still present for array columns. Also produces an inconsistent cell rendering (raw pg text for scalars, JSON ISO array for arrays).",
+    "lane": "blocking",
+    "novelty": {
+     "origin": "introduced",
+     "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+     "contentSha": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+     "alsoAt": null
+    },
+    "verification": "confirmed-high",
+    "lens": "correctness"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-415",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::the `money` assertion is locale-dependent and may fail on non-us clusters.",
+  "file": "packages/backend/test/database.e2e-spec.ts",
+  "line": 244,
+  "summary": "The `MONEY` assertion is locale-dependent and may fail on non-US clusters.",
+  "evidence": "_🎯 Functional Correctness_ | _🟡 Minor_\n\n<details>\n<summary>🧩 Analysis chain</summary>\n\n🌐 Web query:\n\n`In PostgreSQL, is the textual output of the `money` type controlled by the database or cluster locale setting such as `lc_monetary`?`\n\n💡 Result:\n\nIn PostgreSQL, the textual output of the money data type is indeed controlled by the locale setting, specifically the lc_monetary configuration parameter [1][2]. Key points regarding this behavior include: 1. Locale Dependency: The output format (such as currency symbols, decimal separators, and digit grouping) depends on the active setting of lc_monetary [1][3]. Because the textual representation is locale-sensitive, it is important to ensure that lc_monetary remains consistent when moving or restoring data between databases [1]. 2. Configuration Scope: The lc_monetary parameter can be set at the cluster level (in postgresql.conf), the database level, or changed on-the-fly for a specific user session or transaction using the SET command [2][3]. 3. Fractional Precision: In addition to the display format, the fixed fractional precision used by the money type is also determined by the database's lc_monetary setting [1]. Because of this dependency on the client or session locale, applications should be aware that the same money value may appear differently depending on the environment in which it is queried [1][3].\n\nCitations:\n\n- 1: https://www.postgresql.org/docs/current/datatype-money.html\n- 2: https://www.postgresql.org/docs/18/locale.html\n- 3: https://dba.stackexchange.com/questions/183964/is-it-possible-to-insert-un-formatted-data-for-money-data-type-in-postgresql\n\n---\n\n\n\n</details>\n\n**The `MONEY` assertion is locale-dependent and may fail on non-US clusters.**\n\nPostgreSQL formats the `money` type using the database's `lc_monetary` setting, which dictates the currency symbol and digit grouping. Since the test asserts the exact string `$1,234.56`, it will fail on databases configured with different locales.\n\nEither set `lc_monetary` to `en_US.UTF-8` in the test setup or avoid asserting the formatted string output.\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@packages/backend/test/database.e2e-spec.ts` around lines 244 - 245, The MONEY\nexpectation in the database e2e spec is locale-dependent because PostgreSQL\nformats money using lc_monetary, so the exact string asserted in the\ntype-mapping table can fail on non-US setups. Update the money-related assertion\nin the database test to either explicitly set lc_monetary to en_US.UTF-8 in the\ntest setup before running the query, or relax the assertion so it does not\ndepend on the formatted currency string; use the existing MONEY/MACADDR mapping\nin the e2e spec to locate the case.\n```\n\n</details>\n\n<!-- fingerprinting:phantom:poseidon:grasshopper -->\n\n<!-- cr-indicator-types:potential_issue -->\n\n<!-- cr-comment:v1:8cdda54bf0916b6e663a2002 -->\n\n<!-- This is an auto-generated comment by CodeRabbit -->",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "inline-comment",
+   "tier": "",
+   "vintage": "two-field",
+   "vocabulary": "chill",
+   "category": "functional correctness",
+   "effort": "",
+   "lens": "correctness",
+   "stated_severity": "minor",
+   "severity_basis": "header-field",
+   "comment_id": "3474296166",
+   "review_id": "4570809619",
+   "posted_at": "2026-06-25T12:20:55Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/415#discussion_r3474296166",
+   "at_commit": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+   "current_commit": "eeda30c751a4d215924bd8ecd379f769b869be6b",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+   "raw": {
+    "category": "functional correctness",
+    "vocabulary": "chill",
+    "severity": "minor",
+    "severityRaw": "minor",
+    "effort": "",
+    "vintage": "two-field",
+    "lens": "correctness",
+    "summary": "The `MONEY` assertion is locale-dependent and may fail on non-US clusters.",
+    "detail": "**The `MONEY` assertion is locale-dependent and may fail on non-US clusters.** PostgreSQL formats the `money` type using the database's `lc_monetary` setting, which dictates the currency symbol and digit grouping. Since the test asserts the exact string `$1,234.56`, it will fail on databases configured with different locales. Either set `lc_monetary` to `en_US.UTF-8` in the test setup or avoid asserting the formatted string output.",
+    "file": "packages/backend/test/database.e2e-spec.ts",
+    "line": 244,
+    "evidence": "_🎯 Functional Correctness_ | _🟡 Minor_\n\n<details>\n<summary>🧩 Analysis chain</summary>\n\n🌐 Web query:\n\n`In PostgreSQL, is the textual output of the `money` type controlled by the database or cluster locale setting such as `lc_monetary`?`\n\n💡 Result:\n\nIn PostgreSQL, the textual output of the money data type is indeed controlled by the locale setting, specifically the lc_monetary configuration parameter [1][2]. Key points regarding this behavior include: 1. Locale Dependency: The output format (such as currency symbols, decimal separators, and digit grouping) depends on the active setting of lc_monetary [1][3]. Because the textual representation is locale-sensitive, it is important to ensure that lc_monetary remains consistent when moving or restoring data between databases [1]. 2. Configuration Scope: The lc_monetary parameter can be set at the cluster level (in postgresql.conf), the database level, or changed on-the-fly for a specific user session or transaction using the SET command [2][3]. 3. Fractional Precision: In addition to the display format, the fixed fractional precision used by the money type is also determined by the database's lc_monetary setting [1]. Because of this dependency on the client or session locale, applications should be aware that the same money value may appear differently depending on the environment in which it is queried [1][3].\n\nCitations:\n\n- 1: https://www.postgresql.org/docs/current/datatype-money.html\n- 2: https://www.postgresql.org/docs/18/locale.html\n- 3: https://dba.stackexchange.com/questions/183964/is-it-possible-to-insert-un-formatted-data-for-money-data-type-in-postgresql\n\n---\n\n\n\n</details>\n\n**The `MONEY` assertion is locale-dependent and may fail on non-US clusters.**\n\nPostgreSQL formats the `money` type using the database's `lc_monetary` setting, which dictates the currency symbol and digit grouping. Since the test asserts the exact string `$1,234.56`, it will fail on databases configured with different locales.\n\nEither set `lc_monetary` to `en_US.UTF-8` in the test setup or avoid asserting the formatted string output.\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@packages/backend/test/database.e2e-spec.ts` around lines 244 - 245, The MONEY\nexpectation in the database e2e spec is locale-dependent because PostgreSQL\nformats money using lc_monetary, so the exact string asserted in the\ntype-mapping table can fail on non-US setups. Update the money-related assertion\nin the database test to either explicitly set lc_monetary to en_US.UTF-8 in the\ntest setup before running the query, or relax the assertion so it does not\ndepend on the formatted currency string; use the existing MONEY/MACADDR mapping\nin the e2e spec to locate the case.\n```\n\n</details>\n\n<!-- fingerprinting:phantom:poseidon:grasshopper -->\n\n<!-- cr-indicator-types:potential_issue -->\n\n<!-- cr-comment:v1:8cdda54bf0916b6e663a2002 -->\n\n<!-- This is an auto-generated comment by CodeRabbit -->"
+   }
+  }
+ },
+ "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:03.997Z"
+}

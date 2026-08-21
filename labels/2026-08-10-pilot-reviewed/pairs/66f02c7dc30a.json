@@ -1,0 +1,163 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "66f02c7dc30a",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-549",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A is about a missing test for the silent-mode paragraph-interruption branch; Finding B is about relying on markdown-it's private ruler registry and an unpinned semver range. Adding a test doesn't change the API usage, and pinning/switching to getRules() leaves the untested branch untested.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:band",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-549",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::the silent-mode list wrapper's paragraph-interruption behavior is only tested inside a list; an empty bullet interrupting a plain paragraph has no test",
+  "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+  "line": 196,
+  "summary": "The silent-mode list wrapper's paragraph-interruption behavior is only tested inside a list; an empty bullet interrupting a plain paragraph has no test",
+  "evidence": "wrappedList returns true whenever `silent && state.parentType === 'paragraph' && isEmptyBulletLine(...)`, which changes rendering for plain-paragraph input such as `text\\n- ` (previously lazy `text<br>-`). All five new tests start with a list line, so this branch's behavior outside a list is unasserted.",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "does-not-gate",
+  "gating_basis": "non-blocking-severity",
+  "panel": {
+   "lens": "test-adequacy",
+   "lane": null,
+   "novelty": null,
+   "unsettled": false,
+   "verification": null,
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "minor",
+    "confidence": "medium",
+    "claimType": "absence",
+    "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+    "line": 196,
+    "summary": "The silent-mode list wrapper's paragraph-interruption behavior is only tested inside a list; an empty bullet interrupting a plain paragraph has no test",
+    "evidence": "wrappedList returns true whenever `silent && state.parentType === 'paragraph' && isEmptyBulletLine(...)`, which changes rendering for plain-paragraph input such as `text\\n- ` (previously lazy `text<br>-`). All five new tests start with a list line, so this branch's behavior outside a list is unasserted.",
+    "searchedFor": [
+     "Read preview.test.ts fully",
+     "Grep 'render(' fixtures in packages/notes/src/view/preview.test.ts"
+    ],
+    "mergedFrom": [
+     {
+      "severity": "minor",
+      "summary": "`*` and `+` empty bullet markers are accepted by `isEmptyBulletLine` but no test covers them",
+      "evidence": "isEmptyBulletLine accepts 0x2a (`*`) and 0x2b (`+`) as markers, yet every new test uses `-` only (`- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `- 1\\n  - 2`). The `*`/`+` branches (including the interaction with the `hr` rule for `*`) are entirely uncovered."
+     }
+    ],
+    "lens": "test-adequacy"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-549",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::pin the markdown-it dependency or switch to the public `getrules()` api.",
+  "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+  "line": 202,
+  "summary": "Pin the markdown-it dependency or switch to the public `getRules()` API.",
+  "evidence": "_🔒 Security & Privacy_ | _🟡 Minor_ | _⚡ Quick win_\n\n<details>\n<summary>🧩 Analysis chain</summary>\n\n🌐 Web query:\n\n`Does markdown-it's Ruler class expose a public way to read a rule's current function by name in versions 14.1.0 through 14.3.0, or is `__rules__` still the only way?`\n\n💡 Result:\n\nIn markdown-it versions 14.1.0 through 14.3.0, the Ruler class does not expose a public method to retrieve a rule's function by name [1][2]. Accessing the internal `rules` property remains the standard, albeit unofficial, way to programmatically inspect or retrieve the full list of rules, including their associated functions and states [3][2]. The official public API, such as `getRules(chainName)`, only returns an array of active rule functions without their names or metadata [1][3]. Internal members like `rules` and the `find` helper method continue to be marked as internal and are explicitly noted in the source code as methods that should not be used directly [4][5][6]. Consequently, there have been no changes in versions 14.1.0 through 14.3.0 that provide a supported public API for this purpose [7][8][9].\n\nCitations:\n\n- 1: https://markdown-it.github.io/markdown-it/\n- 2: https://deepwiki.com/markdown-it/markdown-it/3-rules-system\n- 3: https://docs.joshuatz.com/cheatsheets/node-and-npm/markdown-it/\n- 4: https://github.com/markdown-it/markdown-it/blob/ff0ee0/lib/ruler.mjs\n- 5: https://github.com/markdown-it/markdown-it/blob/0fe7ccb4/lib/ruler.mjs\n- 6: https://app.unpkg.com/markdown-it@14.1.0/files/lib/ruler.mjs\n- 7: https://github.com/markdown-it/markdown-it/blob/HEAD/CHANGELOG.md\n- 8: https://github.com/markdown-it/markdown-it/compare/14.1.1...14.3.0\n- 9: https://github.com/markdown-it/markdown-it/compare/14.2.0...14.3.0\n\n---\n\n🏁 Script executed:\n\n```shell\n#!/bin/bash\nset -euo pipefail\n\necho \"== package/workspace files ==\"\ngit ls-files | rg '(^|/)(package.json|pnpm-lock.yaml|package-lock.json|yarn.lock|bun.lockb)?' | head -100\n\necho \"== package names/locations ==\"\nfd -e json package.json . | sed 's#^\\./##' | sort | head -100\n\necho \"== dependency mentions ==\"\nrg -n '\"markdown-it\"|library_context|list-empty-bullet-plugin|14\\.1\\.0|14\\.3\\.0' -S . --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/build/**' --glob '!**/coverage/**' | head -200\n\necho \"== candidate files ==\"\nfd -i 'list-empty-bullet-plugin|todo|README|package.json' . . | sed 's#^\\./##' | sort | head -200\n```\n\nRepository: wafflebase/wafflebase\n\nLength of output: 3380\n\n---\n\n🏁 Script executed:\n\n```shell\n#!/bin/bash\nset -euo pipefail\n\necho \"== exact dependency/version mentions ==\"\nrg -n -C 3 '\"markdown-it\"|markdown-it@|library_context|14\\.1\\.0|14\\.3\\.0|Confirmed with markdown-it' -S . --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/build/**' --glob '!**/coverage/**' | head -300 || true\n\necho \"== lockfiles/package manifests ==\"\ngit ls-files | rg '(^|/)(package.json|package-lock.json|pnpm-lock.yaml|yarn.lock|bun.lockb)$' || true\n\necho \"== target file excerpt ==\"\nsed -n '180,225p' packages/notes/src/view/list-empty-bullet-plugin.ts 2>/dev/null || true\n\necho \"== all markdown-it references ==\"\nrg -n 'markdown-it' -S packages .github docs --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/build/**' --glob '!**/coverage/**' | head -200 || true\n```\n\nRepository: wafflebase/wafflebase\n\nLength of output: 13118\n\n---\n\n🌐 Web query:\n\n`markdown-it Ruler source 14.3.0 rules property __rules__ push getRules at`\n\n💡 Result:\n\nIn the markdown-it library (version 14.3.0 and other recent versions), the Ruler class manages the sequence of parser rules used during the document transformation process [1][2]. The key components mentioned in your query interact within the Ruler class as follows: rules property The Ruler class maintains an internal array named rules [3][2]. This array stores the configuration for all added rules [3]. Each element in the array is an object containing the rule's name, its enabled state (Boolean), the function to execute (fn), and an array of alternate chain names (alt) [3][4]. push method The Ruler.push(ruleName, fn, options) method adds a new rule to the end of the rule chain [1][5]. When called, it pushes a new object containing the rule details into the rules array and resets the internal cache (setting cache to null) to ensure the next request for rules forces a re-compilation [5][6]. getRules method The Ruler.getRules(chainName) method returns an array of active functions for a specified chain [1][3]. Internally, it checks if the cache (cache) is null; if it is, it calls the compile method to build the rule lookup cache before returning the requested chain's rules [3][7]. Summary of workflow 1. When you use.push, a new entry is added to this.rules [3][5]. 2. The internal state flag this.cache is set to null, invalidating existing caches [3][6]. 3. When.getRules is called, the library runs this.compile if the cache is null [3][7]. 4. The compile function iterates over the enabled rules in this.rules and populates the cache object based on the rule chain associations [3][7].\n\nCitations:\n\n- 1: https://markdown-it.github.io/markdown-it/\n- 2: https://deepwiki.com/markdown-it/markdown-it/3-rules-system\n- 3: https://github.com/markdown-it/markdown-it/blob/master/lib/ruler.mjs\n- 4: https://app.unpkg.com/markdown-it@14.1.0/files/lib/ruler.mjs\n- 5: https://github.com/markdown-it/markdown-it/blob/ff0ee0/lib/ruler.mjs\n- 6: https://github.com/markdown-it/markdown-it/blob/829797/lib/ruler.mjs\n- 7: https://github.com/markdown-it/markdown-it/blob/0fe7ccb4/lib/ruler.mjs\n\n---\n\n🌐 Web query:\n\n`GitHub markdown-it ruler.mjs if (this.__rules__) lib/rules_inline/tables.mjs`\n\n💡 Result:\n\nIn the markdown-it library, the `Ruler` class (located in `lib/ruler.mjs`) is a helper utility used by the core, block, and inline parsers to manage sequences of rules [1][2]. The `this.rules` property is an internal array within a `Ruler` instance that stores the configured rules [1][3]. Each object in this array contains the rule's name, its enabled status, the function (`fn`) to execute, and any alternate chains (`alt`) the rule belongs to [1][4]. Regarding your mention of `tables.mjs`, it refers to one of the specific block-level parsing rules (typically found in `lib/rules_block/table.mjs`) [5]. While `tables.mjs` implements the logic for parsing Markdown tables, it is managed by the `md.block.ruler` instance [6][2]. Key points about the `Ruler` system: 1. Rule Management: The `Ruler` provides public methods like `push()`, `before()`, `after()`, and `at()` to modify the parsing pipeline without editing core library files [4][2]. 2. Internal State: While `this.rules` is exposed on the `Ruler` instance, it is intended for internal use [1]. Direct modification of `this.rules` is generally discouraged; instead, developers should use the provided API methods (e.g., `md.block.ruler.at(...)` to replace a rule) [7][2]. 3. Compilation: The `Ruler` class maintains a `this.cache` property [1]. When `getRules(chainName)` is called, the ruler checks if the cache is null and, if so, compiles the rules into optimized chains for high-speed execution [1][3]. If you are looking to interact with existing rules—such as wrapping a rule or modifying the table parsing logic—the recommended approach is to access the ruler via `md.block.ruler`, use `find` to locate the rule, or use the official API methods to replace or wrap the functionality [7][2].\n\nCitations:\n\n- 1: https://github.com/markdown-it/markdown-it/blob/master/lib/ruler.mjs\n- 2: https://deepwiki.com/markdown-it/markdown-it/3-rules-system\n- 3: https://github.com/markdown-it/markdown-it/blob/0fe7ccb4/lib/ruler.mjs\n- 4: https://github.com/markdown-it/markdown-it/blob/ff0ee0/lib/ruler.mjs\n- 5: https://github.com/markdown-it/markdown-it/blob/0fe7ccb4/lib/rules_block/table.mjs\n- 6: https://github.com/markdown-it/markdown-it/blob/master/docs/architecture.md\n- 7: https://github.com/markdown-it/markdown-it/issues/544\n\n---\n\n\n\n</details>\n\n**Pin the markdown-it dependency or switch to the public `getRules()` API.**\n\n`packages/notes/package.json` declares `markdown-it: \"^14.1.0\"` while the notes package currently resolves `14.3.0`, so a lockfile-relative upgrade would satisfy semver. Since `getRuleFn()` relies on the unexposed ruler registry name instead of the supported `md.block.ruler.getRules(...)` array, pin `markdown-it` to the exact tested version or avoid the private field/API.\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@packages/notes/src/view/list-empty-bullet-plugin.ts` around lines 202 - 214,\nUpdate getRuleFn to use markdown-it’s supported md.block.ruler.getRules(...) API\ninstead of reading the private __rules__ registry, while preserving lookup by\nrule name and the existing missing-rule error behavior; otherwise pin the\npackage’s markdown-it dependency to the exact tested version.\n```\n\n</details>\n\n<!-- fingerprinting:phantom:medusa:beignet -->\n\n<!-- cr-indicator-types:potential_issue -->\n\n<!-- cr-comment:v1:89e5b52cfcb0fcabce0e12a0 -->\n\n<!-- This is an auto-generated comment by CodeRabbit -->",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "inline-comment",
+   "tier": "",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "security & privacy",
+   "effort": "quick win",
+   "lens": "security",
+   "stated_severity": "minor",
+   "severity_basis": "header-field",
+   "comment_id": "3651715274",
+   "review_id": "4780920465",
+   "posted_at": "2026-07-26T04:06:25Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/549#discussion_r3651715274",
+   "at_commit": "158c6faaf517e832e25978c1f9630c65c2158c8e",
+   "current_commit": "158c6faaf517e832e25978c1f9630c65c2158c8e",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "158c6faaf517e832e25978c1f9630c65c2158c8e",
+   "raw": {
+    "category": "security & privacy",
+    "vocabulary": "chill",
+    "severity": "minor",
+    "severityRaw": "minor",
+    "effort": "quick win",
+    "vintage": "three-field",
+    "lens": "security",
+    "summary": "Pin the markdown-it dependency or switch to the public `getRules()` API.",
+    "detail": "**Pin the markdown-it dependency or switch to the public `getRules()` API.** `packages/notes/package.json` declares `markdown-it: \"^14.1.0\"` while the notes package currently resolves `14.3.0`, so a lockfile-relative upgrade would satisfy semver. Since `getRuleFn()` relies on the unexposed ruler registry name instead of the supported `md.block.ruler.getRules(...)` array, pin `markdown-it` to the exact tested version or avoid the private field/API.",
+    "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+    "line": 202,
+    "evidence": "_🔒 Security & Privacy_ | _🟡 Minor_ | _⚡ Quick win_\n\n<details>\n<summary>🧩 Analysis chain</summary>\n\n🌐 Web query:\n\n`Does markdown-it's Ruler class expose a public way to read a rule's current function by name in versions 14.1.0 through 14.3.0, or is `__rules__` still the only way?`\n\n💡 Result:\n\nIn markdown-it versions 14.1.0 through 14.3.0, the Ruler class does not expose a public method to retrieve a rule's function by name [1][2]. Accessing the internal `rules` property remains the standard, albeit unofficial, way to programmatically inspect or retrieve the full list of rules, including their associated functions and states [3][2]. The official public API, such as `getRules(chainName)`, only returns an array of active rule functions without their names or metadata [1][3]. Internal members like `rules` and the `find` helper method continue to be marked as internal and are explicitly noted in the source code as methods that should not be used directly [4][5][6]. Consequently, there have been no changes in versions 14.1.0 through 14.3.0 that provide a supported public API for this purpose [7][8][9].\n\nCitations:\n\n- 1: https://markdown-it.github.io/markdown-it/\n- 2: https://deepwiki.com/markdown-it/markdown-it/3-rules-system\n- 3: https://docs.joshuatz.com/cheatsheets/node-and-npm/markdown-it/\n- 4: https://github.com/markdown-it/markdown-it/blob/ff0ee0/lib/ruler.mjs\n- 5: https://github.com/markdown-it/markdown-it/blob/0fe7ccb4/lib/ruler.mjs\n- 6: https://app.unpkg.com/markdown-it@14.1.0/files/lib/ruler.mjs\n- 7: https://github.com/markdown-it/markdown-it/blob/HEAD/CHANGELOG.md\n- 8: https://github.com/markdown-it/markdown-it/compare/14.1.1...14.3.0\n- 9: https://github.com/markdown-it/markdown-it/compare/14.2.0...14.3.0\n\n---\n\n🏁 Script executed:\n\n```shell\n#!/bin/bash\nset -euo pipefail\n\necho \"== package/workspace files ==\"\ngit ls-files | rg '(^|/)(package.json|pnpm-lock.yaml|package-lock.json|yarn.lock|bun.lockb)?' | head -100\n\necho \"== package names/locations ==\"\nfd -e json package.json . | sed 's#^\\./##' | sort | head -100\n\necho \"== dependency mentions ==\"\nrg -n '\"markdown-it\"|library_context|list-empty-bullet-plugin|14\\.1\\.0|14\\.3\\.0' -S . --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/build/**' --glob '!**/coverage/**' | head -200\n\necho \"== candidate files ==\"\nfd -i 'list-empty-bullet-plugin|todo|README|package.json' . . | sed 's#^\\./##' | sort | head -200\n```\n\nRepository: wafflebase/wafflebase\n\nLength of output: 3380\n\n---\n\n🏁 Script executed:\n\n```shell\n#!/bin/bash\nset -euo pipefail\n\necho \"== exact dependency/version mentions ==\"\nrg -n -C 3 '\"markdown-it\"|markdown-it@|library_context|14\\.1\\.0|14\\.3\\.0|Confirmed with markdown-it' -S . --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/build/**' --glob '!**/coverage/**' | head -300 || true\n\necho \"== lockfiles/package manifests ==\"\ngit ls-files | rg '(^|/)(package.json|package-lock.json|pnpm-lock.yaml|yarn.lock|bun.lockb)$' || true\n\necho \"== target file excerpt ==\"\nsed -n '180,225p' packages/notes/src/view/list-empty-bullet-plugin.ts 2>/dev/null || true\n\necho \"== all markdown-it references ==\"\nrg -n 'markdown-it' -S packages .github docs --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/build/**' --glob '!**/coverage/**' | head -200 || true\n```\n\nRepository: wafflebase/wafflebase\n\nLength of output: 13118\n\n---\n\n🌐 Web query:\n\n`markdown-it Ruler source 14.3.0 rules property __rules__ push getRules at`\n\n💡 Result:\n\nIn the markdown-it library (version 14.3.0 and other recent versions), the Ruler class manages the sequence of parser rules used during the document transformation process [1][2]. The key components mentioned in your query interact within the Ruler class as follows: rules property The Ruler class maintains an internal array named rules [3][2]. This array stores the configuration for all added rules [3]. Each element in the array is an object containing the rule's name, its enabled state (Boolean), the function to execute (fn), and an array of alternate chain names (alt) [3][4]. push method The Ruler.push(ruleName, fn, options) method adds a new rule to the end of the rule chain [1][5]. When called, it pushes a new object containing the rule details into the rules array and resets the internal cache (setting cache to null) to ensure the next request for rules forces a re-compilation [5][6]. getRules method The Ruler.getRules(chainName) method returns an array of active functions for a specified chain [1][3]. Internally, it checks if the cache (cache) is null; if it is, it calls the compile method to build the rule lookup cache before returning the requested chain's rules [3][7]. Summary of workflow 1. When you use.push, a new entry is added to this.rules [3][5]. 2. The internal state flag this.cache is set to null, invalidating existing caches [3][6]. 3. When.getRules is called, the library runs this.compile if the cache is null [3][7]. 4. The compile function iterates over the enabled rules in this.rules and populates the cache object based on the rule chain associations [3][7].\n\nCitations:\n\n- 1: https://markdown-it.github.io/markdown-it/\n- 2: https://deepwiki.com/markdown-it/markdown-it/3-rules-system\n- 3: https://github.com/markdown-it/markdown-it/blob/master/lib/ruler.mjs\n- 4: https://app.unpkg.com/markdown-it@14.1.0/files/lib/ruler.mjs\n- 5: https://github.com/markdown-it/markdown-it/blob/ff0ee0/lib/ruler.mjs\n- 6: https://github.com/markdown-it/markdown-it/blob/829797/lib/ruler.mjs\n- 7: https://github.com/markdown-it/markdown-it/blob/0fe7ccb4/lib/ruler.mjs\n\n---\n\n🌐 Web query:\n\n`GitHub markdown-it ruler.mjs if (this.__rules__) lib/rules_inline/tables.mjs`\n\n💡 Result:\n\nIn the markdown-it library, the `Ruler` class (located in `lib/ruler.mjs`) is a helper utility used by the core, block, and inline parsers to manage sequences of rules [1][2]. The `this.rules` property is an internal array within a `Ruler` instance that stores the configured rules [1][3]. Each object in this array contains the rule's name, its enabled status, the function (`fn`) to execute, and any alternate chains (`alt`) the rule belongs to [1][4]. Regarding your mention of `tables.mjs`, it refers to one of the specific block-level parsing rules (typically found in `lib/rules_block/table.mjs`) [5]. While `tables.mjs` implements the logic for parsing Markdown tables, it is managed by the `md.block.ruler` instance [6][2]. Key points about the `Ruler` system: 1. Rule Management: The `Ruler` provides public methods like `push()`, `before()`, `after()`, and `at()` to modify the parsing pipeline without editing core library files [4][2]. 2. Internal State: While `this.rules` is exposed on the `Ruler` instance, it is intended for internal use [1]. Direct modification of `this.rules` is generally discouraged; instead, developers should use the provided API methods (e.g., `md.block.ruler.at(...)` to replace a rule) [7][2]. 3. Compilation: The `Ruler` class maintains a `this.cache` property [1]. When `getRules(chainName)` is called, the ruler checks if the cache is null and, if so, compiles the rules into optimized chains for high-speed execution [1][3]. If you are looking to interact with existing rules—such as wrapping a rule or modifying the table parsing logic—the recommended approach is to access the ruler via `md.block.ruler`, use `find` to locate the rule, or use the official API methods to replace or wrap the functionality [7][2].\n\nCitations:\n\n- 1: https://github.com/markdown-it/markdown-it/blob/master/lib/ruler.mjs\n- 2: https://deepwiki.com/markdown-it/markdown-it/3-rules-system\n- 3: https://github.com/markdown-it/markdown-it/blob/0fe7ccb4/lib/ruler.mjs\n- 4: https://github.com/markdown-it/markdown-it/blob/ff0ee0/lib/ruler.mjs\n- 5: https://github.com/markdown-it/markdown-it/blob/0fe7ccb4/lib/rules_block/table.mjs\n- 6: https://github.com/markdown-it/markdown-it/blob/master/docs/architecture.md\n- 7: https://github.com/markdown-it/markdown-it/issues/544\n\n---\n\n\n\n</details>\n\n**Pin the markdown-it dependency or switch to the public `getRules()` API.**\n\n`packages/notes/package.json` declares `markdown-it: \"^14.1.0\"` while the notes package currently resolves `14.3.0`, so a lockfile-relative upgrade would satisfy semver. Since `getRuleFn()` relies on the unexposed ruler registry name instead of the supported `md.block.ruler.getRules(...)` array, pin `markdown-it` to the exact tested version or avoid the private field/API.\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@packages/notes/src/view/list-empty-bullet-plugin.ts` around lines 202 - 214,\nUpdate getRuleFn to use markdown-it’s supported md.block.ruler.getRules(...) API\ninstead of reading the private __rules__ registry, while preserving lookup by\nrule name and the existing missing-rule error behavior; otherwise pin the\npackage’s markdown-it dependency to the exact tested version.\n```\n\n</details>\n\n<!-- fingerprinting:phantom:medusa:beignet -->\n\n<!-- cr-indicator-types:potential_issue -->\n\n<!-- cr-comment:v1:89e5b52cfcb0fcabce0e12a0 -->\n\n<!-- This is an auto-generated comment by CodeRabbit -->"
+   }
+  }
+ },
+ "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+ "matcher": {
+  "verdict_at_label_time": "maybe",
+  "score": 0.5833333333333334,
+  "reason": "partial evidence (location 1, content 0.17) — needs adjudication",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "band",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T07:31:33.006Z"
+}

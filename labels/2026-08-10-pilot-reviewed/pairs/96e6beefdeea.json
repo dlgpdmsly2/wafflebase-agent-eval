@@ -1,0 +1,157 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "96e6beefdeea",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-471",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A asks for added assertions on `cell.v` in a test file (data-validation.test.ts); Finding B asks to mark outdated scope wording in a docs/tasks markdown file as superseded. Different files, different artifacts, and neither edit discharges the other.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-471",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/sheets/test/sheet/data-validation.test.ts::formula-guard test asserts only that `f` survives; it never asserts the cell's value was not overwritten, despite the comment claiming \"writes no literal\"",
+  "file": "packages/sheets/test/sheet/data-validation.test.ts",
+  "line": 69,
+  "summary": "Formula-guard test asserts only that `f` survives; it never asserts the cell's value was not overwritten, despite the comment claiming \"writes no literal\"",
+  "evidence": "packages/sheets/test/sheet/data-validation.test.ts:66-69 comments \"Toggle is a no-op: reports false, keeps the formula, writes no literal\" but the only post-toggle assertions are `toggleCheckboxAt(...) === false` and `cell?.f === '=1=1'`. `cell?.v` (the formula-computed value the checkbox actually renders from — gridcanvas.ts:1042 uses `cell?.v`) is never asserted before or after, so a regression that preserved `f` while clobbering `v` (or one where the formula never evaluated at all) passes. The test also never verifies the stated rationale that \"the formula drives the state\" (i.e. that `isCheckboxChecked(rule, cell.v)` is true for `=1=1`).",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "does-not-gate",
+  "gating_basis": "non-blocking-severity",
+  "panel": {
+   "lens": "test-adequacy",
+   "lane": null,
+   "novelty": null,
+   "unsettled": false,
+   "verification": null,
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "minor",
+    "confidence": "high",
+    "claimType": "absence",
+    "file": "packages/sheets/test/sheet/data-validation.test.ts",
+    "line": 69,
+    "summary": "Formula-guard test asserts only that `f` survives; it never asserts the cell's value was not overwritten, despite the comment claiming \"writes no literal\"",
+    "evidence": "packages/sheets/test/sheet/data-validation.test.ts:66-69 comments \"Toggle is a no-op: reports false, keeps the formula, writes no literal\" but the only post-toggle assertions are `toggleCheckboxAt(...) === false` and `cell?.f === '=1=1'`. `cell?.v` (the formula-computed value the checkbox actually renders from — gridcanvas.ts:1042 uses `cell?.v`) is never asserted before or after, so a regression that preserved `f` while clobbering `v` (or one where the formula never evaluated at all) passes. The test also never verifies the stated rationale that \"the formula drives the state\" (i.e. that `isCheckboxChecked(rule, cell.v)` is true for `=1=1`).",
+    "searchedFor": [
+     "read packages/sheets/test/sheet/data-validation.test.ts in full",
+     "grep toggleCheckboxAt|isCheckboxChecked across repo",
+     "read Sheet.toggleCheckboxAt in packages/sheets/src/model/worksheet/sheet.ts:3834-3848"
+    ],
+    "lens": "test-adequacy"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-471",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md::mark the old scope note as superseded.",
+  "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+  "line": 25,
+  "summary": "Mark the old scope note as superseded.",
+  "evidence": "_📐 Maintainability & Code Quality_ | _🟡 Minor_ | _⚡ Quick win_\n\n**Mark the old scope note as superseded.**\n\nThe “no custom `checkedValue`” wording is narrower than the implemented contract: exact matching applies when either custom value is configured. Keep this historical plan text, but mark it superseded and point readers to `docs/design/sheets/data-validation.md`.\nBased on learnings, outdated behavior text in `docs/tasks/active/` should be marked superseded and linked to the authoritative design document.\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md` around lines\n25 - 26, Mark the scope note in the task document as superseded rather than\npresenting it as current behavior. Update the wording to reflect that exact\nstring matching applies when either custom checkbox value is configured, and\nlink readers to docs/design/sheets/data-validation.md as the authoritative\ncontract while preserving the historical plan text.\n```\n\n</details>\n\n<!-- fingerprinting:phantom:poseidon:luna -->\n\n<!-- cr-indicator-types:potential_issue -->\n\n<!-- cr-comment:v1:16c81a53e20b05983d5be109 -->\n\n_Source: Learnings_\n\n<!-- This is an auto-generated reply by CodeRabbit -->\n\n✅ Confirmed as addressed by @hackerwins\n\n<!-- This is an auto-generated comment by CodeRabbit -->",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "inline-comment",
+   "tier": "",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "maintainability & code quality",
+   "effort": "quick win",
+   "lens": "",
+   "stated_severity": "minor",
+   "severity_basis": "header-field",
+   "comment_id": "3566343388",
+   "review_id": "4680080028",
+   "posted_at": "2026-07-12T12:59:36Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/471#discussion_r3566343388",
+   "at_commit": "42d17c8d81b9fa0bac6be942d06c3e1e455b1a94",
+   "current_commit": "e8e729031dae38a8ea612f5305729d2f78bd69d5",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "42d17c8d81b9fa0bac6be942d06c3e1e455b1a94",
+   "raw": {
+    "category": "maintainability & code quality",
+    "vocabulary": "chill",
+    "severity": "minor",
+    "severityRaw": "minor",
+    "effort": "quick win",
+    "vintage": "three-field",
+    "lens": "",
+    "summary": "Mark the old scope note as superseded.",
+    "detail": "**Mark the old scope note as superseded.** The “no custom `checkedValue`” wording is narrower than the implemented contract: exact matching applies when either custom value is configured. Keep this historical plan text, but mark it superseded and point readers to `docs/design/sheets/data-validation.md`. Based on learnings, outdated behavior text in `docs/tasks/active/` should be marked superseded and linked to the authoritative design document.",
+    "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+    "line": 25,
+    "evidence": "_📐 Maintainability & Code Quality_ | _🟡 Minor_ | _⚡ Quick win_\n\n**Mark the old scope note as superseded.**\n\nThe “no custom `checkedValue`” wording is narrower than the implemented contract: exact matching applies when either custom value is configured. Keep this historical plan text, but mark it superseded and point readers to `docs/design/sheets/data-validation.md`.\nBased on learnings, outdated behavior text in `docs/tasks/active/` should be marked superseded and linked to the authoritative design document.\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md` around lines\n25 - 26, Mark the scope note in the task document as superseded rather than\npresenting it as current behavior. Update the wording to reflect that exact\nstring matching applies when either custom checkbox value is configured, and\nlink readers to docs/design/sheets/data-validation.md as the authoritative\ncontract while preserving the historical plan text.\n```\n\n</details>\n\n<!-- fingerprinting:phantom:poseidon:luna -->\n\n<!-- cr-indicator-types:potential_issue -->\n\n<!-- cr-comment:v1:16c81a53e20b05983d5be109 -->\n\n_Source: Learnings_\n\n<!-- This is an auto-generated reply by CodeRabbit -->\n\n✅ Confirmed as addressed by @hackerwins\n\n<!-- This is an auto-generated comment by CodeRabbit -->"
+   }
+  }
+ },
+ "diff_sha256": "sha256:6d875f999c40e43aefb3f3ce3987dcda2b565bfbfffec056aaf2152b16eacf1f",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:03.992Z"
+}

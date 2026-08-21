@@ -1,0 +1,153 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "173a4647bff1",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A concerns fragile exact-string URL matching for raw-body capture in main.ts affecting webhook signature verification; Finding B asks to reword a design doc sentence about updatedAt bumps for empty PATCH requests. Different files, different problems; fixing either leaves the other untouched.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-465",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/backend/src/main.ts::raw-body capture keyed on an exact-string url match while express route matching is case-insensitive and trailing-slash-tolerant — security-critical wiring that can silently drift",
+  "file": "packages/backend/src/main.ts",
+  "line": 51,
+  "summary": "Raw-body capture keyed on an exact-string URL match while Express route matching is case-insensitive and trailing-slash-tolerant — security-critical wiring that can silently drift",
+  "evidence": "main.ts:51 gates the capture on `req.url?.split('?', 1)[0] === '/internal/yorkie/events'`, but the Nest/Express router (default `caseSensitive: false`, `strict: false`) also matches `/Internal/Yorkie/Events` and `/internal/yorkie/events/`. Those variants reach the controller with `rawBody === undefined`, and the guard then throws `UnauthorizedException` (yorkie-signature.guard.ts:49-51) — so the mismatch fails *closed* and is not a bypass today. It is still fragile: adding `setGlobalPrefix`, an ingress path rewrite, or renaming the controller path silently turns every legitimate webhook into a 401 (Yorkie retry storm), and the pressure to 'fix' that is pressure to weaken the guard. Deriving the constant from the controller path, or matching case-insensitively with the trailing slash normalized, removes the coupling.",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "does-not-gate",
+  "gating_basis": "non-blocking-severity",
+  "panel": {
+   "lens": "security",
+   "lane": null,
+   "novelty": null,
+   "unsettled": false,
+   "verification": null,
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "minor",
+    "confidence": "medium",
+    "claimType": "presence",
+    "file": "packages/backend/src/main.ts",
+    "line": 51,
+    "summary": "Raw-body capture keyed on an exact-string URL match while Express route matching is case-insensitive and trailing-slash-tolerant — security-critical wiring that can silently drift",
+    "evidence": "main.ts:51 gates the capture on `req.url?.split('?', 1)[0] === '/internal/yorkie/events'`, but the Nest/Express router (default `caseSensitive: false`, `strict: false`) also matches `/Internal/Yorkie/Events` and `/internal/yorkie/events/`. Those variants reach the controller with `rawBody === undefined`, and the guard then throws `UnauthorizedException` (yorkie-signature.guard.ts:49-51) — so the mismatch fails *closed* and is not a bypass today. It is still fragile: adding `setGlobalPrefix`, an ingress path rewrite, or renaming the controller path silently turns every legitimate webhook into a 401 (Yorkie retry storm), and the pressure to 'fix' that is pressure to weaken the guard. Deriving the constant from the controller path, or matching case-insensitively with the trailing slash normalized, removes the coupling.",
+    "searchedFor": [],
+    "lens": "security"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-465",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "docs/design/documents-last-modified.md::document the empty-patch exception.",
+  "file": "docs/design/documents-last-modified.md",
+  "line": 73,
+  "summary": "Document the empty-PATCH exception.",
+  "evidence": "_🗄️ Data Integrity & Integration_ | _🟡 Minor_ | _⚡ Quick win_\n\n**Document the empty-PATCH exception.**\n\nThis says every metadata update bumps `updatedAt`, but the implementation intentionally skips the bump for empty PATCH requests. Qualify this as “every non-empty metadata update” to keep the design contract accurate.\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@docs/design/documents-last-modified.md` around lines 73 - 76, The\ndocumentation’s claim about every metadata update bumping updatedAt is\ninaccurate because empty PATCH requests are excluded; update the “Non-content\nupdates” section to say “every non-empty metadata update” and preserve the\nexisting rename behavior description.\n```\n\n</details>\n\n<!-- fingerprinting:phantom:triton:luna -->\n\n<!-- cr-indicator-types:potential_issue -->\n\n<!-- cr-comment:v1:bb28f161cdef4db2adc47d60 -->\n\n<!-- This is an auto-generated reply by CodeRabbit -->\n\n✅ Addressed in commit d0894e2",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "inline-comment",
+   "tier": "",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "data integrity & integration",
+   "effort": "quick win",
+   "lens": "",
+   "stated_severity": "minor",
+   "severity_basis": "header-field",
+   "comment_id": "3563041423",
+   "review_id": "4676349188",
+   "posted_at": "2026-07-11T03:24:46Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/465#discussion_r3563041423",
+   "at_commit": "49f4fc8221a0e5588624194e8e86252b056d1049",
+   "current_commit": "49f4fc8221a0e5588624194e8e86252b056d1049",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "49f4fc8221a0e5588624194e8e86252b056d1049",
+   "raw": {
+    "category": "data integrity & integration",
+    "vocabulary": "chill",
+    "severity": "minor",
+    "severityRaw": "minor",
+    "effort": "quick win",
+    "vintage": "three-field",
+    "lens": "",
+    "summary": "Document the empty-PATCH exception.",
+    "detail": "**Document the empty-PATCH exception.** This says every metadata update bumps `updatedAt`, but the implementation intentionally skips the bump for empty PATCH requests. Qualify this as “every non-empty metadata update” to keep the design contract accurate.",
+    "file": "docs/design/documents-last-modified.md",
+    "line": 73,
+    "evidence": "_🗄️ Data Integrity & Integration_ | _🟡 Minor_ | _⚡ Quick win_\n\n**Document the empty-PATCH exception.**\n\nThis says every metadata update bumps `updatedAt`, but the implementation intentionally skips the bump for empty PATCH requests. Qualify this as “every non-empty metadata update” to keep the design contract accurate.\n\n<details>\n<summary>🤖 Prompt for AI Agents</summary>\n\n```\nVerify each finding against current code. Fix only still-valid issues, skip the\nrest with a brief reason, keep changes minimal, and validate.\n\nIn `@docs/design/documents-last-modified.md` around lines 73 - 76, The\ndocumentation’s claim about every metadata update bumping updatedAt is\ninaccurate because empty PATCH requests are excluded; update the “Non-content\nupdates” section to say “every non-empty metadata update” and preserve the\nexisting rename behavior description.\n```\n\n</details>\n\n<!-- fingerprinting:phantom:triton:luna -->\n\n<!-- cr-indicator-types:potential_issue -->\n\n<!-- cr-comment:v1:bb28f161cdef4db2adc47d60 -->\n\n<!-- This is an auto-generated reply by CodeRabbit -->\n\n✅ Addressed in commit d0894e2"
+   }
+  }
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:03.961Z"
+}

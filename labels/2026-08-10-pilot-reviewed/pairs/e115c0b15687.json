@@ -1,0 +1,159 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "e115c0b15687",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-465",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A is about the v1 REST list endpoint lacking orderBy and rest-api.md not documenting the new updatedAt field; Finding B is about using findUniqueOrThrow instead of an empty-data prisma.document.update in the service. Neither fix discharges the other.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-465",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/backend/src/api/v1/documents.controller.ts::rest v1 documents list left unordered and now silently exposes the new updatedat field; rest-api.md not updated",
+  "file": "packages/backend/src/api/v1/documents.controller.ts",
+  "line": 29,
+  "summary": "REST v1 documents list left unordered and now silently exposes the new updatedAt field; rest-api.md not updated",
+  "evidence": "The v1 list call (api/v1/documents.controller.ts:29-38) passes no `orderBy` at all, so the public API list order still diverges from the UI list's new `[{updatedAt desc},{createdAt desc}]`, while the raw Prisma row it returns now includes the new `updatedAt` column. docs/design/rest-api.md's Document schema (line ~61) documents only `createdAt`, so the API surface change is undocumented.",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "does-not-gate",
+  "gating_basis": "non-blocking-severity",
+  "panel": {
+   "lens": "design-fit",
+   "lane": null,
+   "novelty": null,
+   "unsettled": false,
+   "verification": null,
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "minor",
+    "confidence": "medium",
+    "claimType": "absence",
+    "file": "packages/backend/src/api/v1/documents.controller.ts",
+    "line": 29,
+    "summary": "REST v1 documents list left unordered and now silently exposes the new updatedAt field; rest-api.md not updated",
+    "evidence": "The v1 list call (api/v1/documents.controller.ts:29-38) passes no `orderBy` at all, so the public API list order still diverges from the UI list's new `[{updatedAt desc},{createdAt desc}]`, while the raw Prisma row it returns now includes the new `updatedAt` column. docs/design/rest-api.md's Document schema (line ~61) documents only `createdAt`, so the API surface change is undocumented.",
+    "searchedFor": [
+     "Grep 'orderBy' across packages/backend/src",
+     "Read api/v1/documents.controller.ts:30-90",
+     "Grep 'updatedAt|createdAt' in docs/design/rest-api.md"
+    ],
+    "lens": "design-fit"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-465",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "packages/backend/src/document/document.service.ts::consider using `finduniqueorthrow` for the empty-data path instead of `prisma.document.update({ data: {} })`.",
+  "file": "packages/backend/src/document/document.service.ts",
+  "line": 93,
+  "summary": "Consider using `findUniqueOrThrow` for the empty-data path instead of `prisma.document.update({ data: {} })`.",
+  "evidence": "**Consider using `findUniqueOrThrow` for the empty-data path instead of `prisma.document.update({ data: {} })`.** When `data` is empty, the current code calls `prisma.document.update({ data: {}, where })`. Prisma 6.6.0 may reject an empty `data` object at the client-validation level or generate invalid SQL (an `UPDATE` with no `SET` columns). The test mocks `prisma.document.update` so it wouldn't catch a real runtime failure. Returning the existing row via `findUniqueOrThrow` avoids the risk entirely and skips a needless write.",
+  "severity": "nit",
+  "severity_raw": "nit",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "review-body",
+   "tier": "nitpick",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "stability & availability",
+   "effort": "quick win",
+   "lens": "",
+   "stated_severity": "trivial",
+   "severity_basis": "header-field",
+   "comment_id": null,
+   "review_id": "4676349188",
+   "posted_at": "2026-07-11T03:24:47Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/465#pullrequestreview-4676349188",
+   "at_commit": "49f4fc8221a0e5588624194e8e86252b056d1049",
+   "current_commit": "49f4fc8221a0e5588624194e8e86252b056d1049",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "49f4fc8221a0e5588624194e8e86252b056d1049",
+   "raw": {
+    "tier": "nitpick",
+    "file": "packages/backend/src/document/document.service.ts",
+    "locator": "93-101",
+    "category": "stability & availability",
+    "vocabulary": "chill",
+    "severity": "nit",
+    "severityRaw": "trivial",
+    "effort": "quick win",
+    "vintage": "three-field",
+    "lens": "",
+    "summary": "Consider using `findUniqueOrThrow` for the empty-data path instead of `prisma.document.update({ data: {} })`.",
+    "detail": "**Consider using `findUniqueOrThrow` for the empty-data path instead of `prisma.document.update({ data: {} })`.** When `data` is empty, the current code calls `prisma.document.update({ data: {}, where })`. Prisma 6.6.0 may reject an empty `data` object at the client-validation level or generate invalid SQL (an `UPDATE` with no `SET` columns). The test mocks `prisma.document.update` so it wouldn't catch a real runtime failure. Returning the existing row via `findUniqueOrThrow` avoids the risk entirely and skips a needless write.",
+    "line": 93,
+    "evidence": "**Consider using `findUniqueOrThrow` for the empty-data path instead of `prisma.document.update({ data: {} })`.** When `data` is empty, the current code calls `prisma.document.update({ data: {}, where })`. Prisma 6.6.0 may reject an empty `data` object at the client-validation level or generate invalid SQL (an `UPDATE` with no `SET` columns). The test mocks `prisma.document.update` so it wouldn't catch a real runtime failure. Returning the existing row via `findUniqueOrThrow` avoids the risk entirely and skips a needless write."
+   }
+  }
+ },
+ "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:04.004Z"
+}

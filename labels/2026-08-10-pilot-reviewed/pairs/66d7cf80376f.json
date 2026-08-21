@@ -1,0 +1,158 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "66d7cf80376f",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A concerns a missing unit test for safeFilename's new \"pptx\" extension branch in export-utils.ts; Finding B concerns a markdown line break making \"Modern Writer\" look like two themes in a docs file. Unrelated files and unrelated fixes.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-429",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/frontend/src/app/docs/export-utils.ts::`safefilename` extension union widened to \"pptx\" with no unit test for the function",
+  "file": "packages/frontend/src/app/docs/export-utils.ts",
+  "line": 145,
+  "summary": "`safeFilename` extension union widened to \"pptx\" with no unit test for the function",
+  "evidence": "`safeFilename` handles sanitization of unsafe chars, the \"document\" fallback, and case-insensitive extension de-duplication — all download-visible behavior — and is now extended to a third extension. Grep for `safeFilename` returns only src files (`export-utils.ts`, `pdf-actions.ts`, `docx-actions.ts`, `pptx-actions.ts`) and docs/task markdown; no test file references it. A trivial table test over docx/pdf/pptx (e.g. title already ending in \".PPTX\") would cover the new branch; none exists.",
+  "severity": "minor",
+  "severity_raw": "minor",
+  "gating": "does-not-gate",
+  "gating_basis": "non-blocking-severity",
+  "panel": {
+   "lens": "test-adequacy",
+   "lane": null,
+   "novelty": null,
+   "unsettled": false,
+   "verification": null,
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "minor",
+    "confidence": "high",
+    "claimType": "absence",
+    "file": "packages/frontend/src/app/docs/export-utils.ts",
+    "line": 145,
+    "summary": "`safeFilename` extension union widened to \"pptx\" with no unit test for the function",
+    "evidence": "`safeFilename` handles sanitization of unsafe chars, the \"document\" fallback, and case-insensitive extension de-duplication — all download-visible behavior — and is now extended to a third extension. Grep for `safeFilename` returns only src files (`export-utils.ts`, `pdf-actions.ts`, `docx-actions.ts`, `pptx-actions.ts`) and docs/task markdown; no test file references it. A trivial table test over docx/pdf/pptx (e.g. title already ending in \".PPTX\") would cover the new branch; none exists.",
+    "searchedFor": [
+     "Grep safeFilename repo-wide",
+     "Glob packages/frontend tests for export-utils"
+    ],
+    "lens": "test-adequacy"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-429",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "packages/documentation/slides/themes-and-layouts.md::verify \"modern writer\" rendering doesn't split into two themes.",
+  "file": "packages/documentation/slides/themes-and-layouts.md",
+  "line": 17,
+  "summary": "Verify \"Modern Writer\" rendering doesn't split into two themes.",
+  "evidence": "**Verify \"Modern Writer\" rendering doesn't split into two themes.** The line break between \"Modern\" and \"Writer\" (lines 23-24) could be misread as two separate themes. Consider keeping it on one line or using a non-breaking space.",
+  "severity": "nit",
+  "severity_raw": "nit",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "review-body",
+   "tier": "nitpick",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "maintainability & code quality",
+   "effort": "low value",
+   "lens": "",
+   "stated_severity": "trivial",
+   "severity_basis": "header-field",
+   "comment_id": null,
+   "review_id": "4587801262",
+   "posted_at": "2026-06-28T16:28:22Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/429#pullrequestreview-4587801262",
+   "at_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "current_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "raw": {
+    "tier": "nitpick",
+    "file": "packages/documentation/slides/themes-and-layouts.md",
+    "locator": "17-28",
+    "category": "maintainability & code quality",
+    "vocabulary": "chill",
+    "severity": "nit",
+    "severityRaw": "trivial",
+    "effort": "low value",
+    "vintage": "three-field",
+    "lens": "",
+    "summary": "Verify \"Modern Writer\" rendering doesn't split into two themes.",
+    "detail": "**Verify \"Modern Writer\" rendering doesn't split into two themes.** The line break between \"Modern\" and \"Writer\" (lines 23-24) could be misread as two separate themes. Consider keeping it on one line or using a non-breaking space.",
+    "line": 17,
+    "evidence": "**Verify \"Modern Writer\" rendering doesn't split into two themes.** The line break between \"Modern\" and \"Writer\" (lines 23-24) could be misread as two separate themes. Consider keeping it on one line or using a non-breaking space."
+   }
+  }
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:03.983Z"
+}

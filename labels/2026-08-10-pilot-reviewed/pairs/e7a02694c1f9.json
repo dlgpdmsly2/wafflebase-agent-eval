@@ -1,0 +1,173 @@
+{
+ "schema": "pair-label",
+ "schema_version": 1,
+ "pair_key": "e7a02694c1f9",
+ "pair_key_vintage": "harvest.mjs:73890e38146d eval/adapters/coderabbit.mjs:37af27a8bebf eval/finding-record.mjs:ec6120a74bb3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "run_id": "pilot-01__k2",
+ "item_id": "pr-429",
+ "rubric": "one-fix-discharges-both",
+ "rubric_definition": "After you make the edit that one reviewer is asking for, does the other reviewer's comment still stand? If it is discharged too, the two findings are one defect; if it survives, they are different defects that share a location. If a reviewer offers two alternative fixes, either one discharging the other comment makes it one defect. Contradictory prescriptions to the same lines are different defects, because no single edit satisfies both.",
+ "verdict": "different",
+ "label_source": "silver",
+ "annotators": [
+  "claude-opus-5"
+ ],
+ "confidence": "high",
+ "evidence": "Finding A is about missing test coverage for the new exportSlidesPptxAndDownload adapter in packages/frontend/src/app/slides/pptx-actions.ts; Finding B is about an inconsistent Phase 2 status line in docs/tasks/active/20260628-homepage-refresh-todo.md. Neither location nor defect overlaps, and fixing one leaves the other standing.",
+ "adjudication_basis": {
+  "shown": [
+   "item",
+   "both files and lines",
+   "both severities",
+   "panel summary",
+   "panel evidence",
+   "coderabbit title",
+   "coderabbit detail prose"
+  ],
+  "not_shown": [
+   "the diff",
+   "the matcher's verdict",
+   "the matcher's score, method and reason",
+   "score/tokens/loc/symbolOverlap",
+   "sibling pairs of either finding",
+   "any existing label for this pair",
+   "the panel's lens, lane, verification, gating or novelty"
+  ],
+  "set": "pair-adjudicate:open-findings",
+  "coderabbit_detail_available": true
+ },
+ "panel": {
+  "schema_version": 1,
+  "arm": "panel",
+  "item_id": "pr-429",
+  "run_id": "pilot-01__k2",
+  "population": "reported",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::new `exportslidespptxanddownload` ships with no test at all",
+  "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+  "line": 85,
+  "summary": "New `exportSlidesPptxAndDownload` ships with no test at all",
+  "evidence": "The new frontend export path (blob MIME `application/vnd...presentationml.presentation`, `safeFilename(title,\"pptx\")`, and the `fetchImage` adapter that wraps `docsImageFetcher` and falls back to `mime: \"image/png\"` when `blob.type` is empty) has no test. I globbed all frontend test files (`packages/frontend/**/*{test,spec}*`) — there is no `pptx-actions`, `pdf-actions`, `docx-actions` or `export-utils` test; grep for `exportPptx` finds tests only in `packages/slides/test/export/pptx/*` and `packages/cli/test/slides-export.test.ts`, which exercise the library/CLI paths, not this adapter. The adapter's own logic (arrayBuffer→Uint8Array, mime fallback, progress forwarding) is therefore uncovered and can regress silently; frontend also has no tsc lane, so nothing checks it.",
+  "severity": "major",
+  "severity_raw": "major",
+  "gating": "gates",
+  "gating_basis": "lane-blocking",
+  "panel": {
+   "lens": "test-adequacy",
+   "lane": "blocking",
+   "novelty": {
+    "origin": "introduced",
+    "addedBy": "2500a59b4035fd2b3cc88625f5c821ff07eac43d",
+    "contentSha": "2500a59b4035fd2b3cc88625f5c821ff07eac43d",
+    "alsoAt": null
+   },
+   "unsettled": false,
+   "verification": "confirmed-high",
+   "samples": null,
+   "gate_state": "on",
+   "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+   "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0",
+   "item_status": "ok",
+   "item_reason": null,
+   "raw": {
+    "severity": "major",
+    "confidence": "high",
+    "claimType": "absence",
+    "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+    "line": 85,
+    "summary": "New `exportSlidesPptxAndDownload` ships with no test at all",
+    "evidence": "The new frontend export path (blob MIME `application/vnd...presentationml.presentation`, `safeFilename(title,\"pptx\")`, and the `fetchImage` adapter that wraps `docsImageFetcher` and falls back to `mime: \"image/png\"` when `blob.type` is empty) has no test. I globbed all frontend test files (`packages/frontend/**/*{test,spec}*`) — there is no `pptx-actions`, `pdf-actions`, `docx-actions` or `export-utils` test; grep for `exportPptx` finds tests only in `packages/slides/test/export/pptx/*` and `packages/cli/test/slides-export.test.ts`, which exercise the library/CLI paths, not this adapter. The adapter's own logic (arrayBuffer→Uint8Array, mime fallback, progress forwarding) is therefore uncovered and can regress silently; frontend also has no tsc lane, so nothing checks it.",
+    "searchedFor": [
+     "Grep exportPptx (repo-wide)",
+     "Grep safeFilename (repo-wide)",
+     "Glob packages/frontend/**/*{test,spec}*",
+     "Glob/inspect packages/frontend/tests/app/slides/**"
+    ],
+    "lane": "blocking",
+    "novelty": {
+     "origin": "introduced",
+     "addedBy": "2500a59b4035fd2b3cc88625f5c821ff07eac43d",
+     "contentSha": "2500a59b4035fd2b3cc88625f5c821ff07eac43d",
+     "alsoAt": null
+    },
+    "verification": "confirmed-high",
+    "lens": "test-adequacy"
+   }
+  }
+ },
+ "coderabbit": {
+  "schema_version": 1,
+  "arm": "coderabbit",
+  "item_id": "pr-429",
+  "run_id": null,
+  "population": "reported",
+  "finding_key": "docs/tasks/active/20260628-homepage-refresh-todo.md::clarify phase 2 completion status.",
+  "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+  "line": 146,
+  "summary": "Clarify Phase 2 completion status.",
+  "evidence": "**Clarify Phase 2 completion status.** The status at Line 148 says \"Phase 2 (docs) in progress,\" yet all Phase 2 checkboxes (Lines 93–134) are marked `[x]` complete. If Phase 2 is fully done, update the status to match. If docs work remains open, uncheck the relevant items.",
+  "severity": "nit",
+  "severity_raw": "nit",
+  "gating": "not-applicable",
+  "gating_basis": "no-gate-in-arm",
+  "coderabbit": {
+   "source": "review-body",
+   "tier": "nitpick",
+   "vintage": "three-field",
+   "vocabulary": "chill",
+   "category": "maintainability & code quality",
+   "effort": "low value",
+   "lens": "",
+   "stated_severity": "trivial",
+   "severity_basis": "header-field",
+   "comment_id": null,
+   "review_id": "4587801262",
+   "posted_at": "2026-06-28T16:28:22Z",
+   "url": "https://github.com/wafflebase/wafflebase/pull/429#pullrequestreview-4587801262",
+   "at_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "current_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "window": "in-window",
+   "window_basis": "commit-is-review-commit",
+   "review_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+   "raw": {
+    "tier": "nitpick",
+    "file": "docs/tasks/active/20260628-homepage-refresh-todo.md",
+    "locator": "146-184",
+    "category": "maintainability & code quality",
+    "vocabulary": "chill",
+    "severity": "nit",
+    "severityRaw": "trivial",
+    "effort": "low value",
+    "vintage": "three-field",
+    "lens": "",
+    "summary": "Clarify Phase 2 completion status.",
+    "detail": "**Clarify Phase 2 completion status.** The status at Line 148 says \"Phase 2 (docs) in progress,\" yet all Phase 2 checkboxes (Lines 93–134) are marked `[x]` complete. If Phase 2 is fully done, update the status to match. If docs work remains open, uncheck the relevant items.",
+    "line": 146,
+    "evidence": "**Clarify Phase 2 completion status.** The status at Line 148 says \"Phase 2 (docs) in progress,\" yet all Phase 2 checkboxes (Lines 93–134) are marked `[x]` complete. If Phase 2 is fully done, update the status to match. If docs work remains open, uncheck the relevant items."
+   }
+  }
+ },
+ "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+ "matcher": {
+  "verdict_at_label_time": "no",
+  "score": 0,
+  "reason": "no location tie and no shared anchor symbol",
+  "method": "L2-xsource"
+ },
+ "coderabbit_set_sha256": "sha256:d4fa58be28b736864095a0265be2e29f3141235d0f86f82ac3cbffa5883974a3",
+ "sampling": {
+  "rule": "open-findings",
+  "seed": "pair-adjudicate"
+ },
+ "adjudicator": {
+  "model": "claude-opus-5",
+  "effort": "high",
+  "driver": "pair-adjudicate.mjs",
+  "transport": "ask.mjs askStructured (Claude Agent SDK)",
+  "max_turns": 2,
+  "repo_access": false,
+  "cached_prefix": true
+ },
+ "harness": "pair-adjudicate",
+ "labeled_at_utc": "2026-08-21T06:41:03.996Z"
+}
