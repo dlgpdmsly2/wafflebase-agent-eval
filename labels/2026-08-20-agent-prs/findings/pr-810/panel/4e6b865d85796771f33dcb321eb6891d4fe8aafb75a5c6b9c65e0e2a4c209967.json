@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/model/color.ts::`resolvestoredcolor` only collapses the bare `''` before the resolver, so the `{ kind: 'srgb', value: '' }` form the docstring calls reachable lands on the docs default instead of the theme color",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:1"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "packages/docs/src/model/color.ts: `resolveStoredColor` is `resolve(c === '' ? undefined : c) || undefined`, so only the bare string '' is normalized before the resolver; `{ kind: 'srgb', value: '' }` reaches the resolver intact, resolves to '' (defaultColorResolver returns c.value verbatim), and is only dropped after — meaning callers fall back to theme.defaultColor rather than a theme-aware resolver's \"no color set\" branch. The PR's own docstring says normalizing only after would \"paint near-black text on a dark deck\", and its own slides test declares the object form a reachable #728 shape, so the asymmetry is a real gap by the PR's own model. Confidence is medium because slides' makeColorResolver and the theme object slides passes to renderRun were not readable in this environment, so I could not confirm the dark-deck consequence end-to-end.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

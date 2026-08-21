@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-862",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/store/block-helpers.ts::heading memory propagates to every sibling bullet on split, so un-bulleting a list started from a heading turns plain body items into headings",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against block-helpers.ts (~line 260): applySplitBlock retains after.headingLevel for any newBlockType === 'list-item', including an Enter-at-end split that creates a fresh empty bullet; the new test (list-heading-roundtrip.test.ts:189-207) confirms the new empty bullet carries headingLevel and restores to a heading. Since nothing clears headingLevel when the user types body text into that fresh bullet, un-listing via unlistedBlockType (types.ts:340-348) promotes pure body-text items to headings, exactly as claimed. This propagation is intentional (documented in docs.md and locked in by tests), but the described surprising behavior — invisible heading memory riding onto newly created sibling bullets and converting user-typed body text into headings on un-list — is genuinely present in the code as written.",
+  "notes": null,
+  "diff_sha256": "sha256:38089d0e3481456bf46377ddd5a3eb74189cea39b5f3366ee11f4f510e9fa79c",
+  "class_id": null,
+  "class_members": null
+}

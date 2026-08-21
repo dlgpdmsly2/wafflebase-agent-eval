@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-873",
+  "arm": "panel",
+  "finding_key": "packages/sheets/src/model/worksheet/sheet.ts::selectionrendersat's new format-aware check makes decrease reach a write that clobbers a neighbour's number format with `nf: 'number'`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Traced changeDecimals in the diff: the explicit-write fallback builds nf: 'number' from the active cell alone and calls setRangeStyle, which per the design doc and the PR's own test (\"should not strip decimals another cell in the selection set deeper\", where B1's dp:5 is overwritten to dp:0) rewrites conflicting cell-level keys to the patch values. In the cited test at decimals.test.ts:504-517 (plain A1 {dp:1} + B1 {dp:1, nf:'percent'}), the unset refuses via unsetKeepsRendering and the fallback writes {dp:0, nf:'number'}, converting B1's percent to number — and the test asserts only dp===0, so the lost format is uncaught, contradicting the PR's stated guarantee that formatted neighbours are not stripped. The claim's \"newly widens the path\" framing is inaccurate (pre-PR decreaseDecimals did the same write unconditionally, so the PR narrows rather than widens it), but the described defect is present in the code as written. Confidence is medium because applyStylePatchToExistingCells itself was not readable (no checkout); its overwrite-on-conflict behavior is inferred from the design doc and test evidence.",
+  "notes": null,
+  "diff_sha256": "sha256:729cb83a1f576206c1d4f1b92b0ef2d1f83d5ccf7edd801a5e998cc6b538d1a1",
+  "class_id": null,
+  "class_members": null
+}

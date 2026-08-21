@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-770",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/docs/image-fetcher.ts::`isprivatehost` omits several non-public address ranges (multicast, 240/4 + broadcast, 192.0.0.0/24, 198.18/15) and every ipv6 form that embeds an ipv4 address other than ::ffff:, so 6to4/nat64 spellings of the metadata endpoint pass the guard.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against isPrivateHost (image-fetcher.ts ~lines 84-109) and unwrapIpv4Mapped (~117). The IPv4 branch only enumerates 0/8,10/8,127/8,169.254/16,172.16-31,192.168/16,100.64/10 and returns false for everything else, so multicast (224/4), broadcast/reserved (240/4, 255.255.255.255), 192.0.0.0/24 and 198.18/15 pass. unwrapIpv4Mapped folds only the ::ffff: prefix, so NAT64 (64:ff9b::a9fe:a9fe) and 6to4 (2002:a9fe:a9fe::) embeddings of 169.254.169.254 return false. assertResolvedHostIsPublic early-returns for anything containing ':' (isIpLiteral), so the resolver half does not catch these literals either — the trace is correct. Real defect, but exploitability of the metadata read is niche (requires a NAT64/6to4 gateway); the common literal/::ffff:/DNS-resolved forms remain covered, so I rate it minor.",
+  "notes": null,
+  "diff_sha256": "sha256:c8d92aec1ba53fee531a623b425919c02a8f52c6e84365c25deec98bcb5d3e3d",
+  "class_id": null,
+  "class_members": null
+}

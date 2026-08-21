@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-809",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/lib/date-format-preference.ts::unguarded `localstorage.getitem` in `getdateformat` is called as the `usesyncexternalstore` snapshot on every render of the documents list and settings page; a storage securityerror takes the whole list down",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified against the supplied source: getDateFormat (date-format-preference.ts:31–34) does an unguarded localStorage.getItem and is used as the useSyncExternalStore snapshot (lines 56–58), executing during render of DateCell (document-list.tsx) and Settings (page.tsx:26). localStorage property access genuinely throws SecurityError in blocked-storage/sandboxed-iframe contexts (though the Safari-private-mode example is outdated), and no error boundary is visible, so a throw would crash the list. The defect is real but confined to restricted-storage environments; I could not verify the reviewer's claim that all other localStorage reads in the repo are guarded (no checkout available), so severity is judged minor rather than major.",
+  "notes": null,
+  "diff_sha256": "sha256:92a208497f492e55209063b742fcc904d92a0adfee8da93852390d8c80a4172a",
+  "class_id": null,
+  "class_members": null
+}

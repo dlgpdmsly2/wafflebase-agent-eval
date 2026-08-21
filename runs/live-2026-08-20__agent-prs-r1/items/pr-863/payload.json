@@ -1,0 +1,79 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/slides.ts",
+      "searchedFor": [],
+      "summary": "Design doc now asserts a blanket \"a dry run never reaches the network\" contract, but six sibling read commands outside the diff still fetch under --dry-run",
+      "evidence": "The change is accompanied by docs/design/cli.md:824-827 (\"Reads honour the flag too … A dry run never reaches the network, so it burns no rate limit and emits no access log even when the command is harmless\"), and the new test header repeats it. That universal claim is false for the read commands the diff did not touch, all of which call the client with no `opts.dryRun` guard: packages/cli/src/commands/slides.ts:40 (`slides list`), slides.ts:81 (`slides get`), packages/cli/src/commands/notes.ts:35 (`notes list`), notes.ts:76 (`notes get`), packages/cli/src/commands/files.ts:85 (`files list`), files.ts:105 (`files get`), and packages/cli/src/commands/sheets-export.ts:39 (`sheets export`, which issues GET /cells before writing the file). An agent that reads the new doc sentence and pre-flights `slides list --dry-run` or `sheets export … --dry-run` still hits the API — and `sheets export` additionally writes the output file. Fix belongs either on those call sites or on the new doc wording (narrow it to the four commands actually changed).",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "searchedFor": [
+        "grep dryRun across packages/cli/src",
+        "read notes.ts, files.ts, slides.ts, api-keys.ts, sheets-export.ts action bodies",
+        "grep docs/design/cli.md for dry-run"
+      ],
+      "summary": "New design-doc bullet overstates the behaviour: \"A dry run never reaches the network\" is now a universal claim, but many read commands still fetch under --dry-run",
+      "evidence": "The added bullet reads: \"Reads honour the flag too: `docs list`, `docs get`, `sheets tabs list`, and `sheets cells get` print their GET without fetching. A dry run never reaches the network, so it burns no rate limit and emits no access log even when the command is harmless.\" The second sentence is a blanket guarantee, yet in the same tree `notes list` (packages/cli/src/commands/notes.ts:35), `notes get` (:76), `slides list`/`slides get` (packages/cli/src/commands/slides.ts:35,76), `files list`/`files get` (packages/cli/src/commands/files.ts:85,105), `sheets export` (packages/cli/src/commands/sheets-export.ts:39) and `api-keys list` (packages/cli/src/commands/api-keys.ts:31) all issue the request regardless of `opts.dryRun`. A design doc that promises an invariant the implementation only partially satisfies is worse than an enumerated list; either scope the sentence to the four commands or cover the rest.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'dryRun' across packages/cli/src (api-keys.ts, ctx.ts, sheets-export.ts, status.ts, login.ts, logout.ts return no hits)",
+        "Read packages/cli/src/commands/api-keys.ts in full",
+        "Read packages/cli/src/commands/root.ts (global --dry-run declaration)",
+        "Grep 'api-keys' in packages/cli/src/schema/registry.ts for declared safety levels",
+        "Grep 'dry-run' in packages/cli/skills/SKILL.md and packages/cli/README.md",
+        "Grep 'dry-run|dry_run|dryRun' in docs/design/cli.md",
+        "Glob packages/cli/test/**/*.ts — no api-keys dry-run test exists"
+      ],
+      "summary": "`--dry-run` is silently ignored by `api-keys create` / `revoke` / `list`, so the documented \"preview a write first\" safety control mints or destroys a real credential",
+      "evidence": "This PR sweeps `--dry-run` across the remaining read commands and, at docs/design/cli.md:824-827, now states the contract unconditionally: \"A dry run never reaches the network, so it burns no rate limit and emits no access log.\" The credential-management commands are the one namespace that was never swept. `registerApiKeysCommand` never reads `opts.dryRun`: api-keys.ts:15-17 goes straight to `getClient(opts).createApiKey(name)`, :43-45 to `revokeApiKey(keyId)`, :29-31 to `listApiKeys()`. Commander accepts the global `--dry-run` on every subcommand (root.ts:75), so the flag parses and is discarded.\n\nAttack/failure chain: the CLI is explicitly aimed at agents, and the agent guidance says to preview writes with the flag — packages/cli/skills/SKILL.md:67 (\"For write operations, run with `--dry-run` first to show intent\"), docs/design/cli.md:905 (\"`write` … Agent should confirm or use `--dry-run` first\") and :1027. `wafflebase api-keys create ci-key --dry-run` therefore issues a live POST that mints a workspace-scoped API key and prints its secret (`schema/registry.ts:579` declares the response as `{ id, name, prefix, key }`) to stdout — into whatever agent transcript/CI log the user believed was showing an inert preview, with no revocation ever performed. `wafflebase api-keys revoke <id> --dry-run` (registry.ts:593 marks it `destructive`) irreversibly revokes the key the user was only asking to preview, breaking every consumer of that key. Both are credential-lifecycle side effects taken under a flag whose whole contract is \"no side effect\".\n\nEvery other write/destructive path in the CLI honours the flag (cells.ts:62/95/143, tabs.ts:47/71, docs.ts:108/143/161, files.ts:118/136, docs|notes|slides import), which is what makes the gap read as covered.",
+      "lens": "security"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/http-client.ts",
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "Document/tab/cell identifiers are interpolated into request paths unencoded, so a crafted identifier redirects the authenticated request to an arbitrary path on the configured server (mirrored verbatim by the new dry-run preview)"
+        }
+      ],
+      "summary": "Document/tab/cell identifiers are interpolated into request paths without encodeURIComponent, so a caller-supplied id can retarget the credentialed request outside the workspace scope (path traversal / request-target injection)",
+      "evidence": "`getDocument(id)` builds `GET ${base}/documents/${id}` with no encoding (http-client.ts:199); same pattern at :330 listTabs, :340/:342 getCells (docId/tabId raw, only `range` encoded), :345 getCell, :348 setCell, :354 deleteCell, :361 batchCells. `base` is `${server}/api/v1/workspaces/${workspace}` (:82-85). `fetch` parses the string with the WHATWG URL parser, which collapses dot segments, so `docId = \"../../../../workspaces/victim-ws/api-keys\"` turns `wafflebase docs get <id>` into `GET ${server}/workspaces/victim-ws/api-keys` with the user's `Authorization: Bearer ...` header attached — i.e. the client-side workspace scoping in the path is bypassable and any endpoint on the configured host can be reached with the caller's credentials (only server-side authz stands between). The boundary is real because the CLI is explicitly built to be driven by agents (docs/design/cli.md:22-26, 1024-1029), which routinely pass document ids taken from untrusted content; the CLI then acts as a confused deputy. `downloadFileDocument` already uses `encodeURIComponent(docId)` (:254), showing the intended convention the other builders skip. The change under review propagates the same unencoded interpolation into new code (cells.ts:24, docs.ts:126, tabs.ts:15). Confidence is medium because exploitability depends on the backend's own authorization on the reached endpoint and on ids coming from an untrusted source.",
+      "lens": "security"
+    },
+    {
+      "severity": "critical",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'dryRun' in packages/cli/src (no hits in commands/api-keys.ts)",
+        "Read packages/cli/src/commands/api-keys.ts in full",
+        "Grep 'dry_run|dryRun|dry-run' in packages/cli/src/commands/schema.ts (no per-command annotation)"
+      ],
+      "summary": "`api-keys revoke`/`create` still ignore `--dry-run` and execute the mutation",
+      "evidence": "This change adds `opts.dryRun` short-circuits to read commands, but `registerApiKeysCommand` has no `dryRun` check at all: `api-keys create <name>` (api-keys.ts:17 → `createApiKey`) and `api-keys revoke <key-id>` (api-keys.ts:45 → `revokeApiKey`, a DELETE) run the real request under `--dry-run`. A user (or agent) previewing `wafflebase api-keys revoke k-1 --dry-run` irreversibly revokes the key, even though the global flag is documented as 'Show request without executing' (root.ts:75) and docs/design/cli.md advertises dry-run as a first-class agent affordance. A grep for `dryRun` across packages/cli/src returns zero hits in api-keys.ts.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/notes.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'dryRun' across packages/cli/src to enumerate commands with/without the guard",
+        "Read packages/cli/src/commands/notes.ts, slides.ts (lines 20-150), files.ts in full"
+      ],
+      "summary": "The same `--dry-run`-still-fetches bug is left unfixed in notes/slides/files read commands",
+      "evidence": "The change fixes `docs list`, `docs get`, `tabs list` and `cells get`, but identical read commands elsewhere still hit the network under `--dry-run`: `notes get` (notes.ts:76 `getDocument`), `notes list` (notes.ts:35 `listDocuments`), `slides get` (slides.ts:81), `slides list` (slides.ts:40), `files list` (files.ts:85) and `files get` (files.ts:105). Each of these has no `opts.dryRun` branch, so `--dry-run` performs the very request it promises not to send — the same behavior this PR describes as a bug (burnt rate limit, access-log entry). The fix is partial and leaves the flag's semantics inconsistent across sibling namespaces.",
+      "lens": "correctness"
+    }
+  ]
+}

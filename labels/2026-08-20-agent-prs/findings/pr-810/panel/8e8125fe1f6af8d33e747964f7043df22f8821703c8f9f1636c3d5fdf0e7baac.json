@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/model/color.ts::new `isemptystoredcolor` dereferences an untrusted `storedcolor` without a type guard — a `null` color or an `{ kind: 'srgb', value: <non-string> }` persisted through the content put api throws a typeerror inside the paint path, crashing the renderer for every viewer of the document (stored dos).",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified against the supplied packages/docs/src/model/color.ts:59-63: `isEmptyStoredColor` checks `c === undefined` (strict) then dereferences `c.kind` / calls `c.value.trim()`, so `null` or a non-string `value` throws a TypeError; previously `defaultColorResolver`'s `c == null` loose check handled null safely, so this is a regression introduced on every paint path (renderRun, renderListMarker, table-renderer, resolveColorAtPosition). The cited backend persistence path (slides PUT validation gaps, writeSlidesRoot verbatim assignment) could not be checked because those files were not supplied, so the full stored-DoS exploit chain is plausible but unverified — hence medium confidence. The defect in the code as written is real regardless: the guard is not total over the untrusted inputs the PR itself claims to defend against.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

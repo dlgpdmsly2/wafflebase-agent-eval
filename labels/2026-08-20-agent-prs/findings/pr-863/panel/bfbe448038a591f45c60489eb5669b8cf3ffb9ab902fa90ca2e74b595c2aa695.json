@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::the url printed for headless copy-paste omits `clistate`, so the documented headless flow always produces an unbound callback and steers users to `--allow-unbound-callback`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in login.ts:72–90: the always-printed URL omits cliState and the full URL appears only in the catch around open(). The `open` package resolves without waiting for the opener to succeed, so on stub-xdg-open/WSL-style environments the user only sees the nonce-less URL; visiting it yields a redirect with no state (auth.controller.ts:127–133), which the listener rejects with UNBOUND_CALLBACK_MESSAGE (login.ts:257–265) blaming server version skew and recommending --allow-unbound-callback. The claim's \"always\" is slightly overstated (a genuinely failed open() prints the full URL), but the core defect — a copy-paste path the design doc still advertises (cli.md step 3) that produces a misleading error steering users to disable the injection binding — is present as described.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-770",
+  "arm": "panel",
+  "finding_key": "docs/design/cli.md::the two new error matrix rows contradict the rows and prose they sit next to instead of reconciling them. immediately below, `backend 5xx or network | 2 | system` and above, `backend 401/403 | 2 | unauthorized`; §8.1 (cli.md:780-782) and packages/cli/readme.md:127-128 both state `2` = system error (network, auth). the behaviour this delta generalises to *every* backend command is exit `1` with `http_error` (or a verbatim envelope) for 401/403/5xx alike — `forwardupstreamerror`/`outputerror` only ever set `process.exitcode = 1` (packages/cli/src/output/formatter.ts:62,175). since the pr is the change that makes this the universal path and it edits the very table that records the contract, the stale exit-2 rows should have been folded in or removed; as it stands the canonical design doc describes two mutually exclusive behaviours for the same http responses and an agent branching on exit code (which the doc explicitly invites) gets it wrong.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: the new rows in docs/design/cli.md's error matrix (exit 1, HTTP_ERROR or verbatim envelope, explicitly citing SESSION_EXPIRED) sit directly beside the retained `Backend 401/403 | 2 | UNAUTHORIZED` and `Backend 5xx or network | 2 | SYSTEM` rows, which describe the same HTTP responses with a different exit code. The code confirms the contradiction: forwardUpstreamError and outputError in packages/cli/src/output/formatter.ts only ever set process.exitCode = 1, and every command's !res.ok branch now routes through them (verified across all command files in the diff; upstream-error.test.ts asserts exitCode 1 for 404s, and output.test.ts asserts HTTP_ERROR/exit 1 for a 500). No path in the changed code produces exit 2 for backend 401/403/5xx, so the stale exit-2 rows and §8.1/README prose now describe behavior that cannot occur. Docs-only inconsistency, but misleading for the agent exit-code contract the doc itself promotes.",
+  "notes": null,
+  "diff_sha256": "sha256:c8d92aec1ba53fee531a623b425919c02a8f52c6e84365c25deec98bcb5d3e3d",
+  "class_id": null,
+  "class_members": null
+}

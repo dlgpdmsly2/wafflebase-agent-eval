@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::new cli hard-requires a `state` echo that older backends never send — version skew breaks `wafflebase login` against any deployed/self-hosted server that predates the backend half of this change",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified in packages/cli/src/commands/login.ts: the CLI unconditionally mints a nonce and startCallbackServer 400s any callback lacking a matching `state` (line ~206), then hangs until the 30s timeout with only a generic \"Login timed out\" message. The echo is emitted only by the new backend code (auth.controller.ts:127-134, conditional on a stored nonce), so a pre-change backend's genuine callback is rejected — the backend even made the nonce optional to protect old-CLI/new-backend skew, but nothing protects the reverse. The check itself is the intended security fix, but the absence of any diagnostic or version guard makes login silently break against older servers, exactly as claimed. Confidence is medium because I could not verify the cited self-hosting docs, though the CLI's configurable --server makes the skew scenario credible.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

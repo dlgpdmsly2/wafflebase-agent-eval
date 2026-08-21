@@ -1,0 +1,699 @@
+diff --git a/docs/design/cli.md b/docs/design/cli.md
+index 7dd366ac..dc9f3a69 100644
+--- a/docs/design/cli.md
++++ b/docs/design/cli.md
+@@ -929,6 +929,10 @@ is the agent interface. This approach has key advantages:
+   suppresses the "Exported to X" notice.
+ - Errors: a single JSON line on stderr with shape
+   `{"error":{"code":"…","message":"…","command":"docs.content"}}`.
++  `--quiet` does not suppress it — a non-zero exit with no bytes on
++  either stream leaves the caller with nothing to act on. Only progress
++  notices are display output; the envelope is the machine-readable
++  failure signal, and stderr already survives stdout redirection.
+ 
+ ### 10. Error Matrix
+ 
+diff --git a/docs/tasks/active/20260806-cli-quiet-preserves-body-lessons.md b/docs/tasks/active/20260806-cli-quiet-preserves-body-lessons.md
+new file mode 100644
+index 00000000..cdee0492
+--- /dev/null
++++ b/docs/tasks/active/20260806-cli-quiet-preserves-body-lessons.md
+@@ -0,0 +1,24 @@
++# Lessons — CLI `--quiet` preserves body and error envelope
++
++Issue: [#660](https://github.com/wafflebase/wafflebase/issues/660)
++
++## What we learned
++
++- A boolean flag named after a *display* concern (`quiet`) had been
++  threaded all the way down into the two functions that emit the
++  command's *data*. Every call site passed it, so the bug read as
++  intentional at each individual site — it only looked wrong against
++  the documented contract in `docs/design/cli.md` §9.
++- The fix that survives is deleting the parameter, not ignoring it.
++  A `quiet` argument that is accepted and dropped invites the next
++  reader to "restore" the check.
++- The rest of the CLI already had this right: `writeBinary` and
++  `runDocsContent` both gate only their stderr notices and always
++  write the bytes/text. The regression was isolated to
++  `output/formatter.ts`.
++
++## Follow-ups
++
++None. The error envelope in `docs/design/cli.md` §9 also documents a
++`command` field (`{"error":{"code","message","command":"docs.content"}}`)
++that `outputError` does not emit; that gap is out of scope here.
+diff --git a/docs/tasks/active/20260806-cli-quiet-preserves-body-todo.md b/docs/tasks/active/20260806-cli-quiet-preserves-body-todo.md
+new file mode 100644
+index 00000000..ac300531
+--- /dev/null
++++ b/docs/tasks/active/20260806-cli-quiet-preserves-body-todo.md
+@@ -0,0 +1,53 @@
++# CLI: `--quiet` must preserve the result body and the error envelope
++
++Issue: [#660](https://github.com/wafflebase/wafflebase/issues/660)
++
++## Problem
++
++`--quiet` currently suppresses *everything*, not just progress notices:
++
++- `wafflebase schema --quiet` exits 0 with 0 bytes on stdout — the body
++  is discarded, so `... --quiet > out.json` silently writes an empty file.
++- A failing command under `--quiet` exits non-zero with 0 bytes on both
++  stdout and stderr — no machine-readable diagnostic at all.
++
++The documented contract (`docs/design/cli.md` §9) is the opposite:
++`--quiet` suppresses progress notices but **preserves the body**.
++
++The two offenders live in `packages/cli/src/output/formatter.ts`:
++`output()` early-returns on `quiet`, and `outputError()` sets
++`process.exitCode = 1` and returns without emitting the envelope.
++
++## Plan
++
++1. `output(data, fmt)` — drop the `quiet` parameter; always print the body.
++2. `outputError(error)` — drop the `quiet` parameter; always emit the
++   `{"error":{code,message}}` envelope on stderr and set exit code 1.
++   Removing the parameter (rather than ignoring it) keeps a dead
++   `quiet` argument from being threaded back in later.
++3. Update every call site in `packages/cli/src/commands/*` and
++   `packages/cli/src/**` accordingly.
++4. Reword the `--quiet` flag help from "Suppress output" to something
++   that states what it actually gates.
++5. Leave every other `quiet` check alone — the stderr notices in
++   `docs/content.ts`, `output/binary.ts`, `commands/docs.ts`,
++   `commands/sheets-export.ts`, `docs/import.ts` are exactly the
++   progress output `--quiet` is *supposed* to suppress.
++6. Tests in `packages/cli/test/output.test.ts`: replace the
++   "honors quiet" case with cases asserting the body and the error
++   envelope survive; the flag no longer reaches these functions.
++7. Docs: clarify §9 of `docs/design/cli.md` (errors are never
++   suppressed) and the CLI README global-flag line.
++
++## Acceptance criteria (from the issue)
++
++- [ ] `wafflebase schema --quiet` prints the same body as without `--quiet`.
++- [ ] A failing command under `--quiet` still prints the JSON error
++      envelope on stderr and exits non-zero.
++- [ ] `--quiet` still suppresses progress notices (the `md` lossy
++      notice, page-range warnings, "Wrote N bytes to X", etc.).
++
++## Non-goals
++
++- No change to exit codes, error codes, or the `--out`/binary paths.
++- No new flags (no `--silent`).
+diff --git a/packages/cli/README.md b/packages/cli/README.md
+index 2cbbaa80..5a717ddc 100644
+--- a/packages/cli/README.md
++++ b/packages/cli/README.md
+@@ -71,7 +71,9 @@ wafflebase
+ ```
+ 
+ **Global flags**: `--server`, `--api-key`, `--workspace`, `--profile`,
+-`--format json|table|csv` (default `json`), `--quiet`, `--verbose`,
++`--format json|table|csv` (default `json`), `--quiet` (suppresses
++progress notices only — the result body and the JSON error envelope are
++always emitted), `--verbose`,
+ `--dry-run`. The `--format` flag also doubles as the per-content shape
+ on `docs content` (`json|md|text`) and the export type override on
+ `docs export` (`pdf|docx`).
+diff --git a/packages/cli/src/commands/api-keys.ts b/packages/cli/src/commands/api-keys.ts
+index 6f1c87dc..ca15b08b 100644
+--- a/packages/cli/src/commands/api-keys.ts
++++ b/packages/cli/src/commands/api-keys.ts
+@@ -16,10 +16,9 @@ export function registerApiKeysCommand(program: Command) {
+       try {
+         const res = await getClient(opts).createApiKey(name);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        // Never suppress output — the raw key is shown only once
+-        output(res.data, opts.format, false);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -31,9 +30,9 @@ export function registerApiKeysCommand(program: Command) {
+       try {
+         const res = await getClient(opts).listApiKeys();
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -45,9 +44,9 @@ export function registerApiKeysCommand(program: Command) {
+       try {
+         const res = await getClient(opts).revokeApiKey(keyId);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/cells.ts b/packages/cli/src/commands/cells.ts
+index ffd0664a..1aeb65fb 100644
+--- a/packages/cli/src/commands/cells.ts
++++ b/packages/cli/src/commands/cells.ts
+@@ -23,9 +23,9 @@ export function registerCellsCommand(parent: Command) {
+             ? await getClient(opts).getCell(docId, tab, range)
+             : await getClient(opts).getCells(docId, tab);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -63,9 +63,9 @@ export function registerCellsCommand(parent: Command) {
+           formula ? value : undefined,
+         );
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -89,9 +89,9 @@ export function registerCellsCommand(parent: Command) {
+       try {
+         const res = await getClient(opts).deleteCell(docId, tab, ref);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -136,9 +136,9 @@ export function registerCellsCommand(parent: Command) {
+           cells as Record<string, { value?: string; formula?: string } | null>,
+         );
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/docs.ts b/packages/cli/src/commands/docs.ts
+index 90bedadf..4973afa5 100644
+--- a/packages/cli/src/commands/docs.ts
++++ b/packages/cli/src/commands/docs.ts
+@@ -80,9 +80,9 @@ export function registerDocsCommand(program: Command) {
+             (d) => (d.type ?? 'sheet') === filterType,
+           );
+         }
+-        output(data, opts.format, opts.quiet);
++        output(data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -101,9 +101,9 @@ export function registerDocsCommand(program: Command) {
+         }
+         const res = await getClient(opts).createDocument(title, type);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -115,9 +115,9 @@ export function registerDocsCommand(program: Command) {
+       try {
+         const res = await getClient(opts).getDocument(docId);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -133,9 +133,9 @@ export function registerDocsCommand(program: Command) {
+       try {
+         const res = await getClient(opts).updateDocument(docId, title);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -151,9 +151,9 @@ export function registerDocsCommand(program: Command) {
+       try {
+         const res = await getClient(opts).deleteDocument(docId);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -210,7 +210,7 @@ export function registerDocsCommand(program: Command) {
+           quiet: opts.quiet,
+         });
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -316,7 +316,7 @@ export function registerDocsCommand(program: Command) {
+ 
+         writeBinary(bytes, file, { force: local.force, quiet: opts.quiet });
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -359,7 +359,7 @@ export function registerDocsImportCommand(doc: Command) {
+         );
+         if (result.exitCode !== 0) process.exitCode = result.exitCode;
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/notes.ts b/packages/cli/src/commands/notes.ts
+index 531562f6..367093a8 100644
+--- a/packages/cli/src/commands/notes.ts
++++ b/packages/cli/src/commands/notes.ts
+@@ -40,9 +40,9 @@ export function registerNotesCommand(program: Command) {
+             (d) => d.type === 'note',
+           );
+         }
+-        output(data, opts.format, opts.quiet);
++        output(data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -61,9 +61,9 @@ export function registerNotesCommand(program: Command) {
+         }
+         const res = await getClient(opts).createDocument(title, 'note');
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -75,9 +75,9 @@ export function registerNotesCommand(program: Command) {
+       try {
+         const res = await getClient(opts).getDocument(docId);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -93,9 +93,9 @@ export function registerNotesCommand(program: Command) {
+       try {
+         const res = await getClient(opts).updateDocument(docId, title);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -111,9 +111,9 @@ export function registerNotesCommand(program: Command) {
+       try {
+         const res = await getClient(opts).deleteDocument(docId);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -160,7 +160,7 @@ export function registerNotesCommand(program: Command) {
+           quiet: opts.quiet,
+         });
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -214,7 +214,7 @@ export function registerNotesCommand(program: Command) {
+           quiet: opts.quiet,
+         });
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -245,7 +245,7 @@ export function registerNotesImportCommand(notes: Command) {
+         );
+         if (result.exitCode !== 0) process.exitCode = result.exitCode;
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/root.ts b/packages/cli/src/commands/root.ts
+index c7be3b5b..b5f11ba5 100644
+--- a/packages/cli/src/commands/root.ts
++++ b/packages/cli/src/commands/root.ts
+@@ -51,7 +51,11 @@ export function createProgram(): Command {
+     .option('--workspace <id>', 'Workspace ID')
+     .option('--profile <name>', 'Config profile', 'default')
+     .option('--format <fmt>', 'Output format (json, table, csv)', 'json')
+-    .option('--quiet', 'Suppress output', false)
++    .option(
++      '--quiet',
++      'Suppress progress notices (result body and errors still print)',
++      false,
++    )
+     .option('--verbose', 'Verbose output', false)
+     .option('--dry-run', 'Show request without executing', false);
+ 
+diff --git a/packages/cli/src/commands/schema.ts b/packages/cli/src/commands/schema.ts
+index 570514f4..103da77f 100644
+--- a/packages/cli/src/commands/schema.ts
++++ b/packages/cli/src/commands/schema.ts
+@@ -23,14 +23,14 @@ export function registerSchemaCommand(program: Command) {
+           process.exitCode = 1;
+           return;
+         }
+-        output(schema, opts.format, opts.quiet);
++        output(schema, opts.format);
+       } else {
+         const commands = getAllCommandSchemas().map((c) => ({
+           name: c.name,
+           description: c.description,
+           safety: c.safety,
+         }));
+-        output({ commands }, opts.format, opts.quiet);
++        output({ commands }, opts.format);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/sheets-export.ts b/packages/cli/src/commands/sheets-export.ts
+index 368cbf64..c5e2e6ec 100644
+--- a/packages/cli/src/commands/sheets-export.ts
++++ b/packages/cli/src/commands/sheets-export.ts
+@@ -54,7 +54,7 @@ export function registerSheetsExportCommand(parent: Command) {
+           }
+         }
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/sheets-import.ts b/packages/cli/src/commands/sheets-import.ts
+index d264cdbf..fcccf4bd 100644
+--- a/packages/cli/src/commands/sheets-import.ts
++++ b/packages/cli/src/commands/sheets-import.ts
+@@ -88,9 +88,9 @@ export function registerSheetsImportCommand(parent: Command) {
+         const result = typeof res.data === 'object' && res.data !== null
+           ? { imported: cellCount, ...res.data as Record<string, unknown> }
+           : { imported: cellCount };
+-        output(result, opts.format, opts.quiet);
++        output(result, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/slides.ts b/packages/cli/src/commands/slides.ts
+index 8faa8fc3..74bc5b10 100644
+--- a/packages/cli/src/commands/slides.ts
++++ b/packages/cli/src/commands/slides.ts
+@@ -45,9 +45,9 @@ export function registerSlidesCommand(program: Command) {
+             (d) => d.type === 'slides',
+           );
+         }
+-        output(data, opts.format, opts.quiet);
++        output(data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -66,9 +66,9 @@ export function registerSlidesCommand(program: Command) {
+         }
+         const res = await getClient(opts).createDocument(title, 'slides');
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -80,9 +80,9 @@ export function registerSlidesCommand(program: Command) {
+       try {
+         const res = await getClient(opts).getDocument(docId);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -98,9 +98,9 @@ export function registerSlidesCommand(program: Command) {
+       try {
+         const res = await getClient(opts).updateDocument(docId, title);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -116,9 +116,9 @@ export function registerSlidesCommand(program: Command) {
+       try {
+         const res = await getClient(opts).deleteDocument(docId);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -167,7 +167,7 @@ export function registerSlidesCommand(program: Command) {
+           quiet: opts.quiet,
+         });
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -208,7 +208,7 @@ export function registerSlidesCommand(program: Command) {
+         const bytes = await exportPptxCli(res.data, { imageFetcher });
+         writeBinary(bytes, file, { force: local.force, quiet: opts.quiet });
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ 
+@@ -241,7 +241,7 @@ export function registerSlidesImportCommand(slides: Command) {
+         );
+         if (result.exitCode !== 0) process.exitCode = result.exitCode;
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/tabs.ts b/packages/cli/src/commands/tabs.ts
+index b4ec1699..2f602641 100644
+--- a/packages/cli/src/commands/tabs.ts
++++ b/packages/cli/src/commands/tabs.ts
+@@ -13,9 +13,9 @@ export function registerTabsCommand(parent: Command) {
+       try {
+         const res = await getClient(opts).listTabs(docId);
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+-        output(res.data, opts.format, opts.quiet);
++        output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e, opts.quiet);
++        outputError(e);
+       }
+     });
+ }
+diff --git a/packages/cli/src/output/formatter.ts b/packages/cli/src/output/formatter.ts
+index d873f75d..27dd16da 100644
+--- a/packages/cli/src/output/formatter.ts
++++ b/packages/cli/src/output/formatter.ts
+@@ -15,8 +15,15 @@ export function format(data: unknown, fmt: OutputFormat): string {
+   }
+ }
+ 
+-export function output(data: unknown, fmt: OutputFormat, quiet: boolean) {
+-  if (quiet) return;
++/**
++ * Emit a command's result body on stdout.
++ *
++ * `--quiet` deliberately does not reach this function. It gates progress
++ * notices only (docs/design/cli.md §9); the body is the data callers
++ * redirect, so suppressing it made `... --quiet > out.json` write an
++ * empty file.
++ */
++export function output(data: unknown, fmt: OutputFormat) {
+   console.log(format(data, fmt));
+ }
+ 
+@@ -34,11 +41,15 @@ function errorCode(error: unknown): string {
+   return 'ERROR';
+ }
+ 
+-export function outputError(error: unknown, quiet: boolean) {
+-  if (quiet) {
+-    process.exitCode = 1;
+-    return;
+-  }
++/**
++ * Emit the error envelope on stderr and mark the process as failed.
++ *
++ * Like `output`, this is not gated by `--quiet`: a non-zero exit with no
++ * bytes on either stream tells the caller nothing about what failed or
++ * whether it is retryable. Errors go to stderr precisely so they survive
++ * output redirection and quiet modes.
++ */
++export function outputError(error: unknown) {
+   const message = error instanceof Error ? error.message : String(error);
+   console.error(
+     JSON.stringify({ error: { code: errorCode(error), message } }, null, 2),
+diff --git a/packages/cli/test/output.test.ts b/packages/cli/test/output.test.ts
+index aa17739c..aa6c8828 100644
+--- a/packages/cli/test/output.test.ts
++++ b/packages/cli/test/output.test.ts
+@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+ import { formatJson } from '../src/output/json.js';
+ import { formatTable } from '../src/output/table.js';
+ import { formatCsv } from '../src/output/csv.js';
+-import { format, outputError } from '../src/output/formatter.js';
++import { format, output, outputError } from '../src/output/formatter.js';
+ import { InvalidDocxError } from '../src/docs/docx-import.js';
+ 
+ describe('formatJson', () => {
+@@ -113,13 +113,13 @@ describe('outputError', () => {
+   }
+ 
+   it('defaults to code:"ERROR" for plain Error instances', () => {
+-    outputError(new Error('boom'), false);
++    outputError(new Error('boom'));
+     expect(getEmittedBody().error.code).toBe('ERROR');
+     expect(process.exitCode).toBe(1);
+   });
+ 
+   it('preserves a structured `code` field on Error subclasses', () => {
+-    outputError(new InvalidDocxError('bad zip'), false);
++    outputError(new InvalidDocxError('bad zip'));
+     const body = getEmittedBody();
+     expect(body.error.code).toBe('INVALID_DOCX');
+     expect(body.error.message).toBe('bad zip');
+@@ -130,13 +130,41 @@ describe('outputError', () => {
+     class NumericCodeError extends Error {
+       readonly code = 42;
+     }
+-    outputError(new NumericCodeError('numeric'), false);
++    outputError(new NumericCodeError('numeric'));
+     expect(getEmittedBody().error.code).toBe('ERROR');
+   });
+ 
+-  it('honors quiet by exiting 1 without emitting stderr', () => {
+-    outputError(new InvalidDocxError('bad zip'), true);
+-    expect(stderrSpy).not.toHaveBeenCalled();
++  it('stringifies non-Error throwables', () => {
++    outputError('plain string failure');
++    expect(getEmittedBody().error.message).toBe('plain string failure');
+     expect(process.exitCode).toBe(1);
+   });
+ });
++
++describe('output', () => {
++  let stdoutSpy: ReturnType<typeof vi.spyOn>;
++
++  beforeEach(() => {
++    stdoutSpy = vi.spyOn(console, 'log').mockImplementation(() => {
++      /* swallow */
++    });
++  });
++
++  afterEach(() => {
++    stdoutSpy.mockRestore();
++  });
++
++  // Regression guard for #660: `--quiet` gates progress notices only, so
++  // it must not be threaded into the body/error emitters. Both take no
++  // `quiet` argument — a caller that tries to pass one fails to compile.
++  it('always prints the body', () => {
++    output({ a: 1 }, 'json');
++    expect(stdoutSpy).toHaveBeenCalledOnce();
++    expect(String(stdoutSpy.mock.calls[0]?.[0])).toBe('{\n  "a": 1\n}');
++  });
++
++  it('honors the requested format', () => {
++    output([{ a: 1 }], 'csv');
++    expect(String(stdoutSpy.mock.calls[0]?.[0])).toBe('a\n1');
++  });
++});
+diff --git a/packages/documentation/developers/cli.md b/packages/documentation/developers/cli.md
+index 34f4c460..941ec7e3 100644
+--- a/packages/documentation/developers/cli.md
++++ b/packages/documentation/developers/cli.md
+@@ -106,7 +106,7 @@ export WAFFLEBASE_WORKSPACE=your-workspace-id
+ | `--workspace <id>` | Workspace ID | — |
+ | `--profile <name>` | Config profile | `default` |
+ | `--format <fmt>` | Output format: `json`, `table`, `csv` (also `md` / `text` on `docs content` and `slides content`, `pdf` / `docx` on `docs export`, `pptx` on `slides export`) | `json` |
+-| `--quiet` | Suppress output | `false` |
++| `--quiet` | Suppress progress notices; the result body and the JSON error envelope are always emitted | `false` |
+ | `--verbose` | Verbose output | `false` |
+ | `--dry-run` | Show request without executing | `false` |
+ 

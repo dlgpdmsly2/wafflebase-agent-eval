@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-873",
+  "arm": "panel",
+  "finding_key": "packages/sheets/test/sheet/decimals.test.ts::`expect(() => sheet.todisplaystring(...)).not.tothrow()` is vacuous — todisplaystring is async so it can never throw synchronously",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "In packages/sheets/test/sheet/decimals.test.ts, the clamp test asserts `expect(() => sheet.toDisplayString(...)).not.toThrow()`. Every other call site in the diff awaits `sheet.toDisplayString(...)` (e.g. lines 22, 39, and the following test), confirming it returns a Promise — it must be async since it reads the cell from the async store before formatting. An Intl RangeError would therefore reject asynchronously, so `.not.toThrow()` passes unconditionally, making the assertion vacuous exactly as claimed. Severity is minor rather than major because the immediately following test properly awaits the dp:400 case and asserts the clamped output, and format.test.ts covers hostile inputs directly, so real coverage of the behavior exists.",
+  "notes": null,
+  "diff_sha256": "sha256:729cb83a1f576206c1d4f1b92b0ef2d1f83d5ccf7edd801a5e998cc6b538d1a1",
+  "class_id": null,
+  "class_members": null
+}

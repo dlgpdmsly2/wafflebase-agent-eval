@@ -1,0 +1,73 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/docs.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Backend-shaped error bodies are printed directly with pretty-printed JSON and no `command`, bypassing the new single-line `outputError` contract"
+        }
+      ],
+      "summary": "Out-of-diff error emitters still print multi-line pretty JSON, breaking the one-line stderr envelope contract this change now asserts and documents",
+      "evidence": "The change makes `outputError` emit a single line and the new test asserts `expect(raw).not.toContain('\\n')` (packages/cli/test/output.test.ts:151), while README/design now state \"a single JSON line on stderr\" (packages/cli/README.md:116, docs/design/cli.md:1017). But many reachable error paths never go through `outputError` and still emit `JSON.stringify(..., null, 2)`: packages/cli/src/commands/docs.ts:195 and :255, packages/cli/src/commands/slides.ts:154 and :204, packages/cli/src/commands/notes.ts:148 and :203, packages/cli/src/commands/schema.ts:33, packages/cli/src/files/upload.ts:185/:217/:227, packages/cli/src/files/download.ts:57, packages/cli/src/slides/import.ts:152/:194/:237/:254/:311, packages/cli/src/notes/import.ts:120/:159/:188. A caller that adopts a line-delimited stderr parser because the contract now promises one line per error will fail on `docs content` / `slides import` / `files upload` failures. (The task note at docs/tasks/active/20260811-cli-error-envelope-command-todo.md:19-22 scopes these to #654/#655, so this may be a knowingly-accepted gap, but the docs/tests now state the contract unconditionally.)",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/schema.ts",
+      "searchedFor": [],
+      "summary": "`schema <unknown>` emits a multi-line NOT_FOUND envelope without `command`, contradicting the newly documented one-line contract",
+      "evidence": "packages/cli/src/commands/schema.ts:32-39 writes `JSON.stringify({error:{code:'NOT_FOUND',...}}, null, 2)` and sets exitCode 1 without calling `outputError`. After this change the documented envelope is one line plus `command` (docs/design/cli.md:1017), so this reachable path (`wafflebase schema bogus`) violates it. Ironically the docstring on the new `commandPath` claims the dotted name is \"the same string the `schema` command indexes on\", yet schema's own error is un-attributed.",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/test/output.test.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Alias test is vacuous — it never reaches the command by alias"
+        }
+      ],
+      "summary": "The \"reached by alias\" test never goes through an alias — it is tautological",
+      "evidence": "`it('reports the canonical name when the command was reached by alias')` builds `program.command('docs').alias('doc')` and then calls `outputError(new Error('boom'), docs.command('content'))` directly. No argv is ever parsed, so the command is not \"reached by alias\" in any sense; the test passes the canonical `Command` object itself. `commandPath` (src/output/formatter.ts:58-64) reads `c.name()`, which in commander always returns the canonical name and never the alias, so this assertion is true regardless of whether alias handling works — including if `.alias('doc')` were deleted entirely. The behavior it claims to guard (running `wafflebase doc content …` and getting `command:\"docs.content\"` in the envelope) would require `parseAsync(['node','wafflebase','doc','content'])` and inspecting the emitted envelope; no such test exists in this file.",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/docs/import.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'outputError(' packages/cli/src",
+        "grep 'error:\\s*\\{|console\\.error' packages/cli/src",
+        "read docs/design/cli.md §9/§10",
+        "read packages/cli/README.md error section"
+      ],
+      "summary": "Many error envelopes bypass `outputError`, so they still emit multi-line pretty-printed JSON with no `command` — violating the newly-asserted §9 contract",
+      "evidence": "docs/design/cli.md §9 (line 1017-1018) and packages/cli/README.md:116-118 both state errors are \"a single JSON line on stderr\" with shape `{\"error\":{\"code\":\"…\",\"message\":\"…\",\"command\":\"docs.content\"}}`. The diff only changes `outputError`, but a large set of failure paths hand-roll their own envelope with `JSON.stringify(..., null, 2)` and no command: packages/cli/src/docs/import.ts:126-137 (CONFIRMATION_REQ — the exact code README:120 promises), :164, :194, :201, :211, :245; packages/cli/src/slides/import.ts:154, :194, :237, :244, :254, :312; packages/cli/src/notes/import.ts:122, :159, :188, :197, :212; packages/cli/src/files/upload.ts:217, :227 (`errorJson` helper); packages/cli/src/files/download.ts:57; packages/cli/src/commands/docs.ts:195/:255/:307; packages/cli/src/commands/notes.ts:148/:203; packages/cli/src/commands/slides.ts:154/:204. A caller reading stderr with a line-delimited parser still breaks on these, and cannot attribute them.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "summary": "Localhost OAuth callback accepts any `code` with no CLI-generated nonce/state binding (pre-existing, outside the diff) — login-confusion / session fixation",
+      "evidence": "`startCallbackServer` (packages/cli/src/commands/login.ts:168-182) serves 127.0.0.1/callback and resolves on the first `code` query param it sees, with no check that the code corresponds to the OAuth flow this process started: no CLI-generated nonce is embedded in the `?mode=cli&port=` URL (line 36) and none is verified on the callback, and there is no Origin/Sec-Fetch check. The code is then exchanged unconditionally at line 56 and the resulting tokens persisted at line 138. Attack: while a victim runs `wafflebase login` (a 30s window, line 237), an attacker who has obtained a valid CLI code for their OWN account gets the victim's browser to issue `GET http://127.0.0.1:<port>/callback?code=<attacker-code>` (img/fetch; the opaque response does not matter) and races the legitimate callback across the ephemeral port range. If the attacker's code lands first, the victim's CLI session is fixed to the attacker's account and subsequent `files upload` / `docs import` operations write the victim's data into the attacker's workspace. I could not confirm the port-guessing race is practical in the wild, hence low confidence; this code predates the diff and I cite it because the login action has no try/catch and therefore lands in the `runCli` catch this change modified.",
+      "lens": "security"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/docs.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "The new \"one line per error, with `command`\" stderr invariant is broken by the sibling error paths that bypass `outputError`"
+        }
+      ],
+      "summary": "Many stderr error-envelope emitters bypass `outputError`, so they still print pretty-printed multi-line JSON with no `command` — breaking the one-line/attributed contract this change documents and tests",
+      "evidence": "The diff makes `outputError` emit a single line with `command` and the test asserts `expect(raw).not.toContain('\\n')` (test/output.test.ts:148). But error envelopes are also written directly on real failure paths, all with `JSON.stringify(..., null, 2)` and no `command`: docs.ts:195 and docs.ts:255 (backend-shaped error on `docs content` / `docs export`), notes.ts:148, notes.ts:203, slides.ts:154, slides.ts:204, schema.ts:32 (`{\"error\":{\"code\":\"NOT_FOUND\"...}}` for `wafflebase schema <unknown>`), files/upload.ts:217 and files/upload.ts:227 (`errorJson`), files/download.ts:57, docs/import.ts:164/194/211, notes/import.ts:159/188/212, slides/import.ts:194/237/254. A caller following docs/design/cli.md §9 (\"Errors: a single JSON line on stderr ... command\") with a line-delimited parser sees a multi-line, unattributed body for these — i.e. the very backend-error cases the feature is meant to attribute. The new tests only cover the `outputError` path, so nothing catches it.",
+      "lens": "correctness"
+    }
+  ]
+}

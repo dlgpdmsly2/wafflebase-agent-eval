@@ -1,0 +1,357 @@
+diff --git a/docs/tasks/active/20260819-docs-inline-style-off-clears-key-lessons.md b/docs/tasks/active/20260819-docs-inline-style-off-clears-key-lessons.md
+new file mode 100644
+index 00000000..6bdcda82
+--- /dev/null
++++ b/docs/tasks/active/20260819-docs-inline-style-off-clears-key-lessons.md
+@@ -0,0 +1,27 @@
++# Lessons — docs inline-style off clears the key (#749)
++
++## What the codebase already knew
++
++`CLEAR_INLINE_STYLE` (`model/types.ts:241`) had already settled the convention:
++an inline-style patch key set to `undefined` means *remove this key*, and the
++Yorkie store honours it (`removedInlineStyleAttrs` → `removeStyleByPath`,
++because `styleByPath` can only merge, never delete). The boolean toggles were
++the one write path that had not adopted it.
++
++## The trap: `false` is not always dead
++
++The obvious fix — never store `false` — is wrong. Style resolution paints
++named-style defaults *under* the run style, and Heading 6's built-in style is
++italic. In such a block an explicit `false` is the only representation of "the
++user turned this off", so the demotion has to be conditional on the block's
++resolved defaults. `caret-style.ts` had already learned the same lesson from
++the other side (issue #715: Cmd+I inside a Heading 6 computed `!false` and was
++a permanent no-op).
++
++## Why `Doc`, not the callers
++
++Four call sites compute the toggle boolean (keyboard `toggleStyle`, the shared
++`TextFormatGroup`, the header/footer slim toolbar, the slides text box), but
++all of them funnel into `Doc.applyInlineStyle` / `applyInlineStyleToCells`,
++which is also where a *block* — and therefore its named-style defaults — is in
++scope. One place, no drift.
+diff --git a/docs/tasks/active/20260819-docs-inline-style-off-clears-key-todo.md b/docs/tasks/active/20260819-docs-inline-style-off-clears-key-todo.md
+new file mode 100644
+index 00000000..c258fe87
+--- /dev/null
++++ b/docs/tasks/active/20260819-docs-inline-style-off-clears-key-todo.md
+@@ -0,0 +1,66 @@
++# Docs: turning an inline style off must clear the key, not store `false` (#749)
++
++## Problem
++
++Toggling a boolean inline style on and then off over the same selection leaves
++the run permanently split, carrying an explicit `italic: false` (or
++`bold: false` / `underline: false`) where the key was previously absent.
++
++Two mechanisms compound:
++
++1. **The write bakes a `false`.** Every toggle caller computes
++   `{ italic: !isStyleOn(...) }` and hands the `false` straight through
++   `Doc.applyInlineStyle` → `store.applyStyle` → `applyInlineStyle`
++   (`packages/docs/src/store/block-helpers.ts:310`), which merges it into the
++   run style verbatim.
++2. **`false` never re-merges.** `normalizeInlines` merges neighbours only when
++   `inlineStylesEqual` agrees, and that comparison is strict identity
++   (`packages/docs/src/model/types.ts:404`), so `false === undefined` is
++   `false` and a run carrying a dead flag can never rejoin an identical
++   neighbour that simply lacks the key.
++
++The consequence beyond tidiness: style resolution layers named-style defaults
++*underneath* the explicit run style (`{ ...defaults, ...inline.style }`), so a
++run carrying `italic: false` will not follow a named style later redefined to
++be italic. That is exactly the lazy-cascade hazard `getSelectionStyleImpl`
++already documents (`packages/docs/src/view/editor.ts:990-996`); the off-toggle
++bakes such a value in by a different route.
++
++## Approach
++
++Clear the key instead of writing `false`, at the one layer every toggle caller
++already funnels through — `Doc.applyInlineStyle` /
++`Doc.applyInlineStyleToCells` (`packages/docs/src/model/document.ts`). Fixing
++it there covers the keyboard toggles (`TextEditor.toggleStyle`), both docs
++toolbars, the slides text-box editor, and the pending-style flush, without
++touching four call sites that each recompute the same boolean.
++
++`undefined` is already the established "strip this key" convention: it is what
++`CLEAR_INLINE_STYLE` passes, and what `YorkieDocStore.removedInlineStyleAttrs`
++turns into a `removeStyleByPath` so the clear lands in the CRDT.
++
++**One case genuinely needs an explicit `false`:** when the block's named style
++supplies the style (Heading 6 is italic), clearing the key would leave the run
++italic and the toggle-off would be a visual no-op. So the demotion is
++conditional — `false` survives only where the block's resolved named-style
++inline defaults set that key truthy, which is precisely where `false` carries
++information.
++
++## Scope
++
++- [x] `Doc.applyInlineStyle` / `Doc.applyInlineStyleToCells`: per block slice,
++      demote a boolean inline key explicitly set to `false` to `undefined`
++      unless the block's named-style defaults set it truthy.
++- [x] `applyInlineStyle` (block-helpers): drop keys whose merged value is
++      `undefined` from the styled run, so the stored style has the key
++      *removed* rather than present-with-`undefined`.
++- [x] Tests: on/off round-trip restores a single run with no dead flag;
++      the named-style case still stores `false`; cell rectangles too.
++
++## Non-goals
++
++- Merging adjacent Yorkie Tree inline nodes back together. The CRDT keeps the
++  structural split from the first (correct) style write; this task removes the
++  dead flag and restores the model-level merge that `normalizeInlines` does.
++- Changing how the toggles *decide* add-vs-remove (issue #715's mechanism).
++- Any non-boolean style key.
+diff --git a/packages/docs/src/model/document.ts b/packages/docs/src/model/document.ts
+index 71ad8930..93a7e16a 100644
+--- a/packages/docs/src/model/document.ts
++++ b/packages/docs/src/model/document.ts
+@@ -28,8 +28,23 @@ import {
+ } from './types.js';
+ import { MemDocStore } from '../store/memory.js';
+ import type { DocStore } from '../store/store.js';
++import { blockStyleId, resolveStyleInline } from './named-styles.js';
+ import { visitCellRectangleSlices, visitRangeSlices } from './range-slices.js';
+ 
++/**
++ * The inline-style keys the B/I/U/S toggles write as plain booleans. Kept
++ * here rather than derived from `InlineStyle` because `pageNumber` is a
++ * boolean too and is structural, not character formatting.
++ */
++const BOOLEAN_INLINE_STYLE_KEYS = [
++  'bold',
++  'italic',
++  'underline',
++  'strikethrough',
++  'superscript',
++  'subscript',
++] as const;
++
+ 
+ /**
+  * The current editing context for header/footer routing.
+@@ -359,11 +374,49 @@ export class Doc {
+    */
+   applyInlineStyle(range: DocRange, style: Partial<InlineStyle>): void {
+     visitRangeSlices(this, range, (blockId, from, to) => {
+-      this.store.applyStyle(blockId, from, to, style);
++      this.store.applyStyle(blockId, from, to, this.styleOffAsClear(blockId, style));
+     });
+     this.refresh();
+   }
+ 
++  /**
++   * Rewrite a boolean inline key that the caller turned *off* from an explicit
++   * `false` into `undefined`, i.e. "remove the key" — the convention
++   * `CLEAR_INLINE_STYLE` already uses and the Yorkie store already honours.
++   *
++   * A stored `false` is a dead flag: `inlineStylesEqual` compares strictly, so
++   * `false !== undefined` and `normalizeInlines` can never re-merge the run
++   * with the identical-looking neighbour it was split from. Worse, style
++   * resolution layers named-style defaults *underneath* the run style, so the
++   * dead flag also pins the run against a style later redefined to set it —
++   * the lazy-cascade hazard `getSelectionStyleImpl` documents (issue #749).
++   *
++   * The exception is the case where `false` carries information: when the
++   * block's named style supplies the key (Heading 6 is italic), clearing it
++   * would leave the run italic and the toggle-off would be a visual no-op.
++   * There the explicit `false` is the override and is kept.
++   */
++  private styleOffAsClear(
++    blockId: string,
++    style: Partial<InlineStyle>,
++  ): Partial<InlineStyle> {
++    let defaults: Partial<InlineStyle> | undefined;
++    let cleared: Partial<InlineStyle> | undefined;
++    for (const key of BOOLEAN_INLINE_STYLE_KEYS) {
++      if (style[key] !== false) continue;
++      if (!defaults) {
++        const block = this.findBlock(blockId);
++        defaults = block
++          ? resolveStyleInline(blockStyleId(block), this._document.styles)
++          : {};
++      }
++      if (defaults[key]) continue;
++      cleared = cleared ?? { ...style };
++      cleared[key] = undefined;
++    }
++    return cleared ?? style;
++  }
++
+   /**
+    * Apply inline style to every block of every cell in a cell rectangle.
+    *
+@@ -375,7 +428,7 @@ export class Doc {
+     style: Partial<InlineStyle>,
+   ): void {
+     visitCellRectangleSlices(this, cellRange, (blockId, from, to) => {
+-      this.store.applyStyle(blockId, from, to, style);
++      this.store.applyStyle(blockId, from, to, this.styleOffAsClear(blockId, style));
+     });
+     this.refresh();
+   }
+diff --git a/packages/docs/src/store/block-helpers.ts b/packages/docs/src/store/block-helpers.ts
+index 2a172eb4..86158bd0 100644
+--- a/packages/docs/src/store/block-helpers.ts
++++ b/packages/docs/src/store/block-helpers.ts
+@@ -303,6 +303,27 @@ export function applyInsertInline(block: Block, offset: number, inline: Inline):
+   return newBlock;
+ }
+ 
++/**
++ * Merge a style patch over a run's style, treating a key set to `undefined`
++ * as "remove it" rather than "store it as undefined".
++ *
++ * A plain spread would leave the key present with an `undefined` value, which
++ * reads the same everywhere but keeps a phantom entry in the stored run (and
++ * in anything that enumerates it). Clearing is how `CLEAR_INLINE_STYLE` and
++ * the boolean toggle-off path express themselves, so it is the one merge both
++ * go through.
++ */
++function mergeInlineStyle(
++  base: InlineStyle,
++  patch: Partial<InlineStyle>,
++): InlineStyle {
++  const merged: InlineStyle = { ...base, ...patch };
++  for (const key of Object.keys(patch) as (keyof InlineStyle)[]) {
++    if (patch[key] === undefined) delete merged[key];
++  }
++  return merged;
++}
++
+ /**
+  * Apply inline style to a range within a block. Returns new Block.
+  * Splits inlines as needed and normalizes the result.
+@@ -343,7 +364,7 @@ export function applyInlineStyle(
+ 
+       newInlines.push({
+         text: inline.text.slice(overlapStart, overlapEnd),
+-        style: { ...inline.style, ...resolvedStyle },
++        style: mergeInlineStyle(inline.style, resolvedStyle),
+       });
+ 
+       if (overlapEnd < inline.text.length) {
+diff --git a/packages/docs/test/model/document.test.ts b/packages/docs/test/model/document.test.ts
+index 48ab9906..135003b4 100644
+--- a/packages/docs/test/model/document.test.ts
++++ b/packages/docs/test/model/document.test.ts
+@@ -299,6 +299,72 @@ describe('Doc', () => {
+       expect(doc.document.blocks[1].inlines[0].text).toBe('Wor');
+       expect(doc.document.blocks[1].inlines[0].style.underline).toBe(true);
+     });
++
++    // Issue #749 — turning a boolean style off used to store an explicit
++    // `false`, which `inlineStylesEqual` can never match against a neighbour
++    // that simply lacks the key, so the run stayed split forever and the dead
++    // flag also pinned it against a later style redefinition.
++    it('restores a single run when a boolean style is toggled on and off', () => {
++      const doc = Doc.create();
++      const blockId = doc.document.blocks[0].id;
++      doc.insertText({ blockId, offset: 0 }, 'abcdef');
++      const range = {
++        anchor: { blockId, offset: 2 },
++        focus: { blockId, offset: 4 },
++      };
++
++      doc.applyInlineStyle(range, { italic: true });
++      expect(doc.document.blocks[0].inlines).toHaveLength(3);
++
++      doc.applyInlineStyle(range, { italic: false });
++
++      const inlines = doc.document.blocks[0].inlines;
++      expect(inlines).toHaveLength(1);
++      expect(inlines[0].text).toBe('abcdef');
++      expect('italic' in inlines[0].style).toBe(false);
++    });
++
++    it('clears the key for every boolean toggle, not just italic', () => {
++      const doc = Doc.create();
++      const blockId = doc.document.blocks[0].id;
++      doc.insertText({ blockId, offset: 0 }, 'abcdef');
++      const range = {
++        anchor: { blockId, offset: 2 },
++        focus: { blockId, offset: 4 },
++      };
++
++      for (const key of ['bold', 'underline', 'strikethrough', 'superscript', 'subscript'] as const) {
++        doc.applyInlineStyle(range, { [key]: true });
++        doc.applyInlineStyle(range, { [key]: false });
++        const inlines = doc.document.blocks[0].inlines;
++        expect(inlines).toHaveLength(1);
++        expect(key in inlines[0].style).toBe(false);
++      }
++    });
++
++    it('keeps an explicit false where the named style supplies the flag', () => {
++      const doc = Doc.create();
++      const blockId = doc.document.blocks[0].id;
++      doc.insertText({ blockId, offset: 0 }, 'abcdef');
++      // Heading 6's built-in style is italic, so only an explicit `false` can
++      // turn it off — clearing the key would be a visual no-op.
++      doc.setBlockType(blockId, 'heading', { headingLevel: 6 });
++
++      doc.applyInlineStyle(
++        { anchor: { blockId, offset: 2 }, focus: { blockId, offset: 4 } },
++        { italic: false },
++      );
++
++      const cd = doc.document.blocks[0].inlines.find((i) => i.text === 'cd');
++      expect(cd?.style.italic).toBe(false);
++      // A key the style does not supply is still cleared in the same write.
++      doc.applyInlineStyle(
++        { anchor: { blockId, offset: 2 }, focus: { blockId, offset: 4 } },
++        { bold: false },
++      );
++      const after = doc.document.blocks[0].inlines.find((i) => i.text === 'cd');
++      expect('bold' in (after?.style ?? {})).toBe(false);
++    });
+   });
+ 
+   describe('setBlockType', () => {
+diff --git a/packages/docs/test/view/backward-selection-toggle.test.ts b/packages/docs/test/view/backward-selection-toggle.test.ts
+index dcf9a2c2..bf074cdc 100644
+--- a/packages/docs/test/view/backward-selection-toggle.test.ts
++++ b/packages/docs/test/view/backward-selection-toggle.test.ts
+@@ -469,9 +469,10 @@ describe('header table cell range summary (issue #715)', () => {
+     dispatchKey(container, 'b');
+ 
+     // Keyboard and toolbar now read the same runs, so both turn bold off.
++    // Turning it off clears the key rather than storing `false` (#749).
+     for (const block of storedCellBlocks(store)) {
+       for (const inline of block.inlines) {
+-        expect(inline.style.bold).toBe(false);
++        expect('bold' in inline.style).toBe(false);
+       }
+     }
+   });
+@@ -574,7 +575,8 @@ describe('cell endpoints normalize to the parent table (issue #715)', () => {
+ 
+     for (const col of [0, 1]) {
+       for (const inline of storedCellBlock(store, col).inlines) {
+-        expect(inline.style.bold).toBe(false);
++        // Cleared, not stored as `false` (#749).
++        expect('bold' in inline.style).toBe(false);
+       }
+     }
+   });
+@@ -630,7 +632,8 @@ describe('cell endpoints normalize to the parent table (issue #715)', () => {
+ 
+     for (const col of [0, 1]) {
+       for (const inline of storedCellBlock(store, col).inlines) {
+-        expect(inline.style.bold).toBe(false);
++        // Cleared, not stored as `false` (#749).
++        expect('bold' in inline.style).toBe(false);
+       }
+     }
+   });
+@@ -711,7 +714,8 @@ describe('cell endpoints normalize to the parent table (issue #715)', () => {
+ 
+     const storedOuter = store.getDocument().blocks[1];
+     const cellBlocks = storedOuter.tableData!.rows[0].cells[0].blocks;
+-    expect(cellBlocks[0].inlines[0].style.bold).toBe(false);
++    // Written: the flag is cleared, not stored as `false` (#749).
++    expect('bold' in cellBlocks[0].inlines[0].style).toBe(false);
+     // Untouched: the write never descends into the nested table.
+     const storedInner = cellBlocks[1].tableData!.rows[0].cells[0].blocks[0];
+     expect(storedInner.inlines[0].style.bold).toBeUndefined();

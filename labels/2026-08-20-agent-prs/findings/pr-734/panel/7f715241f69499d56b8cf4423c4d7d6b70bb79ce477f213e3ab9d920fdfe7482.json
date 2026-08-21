@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-734",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/workspace/workspace.service.ts::`revokeinvite` deletes an invite by id without scoping it to the workspace the caller owns (cross-tenant idor)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/backend/src/workspace/workspace.service.ts: revokeInvite calls assertOwner(workspaceId, userId) then prisma.workspaceInvite.delete({ where: { id: inviteId } }) with no workspaceId in the where clause, so the ownership check is decoupled from the row deleted — an owner of workspace A can delete workspace B's invite given its UUID. Sibling methods (removeMember, findInvites) do scope by workspaceId, confirming this is an anomaly. Exploitability is bounded by needing the foreign invite's UUID (invite links expose token, not id), so it is a missing tenant scope on a destructive op rather than a trivially chainable exploit, hence major rather than critical.",
+  "notes": null,
+  "diff_sha256": "sha256:a9d90394b4f8e46a08230c54a5e85a35e8224fb2c4586337612eda1971042fe0",
+  "class_id": null,
+  "class_members": null
+}

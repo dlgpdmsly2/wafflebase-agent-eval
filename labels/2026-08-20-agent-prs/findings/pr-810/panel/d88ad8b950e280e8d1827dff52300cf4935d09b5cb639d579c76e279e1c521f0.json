@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "docs/design/docs/docs-tables.md::cell-style clear semantics changed but the canonical tables design doc was not updated (still shows `backgroundcolor=\"\"` as a stored cell attribute)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "docs/design/docs/docs-tables.md (tree diagram, ~line 138) still shows `cell(backgroundColor=\"\" verticalAlign=\"top\" …)` and the cell-attribute list describes backgroundColor only as \"CSS color string\", while the PR adds removedCellStyleAttrs/removeStyleByPath in packages/frontend/src/app/docs/yorkie-doc-store.ts (~249, ~2443) establishing that cleared cell attributes are removed from the node — and the empty-string value the doc depicts is exactly the invalid pattern issue #728 eliminates. The diff updates two other design docs but not this one, so the staleness claim is accurate. Impact is documentation-only, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,26 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/workspaces/__tests__/workspace-settings.test.tsx",
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "Self-removal path is only asserted as rendered, never as functional: no test clicks the trash button or asserts removeMember is called with the viewer's own id"
+        }
+      ],
+      "summary": "Non-owner test only counts \"Remove member\" buttons; it never checks the button is in the viewer's OWN row, so an inverted/wrong self-check still passes",
+      "evidence": "The new condition under test is `member.role !== \"owner\" && (isOwner || member.user.id === me?.id)` (workspace-settings.tsx:325-326). The test renders as MEMBER (id 2) with two non-owner members (ids 2 and 3) and asserts only `expect(screen.getAllByLabelText(\"Remove member\")).toHaveLength(1)`. If the predicate were wrong in the opposite direction (e.g. `member.user.id !== me?.id`, rendering the trash button on OTHER_MEMBER's row instead of the viewer's), the count would still be exactly 1 and the test would stay green — i.e. the assertion is true regardless of which member the button belongs to. Asserting via the row (e.g. `within(screen.getByText(\"member\").closest(\"tr\"))`) is what would actually pin the behavior. Note the fixture has three members precisely to distinguish these cases, and the distinguishing assertion is the one that is missing.",
+      "lens": "test-adequacy",
+      "round_commit": "92b9be9bffcb5681b6ab29a9604c1ba398b6df32"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/workspace/workspace.service.ts",
+      "summary": "`revokeInvite` deletes an invite by id without scoping it to the workspace the caller owns (cross-tenant IDOR)",
+      "evidence": "The diff gates the revoke-invite button behind `isOwner` in the UI (workspace-settings.tsx:404) and the accompanying doc asserts \"The backend authorization was already correct\" (docs/tasks/active/20260809-workspace-settings-owner-gating-lessons.md:22). The enforced path does not match that claim. `WorkspaceService.revokeInvite(workspaceId, inviteId, userId)` calls `assertOwner(workspaceId, userId)` on line 138 and then executes `this.prisma.workspaceInvite.delete({ where: { id: inviteId } })` on line 139 — the `where` clause contains no `workspaceId`, so the owner check is performed against a workspace that has nothing to do with the row being deleted. Attack: user X, who is the legitimate owner of workspace A, sends `DELETE /workspaces/<A-slug>/invites/<invite-id-belonging-to-workspace-B>` (workspace.controller.ts:103-115 passes the raw path param straight through). `assertOwner` passes for A, and B's pending invite is destroyed — a cross-tenant write/denial of onboarding. Contrast `ApiKeyService.revoke(id, resolvedId)` (api-key.controller.ts:63), which does pass the workspace for scoping, showing the intended pattern. Exploitability is bounded by having to know the target invite's UUID (it is not the value in the invite link, which is `token`), so I could not complete a chain that discovers the id from outside the owning workspace — hence a missing tenant scope on a destructive operation rather than a confirmed end-to-end exploit.",
+      "lens": "security",
+      "round_commit": "92b9be9bffcb5681b6ab29a9604c1ba398b6df32"
+    }
+  ]
+}

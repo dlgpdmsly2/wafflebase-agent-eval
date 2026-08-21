@@ -1,0 +1,17 @@
+{
+  "findings": [
+    {
+      "severity": "critical",
+      "file": "packages/frontend/src/lib/date-format-preference.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Unguarded `localStorage.setItem` in `setDateFormat` throws out of the Select's `onValueChange`, so the preference silently fails to apply instead of degrading"
+        }
+      ],
+      "summary": "Unguarded `localStorage.getItem` in `getDateFormat` is called as the `useSyncExternalStore` snapshot on every render of the documents list and Settings page; a storage SecurityError takes the whole list down",
+      "evidence": "`getDateFormat()` (line 31-34) does a bare `localStorage.getItem(STORAGE_KEY)` and is passed directly as `getSnapshot` to `useSyncExternalStore` (line 56), so it runs on every render of `DateCell` (document-list.tsx:241) and of Settings (page.tsx:26). Accessing `localStorage` throws outright (SecurityError) in Safari private mode, with third‑party/blocked storage, and in sandboxed iframes — the repo already knows this and guards every other such read: `board-grid.ts:220-228` (`try { localStorage.getItem } catch { return DEFAULT }`), `font-recents.ts:23-26`, `analytics.ts:47-53`. Here the throw happens during render, so instead of falling back to `DEFAULT_DATE_FORMAT` it propagates and blanks the entire document list — the exact failure mode the surrounding date-parsing guards were written to avoid.",
+      "lens": "correctness"
+    }
+  ]
+}

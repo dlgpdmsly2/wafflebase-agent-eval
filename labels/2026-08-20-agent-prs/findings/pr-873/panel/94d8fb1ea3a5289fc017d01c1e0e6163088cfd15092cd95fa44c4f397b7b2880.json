@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-873",
+  "arm": "panel",
+  "finding_key": "packages/sheets/src/model/worksheet/style-mutation.ts::compactcell's new spill-field preservation ships with no test",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff adds four spill-preservation branches to compactCell (style-mutation.ts) as a behavioral fix, and the only test file added (packages/sheets/test/sheet/decimals.test.ts, supplied in full) never creates a spill or references spill fields. Since the pre-change compactCell dropped these fields and the suite was presumably green, no pre-existing test can cover the style-rewrite-on-spill-anchor interaction, so the fix is untested and can silently regress. I could not open the pre-existing test files (no checkout mounted) to confirm the reviewer's grep results directly, hence medium confidence, but the diff-level evidence and structural inference both support the claim.",
+  "notes": null,
+  "diff_sha256": "sha256:729cb83a1f576206c1d4f1b92b0ef2d1f83d5ccf7edd801a5e998cc6b538d1a1",
+  "class_id": null,
+  "class_members": null
+}

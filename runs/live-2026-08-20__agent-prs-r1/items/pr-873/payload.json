@@ -1,0 +1,83 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Cell rewrite in `unsetRangeStyleValues` still routes through `compactCell`, silently dropping spill metadata the calculator depends on"
+        }
+      ],
+      "summary": "New cell-level unset path rebuilds cells with `compactCell`, which silently drops spill metadata (`spillRows`/`spillCols`/`spillAnchor`/`spillBlocked`) that the calculator/renderer depend on",
+      "evidence": "`removeCellStyleKeysInRange` writes `await this.store.set(anchor, compactCell(existing, next))` (packages/sheets/src/model/worksheet/sheet.ts:4366). `compactCell` only copies `v`, `f`, `s` (packages/sheets/src/model/worksheet/style-mutation.ts:57-69), while `Cell` also carries `spillRows`, `spillCols`, `spillAnchor`, `spillBlocked` (packages/sheets/src/model/core/types.ts:209-217), which the array-formula code writes and reads: `sheet.setCell(ref, { v: anchorValue, f: cell.f, s: style, spillRows: rows, spillCols: cols })` (packages/sheets/src/model/worksheet/calculator.ts:136) and `if (cell.spillRows && cell.spillCols && !cell.spillBlocked)` in the paint/expansion loops (packages/sheets/src/model/worksheet/calculator.ts:74, packages/sheets/src/model/worksheet/sheet.ts:1086). So decreasing decimals back to the inherited precision over a styled spill anchor erases its spill region metadata until the next recalculation. (Note: `setStyle` at sheet.ts:3682 already has this shape, so the invariant may already be violated elsewhere; the fix belongs in the new code — preserve the non-style fields, e.g. `{ ...existing, s: next }`-style compaction.)",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/test/sheet/decimals.test.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep for changeDecimals/unsetRangeStyleKeys across repo (only decimals.test.ts)",
+        "Grep selectionType|selectAll|selectRow( under packages/sheets/test",
+        "read full packages/sheets/test/sheet/decimals.test.ts"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "New value-mismatch refusal is only tested at the cell layer; the sheet/column/row layer mismatch branches are untested"
+        }
+      ],
+      "summary": "Row-selection and whole-sheet ('all') branches of the new `unsetRangeStyleKeys` are never exercised by any test",
+      "evidence": "The new suite only covers cell (`selectStart`), multi-cell (`selectStart`+`selectEnd`) and column (`selectColumn(1)`) selections. Nothing calls `selectRow(...)` or `selectAll()/selectAllCells()`, so `sheet.ts:4256-4265` (row-style conflict check), `4300-4311` (row-style rewrite) and `4281-4287` (`ownsSheet && this.sheetStyle` rewrite) plus the `!ownsSheet && this.sheetStyle?.[key]` bail at `4243` are entirely uncovered — roughly half the branch surface of the new method. A regression in the row or sheet layer (e.g. writing the wrong key set, or clearing a row style the selection does not own) would keep the suite green.",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "searchedFor": [],
+      "summary": "New clamp makes Decrease at zero destructive when `dp` is stored, breaking the issue's \"equal increases and decreases leave the selection exactly as they found it\" rule",
+      "evidence": "The delta replaces `if (target < 0) return;` with `if (dp + delta < 0 && !explicitDp) return;` plus `const target = Math.max(0, dp + delta)`. So when a cell has an explicitly stored `dp: 0` and the value's own precision is also 0 (e.g. `1234` styled `{dp: 0, nf: 'number'}` from the toolbar), pressing Decrease — which the user reads as a no-op at the floor — now takes the `target === valueDp && explicitDp` branch and unsets `{dp, nf}`, dropping the number format and its grouping separators (`1,234` → `1234`). Pressing Increase afterwards does not restore it: it writes `{dp: 1, nf: 'number'}`. One Decrease + one Increase therefore leaves the cell in a different state than it started, which is exactly the reversibility criterion in docs/tasks/active/20260818-sheets-decimal-round-trip-todo.md:3-5 and docs/design/sheets/sheet-style.md:213-216. Before this delta the same click was an unconditional no-op. It also makes Decrease-at-zero behave differently depending on invisible state (stored vs inferred `dp`), which neither the design doc nor the \"Known deviations\" list records.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "`inheritable` gate narrows the spec'd unset rule, so non-plain/number formats keep residue. The todo (docs/tasks/active/20260818-sheets-decimal-round-trip-todo.md:50-53) specifies: `target === valueDp` and `explicitDp` → try to unset, using `['dp','nf']` when `nf === 'number'` and **`['dp']` otherwise**. The implementation instead only attempts an unset when `!nf || nf === 'plain' || nf === 'number'`, so a `currency`/`percent`/date-formatted cell with an explicit `dp` never returns to inheritance: e.g. currency cell holding `12.34` (valueDp 2, default dp 2) → Increase writes `dp: 3` → Decrease targets 2 === valueDp but is blocked by `inheritable`, storing `dp: 2` residue instead of unsetting. That is the same residue class the issue's outcome (\"leave a cell exactly as it started\") is about, just for a different number format.",
+      "evidence": "const inheritable = !nf || nf === 'plain' || nf === 'number'; if (explicitDp && target === valueDp && inheritable) { ... }",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "`removeCellStyleKeysInRange` rewrites cells through `compactCell`, dropping spill metadata"
+        },
+        {
+          "severity": "minor",
+          "summary": "unsetRangeStyleValues returns true even when it removed nothing, so the caller reports success for a no-op"
+        }
+      ],
+      "summary": "unsetRangeStyleValues treats a missing key as agreement, so a cell that carries only some of the requested keys loses the rest",
+      "evidence": "The conflict scan is `if (cellValue !== undefined && cellValue !== value) return false;` (sheet.ts:4306-4310), but the removal is `omitStyleKeys(existing.s, keys)` — it strips *all* requested keys regardless of which ones the cell actually agreed about. changeDecimals calls it with `{dp, nf:'number'}` (sheet.ts:4208-4210). Scenario: A1 = `12` with `{dp:1, nf:'number'}`, B1 = `12` with `{nf:'number'}` only (no dp). Select A1:B1, press decrease → target 0 === valueDp 0, so unset `{dp:1, nf:'number'}` runs. B1's `nf` matches and its `dp` is undefined, so no conflict is detected; B1 then has both keys omitted and ends up with no style at all, changing its render from `12.00` to `12`. The same asymmetry applies to the col/row/sheet/patch layer checks (sheet.ts:4258-4285), where a layer holding only `nf` and no `dp` is silently accepted and then stripped. The added tests only cover the case where the other cell *disagrees* about a value (currency, dp:5), never the case where it holds a strict subset of the keys.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "Decrease/increase decimals can change other cells' displayed precision because the unset decision uses only the active cell's `valueDp`",
+      "evidence": "`const { dp, nf, valueDp, explicitDp } = await this.getActiveDecimalState()` (4196) and `if (explicitDp && target === valueDp && inheritable)` (4203) test the ACTIVE cell's raw-value precision but the resulting unset applies to the whole selection. Concretely: A1='1.5', A2='1.2345', select A1:A2. Decrease → writes {dp:0, nf:'number'} for both (shows 2 / 1). Increase → dp=0 explicit, target 1 === valueDp(A1)=1, nf='number' → all dp/nf removed → A1 renders '1.5' (intended) but A2 jumps back to '1.2345', i.e. pressing *increase by one decimal* moved A2 from 0 to 4 decimals. The old code wrote an explicit uniform dp and had no such divergence.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "Comment/assumption that dropping `nf:'number'` keeps the cell looking the same is false — grouping separators are lost",
+      "evidence": "Lines 4204-4207 justify removing `nf` with \"the cell keeps looking the same\", but `formatValue(value,'number',dp)` goes through `toLocaleString` (format.ts:127-130) which adds thousands separators, while plain format returns the raw string verbatim (format.ts:111-113). For value '1234.5': with {nf:'number',dp:1} the cell shows '1,234.5'; after the unset it shows '1234.5'. The new test at packages/sheets/test/sheet/decimals.test.ts:89-92 encodes exactly this lossy outcome (`toBe('1234.5')`). So decrease-then-increase on a number-formatted cell silently drops the user's number format and its grouping.",
+      "lens": "correctness"
+    }
+  ]
+}

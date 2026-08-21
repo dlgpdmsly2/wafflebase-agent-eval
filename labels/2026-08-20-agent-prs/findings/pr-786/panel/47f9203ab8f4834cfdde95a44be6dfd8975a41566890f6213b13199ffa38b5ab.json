@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/auth/auth.controller.ts::cli auth code is still not bound to the client (no pkce); the nonce only gates the local listener, so an intercepted code is fully redeemable",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied sources: auth.controller.ts cliExchange (lines ~152-168) redeems `{ code }` with no authentication and no verifier, and cli-auth.store.ts `consumeCode` looks up only the code — the nonce is stored on the StateEntry, never the CodeEntry, and is checked only by the CLI's local listener (login.ts nonceMatches). So the code is an unbound bearer credential and an intercepted code within its 60s single-use TTL is fully redeemable, exactly as claimed; no PKCE exists anywhere in the change despite it citing RFC 8252 §8.9, whose prescription for loopback flows is PKCE. Severity is tempered by the 32-byte random, single-use, 60s code and the need for an interception channel (browser history after a timed-out flow, extension, local proxy), making this a defense-in-depth gap rather than a directly exploitable hole.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

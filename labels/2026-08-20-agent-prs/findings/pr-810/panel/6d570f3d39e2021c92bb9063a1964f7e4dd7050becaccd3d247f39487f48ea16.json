@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/yorkie/docs-tree.ts::`writedocsroot` still persists the literal string \"undefined\" for header/footer `marginfromedge`, which reads back as nan — the same poisoning the diff fixed for block styles",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified against the supplied docs-tree.ts: buildTreeChildren writes `marginFromEdge: String(document.header.marginFromEdge)` unconditionally (header and footer arms), and readDocsRoot inverts with `attrs.marginFromEdge ? Number(attrs.marginFromEdge) : DEFAULT`, so a missing marginFromEdge persists the literal \"undefined\" (truthy) and reads back as NaN — the exact poisoning pattern the same diff fixed in serializeBlockStyle. Confidence is medium rather than high only because the controller's assertValidDocsBody was not supplied in full, so I could not confirm the absence of a header-side number check, though the PR's own comments and lessons doc indicate header/footer values are not validated.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

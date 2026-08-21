@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-862",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/view/text-editor.ts::paste reaches the same 'heading memory travels onto text that was never a heading' defect the new merge guard closes, without passing through it",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "low",
+  "evidence": "The cited code (text-editor.ts ~3404 and ~3575–3607) lies in the omitted region of the supplied excerpt (lines 161–5201) and no checkout is mounted, so I could not read the paste path. The claim is internally coherent with the PR's own provenance rule: the diff guards split (applySplitBlock drops headingLevel for non-heading halves) and merge (mergeDropsHeadingMemory, block-helpers.ts:279) but touches no clipboard/paste code, and the PR newly makes list-items legitimate carriers of headingLevel — turning any paste path that copies the attribute verbatim into a fresh leak vector, exactly the class of bug review round 1 caught for merge. The quoted assignments are plausible and specific, but unverified, hence low confidence; if real, the impact (invisible state that promotes body text to a heading on un-listing after a paste) mirrors the merge case the PR itself deemed worth fixing, i.e. a minor correctness defect.",
+  "notes": null,
+  "diff_sha256": "sha256:38089d0e3481456bf46377ddd5a3eb74189cea39b5f3366ee11f4f510e9fa79c",
+  "class_id": null,
+  "class_members": null
+}

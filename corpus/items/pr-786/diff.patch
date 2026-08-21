@@ -1,0 +1,736 @@
+diff --git a/docs/tasks/active/20260811-cli-error-envelope-command-lessons.md b/docs/tasks/active/20260811-cli-error-envelope-command-lessons.md
+new file mode 100644
+index 00000000..c3d10f78
+--- /dev/null
++++ b/docs/tasks/active/20260811-cli-error-envelope-command-lessons.md
+@@ -0,0 +1,20 @@
++# Lessons — CLI error envelope: single line + `command` field
++
++Issue: #661
++
++## Notes
++
++- Every `outputError` call site already lives inside a commander action
++  declared as `async function (this: Command, …)`, so the command object was
++  in scope at all ~40 of them — threading `this` needed no signature
++  plumbing through helper modules.
++- The last-resort catch in `runCli` has only the root `program`, which does
++  not know which subcommand ran. Commander's `preAction` lifecycle hook,
++  registered on the root, fires for subcommand actions and hands over the
++  acting `Command` — that is what lets the entrypoint's envelope carry
++  `command` too, instead of dropping the field exactly where an unhandled
++  rejection makes attribution most valuable.
++- The dotted name (`docs.content`) is the commander `parent` chain minus the
++  root program. Aliases resolve for free: `name()` returns the canonical
++  name, so `wafflebase doc content` still reports `docs.content` — the same
++  string the `schema` command uses.
+diff --git a/docs/tasks/active/20260811-cli-error-envelope-command-todo.md b/docs/tasks/active/20260811-cli-error-envelope-command-todo.md
+new file mode 100644
+index 00000000..7eafe8ad
+--- /dev/null
++++ b/docs/tasks/active/20260811-cli-error-envelope-command-todo.md
+@@ -0,0 +1,46 @@
++# CLI error envelope: single line + `command` field
++
++Issue: #661
++
++## Problem
++
++`outputError` (`packages/cli/src/output/formatter.ts`) emits the error
++envelope as pretty-printed JSON (`JSON.stringify(..., null, 2)`) and never
++carries the `command` field the docs specify:
++
++- `packages/cli/README.md` — "a single JSON line on stderr"
++- `docs/design/cli.md` §8.1 / §9 —
++  `{"error":{"code":"…","message":"…","command":"docs.content"}}`
++
++Line-orientation lets a caller read stderr with a line-delimited parser and
++match one error to one command; `command` is what tells an agent driving
++several calls *which* call failed.
++
++Scope note: this is the shape emitted when the shared envelope path is taken.
++Hand-rolled emitters that bypass `outputError` (forwarded upstream bodies in
++`docs.ts`/`slides.ts`/`notes.ts`, `src/docs/import.ts`, `src/files/*`,
++`schema.ts`) are the subject of #654/#655 and are left alone here.
++
++## Plan
++
++- [ ] `formatter.ts`: drop `null, 2`; add an optional `command` parameter to
++      `outputError` and populate `error.command` with the command's dotted
++      path (`docs.content`), matching the names `schema` uses.
++- [ ] Add a `commandPath(cmd)` helper that walks commander's `parent` chain
++      and excludes the root program.
++- [ ] Thread `this` (the commander action's `Command`) at every
++      `outputError` call site: docs, slides, notes, cells, files, tabs,
++      api-keys, sheets-import, sheets-export.
++- [ ] `cli.ts`: capture the running command with a `preAction` hook so the
++      last-resort catch can attribute the error too.
++- [ ] Tests: single-line assertion, `command` present per call site, absent
++      when unattributable; update the two existing `toEqual` envelope
++      assertions in `test/output.test.ts`.
++
++## Acceptance criteria (from the issue)
++
++- [ ] The envelope is a single line on stderr (no embedded newlines).
++- [ ] It carries `command` with the dotted command name, e.g.
++      `wafflebase docs content d1 …` → `"command":"docs.content"`.
++- [ ] `code`/`message` behavior (including preserved subclass codes) is
++      unchanged.
+diff --git a/packages/cli/README.md b/packages/cli/README.md
+index 4646bcc4..f85820a7 100644
+--- a/packages/cli/README.md
++++ b/packages/cli/README.md
+@@ -114,7 +114,9 @@ wafflebase schema cell.get          # → sheets.cells.get
+ - **Binary results** (pdf/docx): positional `<file>`; `-` writes to stdout.
+   `--force` is required to overwrite an existing target.
+ - **Errors**: a single JSON line on stderr —
+-  `{"error":{"code":"…","message":"…"}}`. Typed errors (e.g.,
++  `{"error":{"code":"…","message":"…","command":"docs.content"}}`. `command`
++  is the dotted command name (the same string `schema` indexes on), so a
++  caller running several commands can tell which one failed. Typed errors (e.g.,
+   `INVALID_DOCX`, `TYPE_MISMATCH`, `CONFIRMATION_REQ`) carry a
+   command-specific `code` agents can branch on; everything else
+   reports `"ERROR"`.
+diff --git a/packages/cli/src/cli.ts b/packages/cli/src/cli.ts
+index 045896fc..05964bff 100644
+--- a/packages/cli/src/cli.ts
++++ b/packages/cli/src/cli.ts
+@@ -47,14 +47,23 @@ export function buildProgram(): Command {
+  * Lives here rather than in `bin.ts` so it is reachable from tests: a
+  * module-scope side effect in the shebang entrypoint cannot be driven with a
+  * rejecting action, which is exactly the path that needs a regression guard.
++ *
++ * The `preAction` hook records which subcommand is running so that envelope
++ * can carry `command` too. The root program alone cannot say — and this is
++ * the path where attribution matters most, since the throw is by definition
++ * one no command handled itself.
+  */
+ export async function runCli(
+   program: Command = buildProgram(),
+   argv?: readonly string[],
+ ): Promise<void> {
++  let acting: Command | undefined;
++  program.hook('preAction', (_thisCommand, actionCommand) => {
++    acting = actionCommand;
++  });
+   try {
+     await program.parseAsync(argv as string[] | undefined);
+   } catch (e: unknown) {
+-    outputError(e);
++    outputError(e, acting);
+   }
+ }
+diff --git a/packages/cli/src/commands/api-keys.ts b/packages/cli/src/commands/api-keys.ts
+index ca15b08b..0b5fa012 100644
+--- a/packages/cli/src/commands/api-keys.ts
++++ b/packages/cli/src/commands/api-keys.ts
+@@ -18,7 +18,7 @@ export function registerApiKeysCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -32,7 +32,7 @@ export function registerApiKeysCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -46,7 +46,7 @@ export function registerApiKeysCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/cells.ts b/packages/cli/src/commands/cells.ts
+index e59bf8ca..4bbc15e9 100644
+--- a/packages/cli/src/commands/cells.ts
++++ b/packages/cli/src/commands/cells.ts
+@@ -25,7 +25,7 @@ export function registerCellsCommand(parent: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -65,7 +65,7 @@ export function registerCellsCommand(parent: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -91,7 +91,7 @@ export function registerCellsCommand(parent: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -143,7 +143,7 @@ export function registerCellsCommand(parent: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/docs.ts b/packages/cli/src/commands/docs.ts
+index 4973afa5..e5c7240f 100644
+--- a/packages/cli/src/commands/docs.ts
++++ b/packages/cli/src/commands/docs.ts
+@@ -82,7 +82,7 @@ export function registerDocsCommand(program: Command) {
+         }
+         output(data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -103,7 +103,7 @@ export function registerDocsCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -117,7 +117,7 @@ export function registerDocsCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -135,7 +135,7 @@ export function registerDocsCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -153,7 +153,7 @@ export function registerDocsCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -210,7 +210,7 @@ export function registerDocsCommand(program: Command) {
+           quiet: opts.quiet,
+         });
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -316,7 +316,7 @@ export function registerDocsCommand(program: Command) {
+ 
+         writeBinary(bytes, file, { force: local.force, quiet: opts.quiet });
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -359,7 +359,7 @@ export function registerDocsImportCommand(doc: Command) {
+         );
+         if (result.exitCode !== 0) process.exitCode = result.exitCode;
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/files.ts b/packages/cli/src/commands/files.ts
+index bb30ae50..330f5814 100644
+--- a/packages/cli/src/commands/files.ts
++++ b/packages/cli/src/commands/files.ts
+@@ -41,7 +41,7 @@ export function registerFilesCommand(program: Command) {
+         );
+         if (result.exitCode !== 0) process.exitCode = result.exitCode;
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -65,7 +65,7 @@ export function registerFilesCommand(program: Command) {
+         );
+         if (result.exitCode !== 0) process.exitCode = result.exitCode;
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -92,7 +92,7 @@ export function registerFilesCommand(program: Command) {
+         }
+         output(data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -106,7 +106,7 @@ export function registerFilesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -124,7 +124,7 @@ export function registerFilesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -142,7 +142,7 @@ export function registerFilesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/notes.ts b/packages/cli/src/commands/notes.ts
+index 367093a8..b8ba6798 100644
+--- a/packages/cli/src/commands/notes.ts
++++ b/packages/cli/src/commands/notes.ts
+@@ -42,7 +42,7 @@ export function registerNotesCommand(program: Command) {
+         }
+         output(data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -63,7 +63,7 @@ export function registerNotesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -77,7 +77,7 @@ export function registerNotesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -95,7 +95,7 @@ export function registerNotesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -113,7 +113,7 @@ export function registerNotesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -160,7 +160,7 @@ export function registerNotesCommand(program: Command) {
+           quiet: opts.quiet,
+         });
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -214,7 +214,7 @@ export function registerNotesCommand(program: Command) {
+           quiet: opts.quiet,
+         });
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -245,7 +245,7 @@ export function registerNotesImportCommand(notes: Command) {
+         );
+         if (result.exitCode !== 0) process.exitCode = result.exitCode;
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/sheets-export.ts b/packages/cli/src/commands/sheets-export.ts
+index c5e2e6ec..bb1233ef 100644
+--- a/packages/cli/src/commands/sheets-export.ts
++++ b/packages/cli/src/commands/sheets-export.ts
+@@ -54,7 +54,7 @@ export function registerSheetsExportCommand(parent: Command) {
+           }
+         }
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/sheets-import.ts b/packages/cli/src/commands/sheets-import.ts
+index fcccf4bd..1bea1019 100644
+--- a/packages/cli/src/commands/sheets-import.ts
++++ b/packages/cli/src/commands/sheets-import.ts
+@@ -90,7 +90,7 @@ export function registerSheetsImportCommand(parent: Command) {
+           : { imported: cellCount };
+         output(result, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/slides.ts b/packages/cli/src/commands/slides.ts
+index 74bc5b10..d8e3272a 100644
+--- a/packages/cli/src/commands/slides.ts
++++ b/packages/cli/src/commands/slides.ts
+@@ -47,7 +47,7 @@ export function registerSlidesCommand(program: Command) {
+         }
+         output(data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -68,7 +68,7 @@ export function registerSlidesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -82,7 +82,7 @@ export function registerSlidesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -100,7 +100,7 @@ export function registerSlidesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -118,7 +118,7 @@ export function registerSlidesCommand(program: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -167,7 +167,7 @@ export function registerSlidesCommand(program: Command) {
+           quiet: opts.quiet,
+         });
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -208,7 +208,7 @@ export function registerSlidesCommand(program: Command) {
+         const bytes = await exportPptxCli(res.data, { imageFetcher });
+         writeBinary(bytes, file, { force: local.force, quiet: opts.quiet });
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -241,7 +241,7 @@ export function registerSlidesImportCommand(slides: Command) {
+         );
+         if (result.exitCode !== 0) process.exitCode = result.exitCode;
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/tabs.ts b/packages/cli/src/commands/tabs.ts
+index 808b6b8d..c2666e42 100644
+--- a/packages/cli/src/commands/tabs.ts
++++ b/packages/cli/src/commands/tabs.ts
+@@ -16,7 +16,7 @@ export function registerTabsCommand(parent: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -34,6 +34,7 @@ export function registerTabsCommand(parent: Command) {
+       if (type !== 'sheet') {
+         outputError(
+           new Error(`Unsupported tab type "${type}"; only "sheet" is supported.`),
++          this,
+         );
+         return;
+       }
+@@ -49,7 +50,7 @@ export function registerTabsCommand(parent: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ 
+@@ -75,7 +76,7 @@ export function registerTabsCommand(parent: Command) {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         output(res.data, opts.format);
+       } catch (e) {
+-        outputError(e);
++        outputError(e, this);
+       }
+     });
+ }
+diff --git a/packages/cli/src/output/formatter.ts b/packages/cli/src/output/formatter.ts
+index 5741a5dc..0ab989b2 100644
+--- a/packages/cli/src/output/formatter.ts
++++ b/packages/cli/src/output/formatter.ts
+@@ -1,3 +1,4 @@
++import type { Command } from 'commander';
+ import { formatJson } from './json.js';
+ import { formatTable } from './table.js';
+ import { formatCsv } from './csv.js';
+@@ -46,18 +47,47 @@ function errorCode(error: unknown): string {
+   return 'ERROR';
+ }
+ 
++/**
++ * Dotted name of a command, e.g. `docs.content` or `sheets.cells.get`.
++ *
++ * The chain stops below the root program (`wafflebase`), so the result is
++ * the same string the `schema` command indexes on. Aliases collapse for
++ * free: commander's `name()` returns the canonical name, so
++ * `wafflebase doc content` still reports `docs.content`.
++ */
++export function commandPath(cmd: Command): string {
++  const names: string[] = [];
++  for (let c: Command | null = cmd; c.parent; c = c.parent) {
++    names.unshift(c.name());
++  }
++  return names.join('.');
++}
++
+ /**
+  * Emit the error envelope on stderr and mark the process as failed.
+  *
++ * A single line, not pretty-printed JSON (docs/design/cli.md §9): one line
++ * per error is what lets a caller read stderr with a line-delimited parser
++ * and tell two errors apart. `command` carries the dotted command name so an
++ * agent driving several calls can attribute the failure; it is omitted rather
++ * than guessed when no command is known.
++ *
+  * Like `output`, this is not gated by `--quiet`: a non-zero exit with no
+  * bytes on either stream tells the caller nothing about what failed or
+  * whether it is retryable. Errors go to stderr precisely so they survive
+  * output redirection and quiet modes.
+  */
+-export function outputError(error: unknown) {
++export function outputError(error: unknown, command?: Command) {
+   const message = error instanceof Error ? error.message : String(error);
++  const name = command ? commandPath(command) : '';
+   console.error(
+-    JSON.stringify({ error: { code: errorCode(error), message } }, null, 2),
++    JSON.stringify({
++      error: {
++        code: errorCode(error),
++        message,
++        ...(name ? { command: name } : {}),
++      },
++    }),
+   );
+   process.exitCode = 1;
+ }
+diff --git a/packages/cli/test/output.test.ts b/packages/cli/test/output.test.ts
+index 6e7ac05b..8894cceb 100644
+--- a/packages/cli/test/output.test.ts
++++ b/packages/cli/test/output.test.ts
+@@ -5,6 +5,7 @@ import { formatTable } from '../src/output/table.js';
+ import { formatCsv } from '../src/output/csv.js';
+ import { formatYaml } from '../src/output/yaml.js';
+ import {
++  commandPath,
+   format,
+   output,
+   outputError,
+@@ -140,10 +141,17 @@ describe('outputError', () => {
+     process.exitCode = originalExitCode;
+   });
+ 
+-  function getEmittedBody(): { error: { code: string; message: string } } {
++  function getEmittedBody(): {
++    error: { code: string; message: string; command?: string };
++  } {
+     expect(stderrSpy).toHaveBeenCalledOnce();
+     const raw = String(stderrSpy.mock.calls[0]?.[0]);
+-    return JSON.parse(raw) as { error: { code: string; message: string } };
++    // The documented envelope is one line on stderr, so a caller can read it
++    // with a line-delimited parser and tell two errors apart (#661).
++    expect(raw).not.toContain('\n');
++    return JSON.parse(raw) as {
++      error: { code: string; message: string; command?: string };
++    };
+   }
+ 
+   it('defaults to code:"ERROR" for plain Error instances', () => {
+@@ -173,6 +181,33 @@ describe('outputError', () => {
+     expect(getEmittedBody().error.message).toBe('plain string failure');
+     expect(process.exitCode).toBe(1);
+   });
++
++  it('omits `command` when no command is known', () => {
++    outputError(new Error('boom'));
++    expect(getEmittedBody().error).not.toHaveProperty('command');
++  });
++
++  it('reports the dotted command name of a nested command', () => {
++    const program = createProgram();
++    const nested = program.command('sheets').command('cells').command('get');
++    outputError(new Error('boom'), nested);
++    expect(getEmittedBody().error.command).toBe('sheets.cells.get');
++  });
++
++  it('reports the canonical name when the command was reached by alias', () => {
++    const program = createProgram();
++    const docs = program.command('docs').alias('doc');
++    outputError(new Error('boom'), docs.command('content'));
++    expect(getEmittedBody().error.command).toBe('docs.content');
++  });
++});
++
++describe('commandPath', () => {
++  it('excludes the root program', () => {
++    const program = createProgram();
++    expect(commandPath(program.command('status'))).toBe('status');
++    expect(commandPath(program)).toBe('');
++  });
+ });
+ 
+ describe('output', () => {
+@@ -300,13 +335,29 @@ describe('--quiet does not suppress the body or the error envelope', () => {
+     await run('docs', 'get', 'doc-1', '--quiet');
+     expect(stdoutSpy).not.toHaveBeenCalled();
+     expect(stderrSpy).toHaveBeenCalledOnce();
+-    const body = JSON.parse(String(stderrSpy.mock.calls[0]?.[0])) as {
+-      error: { code: string; message: string };
++    const raw = String(stderrSpy.mock.calls[0]?.[0]);
++    expect(raw).not.toContain('\n');
++    const body = JSON.parse(raw) as {
++      error: { code: string; message: string; command?: string };
+     };
+-    expect(body.error).toEqual({ code: 'ERROR', message: 'HTTP 500' });
++    expect(body.error).toEqual({
++      code: 'ERROR',
++      message: 'HTTP 500',
++      command: 'docs.get',
++    });
+     expect(process.exitCode).toBe(1);
+   });
+ 
++  // #661: an agent driving several calls needs to know *which* one failed.
++  it('attributes the envelope to the command that emitted it', async () => {
++    stubFetch(500, null);
++    await run('sheets', 'cells', 'get', 'doc-1', 'A1');
++    const body = JSON.parse(String(stderrSpy.mock.calls[0]?.[0])) as {
++      error: { command?: string };
++    };
++    expect(body.error.command).toBe('sheets.cells.get');
++  });
++
+   // `sheets cells batch` parses its input before it talks to the server; that
+   // parse used to sit outside the try, so malformed JSON skipped the envelope
+   // entirely and left the exit code at 0.
+@@ -374,9 +425,15 @@ describe('runCli entrypoint', () => {
+ 
+     expect(stderrSpy).toHaveBeenCalledOnce();
+     const body = JSON.parse(String(stderrSpy.mock.calls[0]?.[0])) as {
+-      error: { code: string; message: string };
++      error: { code: string; message: string; command?: string };
+     };
+-    expect(body.error).toEqual({ code: 'LATE_FAILURE', message: 'kaboom' });
++    // The command name comes from the `preAction` hook: the root program
++    // alone cannot say which subcommand was running when the throw escaped.
++    expect(body.error).toEqual({
++      code: 'LATE_FAILURE',
++      message: 'kaboom',
++      command: 'boom',
++    });
+     expect(process.exitCode).toBe(1);
+   });
+ 
+diff --git a/scripts/agent/hunt-probe.mjs b/scripts/agent/hunt-probe.mjs
+index b8eb0dff..61047edc 100644
+--- a/scripts/agent/hunt-probe.mjs
++++ b/scripts/agent/hunt-probe.mjs
+@@ -101,8 +101,9 @@ export function renderReproSh(probes, { bin = "wafflebase", extra = [] } = {}) {
+  * route that silently drops.
+  *
+  * The CLI turns this into its documented error envelope
+- * (`{"error":{"code":"ERROR","message":"fetch failed"}}`), so a backend-free
+- * charter still observes well-formed behaviour rather than a crash.
++ * (`{"error":{"code":"ERROR","message":"fetch failed","command":"docs.get"}}`),
++ * so a backend-free charter still observes well-formed behaviour rather than a
++ * crash.
+  */
+ export const NO_SERVER = "http://127.0.0.1:1";
+ 

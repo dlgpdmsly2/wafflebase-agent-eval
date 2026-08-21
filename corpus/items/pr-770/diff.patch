@@ -1,0 +1,482 @@
+diff --git a/docs/tasks/active/20260811-cli-upstream-error-envelope-lessons.md b/docs/tasks/active/20260811-cli-upstream-error-envelope-lessons.md
+new file mode 100644
+index 00000000..4d9ef308
+--- /dev/null
++++ b/docs/tasks/active/20260811-cli-upstream-error-envelope-lessons.md
+@@ -0,0 +1,15 @@
++# Lessons — CLI upstream error envelope (#655)
++
++- A cast is not a check. All six sites read
++  `res.data as { error?: { code?: string } }` and then tested only for
++  truthiness; TypeScript happily described a shape the runtime never
++  verified. When a value crosses a network boundary, the guard has to
++  do the narrowing — the cast just hides that it hasn't.
++- The pass-through path is the interesting one: forwarding a body
++  verbatim is only safe once you have established it is the documented
++  envelope. Otherwise the failure is silent and *well-formed*, which is
++  strictly worse than an obviously wrong string.
++- Six copies of a five-line guard drifted (one site had dropped the
++  `message` field from its cast, one was collapsed onto a single line).
++  Centralizing next to `outputError` keeps the envelope contract in one
++  file with the code that produces it.
+diff --git a/docs/tasks/active/20260811-cli-upstream-error-envelope-todo.md b/docs/tasks/active/20260811-cli-upstream-error-envelope-todo.md
+new file mode 100644
+index 00000000..6db49993
+--- /dev/null
++++ b/docs/tasks/active/20260811-cli-upstream-error-envelope-todo.md
+@@ -0,0 +1,45 @@
++# CLI: validate upstream error bodies before forwarding them (#655)
++
++## Problem
++
++Six CLI command paths forward an upstream error body verbatim after a
++truthiness test (`if (body?.error)`). Every Express/Nest 404/500 body
++(`{message, error: "Not Found", statusCode}`) passes that test, so the
++CLI prints a body where `error` is a **string** — no `code`, no
++`message` — while `packages/cli/README.md` documents the error contract
++as `{"error":{"code":"…","message":"…"}}`. Structurally wrong JSON is
++worse than prose: a consumer has no signal not to trust the shape.
++
++Sites:
++
++- `packages/cli/src/commands/docs.ts:192`, `:254`
++- `packages/cli/src/commands/slides.ts:151`, `:204`
++- `packages/cli/src/commands/notes.ts:145`, `:202`
++
++## Plan
++
++- [x] Add a shared guard next to `outputError` (`src/output/formatter.ts`,
++      which already owns the envelope contract) that forwards the upstream
++      body only when `error` is an object with a string `code`, and
++      otherwise throws `HTTP <status>` so the existing `catch` routes it
++      through `outputError`.
++- [x] Replace all six sites with the helper (kills the local casts that
++      asserted a shape nobody checked).
++- [x] Tests: unit tests for the guard (envelope forwarded; Express 404
++      body, `null`, string body, non-string `code` all rejected) plus a
++      command-level regression driving `docs content` / `slides content` /
++      `notes content` through commander with a stubbed fetch.
++
++## Acceptance criteria
++
++- An Express-shaped 404 body reaches stderr as
++  `{"error":{"code":"ERROR","message":"HTTP 404"}}`, exit code 1.
++- A backend-shaped body (e.g. `TYPE_MISMATCH`) is still forwarded
++  verbatim, exit code 1.
++- All six sites share one helper.
++
++## Non-goals
++
++- Any change to the backend's error bodies.
++- Touching other command paths (sheets/cells/files) that do not have
++  this pattern.
+diff --git a/packages/cli/src/commands/docs.ts b/packages/cli/src/commands/docs.ts
+index 4973afa5..0d16102d 100644
+--- a/packages/cli/src/commands/docs.ts
++++ b/packages/cli/src/commands/docs.ts
+@@ -1,7 +1,11 @@
+ import { Command } from 'commander';
+ import { extname } from 'node:path';
+ import { getGlobalOpts, getClient, getConfig } from './root.js';
+-import { output, outputError } from '../output/formatter.js';
++import {
++  output,
++  outputError,
++  forwardUpstreamError,
++} from '../output/formatter.js';
+ import { printDryRun } from '../client/dry-run.js';
+ import { parseContentFormat, runDocsContent } from '../docs/content.js';
+ import { exportPdf } from '../docs/pdf-export.js';
+@@ -187,17 +191,10 @@ export function registerDocsCommand(program: Command) {
+         }
+ 
+         const res = await getClient(opts).getDocContent(docId);
+-        if (!res.ok) {
+-          const body = res.data as { error?: { code?: string; message?: string } } | null;
+-          if (body?.error) {
+-            // Surface backend-shaped errors (e.g., TYPE_MISMATCH) verbatim
+-            // so agents reading stderr can act on the `code` field.
+-            console.error(JSON.stringify(body, null, 2));
+-            process.exitCode = 1;
+-            return;
+-          }
+-          throw new Error(`HTTP ${res.status}`);
+-        }
++        // Surfaces a backend-shaped error (e.g., TYPE_MISMATCH) verbatim so
++        // agents reading stderr can act on its `code`; anything else throws
++        // and comes back out through `outputError`.
++        if (!res.ok) return forwardUpstreamError(res);
+ 
+         runDocsContent({
+           doc: res.data,
+@@ -249,15 +246,7 @@ export function registerDocsCommand(program: Command) {
+         }
+ 
+         const res = await getClient(opts).getDocContent(docId);
+-        if (!res.ok) {
+-          const body = res.data as { error?: { code?: string; message?: string } } | null;
+-          if (body?.error) {
+-            console.error(JSON.stringify(body, null, 2));
+-            process.exitCode = 1;
+-            return;
+-          }
+-          throw new Error(`HTTP ${res.status}`);
+-        }
++        if (!res.ok) return forwardUpstreamError(res);
+         const fetchedDoc = res.data;
+ 
+         // Image inlines reference URLs that PdfExporter and DocxExporter
+diff --git a/packages/cli/src/commands/notes.ts b/packages/cli/src/commands/notes.ts
+index 367093a8..1c19a69c 100644
+--- a/packages/cli/src/commands/notes.ts
++++ b/packages/cli/src/commands/notes.ts
+@@ -1,7 +1,11 @@
+ import { Command } from 'commander';
+ import { extname } from 'node:path';
+ import { getGlobalOpts, getClient, getConfig } from './root.js';
+-import { output, outputError } from '../output/formatter.js';
++import {
++  output,
++  outputError,
++  forwardUpstreamError,
++} from '../output/formatter.js';
+ import { printDryRun } from '../client/dry-run.js';
+ import { runNotesImport } from '../notes/import.js';
+ import {
+@@ -138,19 +142,10 @@ export function registerNotesCommand(program: Command) {
+         }
+ 
+         const res = await getClient(opts).getNoteContent(docId);
+-        if (!res.ok) {
+-          const body = res.data as
+-            | { error?: { code?: string; message?: string } }
+-            | null;
+-          if (body?.error) {
+-            // Surface backend-shaped errors (e.g., TYPE_MISMATCH) verbatim
+-            // so agents reading stderr can act on the `code` field.
+-            console.error(JSON.stringify(body, null, 2));
+-            process.exitCode = 1;
+-            return;
+-          }
+-          throw new Error(`HTTP ${res.status}`);
+-        }
++        // Surfaces a backend-shaped error (e.g., TYPE_MISMATCH) verbatim so
++        // agents reading stderr can act on its `code`; anything else throws
++        // and comes back out through `outputError`.
++        if (!res.ok) return forwardUpstreamError(res);
+ 
+         runNotesContent({
+           note: res.data,
+@@ -197,15 +192,7 @@ export function registerNotesCommand(program: Command) {
+           return;
+         }
+         const res = await getClient(opts).getNoteContent(docId);
+-        if (!res.ok) {
+-          const body = res.data as { error?: { code?: string } } | null;
+-          if (body?.error) {
+-            console.error(JSON.stringify(body, null, 2));
+-            process.exitCode = 1;
+-            return;
+-          }
+-          throw new Error(`HTTP ${res.status}`);
+-        }
++        if (!res.ok) return forwardUpstreamError(res);
+         runNotesContent({
+           note: res.data,
+           format: 'md',
+diff --git a/packages/cli/src/commands/slides.ts b/packages/cli/src/commands/slides.ts
+index 74bc5b10..a949052c 100644
+--- a/packages/cli/src/commands/slides.ts
++++ b/packages/cli/src/commands/slides.ts
+@@ -1,7 +1,11 @@
+ import { Command } from 'commander';
+ import { extname } from 'node:path';
+ import { getGlobalOpts, getClient, getConfig } from './root.js';
+-import { output, outputError } from '../output/formatter.js';
++import {
++  output,
++  outputError,
++  forwardUpstreamError,
++} from '../output/formatter.js';
+ import { printDryRun } from '../client/dry-run.js';
+ import { runSlidesImport } from '../slides/import.js';
+ import {
+@@ -144,19 +148,10 @@ export function registerSlidesCommand(program: Command) {
+         }
+ 
+         const res = await getClient(opts).getSlidesContent(docId);
+-        if (!res.ok) {
+-          const body = res.data as
+-            | { error?: { code?: string; message?: string } }
+-            | null;
+-          if (body?.error) {
+-            // Surface backend-shaped errors (e.g., TYPE_MISMATCH) verbatim
+-            // so agents reading stderr can act on the `code` field.
+-            console.error(JSON.stringify(body, null, 2));
+-            process.exitCode = 1;
+-            return;
+-          }
+-          throw new Error(`HTTP ${res.status}`);
+-        }
++        // Surfaces a backend-shaped error (e.g., TYPE_MISMATCH) verbatim so
++        // agents reading stderr can act on its `code`; anything else throws
++        // and comes back out through `outputError`.
++        if (!res.ok) return forwardUpstreamError(res);
+ 
+         runSlidesContent({
+           deck: res.data,
+@@ -199,11 +194,7 @@ export function registerSlidesCommand(program: Command) {
+           return;
+         }
+         const res = await getClient(opts).getSlidesContent(docId);
+-        if (!res.ok) {
+-          const body = res.data as { error?: { code?: string } } | null;
+-          if (body?.error) { console.error(JSON.stringify(body, null, 2)); process.exitCode = 1; return; }
+-          throw new Error(`HTTP ${res.status}`);
+-        }
++        if (!res.ok) return forwardUpstreamError(res);
+         const imageFetcher = createImageFetcher({ serverBase: getConfig(opts).server });
+         const bytes = await exportPptxCli(res.data, { imageFetcher });
+         writeBinary(bytes, file, { force: local.force, quiet: opts.quiet });
+diff --git a/packages/cli/src/output/formatter.ts b/packages/cli/src/output/formatter.ts
+index 5741a5dc..feee4a8a 100644
+--- a/packages/cli/src/output/formatter.ts
++++ b/packages/cli/src/output/formatter.ts
+@@ -61,3 +61,50 @@ export function outputError(error: unknown) {
+   );
+   process.exitCode = 1;
+ }
++
++/**
++ * True when `body` is the documented error envelope — an object whose
++ * `error` field is an object carrying a string `code`. That `code` is the
++ * whole point: it is what agents branch on (see the "Errors" section of
++ * `packages/cli/README.md`).
++ *
++ * Deliberately structural rather than a cast. An Express/Nest 404 or 500
++ * body — `{message, error: "Not Found", statusCode}` — has a truthy
++ * `error` too, so a truthiness test cannot tell the envelope from the
++ * framework's default body.
++ */
++function isErrorEnvelope(
++  body: unknown,
++): body is { error: { code: string; message?: string } } {
++  const err = (body as { error?: unknown } | null | undefined)?.error;
++  return (
++    typeof err === 'object' &&
++    err !== null &&
++    typeof (err as { code?: unknown }).code === 'string'
++  );
++}
++
++/**
++ * Handle a failed upstream response for the commands that want to pass a
++ * backend-shaped error through untouched (e.g. `TYPE_MISMATCH`), so agents
++ * reading stderr can act on its `code`.
++ *
++ * Only a body that *is* the documented envelope is forwarded verbatim.
++ * Anything else — a framework 404/500 body where `error` is a string, an
++ * HTML page that failed to parse to `null`, a bare string — throws
++ * `HTTP <status>`, which the caller's `catch` routes through
++ * `outputError` and back into the documented shape. Forwarding those
++ * verbatim produced valid JSON with `error.code` and `error.message` both
++ * `undefined`, which gives a consumer no signal that the shape is wrong.
++ */
++export function forwardUpstreamError(res: {
++  status: number;
++  data: unknown;
++}): void {
++  if (isErrorEnvelope(res.data)) {
++    console.error(JSON.stringify(res.data, null, 2));
++    process.exitCode = 1;
++    return;
++  }
++  throw new Error(`HTTP ${res.status}`);
++}
+diff --git a/packages/cli/test/upstream-error.test.ts b/packages/cli/test/upstream-error.test.ts
+new file mode 100644
+index 00000000..434573bb
+--- /dev/null
++++ b/packages/cli/test/upstream-error.test.ts
+@@ -0,0 +1,181 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import type { Command } from 'commander';
++import { forwardUpstreamError } from '../src/output/formatter.js';
++import { createProgram } from '../src/commands/root.js';
++import { registerDocsCommand } from '../src/commands/docs.js';
++import { registerSlidesCommand } from '../src/commands/slides.js';
++import { registerNotesCommand } from '../src/commands/notes.js';
++
++/** The documented envelope: `error` is an object carrying a string `code`. */
++const ENVELOPE = {
++  error: {
++    code: 'TYPE_MISMATCH',
++    message: "Use 'sheets cells get' for spreadsheet documents",
++  },
++};
++
++/** What Express/Nest returns for an unrouted path — `error` is a string. */
++const EXPRESS_404 = {
++  message: 'Cannot GET /api/v1/workspaces//documents/doc-1/content',
++  error: 'Not Found',
++  statusCode: 404,
++};
++
++describe('forwardUpstreamError', () => {
++  let stderrSpy: ReturnType<typeof vi.spyOn>;
++  const originalExitCode = process.exitCode;
++
++  beforeEach(() => {
++    stderrSpy = vi.spyOn(console, 'error').mockImplementation(() => {
++      /* swallow */
++    });
++    process.exitCode = 0;
++  });
++
++  afterEach(() => {
++    stderrSpy.mockRestore();
++    process.exitCode = originalExitCode;
++  });
++
++  it('forwards the documented envelope verbatim', () => {
++    forwardUpstreamError({ status: 409, data: ENVELOPE });
++    expect(stderrSpy).toHaveBeenCalledOnce();
++    expect(JSON.parse(String(stderrSpy.mock.calls[0]?.[0]))).toEqual(ENVELOPE);
++    expect(process.exitCode).toBe(1);
++  });
++
++  it('keeps extra fields the backend attached to the envelope', () => {
++    const body = { error: { code: 'X', message: 'm', command: 'docs content' } };
++    forwardUpstreamError({ status: 400, data: body });
++    expect(JSON.parse(String(stderrSpy.mock.calls[0]?.[0]))).toEqual(body);
++  });
++
++  // The bug: a truthiness test forwarded this as though it were the
++  // envelope, so `error.code` and `error.message` both read `undefined`.
++  it('rejects a framework body whose `error` is a string', () => {
++    expect(() => forwardUpstreamError({ status: 404, data: EXPRESS_404 })).toThrow(
++      'HTTP 404',
++    );
++    expect(stderrSpy).not.toHaveBeenCalled();
++    expect(process.exitCode).toBe(0);
++  });
++
++  it('rejects an `error` object without a string `code`', () => {
++    expect(() =>
++      forwardUpstreamError({ status: 500, data: { error: { message: 'boom' } } }),
++    ).toThrow('HTTP 500');
++    expect(() =>
++      forwardUpstreamError({ status: 500, data: { error: { code: 42 } } }),
++    ).toThrow('HTTP 500');
++  });
++
++  it('rejects bodies that are not objects at all', () => {
++    expect(() => forwardUpstreamError({ status: 502, data: null })).toThrow(
++      'HTTP 502',
++    );
++    expect(() =>
++      forwardUpstreamError({ status: 502, data: '<html>bad gateway</html>' }),
++    ).toThrow('HTTP 502');
++    expect(() => forwardUpstreamError({ status: 502, data: undefined })).toThrow(
++      'HTTP 502',
++    );
++  });
++});
++
++// End-to-end guard over the six command paths that forward upstream error
++// bodies. Asserting on the helper alone cannot catch a site that stops
++// calling it, so these drive real commands through commander with a
++// stubbed fetch and watch what reaches stderr.
++describe('content/export commands envelope non-envelope error bodies', () => {
++  const ENV_KEYS = [
++    'WAFFLEBASE_CONFIG',
++    'WAFFLEBASE_API_KEY',
++    'WAFFLEBASE_SERVER',
++    'WAFFLEBASE_WORKSPACE',
++  ] as const;
++
++  let stdoutSpy: ReturnType<typeof vi.spyOn>;
++  let stderrSpy: ReturnType<typeof vi.spyOn>;
++  let savedEnv: Record<string, string | undefined>;
++  const originalExitCode = process.exitCode;
++
++  beforeEach(() => {
++    savedEnv = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
++    process.env.WAFFLEBASE_CONFIG = '/nonexistent/wafflebase-test.yaml';
++    process.env.WAFFLEBASE_API_KEY = 'wfb_test';
++    process.env.WAFFLEBASE_SERVER = 'https://api.test';
++    process.env.WAFFLEBASE_WORKSPACE = 'ws-1';
++
++    stdoutSpy = vi.spyOn(console, 'log').mockImplementation(() => {
++      /* swallow */
++    });
++    stderrSpy = vi.spyOn(console, 'error').mockImplementation(() => {
++      /* swallow */
++    });
++    process.exitCode = 0;
++  });
++
++  afterEach(() => {
++    for (const k of ENV_KEYS) {
++      if (savedEnv[k] === undefined) delete process.env[k];
++      else process.env[k] = savedEnv[k];
++    }
++    stdoutSpy.mockRestore();
++    stderrSpy.mockRestore();
++    vi.unstubAllGlobals();
++    process.exitCode = originalExitCode;
++  });
++
++  function stubFetch(status: number, data: unknown) {
++    vi.stubGlobal(
++      'fetch',
++      vi.fn().mockResolvedValue({
++        ok: status >= 200 && status < 300,
++        status,
++        json: async () => data,
++      }),
++    );
++  }
++
++  function buildProgram(): Command {
++    const program = createProgram();
++    registerDocsCommand(program);
++    registerSlidesCommand(program);
++    registerNotesCommand(program);
++    return program;
++  }
++
++  async function run(...argv: string[]): Promise<void> {
++    await buildProgram().parseAsync(['node', 'wafflebase', ...argv]);
++  }
++
++  function emitted(): { error: { code: string; message: string } } {
++    expect(stderrSpy).toHaveBeenCalledOnce();
++    return JSON.parse(String(stderrSpy.mock.calls[0]?.[0]));
++  }
++
++  const CASES: Array<{ name: string; argv: string[] }> = [
++    { name: 'docs content', argv: ['docs', 'content', 'doc-1'] },
++    { name: 'docs export', argv: ['docs', 'export', 'doc-1', 'out.pdf'] },
++    { name: 'slides content', argv: ['slides', 'content', 'doc-1'] },
++    { name: 'slides export', argv: ['slides', 'export', 'doc-1', 'out.pptx'] },
++    { name: 'notes content', argv: ['notes', 'content', 'doc-1'] },
++    { name: 'notes export', argv: ['notes', 'export', 'doc-1', 'out.md'] },
++  ];
++
++  for (const { name, argv } of CASES) {
++    it(`\`${name}\` reports an Express 404 body as the documented envelope`, async () => {
++      stubFetch(404, EXPRESS_404);
++      await run(...argv);
++      expect(emitted().error).toEqual({ code: 'ERROR', message: 'HTTP 404' });
++      expect(process.exitCode).toBe(1);
++    });
++
++    it(`\`${name}\` still forwards a backend-shaped error verbatim`, async () => {
++      stubFetch(409, ENVELOPE);
++      await run(...argv);
++      expect(emitted()).toEqual(ENVELOPE);
++      expect(process.exitCode).toBe(1);
++    });
++  }
++});

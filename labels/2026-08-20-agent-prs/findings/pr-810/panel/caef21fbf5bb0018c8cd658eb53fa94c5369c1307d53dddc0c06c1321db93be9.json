@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/api/v1/docs-content.controller.ts::a table cell that is not an object is silently skipped rather than repaired or rejected, leaving a stored shape the table renderer dereferences unconditionally.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in docs-content.controller.ts (assertValidElementData, table branch): `if (!cell || typeof cell !== 'object' || Array.isArray(cell)) continue;` skips non-object cells, which are then persisted verbatim — neither the `cell.body = { blocks: [] }` repair nor a 400 applies, contradicting the diff's own rest-api.md rule. In packages/slides/src/view/canvas/table-renderer.ts, a truthy non-object cell (string/array) passes the `!cell || isCovered(cell)` guard and crashes at `paddingOf(cell)` (`cell.style.padding`) and `isBlocksEmpty(cell.body.blocks)`, so the deck becomes a TypeError for every viewer. The one overstatement is the `null` example: the renderer's `!cell` guard skips null cells safely, but the defect stands for string/array cells.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-757",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/view/text-box-editor.ts::the change collapses the *range* walk into one model traversal but leaves the *caret* walk triplicated — and the new copy is introduced with a \"mirrors getselectionstyleimpl in view/editor.ts\" comment, exactly the pattern this change's own lessons doc rejects",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: `caretStyle` in packages/docs/src/view/text-box-editor.ts carries the literal comment \"Mirrors `getSelectionStyleImpl` in `view/editor.ts`\" and re-implements the caret walk (findBlock, offset <= inlineEnd, last-run fallback, resolveStyleInline defaults); the diff adds `styleDefaultsAtCursor()` alongside the pre-existing `getStyleAtCursor()` walk in text-editor.ts, keeping a third hand-maintained instance; and the PR's own new lessons doc (docs/tasks/active/20260810-docs-range-aware-toggles-lessons.md) explicitly condemns \"Mirrors X\" comments and says model traversals belong in model/. The claim is therefore correct: the range walk was unified but the caret walk stays duplicated with a mirror comment, the exact drift pattern that caused the text-box bug this PR fixes. It is a design/maintainability concern with no current functional defect (all copies agree post-PR), so minor. The only unverifiable sub-detail (getStyleAtCursor using getBlock vs findBlock) is outside the provided excerpt and not load-bearing.",
+  "notes": null,
+  "diff_sha256": "sha256:34613b8c966c30ce27f8012e3225035e03f57bfc2f1c6e4709dfb9357383cce2",
+  "class_id": null,
+  "class_members": null
+}

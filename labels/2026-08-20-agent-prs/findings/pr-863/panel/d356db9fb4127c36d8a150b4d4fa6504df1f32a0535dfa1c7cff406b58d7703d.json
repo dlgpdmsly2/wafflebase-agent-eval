@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/api-keys.ts::url construction for the api-keys management routes is duplicated in the command layer instead of reused from httpclient. `apikeysurl()` re-derives `${server}/workspaces/${seg(workspace)}/api-keys[/:id]`, which httpclient already builds in three places (listapikeys/createapikey/revokeapikey). the whole point of the change is that \"the preview is the request\", yet the preview now depends on a hand-copied mirror that can silently drift (e.g. if the route ever moves under /api/v1). a single exported url builder on httpclient (or a dry-run mode on the client) would make the guarantee structural rather than by comment.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against packages/cli/src/commands/api-keys.ts:13-18 and packages/cli/src/client/http-client.ts (listApiKeys/createApiKey/revokeApiKey): the `${server}/workspaces/${seg(ws)}/api-keys[/:id]` URL is built independently in the command layer and three times in HttpClient, with no shared builder — the preview/request equivalence is enforced only by comment and by tests that hardcode the same string rather than deriving it from the client. The duplication and drift risk the claim describes are real, though there is no behavioral bug today and the approach matches the PR's existing printDryRun convention, so this is a maintainability finding rather than a defect affecting users.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

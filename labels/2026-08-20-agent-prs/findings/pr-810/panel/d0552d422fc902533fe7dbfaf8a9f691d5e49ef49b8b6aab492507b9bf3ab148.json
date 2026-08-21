@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/api/v1/docs-content.controller.ts::table-element repair fills in `cell.body` but leaves `cell.style`, `columnwidths` and non-object cells/rows unrepaired — the same stored-crash it claims to close",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied code: in docs-content.controller.ts the table branch of assertValidElementData repairs only cell.body and silently tolerates non-array rows (`Array.isArray(data.rows) ? data.rows : []`), rows without cells, and cells lacking style, and never checks data.columnWidths. In packages/slides/src/view/canvas/table-renderer.ts, drawTable reads `data.columnWidths.length`, computeTableLayout reads `row.cells[c]` and `cell.style.padding`, and paintCellFills reads `cell.style.fill` — all unconditionally and before the repaired `cell.body.blocks` is reached. Since the PR's own comments state writeSlidesRoot stores verbatim and migrateElement repairs shapes only, an authenticated PUT can persist a table shape that TypeErrors for every viewer, exactly the stored-crash class the PR claims to close.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

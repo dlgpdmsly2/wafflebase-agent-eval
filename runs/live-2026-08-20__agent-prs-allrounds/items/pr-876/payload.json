@@ -1,0 +1,45 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "summary": "Toggle-off now emits a Yorkie `removeStyleByPath` op on the hottest editing path (B/I/U/S); if Yorkie history cannot reverse TreeStyleRemove, Cmd+Z after a toggle-off silently stops restoring the flag",
+      "evidence": "With the demotion in `Doc.styleOffAsClear`, every B/I/U/S off-toggle now reaches `YorkieDocStore.applyStyleInTree` with the key set to `undefined`, so `removedInlineStyleAttrs` (yorkie-doc-store.ts:144-163) returns the attr and `tree.removeStyleByPath(...)` runs at yorkie-doc-store.ts:1881 — previously only `styleByPath` ran for a toggle-off (the `false` was serialized), and `removeStyleByPath` was reached only by the rare removeLink / clear-formatting paths. Docs undo is Yorkie-history based (`this.doc.history.undo()` at yorkie-doc-store.ts:2611), so the reversibility of the removeStyle op is now load-bearing for the most common formatting action in the product. I could not verify the SDK's reverse-op support from this checkout (the Yorkie SDK is not installed in node_modules here); confirming needs a collab/integration run that toggles bold off and then undoes it against a real Yorkie doc. Fix, if real, belongs in the Yorkie store (emit a compensating style write) rather than in the new Doc code.",
+      "lens": "blast-radius",
+      "round_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/test/model/document.test.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'italic: false' / 'bold: false' in packages/docs/test",
+        "Read packages/docs/test/model/document.test.ts:150-368",
+        "Read packages/docs/test/view/backward-selection-toggle.test.ts:240-362",
+        "Grep 'styleOffAsClear' across repo"
+      ],
+      "summary": "The mixed-key branch of `styleOffAsClear` (one style object containing both a style-supplied key and a non-supplied key) is never exercised, though the test comment claims it is",
+      "evidence": "In 'keeps an explicit false where the named style supplies the flag' (document.test.ts:345-367) the comment at line 360 says \"A key the style does not supply is still cleared **in the same write**\", but the test issues two *separate* `applyInlineStyle` calls: `{ italic: false }` then `{ bold: false }`. The interesting branch in `styleOffAsClear` (document.ts:405-417) is the copy-on-write path `cleared = cleared ?? { ...style }` combined with `if (defaults[key]) continue`, i.e. a single patch like `{ italic: false, bold: false }` on a Heading 6 where `italic:false` must survive while `bold` is deleted. A regression that built `cleared` as `{}` instead of a spread of `style`, or that cleared/kept the wrong key when both are present, would drop the italic override and no test in the diff or elsewhere would fail. I grepped packages/docs/test for combined boolean-off patches and found none.",
+      "lens": "test-adequacy",
+      "round_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/docs/docs-font-controls.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "Glob docs/design/docs/*.md",
+        "Grep 'normalizeInlines|toggle-off|turning it off' in docs/design (no hits)",
+        "Grep 'bold: false|italic: false|inlineStylesEqual' in docs/design",
+        "Read docs/design/docs/docs-font-controls.md:210-268",
+        "Read docs/design/docs/docs-named-styles.md:100-219",
+        "Grep 'design doc|docs/design' in CONTRIBUTING.md",
+        "diff file list (only packages/docs src + tests)"
+      ],
+      "summary": "New cross-cutting storage invariant is recorded only in docs/tasks/*, not in any design doc",
+      "evidence": "The change establishes a model-level invariant — \"a boolean inline key turned off is *cleared*, not stored as `false`, except where the block's named style supplies it truthy\" — plus a new merge semantic in `block-helpers.applyInlineStyle` (a patch key set to `undefined` deletes the key). Both are consumed across packages (docs engine, slides text-box editor, `YorkieDocStore.removedInlineStyleAttrs`) and interact with the named-style lazy cascade. No `docs/design/**` file was touched by the diff; the only written record is `docs/tasks/active/20260819-docs-inline-style-off-clears-key-{todo,lessons}.md`. CONTRIBUTING.md:13-16 and :58-60 require writing/updating a design doc under `docs/design/<area>/` for a non-trivial change, folding into the canonical doc. The natural homes are `docs/design/docs/docs-font-controls.md` §\"Clear formatting\" (which documents the `undefined`-means-remove convention at :229-242 but says nothing about the boolean toggles) and `docs/design/docs/docs-named-styles.md` §\"Cascade resolution model\" (:117-131, where the false-pins-against-redefinition hazard lives).",
+      "lens": "design-fit",
+      "round_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4"
+    }
+  ]
+}

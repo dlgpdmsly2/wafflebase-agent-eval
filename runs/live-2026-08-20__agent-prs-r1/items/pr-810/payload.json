@@ -1,0 +1,76 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/table-renderer.ts",
+      "summary": "Table-cell text still paints legacy `color: ''` through `??`, so the #728 stale-fillStyle bug survives inside tables",
+      "evidence": "`packages/docs/src/view/table-renderer.ts:457` — `const runTextColor = defaultColorResolver(style.color) ?? Theme.defaultColor;` and `:564` — `ctx.fillStyle = defaultColorResolver(cellBlock.inlines[0]?.style.color) ?? Theme.defaultColor;`. Table blocks never go through `renderRun` (paint-layout skips `block.type === 'table'` at lines 221 and 277; table-renderer does its own `ctx.font`/`ctx.fillStyle`/`ctx.fillText` at 451-483 and the list-marker path at 558-565). `defaultColorResolver` returns strings verbatim (`packages/docs/src/model/color.ts:16`), so a stored `color: ''` yields `''`, `ctx.fillStyle = ''` is ignored by the canvas, and the run keeps whatever the previous pass set — the table content pass runs *after* the selection layer (see the comment at table-renderer.ts:471-474 and the explicit `ctx.fillStyle = focused ? Theme.selectionColor : ...` at :442). The task doc for this change explicitly declines a data migration (docs/tasks/active/20260812-docs-font-color-reset-todo.md:51-52), so already-saved `''` values are the intended coverage of the renderer guard — and text in tables is not covered. Fix belongs in table-renderer.ts:457/564 (`|| Theme.defaultColor`).",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/paint-layout.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep renderListMarker across repo",
+        "read packages/docs/test/view/render-list-marker.test.ts in full",
+        "Grep \"color: ''\" / 'color: \"\"' under packages/docs/test",
+        "read new paint-layout.test.ts hunk"
+      ],
+      "summary": "renderListMarker's `?? → ||` change has no test exercising an empty-string marker color",
+      "evidence": "The diff changes `ctx.fillStyle = resolveColor(colorSource) ?? theme.defaultColor` to `|| theme.defaultColor`, but the only marker test file, packages/docs/test/view/render-list-marker.test.ts, exercises only '#FF9900' / '#1155cc' / no-color cases (lines 57-112) — every one of which passes identically before and after the change. No test passes `marker: { color: '' }` or `inline: { color: '' }`, so a regression back to `??` (marker painted in the stale fillStyle, the exact #728 failure mode) would keep the suite green. The task doc itself checks off '`renderListMarker` marker color' under the fix but lists no test for it (docs/tasks/active/20260812-docs-font-color-reset-todo.md:35,37-40).",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/color.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep resolveColorAtPosition across repo (tests + call sites in editor.ts, text-box-editor.ts)",
+        "read packages/docs/test/model/color.test.ts in full"
+      ],
+      "summary": "resolveColorAtPosition's `?? → ||` change (caret color) is untested for the empty-string case",
+      "evidence": "Both changed lines in color.ts switch to `||` so a stored `color: ''` falls back. packages/docs/test/model/color.test.ts:104-156 covers missing block, seam offsets, role-with-no-resolver, and no-color-set — all unchanged by `??` vs `||`. There is no case with `style: { color: '' }` on either the in-span branch or the trailing `last` branch, so the caret-color half of the fix (and the trailing-inline branch generally) has zero discriminating coverage.",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/table-renderer.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep resolveColor( across repo",
+        "Grep style.color / .color in packages/docs/src",
+        "read paint-layout.ts 220-470, 540-560",
+        "Grep applyStyle({color …) in frontend",
+        "read docs/tasks/active/20260812-docs-font-color-reset-todo.md"
+      ],
+      "summary": "Renderer guard for legacy `color: ''` is missing in the table text path, so the issue's symptom persists for text inside tables",
+      "evidence": "The task doc promises \"Renderer treats a falsy resolved color as unset, so documents already saved with `color: \"\"` … render with the theme default instead of a stale `fillStyle`\" and enumerates paintRun / renderListMarker / resolveColorAtPosition. But table cell text is painted by a separate path that still uses `??`:\npackages/docs/src/view/table-renderer.ts:457 `const runTextColor = defaultColorResolver(style.color) ?? Theme.defaultColor;`\npackages/docs/src/view/table-renderer.ts:564 `ctx.fillStyle = defaultColorResolver(cellBlock.inlines[0]?.style.color) ?? Theme.defaultColor;`\nWith a stored empty string these assign `''`, which the canvas ignores — exactly the failure mode of #728 (the previous pass is the selection/backgrounds fill). Acceptance criterion \"reset the text color → the text is uncolored\" therefore still fails for already-saved docs whose colored text lives in a table.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "searchedFor": [],
+      "summary": "Stored color values are interpolated into DOCX XML attributes without escaping, while adjacent attributes in the same element are escaped — an arbitrary color string (which this change confirms can be persisted verbatim) yields OOXML injection in the exported document.",
+      "evidence": "This change is built on the premise that a non-color string can end up stored as `InlineStyle.color` (e.g. the legacy `color: \"\"` the diff now guards against at paint time, and `defaultColorResolver` passes any string through verbatim at packages/docs/src/model/color.ts:16). The renderer path is now hardened, but the DOCX export path is not: packages/docs/src/export/docx-style-map.ts:71-77 does `defaultColorResolver(style.color)` then `parts.push(`<w:color w:val=\"${colorHex.replace('#','')}\"/>`)` and the same for `w:fill`, with no `escapeXmlAttr` — even though the very same function escapes `style.fontFamily` two lines earlier (docx-style-map.ts:53-56, with a comment explicitly warning about attribute injection). Vector: an actor who can write a color value that is not from the fixed palette (a collaborator writing the Yorkie Tree style attribute directly via the docs/slides API, or a crafted imported DOCX/PPTX whose color string survives import) sets e.g. `color = '#000\" /><w:rStyle w:val=\"x'`; on export the string closes the element and injects attacker-chosen OOXML into a file other users open. I could not confirm an end-to-end write path that bypasses the palette, hence low confidence, but the escaping asymmetry inside one function is concrete.",
+      "lens": "security"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/table-renderer.ts",
+      "searchedFor": [],
+      "summary": "The '' -> invalid fillStyle fix was not applied to the table renderer, so text in table cells still inherits the previous fill",
+      "evidence": "The fix converts a falsy resolved color to a fallback in `paint-layout.ts:389/558` and `color.ts:75/80`, but the parallel table text path still uses `??`: `const runTextColor = defaultColorResolver(style.color) ?? Theme.defaultColor;` (table-renderer.ts:457) and `ctx.fillStyle = defaultColorResolver(cellBlock.inlines[0]?.style.color) ?? Theme.defaultColor;` (table-renderer.ts:564). `defaultColorResolver('')` returns `''` (color.ts:16 `if (typeof c === 'string') return c;`), so `??` keeps `''` and `ctx.fillStyle = ''` is ignored by canvas — the run keeps whatever the previous pass set. In this very function the immediately preceding pass sets `ctx.fillStyle = focused ? Theme.selectionColor : Theme.selectionColorInactive` (table-renderer.ts:442), which is exactly the failure mode issue #728 describes. Documents already saved with `color: \"\"` (nothing migrates them — `parseInlineStyle` keeps `''` verbatim, yorkie-doc-store.ts:176) therefore still render wrong inside tables.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/paint-layout.ts",
+      "searchedFor": [],
+      "summary": "Collapsing '' to `undefined` after the resolver bypasses theme-aware fallback, painting legacy cleared runs in the docs default color on themed slides",
+      "evidence": "`const resolvedColor = resolveColor(style.color) || undefined;` then `let textColor = resolvedColor ?? theme.defaultColor;`. For slides the injected resolver (packages/slides/src/view/canvas/text-renderer.ts:52-63 `makeColorResolver`) maps a *missing* color to the deck theme's text color (`themeText`), but a legacy `''` reaches the resolver, comes back `''`, and is turned into the docs `theme.defaultColor` (near-black) instead of being re-resolved as \"no color\" through the theme. On a dark deck theme, runs whose color was cleared before this fix paint dark-on-dark (effectively invisible) rather than in the theme text color. The correct handling is to fall back to `resolveColor(undefined)`. The same shape appears at renderListMarker (paint-layout.ts:558, `resolveColor(colorSource) || theme.defaultColor`) and in resolveColorAtPosition (packages/docs/src/model/color.ts:75/80, `|| fallback` where the slides caller passes the docs `Theme.cursorColor`, text-box-editor.ts:578-583), so the caret over such a run also reverts to the docs cursor color on a dark slide.",
+      "lens": "correctness"
+    }
+  ]
+}

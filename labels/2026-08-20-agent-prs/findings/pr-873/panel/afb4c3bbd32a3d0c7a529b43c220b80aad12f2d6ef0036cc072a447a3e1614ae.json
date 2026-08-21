@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-873",
+  "arm": "panel",
+  "finding_key": "docs/tasks/active/20260818-sheets-decimal-round-trip-lessons.md::lessons doc asserts defaultstylevalues carries `dp: 2` and that writing `dp: 2` self-erases, but the current code (added as part of this same fix) explicitly excludes `dp` from defaultstylevalues for exactly the reversibility reason the lessons doc itself describes elsewhere.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: the lessons doc says in present tense that DefaultStyleValues \"carries dp: 2\", but style-mutation.ts at this commit has no dp in DefaultStyleValues (the diff removes it) and carries a comment (lines 14-18) explaining dp is deliberately absent; docs/design/sheets/sheet-style.md likewise says dp is not in DefaultStyleValues. The lessons entry is at best stale pre-fix narration phrased as current fact, contradicting the code and design doc shipped in the same PR. Docs-only inconsistency, so impact is minor.",
+  "notes": null,
+  "diff_sha256": "sha256:729cb83a1f576206c1d4f1b92b0ef2d1f83d5ccf7edd801a5e998cc6b538d1a1",
+  "class_id": null,
+  "class_members": null
+}

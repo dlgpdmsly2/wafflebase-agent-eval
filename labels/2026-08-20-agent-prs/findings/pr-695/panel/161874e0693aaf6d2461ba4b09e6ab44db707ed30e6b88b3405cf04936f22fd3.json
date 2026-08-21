@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-695",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::scope creep beyond the originating issue. docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md (#635) scopes this work to routing `status`/`ctx list` through `output()` and validating `--format`; the diff additionally lands a cross-package oauth protocol change (per-attempt nonce in `cli-auth.store`, guard, callback redirect, loopback server hardening), a csv formula-injection transform, and a `cells batch` parse restructure. each is a separable change with its own risk surface (the oauth one even introduces a backend/cli version coupling), bundled into an output-formatting pr.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The claim's factual assertions check out against the diff as supplied. The todo file's \"Approach\" (docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md, the six numbered steps) scopes #635 to `parseOutputFormat`, `status`, `ctx list`, the schema registry, tests and doc touch-ups, yet the same PR lands a cross-package OAuth protocol change (`packages/cli/src/commands/login.ts` `createLoginNonce`/`nonceMatches`/`startCallbackServer` nonce+Origin+method checks, `packages/backend/src/auth/github-auth.guard.ts` `parseCliNonce`, `cli-auth.store.ts` `nonce` field, `auth.controller.ts` `stateParam` echo), a CSV formula-neutralization transform with a new required `CsvOptions` (`packages/cli/src/output/csv.ts`), and a restructure of `cells batch` JSON parsing. The version-coupling risk it names is real and is acknowledged in the PR's own docs (\"a CLI at this version or later needs a backend at this version or later\"). The claim does not misread anything; the only nuance is that the todo file itself records these as round-2 panel requests, which explains rather than refutes the bundling. Impact is process/reviewability rather than user-visible incorrectness, so I rate it minor.",
+  "notes": null,
+  "diff_sha256": "sha256:96865731bf719c4343397260f43ba2a54b21da7d1788e3a17dfad3ebd526ff29",
+  "class_id": null,
+  "class_members": null
+}

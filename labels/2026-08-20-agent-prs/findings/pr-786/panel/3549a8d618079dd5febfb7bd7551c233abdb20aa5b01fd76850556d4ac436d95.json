@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::cli login callback accepts any `code` delivered to its loopback port — the state/nonce binding was removed, re-opening oauth authorization-code injection (rfc 8252 §8.9)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The full diff under review touches only error-envelope code (packages/cli/src/output/formatter.ts, cli.ts, command files, docs, tests) and contains no hunk on packages/cli/src/commands/login.ts and no deletion of test/login-callback.test.ts. The claim's core assertion — that this delta removed a state/nonce binding and its regression test — is fabricated; the loopback callback in login.ts (lines ~168–227) indeed lacks a state check, but that is pre-existing at this revision and untouched by this change, and there is no evidence such a mitigation ever existed. Judged as a claim about this change, it misreads the diff entirely.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

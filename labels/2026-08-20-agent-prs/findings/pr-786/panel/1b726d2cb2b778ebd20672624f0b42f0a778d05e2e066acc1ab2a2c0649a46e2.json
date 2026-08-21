@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/output/formatter.ts::`backenderrorenvelope` discards the server's error message for bodies whose `error` is not an object (e.g. nest's default `{statuscode, message, error: \"not found\"}`)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against formatter.ts lines 96–116: `backendErrorEnvelope` only reads `data.error`, and when that is a string (Nest's default `{statusCode, message, error: \"Not Found\"}` body) the `typeof raw === 'object'` guard makes `fields = {}`, so both code and message fall back to the generic `HTTP_ERROR`/`HTTP <status>` — the top-level `message` is never read. Call sites (e.g. docs.ts `if (body?.error)`) are entered by a truthy string `error`, and the pre-change code at those sites printed the body verbatim, preserving the server's message. So the described loss of diagnostic text is real, though impact is limited to error-message fidelity, not incorrect success-path behavior.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,61 @@
+{
+  "run_id": "live-2026-08-20__agent-prs-allrounds",
+  "item_id": "pr-862",
+  "status": "ok",
+  "reason": null,
+  "error": null,
+  "config_hash": "live-agent-review-not-a-config-hash",
+  "corpus_version": "2026-08-20-agent-prs",
+  "panel_sha": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5",
+  "gate": {
+    "state": "live-unknown"
+  },
+  "transcript": {
+    "state": "absent"
+  },
+  "duration_ms": null,
+  "duration_source": "not-measured-live-check-run",
+  "live": {
+    "source": "check-runs",
+    "population": "union-of-answered-rounds",
+    "rounds": [
+      {
+        "sha": "6e588728321eeec883b2e58554f63875f7f54838",
+        "lens_runs": 6,
+        "findings": 3
+      },
+      {
+        "sha": "7e57039ac0b88e1edd70496e1e70b7bc80e64f6b",
+        "lens_runs": 6,
+        "findings": 1
+      },
+      {
+        "sha": "d31bae670b2b56179659c72f412374488c1feace",
+        "lens_runs": 6,
+        "findings": 2
+      },
+      {
+        "sha": "b082e94f35ee88229863fac797711aa4adbc26ef",
+        "lens_runs": 6,
+        "findings": 3
+      },
+      {
+        "sha": "eb05935cf978355b2cd661e30a839dd4139c496b",
+        "lens_runs": 6,
+        "findings": 1
+      },
+      {
+        "sha": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5",
+        "lens_runs": 6,
+        "findings": 5
+      }
+    ],
+    "rounds_unioned": 6,
+    "records_before_dedupe": 15,
+    "distinct_finding_keys": 15,
+    "exact_re_reports_collapsed": 0,
+    "dedupe": "review-panel.mjs::dedupeFindings — the panel's own rule, composed not re-implemented",
+    "spans_multiple_trees": true,
+    "ingested_from": "panel-ingest.mjs ingest-union"
+  }
+}

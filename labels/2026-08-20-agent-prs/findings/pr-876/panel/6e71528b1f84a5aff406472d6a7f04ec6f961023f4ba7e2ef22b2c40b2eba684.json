@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-876",
+  "arm": "panel",
+  "finding_key": "docs/design/docs/docs-font-controls.md::new cross-cutting storage invariant is recorded only in docs/tasks/*, not in any design doc",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified against the diff: only docs/tasks/active/20260819-* files were added, no docs/design/** file touched, yet packages/docs/src/model/document.ts (styleOffAsClear + BOOLEAN_INLINE_STYLE_KEYS) and packages/docs/src/store/block-helpers.ts (mergeInlineStyle) establish a new cross-cutting storage invariant consumed by all toggle callers and by YorkieDocStore.removedInlineStyleAttrs. The cited design docs exist and are silent on it — docs-font-controls.md §\"Clear formatting\" documents undefined-means-remove only for CLEAR_INLINE_STYLE, and docs-named-styles.md's cascade section (\"writes keep storing raw runs\") is now incomplete without the conditional-false exception. The one overstatement is that CONTRIBUTING.md's bug-fix path does not strictly mandate a design doc, but the repo convention (task docs get archived; design docs are canonical, \"update the existing doc when evolving an area\") makes the identified gap genuine. Documentation-only impact, so minor.",
+  "notes": null,
+  "diff_sha256": "sha256:5da908b6ad1e0866826464f4260f44141c87d6b6825011ed2d9788eaf681c704",
+  "class_id": null,
+  "class_members": null
+}

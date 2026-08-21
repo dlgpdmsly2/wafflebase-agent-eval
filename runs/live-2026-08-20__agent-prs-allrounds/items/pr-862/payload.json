@@ -1,0 +1,190 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/document.ts",
+      "summary": "Two other \"exit the list\" paths still hardcode 'paragraph', bypassing `unlistedBlockType`",
+      "evidence": "`Doc.splitBlock` at packages/docs/src/model/document.ts:298-300 (`if (block.type === 'list-item' && blockText.length === 0) this.setBlockType(blockId, 'paragraph')`) and `Doc.deleteBackward` at packages/docs/src/model/document.ts:263-265 both leave a list by forcing `'paragraph'`. These are the Enter-on-empty-bullet and Backspace-on-empty-bullet exits, the most common way a user leaves a list. After this change, exiting a bulleted Heading 2 via the toolbar restores the heading while exiting via Enter/Backspace silently destroys the remembered level (and `setBlockType('paragraph')` deletes `headingLevel` outright, so it is unrecoverable). The `unlistedBlockType` doc comment claims it keeps the exit behaviour from drifting across implementations, but these two model-layer exits were not routed through it. Fix belongs at document.ts:264 and :299 (call `unlistedBlockType(curBlock/block)`), not in the diff.",
+      "lens": "blast-radius",
+      "round_commit": "6e588728321eeec883b2e58554f63875f7f54838"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/docs/docs.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "glob docs/design/**/*.md",
+        "grep headingLevel in docs/design",
+        "grep listKind in docs/design",
+        "read docs/design/docs/docs.md lines 90-170",
+        "read CONTRIBUTING.md design-doc section",
+        "diff contains no docs/design/* hunk"
+      ],
+      "summary": "Data-model semantics change (a `list-item` now carries `headingLevel`) is not recorded in any design doc",
+      "evidence": "CONTRIBUTING.md:57-61 — “**Architecture / data-model changes** belong in `docs/design/<area>/<topic>.md` … Update the existing doc when evolving an area”. This PR redefines an invariant of the `Block` model (previously `headingLevel` implied `type === 'heading'`; now a `list-item` legally carries an inert level that survives round-trip through the Yorkie tree attrs and the backend `docs-tree` serializer). The only prose is a TSDoc comment on `Block.headingLevel` (packages/docs/src/model/types.ts:54-61) and a task todo/lessons pair under docs/tasks/active/. `docs/design/docs/docs.md` is the canonical block-model doc (‘Design decisions → Block type’, line 113-116; ‘Empty list-item Backspace exits the list’, line 135-146) and is untouched, so the doc now describes a model rule the code no longer holds. If the maintainers treat #783 as a plain bug fix, CONTRIBUTING.md:11-12 lets it skip a design doc — hence medium confidence, not high.",
+      "lens": "design-fit",
+      "round_commit": "6e588728321eeec883b2e58554f63875f7f54838"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/document.ts",
+      "searchedFor": [
+        "grep setBlockType(.*'paragraph') across packages/docs/src",
+        "grep list-item across packages/docs/src",
+        "read document.ts 255-305",
+        "read docs/design/docs/docs.md 135-146",
+        "read docs/tasks/active/20260816-docs-unlist-restores-heading-todo.md"
+      ],
+      "summary": "Only `toggleList` exits through `unlistedBlockType`; the other two list-exit gestures still hardcode `'paragraph'`, so the same user intent gives two different results",
+      "evidence": "`Doc.splitBlock` (document.ts:297-301, Enter on an empty list item — “exit list by converting to paragraph”) and `Doc.deleteBackward` (document.ts:262-266, Backspace at offset 0 of an empty list item — documented in docs/design/docs/docs.md:135-146) both call `this.setBlockType(id, 'paragraph')` unchanged. Those are ‘remove the list’ paths just like the toolbar toggle, so a bulleted Heading 2 emptied and Enter/Backspace-ed out of the list still silently becomes body text — the exact failure #783 describes, via a different gesture. The todo (docs/tasks/active/20260816-docs-unlist-restores-heading-todo.md:46-52) lists ‘splitting a bulleted heading (Enter)’ as a non-goal, but that non-goal is about the *new* item after a mid-text split, not about the empty-item list-exit branch, so the gap looks unintended and undermines the stated point of the shared helper (‘keeps the three toggleList implementations from drifting’).",
+      "lens": "design-fit",
+      "round_commit": "6e588728321eeec883b2e58554f63875f7f54838"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/store/block-helpers.ts",
+      "searchedFor": [],
+      "summary": "Splitting a bulleted heading drops the remembered `headingLevel`, so only the FIRST bullet honours the new heading-restoring Enter/Backspace exit",
+      "evidence": "The delta makes `splitBlock`/`deleteBackward` exit an empty list-item via `unlistedBlockType(block)` (document.ts:304, :267) with the comment \"so Enter matches Backspace and the toggle\". But the non-empty split path chooses `newType = 'list-item'` (document.ts:330-331) and `applySplitBlock` then does `if (newBlockType !== 'heading') delete after.headingLevel` (block-helpers.ts:256-258); the Yorkie store does the same (yorkie-doc-store.ts:2049 only copies headingLevel when `newBlockType === 'heading'`). Real flow: bullet a Heading 2, type text, press Enter → the new bullet has no `headingLevel`; press Enter again on that empty bullet → it exits to a *paragraph*, while the original bullet would have exited to Heading 2. The stated invariant (\"a `list-item` retains the level of the heading it was made from\", docs/design/docs/docs.md:117-128) is violated by the split, so the new exit is inconsistent from the second line onward.",
+      "lens": "correctness",
+      "round_commit": "7e57039ac0b88e1edd70496e1e70b7bc80e64f6b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/store/block-helpers.ts",
+      "summary": "Split-propagation of headingLevel onto new list-items contradicts the change's own stated Non-goal",
+      "evidence": "The branch's plan doc `docs/tasks/active/20260816-docs-unlist-restores-heading-todo.md:50-51` lists as a Non-goal: \"Splitting a bulleted heading (Enter) — the new item stays a plain list item, as today.\" The diff does the opposite in three places: `applySplitBlock` now keeps `headingLevel` when `newBlockType === 'list-item'` (block-helpers.ts:256-262), and `yorkie-doc-store.ts:2049-2056` and `:2141-2147` copy `headingLevel` onto split-off list-items. The design doc (docs/design/docs/docs.md:172-176) was updated to describe the new behavior, so the doc set now contradicts the plan's Non-goals rather than the Non-goal being retracted. Either the plan's Non-goal must be revised as part of this change, or the split propagation belongs in a follow-up.",
+      "lens": "design-fit",
+      "round_commit": "d31bae670b2b56179659c72f412374488c1feace"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/store/block-helpers.ts",
+      "searchedFor": [],
+      "summary": "Heading memory propagates to every sibling bullet on split, so un-bulleting a list started from a heading turns plain body items into headings",
+      "evidence": "`applySplitBlock` now keeps `after.headingLevel` when `newBlockType === 'list-item'` (block-helpers.ts:260-262), and `Doc.splitBlock` (document.ts:330-331) always uses `newType = 'list-item'` when splitting a list item. So: bullet a Heading 2 → Enter at end → the new, empty bullet also carries `headingLevel: 2` → the user types body text (\"revenue up\") in it. Selecting the whole list and toggling the bullet off (editor.ts:2869-2872 → `unlistedBlockType`) now converts EVERY item, including the pure body-text ones, into Heading 2. The memory should arguably only ride along on a mid-text split of the original bulleted heading, not onto freshly created empty siblings. The new test at test/view/list-heading-roundtrip.test.ts:189-207 locks in exactly this propagation, so nothing catches it.",
+      "lens": "correctness",
+      "round_commit": "d31bae670b2b56179659c72f412374488c1feace"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-editor.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'toggleList' across packages (tests + src)",
+        "Grep 'Digit7|Digit8|shift.*7|toggleList' in packages/docs/test",
+        "read text-editor.ts keyboard handler around lines 950-970",
+        "read new test file list-heading-roundtrip.test.ts"
+      ],
+      "summary": "TextEditor.toggleList's new heading-restoring exit has no test at all",
+      "evidence": "The diff changes three toggleList implementations and the new test file only exercises one of them (`initialize`/EditorAPI in packages/docs/test/view/list-heading-roundtrip.test.ts:192-249). `TextEditor.toggleList` (packages/docs/src/view/text-editor.ts:2164-2172) is private and only reachable via the Ctrl/Cmd+Shift+7 / +8 shortcuts (text-editor.ts:957-968); I found no test that dispatches those keys or otherwise reaches it. The stated purpose of `unlistedBlockType` is to keep these three implementations from drifting, yet two of the three call sites can regress (e.g. reverting to hardcoded 'paragraph') with the suite still green.",
+      "lens": "test-adequacy",
+      "round_commit": "b082e94f35ee88229863fac797711aa4adbc26ef"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/types.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep headingLevel in packages/docs/src",
+        "grep 'list-item|listKind' in packages/docs/test (13 files)",
+        "packages/docs/test/serialize/markdown.test.ts, export/pdf-exporter.test.ts, view/clipboard.test.ts names",
+        "read named-styles.ts blockStyleId, block-helpers.ts applyMergeBlocks/applySplit"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "The new invariant that a retained headingLevel is 'inert' on a list-item is asserted nowhere"
+        }
+      ],
+      "summary": "The new 'headingLevel is inert on a list-item' invariant is asserted in a comment but nothing tests it (export/serialize/clipboard readers)",
+      "evidence": "The change introduces a genuinely new document state — a `list-item` block that carries `headingLevel` — and the `Block` doc comment claims 'every reader (export, `blockStyleId`, toolbar labels) gates on `type === 'heading'`'. No test in the diff or the suite feeds such a block to any reader. I checked markdown serialization (src/serialize/markdown.ts:103), pdf outline (src/export/pdf-exporter.ts:201), docx export (src/export/docx-exporter.ts:184), `blockStyleId` (src/model/named-styles.ts:99) and clipboard copy (`cloneBlockWithFreshIds`, text-editor.ts:3404, which copies `headingLevel` verbatim, plus paste head/tail merges at text-editor.ts:3578/3607). The new tests assert only `type`/`headingLevel` fields on the store and Doc; if any of those readers stopped gating on type, or a copied bulleted heading pasted into body text resurrected as a heading, every test in this diff would still pass.",
+      "lens": "test-adequacy",
+      "round_commit": "b082e94f35ee88229863fac797711aa4adbc26ef"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/store/block-helpers.ts",
+      "searchedFor": [],
+      "summary": "Remembered headingLevel survives a block merge, so a bullet that now holds only body text can un-list into a heading",
+      "evidence": "`applyMergeBlocks` (block-helpers.ts:271) returns `cloneBlock(block)` for the surviving block, keeping every attribute including the new `headingLevel` memory; the Yorkie merge path likewise keeps the first node's attributes. Sequence: bullet a Heading 2 (block now `list-item` + `headingLevel: 2`), delete its text, then Backspace at the start of the following plain bullet (`Doc.deleteBackward` -> `mergeBlocks`, document.ts:289). The merged bullet now contains only the *following* item's body text but still remembers level 2, so `unlistedBlockType` (types.ts:340) turns that body text into a Heading 2 on the next Enter/Backspace/toggle exit. The new test file explicitly guards the symmetric split direction ('the memory belongs to the block that was bulleted', list-heading-roundtrip.test.ts) but nothing clears the memory on merge.",
+      "lens": "correctness",
+      "round_commit": "b082e94f35ee88229863fac797711aa4adbc26ef"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-editor.ts",
+      "searchedFor": [
+        "Grep 'headingLevel' across packages/**/src",
+        "Read text-editor.ts pasteBlocks 3550-3615",
+        "Read text-editor.ts copySelectedBlocks 3390-3430"
+      ],
+      "summary": "Paste reaches the same 'heading memory travels onto text that was never a heading' defect the new merge guard closes, without passing through it",
+      "evidence": "The delta establishes the provenance rule that a `list-item`'s remembered `headingLevel` must not survive when foreign text is folded into the block (`mergeDropsHeadingMemory`, block-helpers.ts:279). The paste path bypasses it: packages/docs/src/view/text-editor.ts:3575-3580 appends the pasted inlines to the existing head block and then unconditionally sets `headBlock.type = firstPasted.type` and `headBlock.headingLevel = firstPasted.headingLevel`; the same happens for the tail block at lines 3604-3607. `copySelectedBlocks` copies the memory verbatim for a partial slice (text-editor.ts:3404: `if (block.headingLevel !== undefined) cloned.headingLevel = block.headingLevel;`), so pasting a bulleted heading into a paragraph makes the paragraph a `list-item` carrying a heading level, and the block's own pre-existing body text is then promoted to a Heading N on un-listing — exactly the #783 follow-up symptom. Confirming needs a paste round-trip test; the write path is unguarded either way. Fix could live either at these two assignments or by routing them through the same helper.",
+      "lens": "blast-radius",
+      "round_commit": "eb05935cf978355b2cd661e30a839dd4139c496b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-box-editor.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'toggleList' in packages/docs/test",
+        "grep 'toggleList' in packages/docs/src",
+        "read packages/docs/test/view/text-box-editor.test.ts around line 327",
+        "glob packages/docs/test/**/*text-box*"
+      ],
+      "summary": "The text-box editor's `toggleList` exit change ships with no behavioral test",
+      "evidence": "The diff changes three parallel `toggleList` implementations to exit through `unlistedBlockType`: `view/editor.ts` (covered by `list-heading-roundtrip.test.ts` → 'toggleList round trip'), `view/text-editor.ts` (covered by 'keyboard bullet shortcut round trip'), and `view/text-box-editor.ts:1125` — which has no coverage. The only existing test touching it is `packages/docs/test/view/text-box-editor.test.ts:327` ('exposes toggleList, indent, outdent'), which asserts `typeof api.toggleList === 'function'` and `expect(() => api.toggleList('unordered')).not.toThrow()` on a paragraph with no selection — it passes identically whether the exit produces a heading or a paragraph, so it is fake coverage for this change. Ironically the new test file's own comment says both toggleList paths 'must exit through unlistedBlockType or the keyboard path silently drifts', yet only two of the three named implementations are exercised.",
+      "lens": "test-adequacy",
+      "round_commit": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "summary": "Untrusted `headingLevel` is interpolated unescaped into a DOCX XML attribute; this change lengthens the taint path by making the value survive a list round trip",
+      "evidence": "`buildParagraphPropertiesXml` builds `<w:pStyle w:val=\"Heading${headingLevel}\"/>` with no escaping or numeric validation, even though the same file defines `escapeXmlAttr` (docx-style-map.ts:25) whose comment warns the risk is that a value can \"inject attributes\". `headingLevel` is only typed as `1|2|...|6`; at runtime it can be any JSON value because `deserializeClipboard` (packages/docs/src/view/clipboard.ts:40-45) returns `payload.blocks as Block[]` unvalidated and `TextEditor.handlePaste` feeds it straight to `insertBlocks` (text-editor.ts:1228,1240). Attack: a hostile page sets the `application/x-wafflebase-docs` flavour on a copy event with a block whose `headingLevel` is the string `1\"/><w:evil/><w:x w:val=\"`; the victim pastes, exports to DOCX, and injected WordprocessingML lands in `word/document.xml`. Before this change a pasted *list-item*'s level was destroyed (setBlockType deleted it and toggleList hardcoded 'paragraph'); now `pastedHeadingLevel` (text-editor.ts:41) forwards it, `MemDocStore.setBlockType` retains it for `list-item` (memory.ts:258-260), and `unlistedBlockType` re-applies it verbatim as the level of a real `heading` (types.ts:337-344), reaching the unescaped sink via `block.type === 'heading' ? block.headingLevel : undefined` (docx-exporter.ts:184). Fix: clamp/coerce the level to 1..6 at the model boundary, or escape at line 96.",
+      "lens": "security",
+      "round_commit": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/clipboard.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'deserializeClipboard|deserializeBlocks|insertBlocks(' in packages/docs/src",
+        "read packages/docs/src/view/clipboard.ts serialize/deserialize helpers looking for a validator/normalizer",
+        "grep 'function sanitize|normalizeBlock|JSON.parse' in packages/docs/src/view/clipboard.ts",
+        "grep headingLevel across the repo (61 files) and inspected every writer: memory.ts, yorkie-doc-store.ts, block-helpers.ts, text-editor.ts, docx-importer.ts",
+        "grep 'escapeXml|escapeAttr|w:val=\"${' in packages/docs/src/export to see which interpolations are escaped",
+        "read packages/backend/src/yorkie/docs-tree.ts block attribute serialize/parse"
+      ],
+      "summary": "No schema validation on the internal clipboard payload, so attacker-controlled block fields (including the now-retained `headingLevel`) become model state and are written into the shared CRDT",
+      "evidence": "`deserializeClipboard` only checks `version === 1` and `Array.isArray(payload.blocks)`, then returns `payload.blocks as Block[]` — an unchecked cast of attacker-supplied JSON (clipboard.ts:40-48). Any page can populate the custom `WAFFLEDOCS_MIME` flavour on a `copy` event, and `handlePaste` prefers that flavour over `text/html`/`text/plain` (text-editor.ts:1226-1244). With this change the pasted `headingLevel` is no longer dropped when the block is a list item, so a non-numeric or out-of-range value can be handed to `YorkieDocStore.setBlockType`, which stringifies it into the shared tree attribute (`attrs.headingLevel = String(opts?.headingLevel ?? 1)`, yorkie-doc-store.ts:1386) and persists it through the backend `docs-tree` serializer. Co-editors read it back via `Number(attrs.headingLevel)` (yorkie-doc-store.ts:439), yielding `NaN` — one user's paste can poison a block attribute for every collaborator and for the stored document. I could not confirm a memory-safety or code-execution consequence, only corrupted shared state plus the export-injection sink above, hence medium confidence. Recommend validating/normalizing pasted blocks (type enum, headingLevel in 1..6, list fields) in `deserializeClipboard` or `insertBlocks`.",
+      "lens": "security",
+      "round_commit": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/document.ts",
+      "summary": "Enter at offset 0 of a bulleted heading strands the remembered level on the empty leading bullet; the heading's text loses it (asymmetric with a plain heading)",
+      "evidence": "In `Doc.splitBlock`, a `list-item` always yields `newType = 'list-item'` (line 330), and `applySplitBlock` deletes `after.headingLevel` whenever `newBlockType !== 'heading'` (block-helpers.ts:256). So splitting a bulleted heading at offset 0 gives: `before` = empty list-item that KEEPS `headingLevel`, `after` = list-item holding the entire original heading text with NO `headingLevel`. Un-bulleting the text then produces a plain paragraph — exactly the Heading-2-downgrade the change set out to fix. The plain-heading path is deliberately not asymmetric: for `type === 'heading'` with `offset < blockText.length` the new block is also a `heading` (lines 332-337), so real headings survive an Enter at offset 0. The Yorkie store has the same asymmetry (yorkie-doc-store.ts:2140 only copies the level when `newBlockType === 'heading'`). The new tests only cover splitting at the END of the text (list-heading-roundtrip.test.ts 'splitting a bulleted heading leaves the new bullet plain'), so offset 0 is unguarded.",
+      "lens": "correctness",
+      "round_commit": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-editor.ts",
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "Multi-block paste inside a bulleted heading overwrites the destination's own remembered level with the pasted block's"
+        }
+      ],
+      "summary": "Multi-block paste into an empty bulleted list item collapses head and tail into the same block, scrambling the pasted content",
+      "evidence": "`insertBlocks` multi-block branch does `const tailBlockId = this.docSplitBlock(pos.blockId, pos.offset)` (line 3596) and then treats `pos.blockId` as the head and `tailBlockId` as a distinct tail. But `Doc.splitBlock` short-circuits for an empty list item — `if (block.type === 'list-item' && blockText.length === 0) { setBlockType(...); return blockId; }` (document.ts:303-307, a branch this diff edits) — returning the SAME id, so `tailBlockId === pos.blockId`. The head write (lines 3603-3610) appends `firstPasted`'s inlines, middle blocks are inserted after it (3621-3625), and then lines 3628-3640 re-read that same block as `tailBlock` and splice `lastPasted` at offset 0, producing `lastPasted + firstPasted` in one block with the middle blocks after it, plus type/style/headingLevel taken from `lastPasted`. The new test only covers a SINGLE-block paste into an emptied bulleted heading, so this path is untested. (Pre-existing, but the empty-list-item exit branch is directly modified here and the new `headingLevel` bookkeeping runs through it.)",
+      "lens": "correctness",
+      "round_commit": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-899",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/board/is-editable-target.ts::board adoption conflicts with a documented board design decision. `packages/frontend/src/app/board/is-editable-target.ts:6-13` states the button branch exists specifically \"so space on a focused `boardtoolbar` toggle still activates the button instead of entering pan mode\". blurring toolbar buttons to `document.body` after every pointer-driven click means the next space now enters board pan mode rather than re-activating the just-used toggle — a behaviour change to board pan-mode that no doc under `docs/design/board/` records.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified: board-toolbar.tsx calls useCanvasFocusRelease() and sets data-canvas-toolbar, despite the PR's own todo doc listing board adoption as out of scope and the design doc calling it deferred. Tracing toolbar-focus-release.ts, a pointer-clicked BoardToolbar toggle (data-state=\"on\" doesn't match the \"open\" guard, lines 61-66) is released to document.body, so the next Space keydown targets the body and BoardView's pan-mode shortcut fires instead of re-activating the toggle — exactly contradicting the documented rationale at is-editable-target.ts:6-13. The behavior change is real and undocumented for the board surface, though keyboard (Tab) focus is preserved and the new behavior may arguably be desirable, which caps severity at minor.",
+  "notes": null,
+  "diff_sha256": "sha256:5c74f9ed85834db65072188cc10eb123e0733a9662c5a76f5d67d0b3a9ec3c3f",
+  "class_id": null,
+  "class_members": null
+}

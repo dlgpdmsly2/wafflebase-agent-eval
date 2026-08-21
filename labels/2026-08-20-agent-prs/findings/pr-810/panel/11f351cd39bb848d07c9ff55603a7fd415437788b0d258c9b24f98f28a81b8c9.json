@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/slides/src/export/pptx/theme.ts::`tosrgbhex` now routes theme colors through `torgbhexcolor` with a black fallback — untested, and the existing theme test mirrors the old implementation",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff (given in full) changes packages/slides/src/export/pptx/theme.ts so toSrgbHex routes through toRgbHexColor with a '000000' fallback and removes escapeXmlAttr at the srgbClr sink, yet contains no changes to packages/slides/test/export/pptx/theme.test.ts — unlike the sibling sinks (color.ts, shape.ts, text.ts), which all got hostile-input tests in this same PR. So the theme sink's new normalization/fallback and the escaping removal are untested at their own call site. I could not verify the reviewer's specific description of the existing theme.test.ts (it mirrors the old implementation in its round-trip expectation), since no checkout is mounted, but that detail is consistent with no test update being needed and is not load-bearing for the core claim. Severity is minor: the shared toRgbHexColor is unit-tested in packages/docs/test/model/color.test.ts, so only theme-sink wiring regressions would go undetected.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

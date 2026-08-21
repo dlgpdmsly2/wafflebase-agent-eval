@@ -1,0 +1,41 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/document.ts",
+      "summary": "Two other \"exit the list\" paths still hardcode 'paragraph', bypassing `unlistedBlockType`",
+      "evidence": "`Doc.splitBlock` at packages/docs/src/model/document.ts:298-300 (`if (block.type === 'list-item' && blockText.length === 0) this.setBlockType(blockId, 'paragraph')`) and `Doc.deleteBackward` at packages/docs/src/model/document.ts:263-265 both leave a list by forcing `'paragraph'`. These are the Enter-on-empty-bullet and Backspace-on-empty-bullet exits, the most common way a user leaves a list. After this change, exiting a bulleted Heading 2 via the toolbar restores the heading while exiting via Enter/Backspace silently destroys the remembered level (and `setBlockType('paragraph')` deletes `headingLevel` outright, so it is unrecoverable). The `unlistedBlockType` doc comment claims it keeps the exit behaviour from drifting across implementations, but these two model-layer exits were not routed through it. Fix belongs at document.ts:264 and :299 (call `unlistedBlockType(curBlock/block)`), not in the diff.",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/docs/docs.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "glob docs/design/**/*.md",
+        "grep headingLevel in docs/design",
+        "grep listKind in docs/design",
+        "read docs/design/docs/docs.md lines 90-170",
+        "read CONTRIBUTING.md design-doc section",
+        "diff contains no docs/design/* hunk"
+      ],
+      "summary": "Data-model semantics change (a `list-item` now carries `headingLevel`) is not recorded in any design doc",
+      "evidence": "CONTRIBUTING.md:57-61 — “**Architecture / data-model changes** belong in `docs/design/<area>/<topic>.md` … Update the existing doc when evolving an area”. This PR redefines an invariant of the `Block` model (previously `headingLevel` implied `type === 'heading'`; now a `list-item` legally carries an inert level that survives round-trip through the Yorkie tree attrs and the backend `docs-tree` serializer). The only prose is a TSDoc comment on `Block.headingLevel` (packages/docs/src/model/types.ts:54-61) and a task todo/lessons pair under docs/tasks/active/. `docs/design/docs/docs.md` is the canonical block-model doc (‘Design decisions → Block type’, line 113-116; ‘Empty list-item Backspace exits the list’, line 135-146) and is untouched, so the doc now describes a model rule the code no longer holds. If the maintainers treat #783 as a plain bug fix, CONTRIBUTING.md:11-12 lets it skip a design doc — hence medium confidence, not high.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/document.ts",
+      "searchedFor": [
+        "grep setBlockType(.*'paragraph') across packages/docs/src",
+        "grep list-item across packages/docs/src",
+        "read document.ts 255-305",
+        "read docs/design/docs/docs.md 135-146",
+        "read docs/tasks/active/20260816-docs-unlist-restores-heading-todo.md"
+      ],
+      "summary": "Only `toggleList` exits through `unlistedBlockType`; the other two list-exit gestures still hardcode `'paragraph'`, so the same user intent gives two different results",
+      "evidence": "`Doc.splitBlock` (document.ts:297-301, Enter on an empty list item — “exit list by converting to paragraph”) and `Doc.deleteBackward` (document.ts:262-266, Backspace at offset 0 of an empty list item — documented in docs/design/docs/docs.md:135-146) both call `this.setBlockType(id, 'paragraph')` unchanged. Those are ‘remove the list’ paths just like the toolbar toggle, so a bulleted Heading 2 emptied and Enter/Backspace-ed out of the list still silently becomes body text — the exact failure #783 describes, via a different gesture. The todo (docs/tasks/active/20260816-docs-unlist-restores-heading-todo.md:46-52) lists ‘splitting a bulleted heading (Enter)’ as a non-goal, but that non-goal is about the *new* item after a mid-text split, not about the empty-item list-exit branch, so the gap looks unintended and undermines the stated point of the shared helper (‘keeps the three toggleList implementations from drifting’).",
+      "lens": "design-fit"
+    }
+  ]
+}

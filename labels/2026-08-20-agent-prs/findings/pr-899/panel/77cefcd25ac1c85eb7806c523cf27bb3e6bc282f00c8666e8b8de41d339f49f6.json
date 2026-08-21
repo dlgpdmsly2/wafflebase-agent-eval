@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-899",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/components/toolbar-focus-release.ts::focus release fires while a slides text-box edit session is still alive (keepalive path), re-arming destructive canvas shortcuts against the element being edited",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified the chain in supplied code: isReleasable() (toolbar-focus-release.ts:56-63) has no text-edit exemption; menu-focus.ts:52-57 confirms Escape/outside dismissal skips onSwatchClose and falls through to Radix focus-to-trigger with no editor.focus(); pointerDriven survives Escape (only Tab clears it), so the trigger's focusin schedules a release and the now-closed trigger passes isReleasable, blurring to body. With target=body, isEditableTarget is false and the Delete/type-to-edit rules in keyboard.ts re-arm, while keyboard.ts's T2 comment confirms the editing element sits in selection. The only unverified link is the keepalive/skip-commit behavior in text-box-editor.ts (not supplied, basename-ambiguous), which is why confidence is medium rather than high; everything checkable supports the claim.",
+  "notes": null,
+  "diff_sha256": "sha256:5c74f9ed85834db65072188cc10eb123e0733a9662c5a76f5d67d0b3a9ec3c3f",
+  "class_id": null,
+  "class_members": null
+}

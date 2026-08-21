@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::the changed timeout behavior — reporting unbound_callback_message instead of the generic timeout when only nonce-less callbacks were seen — has no test",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against packages/cli/src/commands/login.ts (the setTimeout block branching on sawUnboundCallback, ~line 373) and packages/cli/test/login-callback.test.ts. The test file never uses fake timers (vi is not even imported), the 30s timeout is hardcoded with no injectable override, UNBOUND_CALLBACK_MESSAGE is only asserted as a 400 response body, and no test asserts any rejection of waitForCallback() — settledWithin(..., 50) only checks non-settlement. The timeout-message branch is genuinely untested; impact is limited to an unverified error-message selection, so minor.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

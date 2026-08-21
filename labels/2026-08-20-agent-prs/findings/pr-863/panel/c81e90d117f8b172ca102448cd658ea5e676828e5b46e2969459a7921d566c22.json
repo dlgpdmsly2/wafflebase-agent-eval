@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/client/url.ts::`seg()` folds the *empty* segment into the traversal rejection, but an empty workspace is a documented, expected configuration state, not an attack. `resolveconfig` deliberately returns `workspace: ''` when no `--workspace`/`wafflebase_workspace`/profile value exists (packages/cli/src/config/config.ts:100,126,146,164) and the comment at config.ts:108 explicitly anticipates `/workspaces//...` yielding a 404. after this change every command — including `--dry-run` previews — dies with `invalid identifier \"\": a url path segment cannot be empty, \".\" or \"..\" — the url parser resolves those...`, which misdescribes the situation (nothing was \"named\") and hides the real cause (no workspace configured / not logged in). the dot-segment defence does not require conflating the two cases; a distinct \"no workspace configured\" error is what the cli's error taxonomy (docs/design/cli.md §8.1 exit codes) implies.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the code: url.ts:33-40 throws on an empty encoded segment, apiV1Base (url.ts:51-53) and apiKeysUrl pass config.workspace through seg(), and config.ts returns workspace: '' in all four resolution branches (its step-2 comment even anticipates the `/workspaces//...` 404 that used to result). Every command and every --dry-run preview builds a URL through these helpers, so an unconfigured workspace now dies with the traversal-defence message 'Invalid identifier \"\"...', which does misdescribe the cause and never points at --workspace/login. Real, but it is an error-message/diagnosability gap (both old and new behavior fail; the new one arguably fails safer), so minor.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-873",
+  "arm": "panel",
+  "finding_key": "docs/design/sheets/sheet-style.md::headline outcome (\"increase then decrease leaves the cell exactly as it started\") is knowingly not met for grouped values and user-chosen `nf: 'number'`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the diff: the todo's headline (lines 3–5) states an absolute round-trip requirement, while `changeDecimals`'s `unsetKeepsRendering` gate (sheet.ts) refuses the unset for grouped values, leaving `{dp: 1, nf: 'number'}` residue on an initially unstyled `1234.5` cell — asserted as intended in decimals.test.ts ('should keep the grouping separators the step would flatten', ~lines 96–113) and recorded as a deliberate trade in sheet-style.md's consequences bullet and the todo's Known deviations. The claim accurately describes a knowing shortfall against the stated outcome, self-granted within the PR. Impact is low since the residue renders identically on screen; the defect is spec/design-fit divergence rather than user-visible misbehavior.",
+  "notes": null,
+  "diff_sha256": "sha256:729cb83a1f576206c1d4f1b92b0ef2d1f83d5ccf7edd801a5e998cc6b538d1a1",
+  "class_id": null,
+  "class_members": null
+}

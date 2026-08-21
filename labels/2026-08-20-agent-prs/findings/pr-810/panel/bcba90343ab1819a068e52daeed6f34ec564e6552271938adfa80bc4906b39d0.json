@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "docs/design/slides/slides-pptx-export.md::design doc claims the shared `torgbhexcolor` normalizes `<a:srgbclr val>` in `color.ts`, but the implementation only normalizes at the two call sites in `export/pptx/text.ts`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The doc edit in docs/design/slides/slides-pptx-export.md places the toRgbHexColor normalization under the \"Colors (color.ts)\" bullet as a property of the `<a:srgbClr val>` sink, but the diff (given as complete) modifies only packages/slides/src/export/pptx/text.ts, where storedColorToThemeColor normalizes docs StoredColor values before building a ThemeColor. text.ts's own comment at this commit states \"colorChildXml only strips `#` and upper-cases\", confirming color.ts is unchanged and other srgbClr producers (shape fills, gradients, theme colors) bypass the normalizer. The doc therefore overstates the sink-level \"injection-proof by construction\" guarantee; the claim correctly identifies the doc/implementation mismatch. Impact is limited since non-text srgb values come from typed model paths and are still XML-escaped, so this is a minor doc-accuracy/design-fit defect.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

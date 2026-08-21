@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::the cli half of the nonce feature — sending `clistate` in the oauth url — has no test at all",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "login.ts:60-77 builds the OAuth URL with `&cliState=` inside the commander action, but login-callback.test.ts imports only startCallbackServer/stateMatches/UNBOUND_CALLBACK_MESSAGE and mints its own nonce — nothing runs registerLoginCommand's action or asserts the URL contains the nonce. Backend specs inject the nonce directly, so dropping the `&cliState=` term (or desyncing it from the listener's expected state) would pass every test in the diff while breaking every real login. This is a genuine test-adequacy gap in the wiring of the new security feature, though it is a missing test rather than a code defect, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

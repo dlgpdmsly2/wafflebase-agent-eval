@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-809",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/components/theme-provider.tsx::the new try/catch around localstorage does not achieve its stated goal: themeprovider, which wraps the entire app (including the documents list), still reads localstorage unguarded during render",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: theme-provider.tsx line 41 does an unguarded `localStorage.getItem(storageKey)` inside a useState initializer, and App.tsx mounts ThemeProvider as the outermost wrapper around all routes. In the environments the new code's own comment cites (date-format-preference.ts:44-48 — sandboxed iframes, blocked storage), that read throws SecurityError during initial render and blanks the whole app before the documents list or getDateFormat() ever runs, so the new guard cannot achieve its stated goal in those environments. The defect is real as described, though it is a pre-existing crash the PR neither introduces nor worsens — the PR's hardening is simply partially moot — so impact is minor.",
+  "notes": null,
+  "diff_sha256": "sha256:92a208497f492e55209063b742fcc904d92a0adfee8da93852390d8c80a4172a",
+  "class_id": null,
+  "class_members": null
+}

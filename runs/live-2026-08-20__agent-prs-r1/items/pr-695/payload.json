@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/cells.ts",
+      "searchedFor": [],
+      "summary": "`format()`'s new throw fires *after* the mutation in every un-migrated command, turning a successful write into exit 1 / INVALID_FORMAT",
+      "evidence": "Only `status`, `ctx list` and `schema` call `parseOutputFormat` up front. Every other `output()` call site still passes the raw `opts.format` *after* the request has been sent: `cells.ts:66` (`sheets cells set`), `cells.ts:92` (delete), `cells.ts:139` (batch), `docs.ts:104/136/154` (create/rename/delete), `notes.ts:64+`, `slides.ts:69+`, `sheets-import.ts:91`, `api-keys.ts:20/34/48`, `tabs.ts:16`. With the new `default:` branch in `format()` (formatter.ts:51-55), `wafflebase sheets cells set … --format bogus` now performs the PATCH, then throws inside the try block, and `outputError` sets `process.exitCode = 1` with an INVALID_FORMAT body — so a caller/agent sees a failure for an operation that actually succeeded and may retry it (duplicate writes). Previously the same invocation printed \"undefined\" and exited 0. `api-keys create --format bogus` is worst: the key is created and its one-time secret is discarded, now reported as an error. Fix belongs in those call sites (validate before issuing the request), not in the diff's files.",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "searchedFor": [],
+      "summary": "Design doc still advertises the removed `*` active marker in the command tree",
+      "evidence": "docs/design/cli.md:267 `│     ├── list                             List workspaces (* = active)`. The change deletes `formatWorkspaceList` and its `*` prefix (ctx.ts) and updates the examples at cli.md:455 and the §8.1 prose, but the canonical command tree at line 267 still documents the old prose output. The task doc's checklist item \"`docs/design/cli.md` prose references updated\" (docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md:96) is therefore only partly satisfied, leaving the design doc self-contradictory about the contract this PR changes.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'output\\(|opts\\.format|outputError' across packages/cli/src",
+        "grep for imports of ../output/formatter.js in packages/cli",
+        "read api-keys.ts, cells.ts, sheets-import.ts, sheets-export.ts, docs.ts, notes.ts, slides.ts action bodies",
+        "read docs/tasks/active/20260806-cli-status-ctx-structured-output-lessons.md (call-site audit claim covers only try/catch presence, not pre-mutation validation)"
+      ],
+      "summary": "New `default:` throw in `format()` fires *after* side effects at the ~12 unvalidated `output()` call sites; only status/ctx/schema validate `--format` up front",
+      "evidence": "formatter.ts:51-55 now throws `InvalidFormatError` from `format()` for any value outside json|table|csv. Only the three commands touched by this diff call `parseOutputFormat(opts.format)` before doing work; every other caller still passes the raw `opts.format` straight into `output()` after the request has already been executed (api-keys.ts:20 `output(res.data, opts.format, false)` after `createApiKey`, cells.ts:66/92/139 after writes, sheets-import.ts:91 after the import, docs/slides/notes create/update). With e.g. `wafflebase api-keys create ci --format jsonl`, the key is created server-side, `format()` throws, `outputError` prints INVALID_FORMAT and sets `process.exitCode = 1` — so a command that succeeded reports failure, and for `api-keys create` the raw key (shown only once, per the comment on line 19) is destroyed with no way to recover it. An agent seeing exit 1 will reasonably retry the mutation, duplicating writes. The guard added in this change (parseOutputFormat before any work) is exactly the right shape but was applied to only 3 of the call sites.",
+      "lens": "correctness"
+    }
+  ]
+}

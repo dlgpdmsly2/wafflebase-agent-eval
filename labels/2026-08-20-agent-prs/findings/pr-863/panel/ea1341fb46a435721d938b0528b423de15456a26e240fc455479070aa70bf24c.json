@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/slides.ts::design doc now asserts a blanket \"a dry run never reaches the network\" contract, but six sibling read commands outside the diff still fetch under --dry-run",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The new docs/design/cli.md §8.2 bullet asserts \"A dry run never reaches the network\" as a universal property, but the supplied packages/cli/src/commands/slides.ts shows `slides list` (~line 37-52) and `slides get` (~line 77-88) call getClient(opts).listDocuments()/getDocument() with no opts.dryRun guard, while sibling actions in the same file (create/rename/delete/content/export) all have the guard — so `--dry-run`, a global flag, is accepted and ignored on those reads. The other cited files (notes.ts, files.ts, sheets-export.ts) are not available in the empty workspace, but the claim's core assertion is confirmed by slides.ts alone; the lessons doc's \"Follow-ups: None\" also conspicuously omits these commands. Verified reads are harmless GETs (rate limit / access log), so I rate it minor; it would be closer to major if sheets export truly writes a file under --dry-run, which I could not check.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

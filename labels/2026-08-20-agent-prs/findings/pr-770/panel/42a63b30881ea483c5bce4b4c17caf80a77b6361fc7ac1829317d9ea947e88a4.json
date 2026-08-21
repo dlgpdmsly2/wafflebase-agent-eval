@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-770",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/client/http-client.ts::`api-keys` commands bypass `send()`, so the session_expired/refresh invariant this delta asserts does not hold for them",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/cli/src/client/http-client.ts: listApiKeys/createApiKey/revokeApiKey call fetch directly rather than this.send(), so they never attempt refreshSession() on a 401 nor return sessionExpiredBody(); every other endpoint does (send() at the top of the class). The new forwardUpstreamError comment and README assert every command reports the same code — SESSION_EXPIRED most of all — yet under JWT auth an expired token on api-keys commands yields a raw Nest 401 body that isErrorEnvelope rejects, producing HTTP_ERROR instead of SESSION_EXPIRED, and skips the refresh-retry other commands get. The new tests use API-key auth and a single-response fetch stub, so they never exercise the 401/refresh path. The direct-fetch spelling is pre-existing, but the asserted invariant is new and does not hold for these three commands.",
+  "notes": null,
+  "diff_sha256": "sha256:c8d92aec1ba53fee531a623b425919c02a8f52c6e84365c25deec98bcb5d3e3d",
+  "class_id": null,
+  "class_members": null
+}

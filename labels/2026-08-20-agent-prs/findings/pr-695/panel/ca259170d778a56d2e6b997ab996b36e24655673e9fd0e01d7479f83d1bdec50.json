@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-695",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/auth/cli-login-confirm.middleware.ts::scope: the originating issue (docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md, \"#635 — route `status`/`ctx list` through `output()`\") is a cli output-formatting defect whose stated approach is six steps confined to `packages/cli/src/output`, `status.ts`, `ctx.ts`, the schema registry and cli.md prose. this diff additionally lands a backend auth architecture change (new `oauth-state.ts` double-submit module, new `cliloginconfirmmiddleware` + interstitial html consent page, two new cookies, a mandatory callback `state` on every path, a rewritten `githubauthguard`), a cli login-protocol change, a csv formula-neutralization feature with a new `--raw` flag, and a frontend login error surface. none of that is in the issue's outcome/acceptance list. the todo records the panel raising this three times and the author rebutting it (\"round-2 requests\"), so a verifier should weigh that rebuttal — but the fit objection is real: a change to how every user of the product authenticates is now gated behind a cli formatting issue, with no separate issue or design doc of its own.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The todo file is included verbatim in the diff: its Problem and six-step Approach are confined to `src/output/formatter.ts`, `status.ts`, `ctx.ts`, `schema/registry.ts` and `cli.md`, yet the same diff adds `packages/backend/src/auth/oauth-state.ts`, `cli-login-confirm.middleware.ts` (interstitial consent page + `wafflebase_cli_confirm` cookie), a rewritten `github-auth.guard.ts` that mints `state` on every path, a now-mandatory callback `state` in `auth.controller.ts`, an `AuthModule.configure()` middleware, a CLI login-protocol change in `login.ts`, CSV neutralization plus `sheets export --raw`, and a frontend `login-form.tsx` error surface — none of which appear in the issue's approach or checklist. So the scope description is factually accurate. The claim itself flags the author's documented rebuttal (the todo's \"Review round 2\" list shows the OAuth nonce and CSV work were the panel's own asks), which materially weakens it as an actionable defect. It is a process/design-fit concern rather than a functional bug: the middleware code as written looks coherent, so user-facing impact is limited to review risk from bundling an auth rewrite into a formatting PR.",
+  "notes": null,
+  "diff_sha256": "sha256:96865731bf719c4343397260f43ba2a54b21da7d1788e3a17dfad3ebd526ff29",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-737",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/analytics/analytics-warehouse.service.ts::hand-rolled sql literal escaping reinvents `mysql2`'s own escaper, which is already imported in this file",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:1"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against analytics-warehouse.service.ts: line 3 imports 'mysql2/promise' (used for createPool), and lines 33–44 define a hand-rolled sql() escaper handling only backslashes and quotes. mysql2/promise does re-export SqlString's escape/format (also pool.escape()), which handles the full escape set (\\0, \\n, \\r, \\x1a, \") the bespoke helper omits. The diff also confirms the maintenance-cost point: the original quote-only escaper had to be patched this round to add backslash handling plus dedicated tests. The finding is real but is a maintainability/design-fit issue, not a live correctness bug, since the fixed escaper is adequate for the document-id and date values it escapes.",
+  "notes": null,
+  "diff_sha256": "sha256:c8854ffe6ae20bc51b9571959f048e4ced9b8fbac5e30f9caf47ac18d30f2e68",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-694",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/bin.ts::production entrypoint uses `program.parse()` (sync) with async action handlers, so the behavior the new `--quiet` guard asserts via `parseasync` is not what ships",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "bin.ts:27 does use sync parse() with async actions, but the claim's conclusion misreads the code: all body/envelope emission happens inside each handler's try/catch (docs.ts:115-122, cells.ts, etc.), which runs identically under parse() and parseAsync — the tested behavior (output body, stderr envelope, exitCode=1) does ship. The assertion that \"nothing keeps the process alive\" is false (pending fetch/stdin I/O keeps the event loop running and process.exitCode is honored at natural exit). The only rejections that escape are sync throws outside the try blocks (e.g. JSON.parse in cells.ts batch), which would be unhandled even with parseAsync absent a top-level .catch — a pre-existing nit, not the claimed defect that the regression guard proves an unshipped path.",
+  "notes": null,
+  "diff_sha256": "sha256:17a8a38ddf5b90135f87378e52ec353f2336716fd15daba5afcf87321a39f2d4",
+  "class_id": null,
+  "class_members": null
+}

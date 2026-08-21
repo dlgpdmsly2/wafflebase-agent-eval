@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/editor.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'notifyStyleApplied' repo-wide",
+        "Grep 'setBlockType' repo-wide",
+        "Grep 'toggleList|indent()|outdent()' in packages/frontend/src",
+        "read packages/docs/src/view/editor.ts:2790-2930",
+        "read packages/docs/src/view/text-box-editor.ts:1100-1185",
+        "read packages/frontend/src/components/text-formatting/text-style-options.ts",
+        "read packages/frontend/src/app/docs/docs-formatting-toolbar.tsx:300-330"
+      ],
+      "summary": "`EditorAPI.toggleList` still does not fire the cursor-move callbacks, so the exact staleness this diff fixes remains reachable when a bullet is toggled on a heading block",
+      "evidence": "`toggleList` (packages/docs/src/view/editor.ts:2871-2885) ends at `render()` with no `notifyStyleApplied()`, unlike the `setBlockType` this diff patched (and unlike the text-box editor's `toggleList`, packages/docs/src/view/text-box-editor.ts:1135, which does notify). It is reachable from the docs toolbar list buttons: packages/frontend/src/app/docs/docs-formatting-toolbar.tsx:779/783 and packages/frontend/src/components/text-formatting/text-paragraph-group.tsx:176/194. When the caret sits in a `heading` block, `toggleList` calls `doc.setBlockType(block.id, 'list-item', …)`, so `getBlockType().type` becomes `list-item` → `getBlockLabel` returns \"Normal text\" (packages/frontend/src/components/text-formatting/text-style-options.ts:106-114) and `blockTypeToStyleId` returns \"normal\" (ibid:121-129). With no callback fire, the toolbar's `refresh` (docs-formatting-toolbar.tsx:317-324) never runs, so the Text style button keeps showing \"Heading 1\" and the menu keeps the Heading 1 checkmark — the same #792 symptom on a sibling entry point. The task note (docs/tasks/active/20260817-block-type-toolbar-refresh-todo.md:21-27) declares this unobservable because \"TextStyleGroup never offers list-item\", but the label is derived from the block's *actual* type, not from the offered options, so the heading→list-item transition is observable. Fix belongs in the new code's neighbour: add `notifyStyleApplied()` to `toggleList` (and, for consistency, `indent`/`outdent` at editor.ts:2904 and :2925).",
+      "lens": "blast-radius",
+      "round_commit": "e91dd39b789e1b6b4ed75436207b526ac3b826b1"
+    }
+  ]
+}

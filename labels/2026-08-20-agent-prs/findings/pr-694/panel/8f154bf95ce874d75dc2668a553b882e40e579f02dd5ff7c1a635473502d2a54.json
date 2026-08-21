@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-694",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/cells.ts::`sheets cells batch` parses json outside its try/catch, so malformed input escapes the error-envelope path entirely",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in the supplied packages/cli/src/commands/cells.ts: in the `batch` action, `JSON.parse(dataStr)` and the stdin read/parse occur before the `try` block that wraps `batchCells`, so malformed JSON throws without reaching `outputError` — no error envelope, and `process.exitCode = 1` is never set by the CLI's own path. bin.ts:27 confirms `program.parse()` with no rejection handling, so it surfaces as an unhandled rejection trace. The claim slightly overstates the exit-code impact (modern Node exits non-zero on unhandled rejection anyway), but the core defect — malformed input escaping the error-envelope contract on a command the new regression tests don't cover — is accurate. It is pre-existing rather than introduced by this diff, but real in the code as written.",
+  "notes": null,
+  "diff_sha256": "sha256:17a8a38ddf5b90135f87378e52ec353f2336716fd15daba5afcf87321a39f2d4",
+  "class_id": null,
+  "class_members": null
+}

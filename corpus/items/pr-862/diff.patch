@@ -1,0 +1,488 @@
+diff --git a/docs/tasks/active/20260816-docs-unlist-restores-heading-lessons.md b/docs/tasks/active/20260816-docs-unlist-restores-heading-lessons.md
+new file mode 100644
+index 00000000..3d458ef0
+--- /dev/null
++++ b/docs/tasks/active/20260816-docs-unlist-restores-heading-lessons.md
+@@ -0,0 +1,17 @@
++# Lessons — Docs: un-listing a heading restores the heading (#783)
++
++## What we learned
++
++- Every `headingLevel` reader in the repo is already guarded by
++  `block.type === 'heading'` (docx exporter, pdf outline, markdown
++  serializer, `blockStyleId`, the toolbar's `getBlockLabel` /
++  `blockTypeToStyleId`). That is what made "let a `list-item` carry its
++  heading level" a safe representation instead of a new model field: nothing
++  reads the level while the block is a list item.
++- `setBlockType` is implemented three times — `MemDocStore`,
++  `YorkieDocStore` (tree attrs *and* an in-memory block cache that must be
++  kept in sync by hand), and `createBlock`'s defaults. A rule about
++  type-specific attributes has to be applied in each.
++- `toggleList` likewise exists three times (`editor.ts`, `text-editor.ts`,
++  `text-box-editor.ts`); a shared helper in the model layer is the only thing
++  keeping them from drifting.
+diff --git a/docs/tasks/active/20260816-docs-unlist-restores-heading-todo.md b/docs/tasks/active/20260816-docs-unlist-restores-heading-todo.md
+new file mode 100644
+index 00000000..900076f1
+--- /dev/null
++++ b/docs/tasks/active/20260816-docs-unlist-restores-heading-todo.md
+@@ -0,0 +1,52 @@
++# Docs: un-listing a heading restores the heading (#783)
++
++## Problem
++
++Bulleting a `Heading 2` and then un-bulleting it leaves body text. The
++heading level is destroyed by an action that looks reversible.
++
++Two independent causes:
++
++1. `MemDocStore.setBlockType` (`packages/docs/src/store/memory.ts`) deletes
++   `headingLevel` unconditionally, so the level is gone the moment the list
++   is applied. `YorkieDocStore.setBlockType`
++   (`packages/frontend/src/app/docs/yorkie-doc-store.ts`) does the same in
++   both the tree attrs (`toRemove`) and the block cache.
++2. `toggleList` hardcodes `'paragraph'` on the way out (three call sites in
++   the docs package), so there is nothing to restore from.
++
++## Approach
++
++Model the "bulleted heading" the way Google Docs does — the bullet is applied
++*to* the heading — with the smallest possible model change: a `list-item`
++block **keeps** its `headingLevel`. No new field, no new CRDT attribute name
++(`headingLevel` already round-trips through the Yorkie tree attrs), and every
++existing `headingLevel` reader is already guarded by `type === 'heading'`
++(docx/pdf/markdown export, `blockStyleId`, toolbar labels), so a retained
++level is inert until the list is removed.
++
++`toggleList` then restores `heading` + level when the level is present, else
++`paragraph`, via one shared helper so the three editors cannot drift.
++
++Explicit "Normal text" commands (style dropdown, ⌥0, heading toggle) keep
++clearing the level — only the list round trip restores.
++
++## Steps
++
++- [x] `model/types.ts`: document the retention on `Block.headingLevel`, add
++      `unlistedBlockType(block)` helper.
++- [x] `store/memory.ts`: preserve `headingLevel` when the new type is
++      `list-item`.
++- [x] `yorkie-doc-store.ts`: same, in the `toRemove` attrs and the cache.
++- [x] `view/editor.ts`, `view/text-editor.ts`, `view/text-box-editor.ts`:
++      `toggleList` exits through `unlistedBlockType`.
++- [x] Unit tests: store-level round trip (the issue's repro), editor-level
++      round trip, paragraph unaffected, explicit Normal text still clears.
++
++## Non-goals
++
++- How a list item is *styled* while it is a list item (`blockStyleId` maps
++  `list-item` → `normal`; the issue calls this working as intended).
++- Splitting a bulleted heading (Enter) — the new item stays a plain list
++  item, as today.
++- DOCX/PPTX export of a bulleted heading's `pStyle`.
+diff --git a/packages/docs/src/model/types.ts b/packages/docs/src/model/types.ts
+index 3bf66931..5848cb41 100644
+--- a/packages/docs/src/model/types.ts
++++ b/packages/docs/src/model/types.ts
+@@ -51,6 +51,14 @@ export interface Block {
+   type: BlockType;
+   inlines: Inline[];
+   style: BlockStyle;
++  /**
++   * Heading level of a `heading` block. A `list-item` also keeps the level of
++   * the heading it was made from — bulleting a heading applies the bullet *to*
++   * the heading (Google Docs / Word parity), so removing the list restores it
++   * (see `unlistedBlockType`). The level is inert while the block is a list
++   * item: every reader (export, `blockStyleId`, toolbar labels) gates on
++   * `type === 'heading'`.
++   */
+   headingLevel?: HeadingLevel;
+   listKind?: 'ordered' | 'unordered';
+   listLevel?: number;
+@@ -320,6 +328,21 @@ export function createBlock(
+   return block;
+ }
+ 
++/**
++ * The block type a list item returns to when its list is removed: the heading
++ * it was bulleted from, if any, else a plain paragraph. Keeps the three
++ * `toggleList` implementations (docs editor, text editor, text-box editor)
++ * from drifting.
++ */
++export function unlistedBlockType(
++  block: Block,
++): { type: BlockType; opts?: { headingLevel: HeadingLevel } } {
++  if (block.headingLevel !== undefined) {
++    return { type: 'heading', opts: { headingLevel: block.headingLevel } };
++  }
++  return { type: 'paragraph' };
++}
++
+ /**
+  * Get the total text length of a block.
+  */
+diff --git a/packages/docs/src/store/memory.ts b/packages/docs/src/store/memory.ts
+index e53ebe22..e114a956 100644
+--- a/packages/docs/src/store/memory.ts
++++ b/packages/docs/src/store/memory.ts
+@@ -246,6 +246,7 @@ export class MemDocStore implements DocStore {
+   ): void {
+     const block = this.findBlock(blockId);
+     const prevStyleId = blockStyleId(block);
++    const prevHeadingLevel = block.headingLevel;
+     block.type = type;
+     delete block.headingLevel;
+     delete block.listKind;
+@@ -254,6 +255,9 @@ export class MemDocStore implements DocStore {
+       block.headingLevel = opts?.headingLevel ?? 1;
+     }
+     if (type === 'list-item') {
++      // A bulleted heading remembers its level so removing the list restores
++      // the heading instead of flattening it to body text (see `Block`).
++      if (prevHeadingLevel !== undefined) block.headingLevel = prevHeadingLevel;
+       block.listKind = opts?.listKind ?? 'unordered';
+       block.listLevel = opts?.listLevel ?? 0;
+     }
+diff --git a/packages/docs/src/view/editor.ts b/packages/docs/src/view/editor.ts
+index 0365cc5b..ac3a301e 100644
+--- a/packages/docs/src/view/editor.ts
++++ b/packages/docs/src/view/editor.ts
+@@ -1,6 +1,6 @@
+ import { Doc } from '../model/document.js';
+ import type { Block, InlineStyle, BlockStyle, BlockType, HeadingLevel, SearchMatch, CellAddress, CellRange, CellStyle, ImageData } from '../model/types.js';
+-import { resolvePageSetup, getEffectiveDimensions, getBlockTextLength, getBlockText, findImageAtOffset, clampImageToWidth, CLEAR_INLINE_STYLE, DEFAULT_INLINE_STYLE } from '../model/types.js';
++import { resolvePageSetup, getEffectiveDimensions, getBlockTextLength, getBlockText, findImageAtOffset, clampImageToWidth, unlistedBlockType, CLEAR_INLINE_STYLE, DEFAULT_INLINE_STYLE } from '../model/types.js';
+ import { MemDocStore } from '../store/memory.js';
+ import type { DocStore } from '../store/store.js';
+ import type { DocStyles, NamedStyleDef, StyleId } from '../model/named-styles.js';
+@@ -2867,7 +2867,8 @@ export function initialize(
+       docStore.snapshot();
+       forEachBlockInSelection((block) => {
+         if (block.type === 'list-item' && block.listKind === kind) {
+-          doc.setBlockType(block.id, 'paragraph');
++          const exit = unlistedBlockType(block);
++          doc.setBlockType(block.id, exit.type, exit.opts);
+         } else {
+           doc.setBlockType(block.id, 'list-item', {
+             listKind: kind,
+diff --git a/packages/docs/src/view/text-box-editor.ts b/packages/docs/src/view/text-box-editor.ts
+index 853ff509..8f06398c 100644
+--- a/packages/docs/src/view/text-box-editor.ts
++++ b/packages/docs/src/view/text-box-editor.ts
+@@ -28,7 +28,7 @@
+ import type { Block, PageSetup, InlineStyle, BlockStyle, BlockType, HeadingLevel } from '../model/types.js';
+ import type { ColorResolver } from '../model/color.js';
+ import { defaultColorResolver, resolveColorAtPosition } from '../model/color.js';
+-import { createEmptyBlock, CLEAR_INLINE_STYLE, DEFAULT_INLINE_STYLE } from '../model/types.js';
++import { createEmptyBlock, unlistedBlockType, CLEAR_INLINE_STYLE, DEFAULT_INLINE_STYLE } from '../model/types.js';
+ import { Doc } from '../model/document.js';
+ import { MemDocStore } from '../store/memory.js';
+ import { CanvasTextMeasurer } from './canvas-measurer.js';
+@@ -1122,7 +1122,8 @@ export function initializeTextBox(opts: TextBoxEditorOptions): TextBoxEditorAPI
+       docStore.snapshot();
+       forEachBlockInSelection((block) => {
+         if (block.type === 'list-item' && block.listKind === kind) {
+-          doc.setBlockType(block.id, 'paragraph');
++          const exit = unlistedBlockType(block);
++          doc.setBlockType(block.id, exit.type, exit.opts);
+         } else {
+           doc.setBlockType(block.id, 'list-item', {
+             listKind: kind,
+diff --git a/packages/docs/src/view/text-editor.ts b/packages/docs/src/view/text-editor.ts
+index ba31cbd9..e8cdcbf0 100644
+--- a/packages/docs/src/view/text-editor.ts
++++ b/packages/docs/src/view/text-editor.ts
+@@ -1,5 +1,5 @@
+ import type { Block, BlockCellInfo, CellAddress, DocPosition, DocRange, Inline, InlineStyle, HeadingLevel, TableCell } from '../model/types.js';
+-import { generateBlockId, getBlockText, getBlockTextLength, DEFAULT_BLOCK_STYLE, createBlock, createTableBlock, normalizeTableMerges } from '../model/types.js';
++import { generateBlockId, getBlockText, getBlockTextLength, unlistedBlockType, DEFAULT_BLOCK_STYLE, createBlock, createTableBlock, normalizeTableMerges } from '../model/types.js';
+ import { Doc, type EditContext } from '../model/document.js';
+ import { cloneBlockWithFreshIds } from '../store/block-helpers.js';
+ import { serializeClipboard, deserializeClipboard, cloneTableCells, parseHtmlToBlocks, parseHtmlTableToTableCells, parseMarkdownTableToTableCells, parseMarkdownWithTables, WAFFLEDOCS_MIME } from './clipboard.js';
+@@ -2166,7 +2166,8 @@ export class TextEditor {
+     {
+       const block = this.doc.getBlock(this.cursor.position.blockId);
+       if (block.type === 'list-item' && block.listKind === kind) {
+-        this.doc.setBlockType(block.id, 'paragraph');
++        const exit = unlistedBlockType(block);
++        this.doc.setBlockType(block.id, exit.type, exit.opts);
+       } else {
+         this.doc.setBlockType(block.id, 'list-item', {
+           listKind: kind,
+diff --git a/packages/docs/test/view/list-heading-roundtrip.test.ts b/packages/docs/test/view/list-heading-roundtrip.test.ts
+new file mode 100644
+index 00000000..caff2bf3
+--- /dev/null
++++ b/packages/docs/test/view/list-heading-roundtrip.test.ts
+@@ -0,0 +1,199 @@
++// @vitest-environment jsdom
++import { describe, test, expect, beforeEach, afterEach } from 'vitest';
++import { MemDocStore } from '../../src/store/memory.js';
++import { initialize, type EditorAPI } from '../../src/view/editor.js';
++import { normalizeBlockStyle, unlistedBlockType } from '../../src/model/types.js';
++import type { Block } from '../../src/model/types.js';
++
++/**
++ * Bulleting a heading and un-bulleting it must give the heading back
++ * (Google Docs / Word parity — the bullet is applied *to* the heading).
++ *
++ * Regression guard for #783: `setBlockType` dropped `headingLevel` the
++ * moment the list was applied and `toggleList` hardcoded `'paragraph'` on
++ * the way out, so the round trip silently downgraded a Heading 2 to body
++ * text.
++ */
++
++function installCanvasShim(): void {
++  const ctxHandler: ProxyHandler<object> = {
++    get(_t, prop) {
++      if (prop === 'measureText') {
++        return (text: string) => ({
++          width: typeof text === 'string' ? text.length * 6 : 0,
++          actualBoundingBoxAscent: 8,
++          actualBoundingBoxDescent: 2,
++        });
++      }
++      if (prop === 'getImageData') {
++        return (_x: number, _y: number, w: number, h: number) => ({
++          data: new Uint8ClampedArray(Math.max(0, w) * Math.max(0, h) * 4),
++          width: w,
++          height: h,
++        });
++      }
++      if (prop === 'createLinearGradient' || prop === 'createRadialGradient' ||
++          prop === 'createPattern') {
++        return () => ({ addColorStop: () => {} });
++      }
++      if (prop === 'canvas') return null;
++      if (prop === 'font') return '12px sans-serif';
++      return () => {};
++    },
++    set() {
++      return true;
++    },
++  };
++  const fakeCtx = new Proxy({}, ctxHandler) as unknown as CanvasRenderingContext2D;
++
++  (HTMLCanvasElement.prototype as unknown as {
++    getContext: (kind: string) => unknown;
++  }).getContext = (kind: string) => (kind === '2d' ? fakeCtx : null);
++
++  (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
++    observe(): void {}
++    unobserve(): void {}
++    disconnect(): void {}
++  };
++}
++
++function makeHeading(id: string, text: string, headingLevel: 1 | 2 | 3): Block {
++  return {
++    id,
++    type: 'heading',
++    headingLevel,
++    inlines: [{ text, style: {} }],
++    style: normalizeBlockStyle({}),
++  };
++}
++
++function makeParagraph(id: string, text: string): Block {
++  return {
++    id,
++    type: 'paragraph',
++    inlines: [{ text, style: {} }],
++    style: normalizeBlockStyle({}),
++  };
++}
++
++function setupEditor(blocks: Block[]): { editor: EditorAPI; container: HTMLElement } {
++  const store = new MemDocStore();
++  store.setDocument({ blocks });
++  const container = document.createElement('div');
++  document.body.appendChild(container);
++  const editor = initialize(container, store);
++  return { editor, container };
++}
++
++describe('MemDocStore.setBlockType — heading level across a list', () => {
++  test('a bulleted heading remembers its level', () => {
++    const store = new MemDocStore({ blocks: [makeHeading('b1', 'Quarterly results', 2)] });
++
++    store.setBlockType('b1', 'list-item', { listKind: 'unordered', listLevel: 0 });
++
++    const block = store.getBlock('b1')!;
++    expect(block.type).toBe('list-item');
++    expect(block.headingLevel).toBe(2);
++  });
++
++  test('indenting a bulleted heading keeps the remembered level', () => {
++    const store = new MemDocStore({ blocks: [makeHeading('b1', 'Quarterly results', 2)] });
++
++    store.setBlockType('b1', 'list-item', { listKind: 'unordered', listLevel: 0 });
++    store.setBlockType('b1', 'list-item', { listKind: 'unordered', listLevel: 1 });
++
++    expect(store.getBlock('b1')!.headingLevel).toBe(2);
++  });
++
++  test('an explicit Normal text still clears the level', () => {
++    const store = new MemDocStore({ blocks: [makeHeading('b1', 'Quarterly results', 2)] });
++
++    store.setBlockType('b1', 'list-item', { listKind: 'unordered', listLevel: 0 });
++    store.setBlockType('b1', 'paragraph');
++
++    const block = store.getBlock('b1')!;
++    expect(block.type).toBe('paragraph');
++    expect(block.headingLevel).toBeUndefined();
++  });
++
++  test('a bulleted paragraph has no level to remember', () => {
++    const store = new MemDocStore({ blocks: [makeParagraph('b1', 'body text')] });
++
++    store.setBlockType('b1', 'list-item', { listKind: 'unordered', listLevel: 0 });
++
++    expect(store.getBlock('b1')!.headingLevel).toBeUndefined();
++  });
++});
++
++describe('unlistedBlockType', () => {
++  test('a list item that came from a heading returns to that heading', () => {
++    const block = makeHeading('b1', 'Quarterly results', 2);
++    block.type = 'list-item';
++    expect(unlistedBlockType(block)).toEqual({ type: 'heading', opts: { headingLevel: 2 } });
++  });
++
++  test('a plain list item returns to a paragraph', () => {
++    expect(unlistedBlockType(makeParagraph('b1', 'body text'))).toEqual({ type: 'paragraph' });
++  });
++});
++
++describe('toggleList round trip', () => {
++  beforeEach(() => {
++    installCanvasShim();
++    document.body.innerHTML = '';
++  });
++
++  afterEach(() => {
++    document.body.innerHTML = '';
++  });
++
++  test('bullet on then off gives the heading back', () => {
++    const { editor } = setupEditor([makeHeading('b1', 'Quarterly results', 2)]);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 0 },
++    });
++
++    editor.toggleList('unordered');
++    expect(editor.getDoc().document.blocks[0].type).toBe('list-item');
++
++    editor.toggleList('unordered');
++    const block = editor.getDoc().document.blocks[0];
++    expect(block.type).toBe('heading');
++    expect(block.headingLevel).toBe(2);
++    editor.dispose();
++  });
++
++  test('bullet on then off leaves a paragraph a paragraph', () => {
++    const { editor } = setupEditor([makeParagraph('b1', 'body text')]);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 0 },
++    });
++
++    editor.toggleList('unordered');
++    editor.toggleList('unordered');
++
++    const block = editor.getDoc().document.blocks[0];
++    expect(block.type).toBe('paragraph');
++    expect(block.headingLevel).toBeUndefined();
++    editor.dispose();
++  });
++
++  test('switching bullet kind keeps the heading recoverable', () => {
++    const { editor } = setupEditor([makeHeading('b1', 'Quarterly results', 3)]);
++    editor._setSelectionForTest({
++      anchor: { blockId: 'b1', offset: 0 },
++      focus: { blockId: 'b1', offset: 0 },
++    });
++
++    editor.toggleList('unordered');
++    editor.toggleList('ordered');
++    editor.toggleList('ordered');
++
++    const block = editor.getDoc().document.blocks[0];
++    expect(block.type).toBe('heading');
++    expect(block.headingLevel).toBe(3);
++    editor.dispose();
++  });
++});
+diff --git a/packages/frontend/src/app/docs/yorkie-doc-store.ts b/packages/frontend/src/app/docs/yorkie-doc-store.ts
+index 53c7b3e8..f0b11183 100644
+--- a/packages/frontend/src/app/docs/yorkie-doc-store.ts
++++ b/packages/frontend/src/app/docs/yorkie-doc-store.ts
+@@ -1388,6 +1388,11 @@ export class YorkieDocStore implements DocStore {
+       attrs.listKind = opts?.listKind ?? 'unordered';
+       attrs.listLevel = String(opts?.listLevel ?? 0);
+     }
++    // A bulleted heading remembers its level so removing the list restores the
++    // heading instead of flattening it to body text (see `Block`). The
++    // attribute is already on the node, so only the removal below changes.
++    const keepHeadingLevel =
++      type === 'list-item' && block.headingLevel !== undefined;
+ 
+     // Applying a different named style re-materializes the block's style-owned
+     // spacing into the same styleByPath write (Google Docs parity). A bullet
+@@ -1405,7 +1410,7 @@ export class YorkieDocStore implements DocStore {
+ 
+     // Determine stale attributes to remove (styleByPath merges, not replaces)
+     const toRemove: string[] = [];
+-    if (type !== 'heading') toRemove.push('headingLevel');
++    if (type !== 'heading' && !keepHeadingLevel) toRemove.push('headingLevel');
+     if (type !== 'list-item') toRemove.push('listKind', 'listLevel');
+ 
+     const cursorForHistory = this.consumePendingCursor();
+@@ -1443,12 +1448,14 @@ export class YorkieDocStore implements DocStore {
+     });
+ 
+     // Update cache
++    const prevHeadingLevel = block.headingLevel;
+     block.type = type;
+     delete block.headingLevel;
+     delete block.listKind;
+     delete block.listLevel;
+     if (type === 'heading') block.headingLevel = opts?.headingLevel ?? 1;
+     if (type === 'list-item') {
++      if (keepHeadingLevel) block.headingLevel = prevHeadingLevel;
+       block.listKind = opts?.listKind ?? 'unordered';
+       block.listLevel = opts?.listLevel ?? 0;
+     }
+diff --git a/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts b/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
+index b59c7c2f..0f34d817 100644
+--- a/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
++++ b/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
+@@ -1891,7 +1891,9 @@ describe('YorkieDocStore', () => {
+       expect(result.headingLevel).toBe(undefined);
+     });
+ 
+-    it('should remove stale headingLevel from tree when changing to list-item', () => {
++    it('should keep headingLevel in the tree when changing to list-item', () => {
++      // Bulleting a heading applies the bullet *to* the heading, so the level
++      // survives in the tree and un-listing can restore it (#783).
+       const block: Block = {
+         id: generateBlockId(),
+         type: 'heading',
+@@ -1903,8 +1905,16 @@ describe('YorkieDocStore', () => {
+       store.setBlockType(block.id, 'list-item', { listKind: 'ordered', listLevel: 0 });
+       const result = store.getBlock(block.id)!;
+       expect(result.type).toBe('list-item');
+-      expect(result.headingLevel, 'headingLevel should be removed').toBe(undefined);
++      expect(result.headingLevel, 'headingLevel should be remembered').toBe(2);
+       expect(result.listKind).toBe('ordered');
++      // Re-read from the tree, not the cache.
++      const fromTree = new YorkieDocStore(doc).getBlock(block.id)!;
++      expect(fromTree.headingLevel).toBe(2);
++
++      // An explicit "Normal text" still clears it.
++      store.setBlockType(block.id, 'paragraph');
++      expect(store.getBlock(block.id)!.headingLevel).toBe(undefined);
++      expect(new YorkieDocStore(doc).getBlock(block.id)!.headingLevel).toBe(undefined);
+     });
+ 
+     it('should remove stale listKind/listLevel from tree when changing to paragraph', () => {

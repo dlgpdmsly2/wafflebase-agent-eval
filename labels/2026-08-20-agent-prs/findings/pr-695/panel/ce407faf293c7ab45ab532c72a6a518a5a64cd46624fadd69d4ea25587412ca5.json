@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-695",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/auth/oauth-state.ts::browser oauth `state` is an unauthenticated double-submit cookie with no `__host-` prefix and no server-side binding, so a sibling-subdomain foothold restores login csrf",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied oauth-state.ts: `createWebOAuthState` mints a bare `randomBytes(32)` secret and `state = 'web.' + sha256(secret)`, `webOAuthStateMatches` re-hashes whatever is in the cookie with no HMAC or server-side record, and `oauthStateCookieOptions()` sets `path:'/auth'` with no `__Host-` prefix and no Domain pin. Cookie possession is therefore the entire proof, and a sibling host under the registrable domain can write `Domain=example.com; Path=/auth`; auth.controller.ts then matches and falls through to `createTokens`/`setAuthCookies`, issuing a session for the account behind the attacker-supplied code — the sameSite=lax cookie is sent on that top-level GET navigation. This is the known unsigned-double-submit weakness rather than a misreading of the code; I rate it minor rather than higher only because it requires an additional foothold (control of or XSS on a sibling host / takeover-able CNAME) beyond the base login-CSRF scenario the change closed.",
+  "notes": null,
+  "diff_sha256": "sha256:96865731bf719c4343397260f43ba2a54b21da7d1788e3a17dfad3ebd526ff29",
+  "class_id": null,
+  "class_members": null
+}

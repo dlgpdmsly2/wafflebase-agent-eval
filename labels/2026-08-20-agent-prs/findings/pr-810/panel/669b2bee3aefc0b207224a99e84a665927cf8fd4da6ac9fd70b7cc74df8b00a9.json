@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/docs/yorkie-doc-store.ts::marginfromedge serializer/parser guard added on the backend copy of the codec but not mirrored in the frontend copy the diff claims is kept in sync",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff adds serializeMarginFromEdge/parseMarginFromEdge only to packages/backend/src/yorkie/docs-tree.ts; every frontend yorkie-doc-store.ts hunk concerns block-style and cell-style codecs, with no marginFromEdge change. The backend file explicitly mirrors the frontend store and its pre-diff code (`String(document.header.marginFromEdge)`, bare `Number(attrs.marginFromEdge)`) was copied from it, and the PR's own lessons file admits \"Same for marginFromEdge, which… kept writing String(undefined)\" under \"Duplicated codecs have to be hardened in pairs\" — yet only the block-style guard was mirrored. I could not read the cited frontend lines (526/532/728/769/2724/2732 are omitted from the excerpt and no checkout is mounted), so the exact quoted code is unverified, hence medium confidence; the impact is limited to legacy/API-poisoned documents reading NaN header/footer geometry in the editor.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

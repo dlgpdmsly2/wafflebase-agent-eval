@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-770",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/docs/image-fetcher.ts::ssrf: `docs export` / `slides export` fetch arbitrary absolute urls taken from document content with no scheme or host restriction",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:1"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the full text of packages/cli/src/docs/image-fetcher.ts: resolveImageUrl (line 28) passes through any scheme-prefixed URL untouched, and createImageFetcher (line ~53) fetches it with global fetch — no scheme allowlist, no loopback/link-local rejection, no redirect limit — echoing the resolved URL into the error (line 52). The URLs are image-inline `src` values from document content (confirmed by the file's docstring and by the export wiring in slides.ts/docs.ts in the diff), which is content other workspace members or agents can author, so an export fetches attacker-chosen URLs from the operator's machine and embeds the bytes into the PDF/DOCX. The behavior is pre-existing and untouched by this diff, as the claim itself states, but the described defect is present exactly as claimed.",
+  "notes": null,
+  "diff_sha256": "sha256:c8d92aec1ba53fee531a623b425919c02a8f52c6e84365c25deec98bcb5d3e3d",
+  "class_id": null,
+  "class_members": null
+}

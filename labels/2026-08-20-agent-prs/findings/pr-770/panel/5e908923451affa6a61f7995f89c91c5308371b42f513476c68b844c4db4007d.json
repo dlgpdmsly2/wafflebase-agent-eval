@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-770",
+  "arm": "panel",
+  "finding_key": "packages/frontend/scripts/verify-visual-browser.mjs::adding index.html's own families (inter/fraunces/jetbrains mono) to the font gate makes every visual capture, in every section, hard-depend on fonts.googleapis.com resolving within 10s",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the diff and supplied files: index.html:12 registers Inter/Fraunces/JetBrains Mono on every page, VISUAL_FONT_FAMILIES now includes them, and capturePass() calls waitForFontsReady() for every profile×section pass, whose check-poll (verify-visual-browser.mjs ~line 384) hard-fails after 10s if those faces never load; document.fonts.check() only returned true trivially before because the listed families were unregistered on non-slides pages. The .catch(() => {}) on fonts.load does convert fetch failures into per-page timeouts. The claim's mechanism is accurate; severity is tempered because the baselines already encode Inter glyphs (a no-egress run would fail pixel diffs anyway) and the PR's task doc explicitly accepts this trade-off.",
+  "notes": null,
+  "diff_sha256": "sha256:c8d92aec1ba53fee531a623b425919c02a8f52c6e84365c25deec98bcb5d3e3d",
+  "class_id": null,
+  "class_members": null
+}

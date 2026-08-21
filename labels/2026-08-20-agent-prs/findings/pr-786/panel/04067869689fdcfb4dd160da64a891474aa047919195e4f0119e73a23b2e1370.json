@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/cli/test/login-callback.test.ts::nonce-mismatch coverage only exercises the length-differs branch, so a length-only comparison would pass",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files at this commit. nonceMatches (packages/cli/src/commands/login.ts, the constant-time compare helper) is `a.length === b.length && timingSafeEqual(a, b)`; the test's rejection cases in packages/cli/test/login-callback.test.ts are a missing state (caught by the `!received` guard) and `state=guessed` (7 chars vs the 9-char 'the-nonce'), which short-circuits on the length check. A mutant returning only `a.length === b.length` passes all assertions including the accept case, so the value-comparison branch is genuinely unpinned; a same-length wrong-value case is absent. Real test-adequacy gap, though production behavior itself is correct, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

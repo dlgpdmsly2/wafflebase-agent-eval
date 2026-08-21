@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/docs/yorkie-doc-store.ts::frontend's copy of parseblockstyle/serializeblockstyle was not hardened alongside the backend's, so documents already carrying the poisoned attributes still read as nan in the editor",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff hardens serializeBlockStyle/parseBlockStyle only in packages/backend/src/yorkie/docs-tree.ts; its hunks in packages/frontend/src/app/docs/yorkie-doc-store.ts touch only cell-style removal. The backend file's header explicitly states it mirrors the frontend store's reader/writer, and the frontend's visible serializeInlineStyle is verbatim-identical to the backend's, confirming the mirror. The pre-existing PUT validation (typeof b.style === 'object') accepted style:{} before this PR, so documents with \"undefined\" attributes can exist, and the frontend editor reads the CRDT directly — Number(\"undefined\") → NaN survives the bare-spread normalizeBlockStyle, exactly the unrenderable-geometry failure the PR's own task doc describes. Confidence is medium only because the frontend's lines ~206-226 fall in an omitted excerpt region, so I verified the mirror relationship rather than the exact lines.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

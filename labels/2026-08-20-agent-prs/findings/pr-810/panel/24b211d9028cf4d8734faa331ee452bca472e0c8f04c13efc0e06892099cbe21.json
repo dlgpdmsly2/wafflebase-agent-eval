@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/api/v1/docs-content.controller.ts::slides text-body style validation is stricter than the slides reader, so a get → edit → put round-trip of an existing deck can now 400",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/backend/src/api/v1/docs-content.controller.ts: assertValidTextBodyBlocks → assertValidBlockStyle throws 400 on `lineHeight: null` / unknown alignment for slide text bodies, while the slides GET path (readSlidesRoot) returns those bodies verbatim with no normalizer — the code's own comments confirm \"there is no attribute codec to normalize them on read\", and the rest-api.md change guarantees GET→PUT losslessness only \"for docs bodies\". Since the pre-change validator checked only structure, decks can already hold such values, so an unmodified GET→PUT round-trip can 400 on data the caller never touched. Real, but scoped to decks already holding invalid style values, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

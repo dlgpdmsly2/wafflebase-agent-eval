@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/auth/auth.controller.ts::anyone can start a `mode=cli` login pointing at an arbitrary loopback port; the new browser-binding cookie does not stop the start-url variant of the phishing attack it is documented as closing",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied code: `GitHubAuthGuard.canActivate` (github-auth.guard.ts, the `mode === 'cli' && port` branch) accepts an unauthenticated start request with any `port` in 1024–65535 plus attacker-chosen `nonce` and `code_challenge`, and mints the `wafflebase_oauth_state` cookie *on the browser making that request*. So if the victim clicks an attacker-crafted start URL, the victim's own browser holds the binding, `verifyCallbackState` (auth.controller.ts, CLI branch: `state.mode === 'cli' && secretEquals(state.browserBinding, binding)`) passes, and the controller redirects to `http://127.0.0.1:<attacker-chosen port>/callback?code=<victim code>&state=<attacker nonce>`; because the attacker supplied the challenge they hold the verifier, so `consumeCode` in cli-auth.store.ts happily redeems it. The cookie therefore only defeats the pre-minted-state/replay variant, while the guard comment and the rest-api.md risk row assert it closes \"an attacker mints a CLI state pointing at a loopback port they own and walks the victim through consent\" — a scope overclaim, and PKCE gives no protection here either. Exploitation still requires the attacker to have a listener on the victim's loopback (shared/multi-user host or a local malicious process) plus a clicked link, which caps impact, but the outcome is full account takeover of the victim's tokens.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-695",
+  "arm": "panel",
+  "finding_key": "docs/design/cli.md::new agent-facing error codes (`invalid_format`, `not_logged_in`) are not added to §10 error matrix, the canonical table agents/skills read for codes",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied `docs/design/cli.md`: the new §8.1 paragraphs (around lines 710-728) document `NOT_LOGGED_IN` (exit 1) and `INVALID_FORMAT`, but the §10 Error Matrix table later in the same file is untouched by the diff and still lists only TYPE_MISMATCH, INVALID_RANGE, CONFIRMATION_REQ, FILE_EXISTS, PATH_NOT_FOUND, UNAUTHORIZED, SYSTEM, YORKIE_ERROR, INVALID_DOCX, FONT_LOAD_ERROR. Both codes do exist in code (`formatter.ts` InvalidFormatError.code, `ctx.ts` NotLoggedInError.code) and reach agents via `outputError`, so the omission is real. Impact is doc-completeness only: the behavior is implemented and described in prose two sections earlier, so nothing is wrong or contradictory, just not enumerated in the canonical table.",
+  "notes": null,
+  "diff_sha256": "sha256:96865731bf719c4343397260f43ba2a54b21da7d1788e3a17dfad3ebd526ff29",
+  "class_id": null,
+  "class_members": null
+}

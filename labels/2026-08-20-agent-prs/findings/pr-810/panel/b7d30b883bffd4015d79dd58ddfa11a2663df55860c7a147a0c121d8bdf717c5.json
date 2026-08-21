@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/export/docx-style-map.ts::`docx_alignments` lookup is not actually closed — prototype keys (`tostring`, `constructor`, `__proto__`, `valueof`) resolve to inherited values that get interpolated into `w:jc/@w:val`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/docs/src/export/docx-style-map.ts: `DOCX_ALIGNMENTS` is a plain object literal and `DOCX_ALIGNMENTS[style.alignment as string] ?? 'left'` consults the prototype chain, so `style.alignment === 'toString'` yields `Object.prototype.toString`, which survives the `??` and `!== 'left'` checks and is stringified into `<w:jc w:val=\"function toString() { [native code] }\"/>`; `'__proto__'` yields `[object Object]`. The same pattern exists in packages/slides/src/export/pptx/text.ts (`ALGN[block.style.alignment] ?? 'l'`). This breaks the code's own \"closed lookup / fail-closed\" claim for values the PR itself treats as untrusted CRDT data, though impact is limited: only Object.prototype key names trigger it, and the inherited values' string forms contain no quotes, so it produces a schema-invalid attribute value rather than an injection escape.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

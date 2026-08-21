@@ -1,0 +1,1018 @@
+diff --git a/docs/tasks/active/20260810-docs-range-aware-toggles-lessons.md b/docs/tasks/active/20260810-docs-range-aware-toggles-lessons.md
+new file mode 100644
+index 00000000..427d2cc9
+--- /dev/null
++++ b/docs/tasks/active/20260810-docs-range-aware-toggles-lessons.md
+@@ -0,0 +1,34 @@
++# Lessons — docs range-aware B/I/U/S toggles (#715)
++
++- **A caret is not a selection.** `getSelectionStyle()` reads one position, so
++  every "read current style, invert it" toggle is direction-dependent: a
++  backward selection parks the caret at the range *start* and the
++  `offset <= inlineEnd` match returns the run *before* the selection. Any new
++  selection-scoped decision should read `getRangeStyleSummary()` instead.
++
++- **The collapsed-caret paths were already identical.** Both `EditorAPI`
++  (`packages/docs/src/view/editor.ts`) and `TextBoxEditorAPI`
++  (`packages/docs/src/view/text-box-editor.ts`) implement
++  `getRangeStyleSummary()`'s no-selection branch as the same caret walk their
++  `getSelectionStyle()` uses — same named-style defaults, same pending-style
++  merge. That parity is what made the swap safe rather than a behaviour change
++  for carets; it is worth preserving when either function is touched.
++
++- **Button state and button action must read the same source.** Fixing only
++  the click handler would have left Bold rendering as pressed (caret says
++  bold) while clicking it *adds* bold (range says not bold). `pressed` moved to
++  the summary too, with `'mixed'` rendering unpressed — consistent with
++  `'mixed'` meaning "click applies".
++
++- **Fix every entry point to the same mutation, not just the loudest one.**
++  The toolbar was the reported surface, but `Cmd/Ctrl+B` (`TextEditor.toggle
++  Style`) and the slides mobile bar invert the same value from the same caret
++  read. Fixing only the toolbar would have left the *same document* behaving
++  two different ways depending on whether the user clicked or pressed a key —
++  worse than the original bug, which was at least consistent.
++
++- **Shared components are shared bugs.** `TextFormatGroup` is mounted by both
++  the docs toolbar and the slides text-box toolbar, so one fix covered both
++  surfaces; the docs header/footer toolbar hand-rolls its own B/I/U trio and
++  had to be fixed separately. Grepping for the *shape* (`bold: !`) rather than
++  the component name is what found all the call sites.
+diff --git a/docs/tasks/active/20260810-docs-range-aware-toggles-todo.md b/docs/tasks/active/20260810-docs-range-aware-toggles-todo.md
+new file mode 100644
+index 00000000..f9038280
+--- /dev/null
++++ b/docs/tasks/active/20260810-docs-range-aware-toggles-todo.md
+@@ -0,0 +1,72 @@
++# Docs B/I/U/S toggles: decide from the range, not the caret
++
++Issue: #715
++
++## Problem
++
++The docs toolbar's Bold / Italic / Underline / Strikethrough buttons decide
++whether to add or remove a style with
++
++```ts
++const current = editor.getSelectionStyle();
++editor.applyStyle({ bold: !current.bold });
++```
++
++`getSelectionStyle()` samples a **single caret position**. With a backward
++(right-to-left) selection the caret sits at the range's *start*, and the
++`offset <= inlineEnd` match resolves to the run that *ends* there — i.e. the
++run **preceding** the selection. The toggle then inverts the wrong value.
++
++Visible consequence (issue repro): bold `abcdef`, backward-select `cd`, click
++Bold (bold is removed — correct), click Bold again — nothing happens, ever.
++Selected forward the same two characters toggle correctly.
++
++Affects all four toggles in the shared `TextFormatGroup` and the B/I/U trio in
++the docs header/footer slim toolbar.
++
++## Approach
++
++`getRangeStyleSummary()` already exists on both `EditorAPI` (docs) and
++`TextBoxEditorAPI` (slides text boxes), is range-aware, and reports
++`bold: false` for the failing case. For a collapsed caret both editors return
++exactly what `getSelectionStyle()` returns (same caret walk, same named-style
++defaults, same pending merge), so switching the toggles to the summary is a
++no-op for carets and a fix for ranges.
++
++Rule: `'mixed'` counts as "not fully applied" → the click **applies** the
++style to the whole range (Google Docs behaviour).
++
++## Tasks
++
++- [x] Add a shared `isStyleOn(value)` helper (`true` only when the summary is
++      literally `true`) and export it from `components/text-formatting`.
++- [x] `TextFormatGroup`: route the four toggles' *action* and their `pressed`
++      state through `getRangeStyleSummary()`.
++- [x] `docs-formatting-toolbar.tsx` header/footer slim toolbar: same for B/I/U.
++- [x] Regression tests: backward-selection case (caret style disagrees with
++      range summary) and `'mixed'` → apply, for all four toggles.
++- [x] Update the `toolbar-focus` test's editor mock with the summary method.
++- [x] `TextEditor.toggleStyle`: make the `Cmd/Ctrl+B` / `I` / `U` /
++      `Shift+X` keyboard path decide from the range too, via a
++      `isStyleOnInSelection()` walk inside the `TextEditor` class (mirrors
++      `Doc.applyInlineStyle`'s range walk so the read covers exactly the runs
++      the write touches). Without it the keyboard and the fixed toolbar
++      disagreed on the same selection.
++- [x] Slides mobile toolbar (`slides/toolbar/mobile-toolbar.tsx`): same swap
++      for its own B/I/U trio, which sits in the same bar as a
++      `TextFormatGroup` and would otherwise contradict it.
++- [x] Engine-level regression tests for the premise itself
++      (`packages/docs/test/view/backward-selection-toggle.test.ts`): the real
++      editor's `getSelectionStyle()` vs `getRangeStyleSummary()` disagreement
++      on a backward selection, plus the Cmd+B path end-to-end.
++- [x] Header/footer slim toolbar regression tests
++      (`packages/frontend/tests/app/docs/docs-formatting-toolbar-header-footer.test.tsx`).
++
++## Out of scope
++
++- The `getSelectionStyle()` `<=` boundary for a collapsed caret — the issue
++  explicitly defers this ("worth checking separately"); at a run boundary
++  returning the preceding run's style matches what typing there inherits.
++- The header/footer slim toggles' `pressed` state: those `Toggle`s were
++  already uncontrolled before this change (no `pressed` prop at all), so
++  wiring them is a separate fix.
+diff --git a/packages/docs/src/view/text-editor.ts b/packages/docs/src/view/text-editor.ts
+index 155d1562..6f4e6485 100644
+--- a/packages/docs/src/view/text-editor.ts
++++ b/packages/docs/src/view/text-editor.ts
+@@ -2888,7 +2888,13 @@ export class TextEditor {
+     const resolved: Partial<InlineStyle> = {};
+     for (const key of Object.keys(style) as (keyof InlineStyle)[]) {
+       if (typeof style[key] === 'boolean') {
+-        (resolved as Record<string, unknown>)[key] = !visual[key];
++        // Decide add-vs-remove from the *range* whenever there is one —
++        // the caret style is only a fallback (collapsed caret, or a range
++        // holding no text runs). See `isStyleOnInSelection` for why.
++        const inRange = this.isStyleOnInSelection(key);
++        (resolved as Record<string, unknown>)[key] = !(
++          inRange ?? !!visual[key]
++        );
+       } else {
+         (resolved as Record<string, unknown>)[key] = style[key];
+       }
+@@ -2980,6 +2986,141 @@ export class TextEditor {
+     return last ? { ...last.style } : {};
+   }
+ 
++  /**
++   * Is a boolean inline style set on every text run of the selection?
++   *
++   * The keyboard shortcuts (Cmd/Ctrl+B / I / U, Cmd/Ctrl+Shift+X) must
++   * decide add-vs-remove from the *range*, not from the caret: with a
++   * backward (right-to-left) selection the caret sits at the range's start,
++   * where `getStyleAtCursor()` resolves the run *preceding* the selection.
++   * The shortcut therefore inverted the wrong value and re-applying a style
++   * could stay a permanent no-op (issue #715). Mirrors the toolbar's
++   * `getRangeStyleSummary()` decision so keyboard and toolbar agree: a mixed
++   * range (some runs on, some off) counts as *not* applied, so the next
++   * press styles the whole range.
++   *
++   * Returns `undefined` when there is no selection, or when the range holds
++   * no text runs — the caller then falls back to the caret style.
++   */
++  private isStyleOnInSelection(key: keyof InlineStyle): boolean | undefined {
++    const range = this.selection.range;
++    if (!this.selection.hasSelection() || !range) return undefined;
++
++    let sawRun = false;
++    let allOn = true;
++    const visit = (blockId: string, from: number, to: number): void => {
++      const block = this.doc.findBlock(blockId);
++      if (!block) return;
++      let pos = 0;
++      for (const inline of block.inlines) {
++        const inlineEnd = pos + inline.text.length;
++        // Overlap test [from, to) with [pos, inlineEnd). Zero-width
++        // placeholder runs carry no style information.
++        if (inline.text.length > 0 && inlineEnd > from && pos < to) {
++          sawRun = true;
++          if (!(inline.style as Record<string, unknown>)[key]) allOn = false;
++        }
++        pos = inlineEnd;
++        if (pos >= to) break;
++      }
++    };
++    const visitWhole = (block: Block): void =>
++      visit(block.id, 0, getBlockTextLength(block));
++    const visitTable = (block: Block): void => {
++      if (!block.tableData) return;
++      for (const row of block.tableData.rows) {
++        for (const cell of row.cells) {
++          if (cell.colSpan === 0) continue;
++          for (const cellBlock of cell.blocks) visitWhole(cellBlock);
++        }
++      }
++    };
++
++    if (range.tableCellRange) {
++      // Rectangle of selected cells — every block inside counts.
++      const cr = range.tableCellRange;
++      const tableBlock = this.doc.findBlock(cr.blockId);
++      if (tableBlock?.tableData) {
++        const minRow = Math.min(cr.start.rowIndex, cr.end.rowIndex);
++        const maxRow = Math.max(cr.start.rowIndex, cr.end.rowIndex);
++        const minCol = Math.min(cr.start.colIndex, cr.end.colIndex);
++        const maxCol = Math.max(cr.start.colIndex, cr.end.colIndex);
++        for (let r = minRow; r <= maxRow; r++) {
++          for (let c = minCol; c <= maxCol; c++) {
++            const cell = tableBlock.tableData.rows[r]?.cells[c];
++            if (!cell || cell.colSpan === 0) continue;
++            for (const cellBlock of cell.blocks) visitWhole(cellBlock);
++          }
++        }
++      }
++    } else if (range.anchor.blockId === range.focus.blockId) {
++      const a = range.anchor.offset;
++      const b = range.focus.offset;
++      visit(range.anchor.blockId, Math.min(a, b), Math.max(a, b));
++    } else {
++      // Mirrors `Doc.applyInlineStyle`'s range walk so the read matches
++      // exactly the runs the write would touch.
++      const anchorCI = this.getCellInfo(range.anchor.blockId);
++      const focusCI = this.getCellInfo(range.focus.blockId);
++      if (
++        anchorCI && focusCI &&
++        anchorCI.tableBlockId === focusCI.tableBlockId &&
++        anchorCI.rowIndex === focusCI.rowIndex &&
++        anchorCI.colIndex === focusCI.colIndex
++      ) {
++        // Cross-block inside one cell.
++        const tableBlock = this.doc.findBlock(anchorCI.tableBlockId);
++        const cell =
++          tableBlock?.tableData?.rows[anchorCI.rowIndex]?.cells[anchorCI.colIndex];
++        if (cell) {
++          const anchorIdx = cell.blocks.findIndex((b) => b.id === range.anchor.blockId);
++          const focusIdx = cell.blocks.findIndex((b) => b.id === range.focus.blockId);
++          if (anchorIdx >= 0 && focusIdx >= 0) {
++            const [fromIdx, toIdx, from, to] = anchorIdx <= focusIdx
++              ? [anchorIdx, focusIdx, range.anchor, range.focus]
++              : [focusIdx, anchorIdx, range.focus, range.anchor];
++            for (let i = fromIdx; i <= toIdx; i++) {
++              const block = cell.blocks[i];
++              const blockLen = getBlockTextLength(block);
++              const start = i === fromIdx ? from.offset : 0;
++              const end = i === toIdx ? to.offset : blockLen;
++              if (start < end) visit(block.id, start, end);
++            }
++          }
++        }
++      } else {
++        // Top-level cross-block: normalize cell endpoints to their parent
++        // table block, then walk the context blocks in document order.
++        const anchorTopId = anchorCI ? anchorCI.tableBlockId : range.anchor.blockId;
++        const focusTopId = focusCI ? focusCI.tableBlockId : range.focus.blockId;
++        const anchorIdx = this.doc.getBlockIndex(anchorTopId);
++        const focusIdx = this.doc.getBlockIndex(focusTopId);
++        if (anchorIdx >= 0 && focusIdx >= 0) {
++          const [fromIdx, toIdx, from, to] =
++            anchorIdx < focusIdx ||
++            (anchorIdx === focusIdx && range.anchor.offset <= range.focus.offset)
++              ? [anchorIdx, focusIdx, range.anchor, range.focus]
++              : [focusIdx, anchorIdx, range.focus, range.anchor];
++          const contextBlocks = this.doc.getContextBlocks();
++          for (let i = fromIdx; i <= toIdx; i++) {
++            const block = contextBlocks[i];
++            if (!block) continue;
++            if (block.type === 'table' && block.tableData) {
++              visitTable(block);
++              continue;
++            }
++            const blockLen = getBlockTextLength(block);
++            const start = i === fromIdx ? from.offset : 0;
++            const end = i === toIdx ? to.offset : blockLen;
++            if (start < end) visit(block.id, start, end);
++          }
++        }
++      }
++    }
++
++    return sawRun ? allOn : undefined;
++  }
++
+   // --- Cell helpers ---
+ 
+   private isInCell(blockId: string): boolean {
+diff --git a/packages/docs/test/view/backward-selection-toggle.test.ts b/packages/docs/test/view/backward-selection-toggle.test.ts
+new file mode 100644
+index 00000000..6415540f
+--- /dev/null
++++ b/packages/docs/test/view/backward-selection-toggle.test.ts
+@@ -0,0 +1,200 @@
++// @vitest-environment jsdom
++/**
++ * Issue #715 — a backward (right-to-left) selection parks the caret at the
++ * range's *start*, where the caret walk resolves the run *preceding* the
++ * selection. Anything that decides add-vs-remove from the caret therefore
++ * inverts the wrong value: after clearing bold from a sub-range of a bold
++ * run, re-applying bold was a permanent no-op.
++ *
++ * These tests pin the two halves of the fix at the engine level:
++ *
++ *  1. `getSelectionStyle()` really does report the preceding run for a
++ *     backward selection while `getRangeStyleSummary()` reports the range —
++ *     the premise the toolbar toggles rely on (the frontend component tests
++ *     mock this disagreement; here it is produced by the real editor).
++ *  2. The Cmd/Ctrl+B keyboard path decides from the range too, so keyboard
++ *     and toolbar agree on the same selection.
++ */
++import { describe, test, expect, beforeEach, afterEach } from 'vitest';
++import { MemDocStore } from '../../src/store/memory.js';
++import { initialize, type EditorAPI } from '../../src/view/editor.js';
++import { normalizeBlockStyle } from '../../src/model/types.js';
++import type { Block } from '../../src/model/types.js';
++
++const EMPTY_BLOCK_STYLE = normalizeBlockStyle({});
++const BLOCK_ID = 'b1';
++
++function installCanvasShim(): void {
++  const ctxHandler: ProxyHandler<object> = {
++    get(_t, prop) {
++      if (prop === 'measureText') {
++        return (text: string) => ({
++          width: typeof text === 'string' ? text.length * 6 : 0,
++          actualBoundingBoxAscent: 8,
++          actualBoundingBoxDescent: 2,
++        });
++      }
++      if (prop === 'getImageData') {
++        return (_x: number, _y: number, w: number, h: number) => ({
++          data: new Uint8ClampedArray(Math.max(0, w) * Math.max(0, h) * 4),
++          width: w, height: h,
++        });
++      }
++      if (prop === 'createLinearGradient' || prop === 'createRadialGradient' ||
++          prop === 'createPattern') {
++        return () => ({ addColorStop: () => {} });
++      }
++      if (prop === 'canvas') return null;
++      if (prop === 'font') return '12px sans-serif';
++      return () => {};
++    },
++    set() {
++      return true;
++    },
++  };
++  const fakeCtx = new Proxy({}, ctxHandler) as unknown as CanvasRenderingContext2D;
++
++  (HTMLCanvasElement.prototype as unknown as {
++    getContext: (kind: string) => unknown;
++  }).getContext = (kind: string) => (kind === '2d' ? fakeCtx : null);
++
++  (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
++    observe(): void {}
++    unobserve(): void {}
++    disconnect(): void {}
++  };
++}
++
++/**
++ * One paragraph, two runs: `head` (styled per `headBold`) then `tail`.
++ * "ab" occupies offsets [0, 2), "cd" offsets [2, 4).
++ */
++function setupEditor(
++  headBold: boolean,
++  tailBold: boolean,
++): { editor: EditorAPI; store: MemDocStore; container: HTMLElement } {
++  const blocks: Block[] = [
++    {
++      id: BLOCK_ID,
++      type: 'paragraph',
++      inlines: [
++        { text: 'ab', style: headBold ? { bold: true } : {} },
++        { text: 'cd', style: tailBold ? { bold: true } : {} },
++      ],
++      style: EMPTY_BLOCK_STYLE,
++    },
++  ];
++  const store = new MemDocStore();
++  store.setDocument({ blocks });
++  const container = document.createElement('div');
++  document.body.appendChild(container);
++  const editor = initialize(container, store);
++  return { editor, store, container };
++}
++
++/** Select "cd" right-to-left: anchor at the end, focus (caret) at the start. */
++function selectTailBackward(editor: EditorAPI): void {
++  editor._setSelectionForTest({
++    anchor: { blockId: BLOCK_ID, offset: 4 },
++    focus: { blockId: BLOCK_ID, offset: 2 },
++  });
++}
++
++function dispatchKey(container: HTMLElement, key: string): void {
++  const textarea = container.querySelector('textarea');
++  if (!textarea) throw new Error('textarea not mounted');
++  textarea.dispatchEvent(
++    new KeyboardEvent('keydown', {
++      key,
++      metaKey: true,
++      ctrlKey: true,
++      bubbles: true,
++      cancelable: true,
++    }),
++  );
++}
++
++/** Is every character of "cd" bold in the stored document? */
++function tailIsBold(store: MemDocStore): boolean {
++  const inlines = store.getDocument().blocks[0].inlines;
++  let pos = 0;
++  let sawRun = false;
++  let allBold = true;
++  for (const inline of inlines) {
++    const end = pos + inline.text.length;
++    if (inline.text.length > 0 && end > 2 && pos < 4) {
++      sawRun = true;
++      if (!inline.style.bold) allBold = false;
++    }
++    pos = end;
++  }
++  return sawRun && allBold;
++}
++
++describe('backward selection style resolution (issue #715)', () => {
++  beforeEach(() => {
++    installCanvasShim();
++    document.body.innerHTML = '';
++  });
++
++  afterEach(() => {
++    document.body.innerHTML = '';
++  });
++
++  test('caret style reports the preceding run while the summary reports the range', () => {
++    const { editor } = setupEditor(true, false);
++    selectTailBackward(editor);
++
++    // The caret sits at offset 2 — the boundary — and resolves the bold
++    // run before the selection. This is the trap the toggles used to fall
++    // into, reproduced here by the real editor rather than a mock.
++    expect(editor.getSelectionStyle().bold).toBe(true);
++    // The range summary looks at the selected runs only: "cd" is not bold.
++    expect(editor.getRangeStyleSummary().bold).not.toBe(true);
++
++    editor.dispose();
++  });
++
++  test('the summary still reads true when the backward range is uniformly bold', () => {
++    const { editor } = setupEditor(false, true);
++    selectTailBackward(editor);
++
++    expect(editor.getSelectionStyle().bold).not.toBe(true);
++    expect(editor.getRangeStyleSummary().bold).toBe(true);
++
++    editor.dispose();
++  });
++
++  test('Cmd+B on a backward, unstyled range applies bold (was a silent no-op)', () => {
++    const { editor, store, container } = setupEditor(true, false);
++    selectTailBackward(editor);
++
++    dispatchKey(container, 'b');
++
++    expect(tailIsBold(store)).toBe(true);
++    editor.dispose();
++  });
++
++  test('Cmd+B on a backward, uniformly bold range removes bold', () => {
++    const { editor, store, container } = setupEditor(false, true);
++    selectTailBackward(editor);
++
++    dispatchKey(container, 'b');
++
++    expect(tailIsBold(store)).toBe(false);
++    editor.dispose();
++  });
++
++  test('Cmd+B on a forward range still toggles from the range', () => {
++    const { editor, store, container } = setupEditor(true, true);
++    editor._setSelectionForTest({
++      anchor: { blockId: BLOCK_ID, offset: 2 },
++      focus: { blockId: BLOCK_ID, offset: 4 },
++    });
++
++    dispatchKey(container, 'b');
++
++    expect(tailIsBold(store)).toBe(false);
++    editor.dispose();
++  });
++});
+diff --git a/packages/frontend/src/app/docs/docs-formatting-toolbar.tsx b/packages/frontend/src/app/docs/docs-formatting-toolbar.tsx
+index 399d8728..2bbc1c7e 100644
+--- a/packages/frontend/src/app/docs/docs-formatting-toolbar.tsx
++++ b/packages/frontend/src/app/docs/docs-formatting-toolbar.tsx
+@@ -63,6 +63,7 @@ import {
+   InsertLinkButton,
+   ensureFontLink,
+   clampFontSize,
++  isStyleOn,
+ } from "@/components/text-formatting";
+ import { STYLE_OPTIONS } from "@/components/text-formatting/text-style-options";
+ import { fetchMyDocStyles, saveMyDocStyles } from "@/api/doc-styles";
+@@ -384,20 +385,24 @@ export function DocsFormattingToolbar({ editor, editContext = 'body' }: DocsForm
+   // Does not use the shared formatting groups because the header/footer
+   // surface is intentionally narrower (no lists, no link, no styles dropdown).
+   if (isHeaderFooter) {
++    // Toggle off the range summary, not the caret style: with a backward
++    // selection the caret sits at the range's start and `getSelectionStyle()`
++    // reports the run *before* it, inverting the wrong value (issue #715).
+     const toggleBold = () => {
+       if (!editor) return;
+-      const current = editor.getSelectionStyle();
+-      editor.applyStyle({ bold: !current.bold });
++      editor.applyStyle({ bold: !isStyleOn(editor.getRangeStyleSummary().bold) });
+     };
+     const toggleItalic = () => {
+       if (!editor) return;
+-      const current = editor.getSelectionStyle();
+-      editor.applyStyle({ italic: !current.italic });
++      editor.applyStyle({
++        italic: !isStyleOn(editor.getRangeStyleSummary().italic),
++      });
+     };
+     const toggleUnderline = () => {
+       if (!editor) return;
+-      const current = editor.getSelectionStyle();
+-      editor.applyStyle({ underline: !current.underline });
++      editor.applyStyle({
++        underline: !isStyleOn(editor.getRangeStyleSummary().underline),
++      });
+     };
+     const handleTextColor = (color: string) => {
+       editor?.applyStyle({ color });
+diff --git a/packages/frontend/src/app/slides/toolbar/mobile-toolbar.tsx b/packages/frontend/src/app/slides/toolbar/mobile-toolbar.tsx
+index 6fdeb84a..ee857d27 100644
+--- a/packages/frontend/src/app/slides/toolbar/mobile-toolbar.tsx
++++ b/packages/frontend/src/app/slides/toolbar/mobile-toolbar.tsx
+@@ -65,6 +65,7 @@ import {
+   useResolvedFontFamily,
+   ensureFontLink,
+   clampFontSize,
++  isStyleOn,
+ } from "@/components/text-formatting";
+ import { applySlideFontFamily } from "./apply-font-family";
+ import type { ToolbarState } from "./state";
+@@ -220,16 +221,25 @@ function TextEditMobileBar({
+   // Read pressed state synchronously; SlidesToolbar's onTextEditingChange +
+   // store.onChange listeners trigger a re-render after every applyStyle, so
+   // the toggles flip after the click — same staleness model as desktop.
+-  const sel = textEditor.getSelectionStyle();
++  // Read the *range* summary, not the caret style: a backward
++  // (right-to-left) selection parks the caret at the range's start, where
++  // `getSelectionStyle()` reports the run *preceding* the selection and the
++  // toggle inverts the wrong value (issue #715). Same decision as the
++  // shared `TextFormatGroup` rendered in the sheet below, so the two agree.
++  const summary = textEditor.getRangeStyleSummary();
+   const onBold = useCallback(() => {
+-    textEditor.applyStyle({ bold: !textEditor.getSelectionStyle().bold });
++    textEditor.applyStyle({
++      bold: !isStyleOn(textEditor.getRangeStyleSummary().bold),
++    });
+   }, [textEditor]);
+   const onItalic = useCallback(() => {
+-    textEditor.applyStyle({ italic: !textEditor.getSelectionStyle().italic });
++    textEditor.applyStyle({
++      italic: !isStyleOn(textEditor.getRangeStyleSummary().italic),
++    });
+   }, [textEditor]);
+   const onUnderline = useCallback(() => {
+     textEditor.applyStyle({
+-      underline: !textEditor.getSelectionStyle().underline,
++      underline: !isStyleOn(textEditor.getRangeStyleSummary().underline),
+     });
+   }, [textEditor]);
+ 
+@@ -237,12 +247,17 @@ function TextEditMobileBar({
+     <Toolbar className="flex h-10 items-center gap-1 border-b px-2">
+       <UndoRedoGroup store={store} />
+       <ToolbarSeparator className="mx-1" />
+-      <Toggle size="sm" pressed={!!sel.bold} onPressedChange={onBold} aria-label="Bold">
++      <Toggle
++        size="sm"
++        pressed={isStyleOn(summary.bold)}
++        onPressedChange={onBold}
++        aria-label="Bold"
++      >
+         <IconBold size={16} />
+       </Toggle>
+       <Toggle
+         size="sm"
+-        pressed={!!sel.italic}
++        pressed={isStyleOn(summary.italic)}
+         onPressedChange={onItalic}
+         aria-label="Italic"
+       >
+@@ -250,7 +265,7 @@ function TextEditMobileBar({
+       </Toggle>
+       <Toggle
+         size="sm"
+-        pressed={!!sel.underline}
++        pressed={isStyleOn(summary.underline)}
+         onPressedChange={onUnderline}
+         aria-label="Underline"
+       >
+diff --git a/packages/frontend/src/components/text-formatting/index.ts b/packages/frontend/src/components/text-formatting/index.ts
+index 7997881c..8d78dd5c 100644
+--- a/packages/frontend/src/components/text-formatting/index.ts
++++ b/packages/frontend/src/components/text-formatting/index.ts
+@@ -1,4 +1,5 @@
+ export type { TextFormattingEditor } from "./types";
++export { isStyleOn } from "./style-summary";
+ export { TextStyleGroup } from "./text-style-group";
+ export { TextFormatGroup } from "./text-format-group";
+ export { TextParagraphGroup } from "./text-paragraph-group";
+diff --git a/packages/frontend/src/components/text-formatting/style-summary.ts b/packages/frontend/src/components/text-formatting/style-summary.ts
+new file mode 100644
+index 00000000..1a2f67b0
+--- /dev/null
++++ b/packages/frontend/src/components/text-formatting/style-summary.ts
+@@ -0,0 +1,21 @@
++/**
++ * Helpers for reading a range style summary (`getRangeStyleSummary()`).
++ *
++ * Boolean inline styles are toggled from the *range* summary, never from
++ * `getSelectionStyle()`: the latter samples a single caret position, and a
++ * backward (right-to-left) selection parks the caret at the range's start,
++ * where it resolves to the run *preceding* the selection. Toggles fed from
++ * the caret therefore invert the wrong value and can leave a style
++ * impossible to re-apply (issue #715).
++ */
++
++/**
++ * Is a boolean inline style fully applied across the current selection?
++ *
++ * `'mixed'` — the selection carries both values — counts as *not* applied,
++ * so the next click applies the style to the whole range (Google Docs
++ * behaviour) and the toolbar button renders unpressed.
++ */
++export function isStyleOn(value: boolean | "mixed" | undefined): boolean {
++  return value === true;
++}
+diff --git a/packages/frontend/src/components/text-formatting/text-format-group.tsx b/packages/frontend/src/components/text-formatting/text-format-group.tsx
+index 14c7181b..9c73432f 100644
+--- a/packages/frontend/src/components/text-formatting/text-format-group.tsx
++++ b/packages/frontend/src/components/text-formatting/text-format-group.tsx
+@@ -8,6 +8,7 @@ import { useCallback, useState } from "react";
+ import type { InlineStyle } from "@wafflebase/docs";
+ import { useMenuCloseHandlers } from "@/components/menu-focus";
+ import type { TextFormattingEditor } from "./types";
++import { isStyleOn } from "./style-summary";
+ import { Toggle } from "@/components/ui/toggle";
+ import {
+   Tooltip,
+@@ -87,29 +88,37 @@ export function TextFormatGroup({
+   defaultHighlightColor,
+ }: TextFormatGroupProps) {
+   const selectionStyle = editor?.getSelectionStyle();
++  // The four B/I/U/S toggles read the range summary, not the caret style:
++  // a backward selection leaves the caret at the range's start, where
++  // `getSelectionStyle()` reports the *preceding* run and the toggle inverts
++  // the wrong value (issue #715). The color swatches below still read the
++  // caret style — they set a value rather than invert one.
++  const styleSummary = editor?.getRangeStyleSummary();
+ 
+   const toggleBold = useCallback(() => {
+     if (!editor) return;
+-    const current = editor.getSelectionStyle();
+-    editor.applyStyle({ bold: !current.bold });
++    editor.applyStyle({ bold: !isStyleOn(editor.getRangeStyleSummary().bold) });
+   }, [editor]);
+ 
+   const toggleItalic = useCallback(() => {
+     if (!editor) return;
+-    const current = editor.getSelectionStyle();
+-    editor.applyStyle({ italic: !current.italic });
++    editor.applyStyle({
++      italic: !isStyleOn(editor.getRangeStyleSummary().italic),
++    });
+   }, [editor]);
+ 
+   const toggleUnderline = useCallback(() => {
+     if (!editor) return;
+-    const current = editor.getSelectionStyle();
+-    editor.applyStyle({ underline: !current.underline });
++    editor.applyStyle({
++      underline: !isStyleOn(editor.getRangeStyleSummary().underline),
++    });
+   }, [editor]);
+ 
+   const toggleStrike = useCallback(() => {
+     if (!editor) return;
+-    const current = editor.getSelectionStyle();
+-    editor.applyStyle({ strikethrough: !current.strikethrough });
++    editor.applyStyle({
++      strikethrough: !isStyleOn(editor.getRangeStyleSummary().strikethrough),
++    });
+   }, [editor]);
+ 
+   // Controlled open state so the swatch click closes the palette — the
+@@ -151,7 +160,7 @@ export function TextFormatGroup({
+         <TooltipTrigger asChild>
+           <Toggle
+             size="sm"
+-            pressed={!!selectionStyle?.bold}
++            pressed={isStyleOn(styleSummary?.bold)}
+             onPressedChange={toggleBold}
+             onMouseDown={(e) => e.preventDefault()}
+             className="h-7 w-7 cursor-pointer"
+@@ -169,7 +178,7 @@ export function TextFormatGroup({
+         <TooltipTrigger asChild>
+           <Toggle
+             size="sm"
+-            pressed={!!selectionStyle?.italic}
++            pressed={isStyleOn(styleSummary?.italic)}
+             onPressedChange={toggleItalic}
+             onMouseDown={(e) => e.preventDefault()}
+             className="h-7 w-7 cursor-pointer"
+@@ -187,7 +196,7 @@ export function TextFormatGroup({
+         <TooltipTrigger asChild>
+           <Toggle
+             size="sm"
+-            pressed={!!selectionStyle?.underline}
++            pressed={isStyleOn(styleSummary?.underline)}
+             onPressedChange={toggleUnderline}
+             onMouseDown={(e) => e.preventDefault()}
+             className="h-7 w-7 cursor-pointer"
+@@ -206,7 +215,7 @@ export function TextFormatGroup({
+           <TooltipTrigger asChild>
+             <Toggle
+               size="sm"
+-              pressed={!!selectionStyle?.strikethrough}
++              pressed={isStyleOn(styleSummary?.strikethrough)}
+               onPressedChange={toggleStrike}
+               onMouseDown={(e) => e.preventDefault()}
+               className="h-7 w-7 cursor-pointer"
+diff --git a/packages/frontend/tests/app/docs/docs-formatting-toolbar-header-footer.test.tsx b/packages/frontend/tests/app/docs/docs-formatting-toolbar-header-footer.test.tsx
+new file mode 100644
+index 00000000..accdfd4f
+--- /dev/null
++++ b/packages/frontend/tests/app/docs/docs-formatting-toolbar-header-footer.test.tsx
+@@ -0,0 +1,107 @@
++/**
++ * Regression tests for issue #715 on the docs header/footer slim toolbar.
++ *
++ * The slim toolbar deliberately does not use the shared `TextFormatGroup`
++ * (no lists, no link, no styles dropdown), so it carries its own copy of the
++ * B/I/U toggle logic — and therefore needs its own copy of the regression
++ * test. The stubbed editor makes the caret style and the range summary
++ * disagree, which is the shape a backward (right-to-left) selection produces:
++ * the caret sits at the range's start and resolves the run *preceding* the
++ * selection. The toggles must follow the range.
++ */
++import { describe, it, expect, vi } from 'vitest';
++import { render, screen, fireEvent } from '@testing-library/react';
++import { TooltipProvider } from '@/components/ui/tooltip';
++import { DocsFormattingToolbar } from '@/app/docs/docs-formatting-toolbar';
++import type { EditorAPI } from '@wafflebase/docs';
++
++// jsdom ships no matchMedia; the toolbar reads it through `useIsMobile()`.
++if (typeof window.matchMedia !== 'function') {
++  window.matchMedia = ((query: string) => ({
++    matches: false,
++    media: query,
++    onchange: null,
++    addEventListener: () => {},
++    removeEventListener: () => {},
++    addListener: () => {},
++    removeListener: () => {},
++    dispatchEvent: () => false,
++  })) as unknown as typeof window.matchMedia;
++}
++
++type Summary = ReturnType<EditorAPI['getRangeStyleSummary']>;
++
++/** Minimal EditorAPI stub — only what the slim header/footer toolbar calls. */
++function makeEditor(
++  caretStyle: Record<string, unknown>,
++  summary: Partial<Summary>,
++): EditorAPI {
++  return {
++    focus: vi.fn(),
++    applyStyle: vi.fn(),
++    applyBlockStyle: vi.fn(),
++    getSelectionStyle: vi.fn(() => caretStyle),
++    getRangeStyleSummary: vi.fn(() => summary),
++    getBlockStyle: vi.fn(() => ({})),
++    onCursorMove: vi.fn(() => () => {}),
++    insertPageNumber: vi.fn(),
++    undo: vi.fn(),
++    redo: vi.fn(),
++    getDocStyles: vi.fn(() => ({})),
++    setDocStyles: vi.fn(),
++  } as unknown as EditorAPI;
++}
++
++function mount(editor: EditorAPI, context: 'header' | 'footer' = 'header') {
++  render(
++    <TooltipProvider>
++      <DocsFormattingToolbar editor={editor} editContext={context} />
++    </TooltipProvider>,
++  );
++}
++
++const CASES = [
++  { label: 'Bold', key: 'bold' },
++  { label: 'Italic', key: 'italic' },
++  { label: 'Underline', key: 'underline' },
++] as const;
++
++describe('DocsFormattingToolbar header/footer toggles (issue #715)', () => {
++  for (const { label, key } of CASES) {
++    it(`${label} applies when the range is unstyled but the caret run is styled`, () => {
++      const editor = makeEditor({ [key]: true }, { [key]: false } as Summary);
++      mount(editor);
++
++      fireEvent.click(screen.getByLabelText(label));
++
++      expect(editor.applyStyle).toHaveBeenCalledWith({ [key]: true });
++    });
++
++    it(`${label} removes when the range is uniformly styled`, () => {
++      const editor = makeEditor({ [key]: false }, { [key]: true } as Summary);
++      mount(editor);
++
++      fireEvent.click(screen.getByLabelText(label));
++
++      expect(editor.applyStyle).toHaveBeenCalledWith({ [key]: false });
++    });
++
++    it(`${label} applies when the range is mixed`, () => {
++      const editor = makeEditor({ [key]: true }, { [key]: 'mixed' } as Summary);
++      mount(editor);
++
++      fireEvent.click(screen.getByLabelText(label));
++
++      expect(editor.applyStyle).toHaveBeenCalledWith({ [key]: true });
++    });
++
++    it(`${label} applies when the range carries no value at all`, () => {
++      const editor = makeEditor({ [key]: true }, {} as Summary);
++      mount(editor, 'footer');
++
++      fireEvent.click(screen.getByLabelText(label));
++
++      expect(editor.applyStyle).toHaveBeenCalledWith({ [key]: true });
++    });
++  }
++});
+diff --git a/packages/frontend/tests/components/text-formatting/text-format-toggles.test.ts b/packages/frontend/tests/components/text-formatting/text-format-toggles.test.ts
+new file mode 100644
+index 00000000..a348955e
+--- /dev/null
++++ b/packages/frontend/tests/components/text-formatting/text-format-toggles.test.ts
+@@ -0,0 +1,157 @@
++// @vitest-environment jsdom
++/**
++ * Regression tests for issue #715 — the B/I/U/S toggles decided whether to
++ * add or remove a style from `getSelectionStyle()`, which samples a single
++ * caret position. With a backward (right-to-left) selection the caret sits at
++ * the range's *start* and resolves to the run *preceding* the selection, so
++ * the toggle inverted the wrong value: after clearing bold from a sub-range
++ * of a bold run, clicking Bold again was a silent no-op forever.
++ *
++ * The mocks below encode exactly that disagreement — the caret style says
++ * "bold" (the preceding run) while the range summary says "not bold" (the
++ * selection) — and assert the toggles follow the range.
++ *
++ * JSX is avoided (matching the package's `tests/**\/*.test.ts` runner) by
++ * building elements with `React.createElement`.
++ */
++import { describe, test, expect, vi, afterEach } from "vitest";
++import { createElement as h, act, type ReactElement } from "react";
++import { createRoot, type Root } from "react-dom/client";
++
++import { TooltipProvider } from "../../../src/components/ui/tooltip.tsx";
++import { TextFormatGroup } from "../../../src/components/text-formatting/index.ts";
++import type { TextFormattingEditor } from "../../../src/components/text-formatting/types.ts";
++
++(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
++  true;
++
++type Summary = ReturnType<TextFormattingEditor["getRangeStyleSummary"]>;
++
++/**
++ * An editor whose caret style and range summary disagree — the shape a
++ * backward selection produces.
++ */
++function makeEditor(
++  caretStyle: Record<string, unknown>,
++  summary: Summary,
++): TextFormattingEditor {
++  return {
++    focus: vi.fn(),
++    getSelectionStyle: vi.fn(() => caretStyle),
++    getRangeStyleSummary: vi.fn(() => summary),
++    applyStyle: vi.fn(),
++    clearInlineFormatting: vi.fn(),
++    applyBlockStyle: vi.fn(),
++    getBlockType: vi.fn(() => ({ type: "paragraph" as const })),
++    setBlockType: vi.fn(),
++    toggleList: vi.fn(),
++    indent: vi.fn(),
++    outdent: vi.fn(),
++    requestLink: vi.fn(),
++  } as unknown as TextFormattingEditor;
++}
++
++let root: Root | null = null;
++let host: HTMLDivElement | null = null;
++
++function render(ui: ReactElement): HTMLElement {
++  host = document.createElement("div");
++  document.body.appendChild(host);
++  root = createRoot(host);
++  act(() => {
++    root!.render(h(TooltipProvider, null, ui));
++  });
++  return host;
++}
++
++afterEach(() => {
++  if (root) act(() => root!.unmount());
++  root = null;
++  host?.remove();
++  host = null;
++});
++
++function toggle(container: HTMLElement, label: string): HTMLElement {
++  const el = container.querySelector(`[aria-label="${label}"]`);
++  expect(el).toBeTruthy();
++  return el as HTMLElement;
++}
++
++function click(el: HTMLElement): void {
++  act(() => {
++    el.click();
++  });
++}
++
++const CASES = [
++  { label: "Bold", key: "bold" },
++  { label: "Italic", key: "italic" },
++  { label: "Underline", key: "underline" },
++  { label: "Strikethrough", key: "strikethrough" },
++] as const;
++
++describe("TextFormatGroup toggles (issue #715)", () => {
++  for (const { label, key } of CASES) {
++    test(`${label} applies when the range is unstyled but the caret run is styled`, () => {
++      // Backward selection: caret style reports the preceding (styled) run,
++      // the range summary reports the (unstyled) selection.
++      const editor = makeEditor({ [key]: true }, { [key]: false } as Summary);
++      const container = render(h(TextFormatGroup, { editor }));
++
++      click(toggle(container, label));
++
++      expect(editor.applyStyle).toHaveBeenCalledWith({ [key]: true });
++    });
++
++    test(`${label} removes when the range is uniformly styled`, () => {
++      const editor = makeEditor({ [key]: false }, { [key]: true } as Summary);
++      const container = render(h(TextFormatGroup, { editor }));
++
++      click(toggle(container, label));
++
++      expect(editor.applyStyle).toHaveBeenCalledWith({ [key]: false });
++    });
++
++    test(`${label} applies when the range is mixed`, () => {
++      const editor = makeEditor({ [key]: true }, { [key]: "mixed" } as Summary);
++      const container = render(h(TextFormatGroup, { editor }));
++
++      click(toggle(container, label));
++
++      expect(editor.applyStyle).toHaveBeenCalledWith({ [key]: true });
++    });
++
++    test(`${label} button state follows the range, not the caret`, () => {
++      const unstyledRange = render(
++        h(TextFormatGroup, {
++          editor: makeEditor({ [key]: true }, { [key]: false } as Summary),
++        }),
++      );
++      expect(toggle(unstyledRange, label).getAttribute("aria-pressed")).toBe(
++        "false",
++      );
++    });
++
++    test(`${label} button is unpressed for a mixed range`, () => {
++      const mixedRange = render(
++        h(TextFormatGroup, {
++          editor: makeEditor({ [key]: true }, { [key]: "mixed" } as Summary),
++        }),
++      );
++      expect(toggle(mixedRange, label).getAttribute("aria-pressed")).toBe(
++        "false",
++      );
++    });
++
++    test(`${label} button is pressed for a uniformly styled range`, () => {
++      const styledRange = render(
++        h(TextFormatGroup, {
++          editor: makeEditor({ [key]: false }, { [key]: true } as Summary),
++        }),
++      );
++      expect(toggle(styledRange, label).getAttribute("aria-pressed")).toBe(
++        "true",
++      );
++    });
++  }
++});
+diff --git a/packages/frontend/tests/components/text-formatting/toolbar-focus.test.ts b/packages/frontend/tests/components/text-formatting/toolbar-focus.test.ts
+index 8ebf87c8..7733683f 100644
+--- a/packages/frontend/tests/components/text-formatting/toolbar-focus.test.ts
++++ b/packages/frontend/tests/components/text-formatting/toolbar-focus.test.ts
+@@ -40,6 +40,7 @@ function makeEditor(): TextFormattingEditor {
+   return {
+     focus: vi.fn(),
+     getSelectionStyle: vi.fn(() => ({})),
++    getRangeStyleSummary: vi.fn(() => ({})),
+     applyStyle: vi.fn(),
+     applyBlockStyle: vi.fn(),
+     getBlockType: vi.fn(() => ({ type: "paragraph" as const })),

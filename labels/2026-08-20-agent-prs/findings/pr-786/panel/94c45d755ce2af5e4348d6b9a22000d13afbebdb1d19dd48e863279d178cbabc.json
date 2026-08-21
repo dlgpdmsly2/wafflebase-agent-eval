@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/docs.ts::many stderr error-envelope emitters bypass `outputerror`, so they still print pretty-printed multi-line json with no `command` — breaking the one-line/attributed contract this change documents and tests",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied sources: docs.ts (~line 195 and ~255) emits `console.error(JSON.stringify(body, null, 2))` with no `command`; docs/import.ts and schema.ts likewise emit pretty-printed envelopes bypassing outputError. The README updated in this PR documents \"a single JSON line on stderr\" with `command` unconditionally, so the described divergence is genuinely present. Severity is tempered because the PR's own task doc explicitly scopes these hand-rolled emitters out to issues #654/#655 — it is a known, pre-existing, tracked gap rather than a regression — but the documented contract vs. actual behavior mismatch the claim describes exists in the code as written.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

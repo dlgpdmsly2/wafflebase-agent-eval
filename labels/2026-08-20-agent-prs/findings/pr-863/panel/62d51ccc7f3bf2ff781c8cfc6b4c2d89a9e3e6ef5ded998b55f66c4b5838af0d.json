@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::new cli hard-requires an echoed `state`, so it cannot log in against any backend that does not yet echo it (version skew)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/cli/src/commands/login.ts: stateMatches() returns false for a null `state` param, so the listener answers `400 State mismatch` without settling, and login fails at the 30s timeout with a \"Login timed out\" message. The `&state=` echo exists only via this PR's change in packages/backend/src/auth/auth.controller.ts (~lines 127–137), so a pre-PR backend redirects without `state` and the new CLI can never complete login against it; nothing pins or detects server version. Failing closed is defensible security-wise, but the version-skew breakage and misleading error the claim describes are genuinely present in the code as written.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

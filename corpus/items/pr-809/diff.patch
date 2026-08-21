@@ -1,0 +1,532 @@
+diff --git a/docs/tasks/active/20260812-date-display-format-lessons.md b/docs/tasks/active/20260812-date-display-format-lessons.md
+new file mode 100644
+index 00000000..29592924
+--- /dev/null
++++ b/docs/tasks/active/20260812-date-display-format-lessons.md
+@@ -0,0 +1,21 @@
++# Lessons — date display format setting (#584)
++
++## Notes
++
++- The frontend has **no i18n framework** (no `i18next`, no language
++  setting). "Localize by the user's locale" therefore means passing
++  `undefined` as the locale to `Intl.DateTimeFormat`, which resolves to the
++  runtime/browser locale. If a language setting lands later, that single
++  `undefined` is the one place to thread it through.
++- `formatDistanceToNow` (date-fns) throws a `RangeError` on an invalid
++  `Date`, which is why `formatRelativeTime` already guards. `Intl` does
++  too (`RangeError: Invalid time value`), so the new formatters need the
++  same guard — one bad row must not blank the list.
++- The preference is read by both the Settings page and the documents list,
++  which live in separate route trees. A `useSyncExternalStore` over
++  `localStorage` + a custom event keeps them in sync without adding
++  another context provider to `App.tsx`.
++
++## Follow-ups
++
++- (none yet)
+diff --git a/docs/tasks/active/20260812-date-display-format-todo.md b/docs/tasks/active/20260812-date-display-format-todo.md
+new file mode 100644
+index 00000000..7eaba839
+--- /dev/null
++++ b/docs/tasks/active/20260812-date-display-format-todo.md
+@@ -0,0 +1,63 @@
++# Date display format setting + date column tooltips (#584)
++
++## Goal
++
++The documents list renders its **Modified** / **Created** columns as a
++relative time only ("about 1 month ago"). That reads well at a glance but
++hides the actual timestamp, and there is no way to ask for the real date.
++
++Add a user preference with two display formats and always expose the full
++timestamp on hover:
++
++- **Relative** — today's behavior (`about 1 month ago`).
++- **Exact date** — locale-formatted (`Jul 25, 2026` / `2026년 7월 25일`),
++  with the year omitted when the date is in the current calendar year.
++- **Tooltip** — regardless of format, the full localized date + time
++  (`Jul 25, 2026, 3:30 PM`).
++
++## Acceptance criteria (from the issue)
++
++- [x] Settings tab gets a "Date Display Format" option: `Relative` /
++      `Exact date`.
++- [x] Exact date omits the year for dates inside the current calendar year.
++- [x] Exact date is localized from the user's locale (`Intl.DateTimeFormat`
++      with the runtime default locale — the app has no i18n language
++      setting, so the browser locale *is* the user's locale).
++- [x] Both columns carry a `title` tooltip with the full localized
++      date + time in every format.
++- [x] Fallback UI (`—`) for `null` / `undefined` / unparseable values,
++      tooltip included.
++- [x] Sorting still compares the raw absolute dates, independent of the
++      display format.
++
++## Plan
++
++1. `packages/frontend/src/app/documents/document-list-utils.ts`
++   - `formatExactDate(value, now?)` — `Intl.DateTimeFormat` (default
++     locale), `{ month: "short", day: "numeric" }` plus `year` only when
++     the date is not in the current calendar year. `—` on bad input.
++   - `formatFullDateTime(value)` — full localized date + time for the
++     tooltip. `—` on bad input.
++   - `formatListDate(value, format)` — dispatch on the preference.
++2. `packages/frontend/src/lib/date-format-preference.ts`
++   - `DateDisplayFormat = "relative" | "exact"`, localStorage-backed
++     (`wafflebase-date-format`), `useDateFormat()` via
++     `useSyncExternalStore` so the list re-renders when Settings changes
++     it. No new context provider / `App.tsx` plumbing needed.
++3. `packages/frontend/src/app/documents/document-list.tsx`
++   - `dateColumn`'s cell renders through a small `DateCell` that reads the
++     preference and wraps the text in `title=`. `sortingFn` untouched
++     (already `compareDates` over the accessor's raw ISO string).
++4. `packages/frontend/src/app/settings/page.tsx`
++   - New "Dates" section with a `Select` for the two formats.
++5. Tests — extend
++   `packages/frontend/tests/app/documents/document-list-utils.test.ts`
++   (year omission, invalid input, tooltip string) and add
++   `packages/frontend/tests/lib/date-format-preference.test.ts`.
++
++## Out of scope
++
++- Any other date rendering (comments, notifications, file view) keeps
++  using `formatRelativeTime` — the issue is about the list's date column.
++- Server-side persistence of the preference (localStorage only, like the
++  theme).
+diff --git a/packages/frontend/src/app/documents/document-list-utils.ts b/packages/frontend/src/app/documents/document-list-utils.ts
+index c30d18ca..eec6355c 100644
+--- a/packages/frontend/src/app/documents/document-list-utils.ts
++++ b/packages/frontend/src/app/documents/document-list-utils.ts
+@@ -1,5 +1,6 @@
+ import { formatDistanceToNow } from "date-fns";
+ 
++import type { DateDisplayFormat } from "@/lib/date-format-preference";
+ import type { Document, DocumentType } from "@/types/documents";
+ 
+ /**
+@@ -71,12 +72,80 @@ function toEpoch(value: string | undefined): number {
+  * Date, which would blank the whole list — returning an em dash instead.
+  */
+ export function formatRelativeTime(value: string | undefined): string {
+-  if (!value) return "—";
+-  const date = new Date(value);
+-  if (Number.isNaN(date.getTime())) return "—";
++  const date = parseDate(value);
++  if (!date) return NO_DATE;
+   return formatDistanceToNow(date, { includeSeconds: true, addSuffix: true });
+ }
+ 
++/** The placeholder shown for a missing or unparseable date. */
++export const NO_DATE = "—";
++
++/**
++ * Parse an ISO date string, returning null for missing or unparseable input.
++ * Both `formatDistanceToNow` and `Intl.DateTimeFormat` throw a RangeError on
++ * an invalid Date, and one malformed row must not blank the whole list.
++ */
++function parseDate(value: string | undefined): Date | null {
++  if (!value) return null;
++  const date = new Date(value);
++  return Number.isNaN(date.getTime()) ? null : date;
++}
++
++/**
++ * Render an absolute calendar date in the user's locale, e.g. "Jul 25, 2026"
++ * — or "Jul 25" when the date falls in the current calendar year, since the
++ * year is then just noise in a list of mostly-recent documents.
++ *
++ * The locale is left to the runtime (`undefined`), which resolves to the
++ * browser's locale. The app has no language setting of its own, so that *is*
++ * the user's locale; if one is ever added, this is the single place to thread
++ * it through.
++ *
++ * `now` is injectable so the year-omission rule is testable without
++ * depending on the wall clock.
++ */
++export function formatExactDate(
++  value: string | undefined,
++  now: Date = new Date(),
++): string {
++  const date = parseDate(value);
++  if (!date) return NO_DATE;
++  return new Intl.DateTimeFormat(undefined, {
++    month: "short",
++    day: "numeric",
++    ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
++  }).format(date);
++}
++
++/**
++ * Render the full localized date *and* time, e.g. "Jul 25, 2026, 3:30 PM".
++ * Used as the tooltip on every date cell so the exact timestamp is reachable
++ * whichever display format is active.
++ */
++export function formatFullDateTime(value: string | undefined): string {
++  const date = parseDate(value);
++  if (!date) return NO_DATE;
++  return new Intl.DateTimeFormat(undefined, {
++    dateStyle: "medium",
++    timeStyle: "short",
++  }).format(date);
++}
++
++/**
++ * Render a date cell's visible text for the user's chosen display format.
++ * Purely presentational — sorting always compares the raw values through
++ * `compareDates`, so the order never depends on the format.
++ */
++export function formatListDate(
++  value: string | undefined,
++  format: DateDisplayFormat,
++  now?: Date,
++): string {
++  return format === "exact"
++    ? formatExactDate(value, now)
++    : formatRelativeTime(value);
++}
++
+ /** Maps a document to its editor/viewer route by type. */
+ export function getDocumentPath(doc: {
+   id: number | string;
+diff --git a/packages/frontend/src/app/documents/document-list.tsx b/packages/frontend/src/app/documents/document-list.tsx
+index a02da1a3..26115aa9 100644
+--- a/packages/frontend/src/app/documents/document-list.tsx
++++ b/packages/frontend/src/app/documents/document-list.tsx
+@@ -93,6 +93,7 @@ import {
+   TooltipTrigger,
+ } from "@/components/ui/tooltip";
+ 
++import { useDateFormat } from "@/lib/date-format-preference";
+ import type { Document, DocumentType, Folder } from "@/types/documents";
+ import {
+   allManageable,
+@@ -105,7 +106,8 @@ import { FolderBreadcrumb } from "./folder-breadcrumb";
+ import { folderPath } from "./folder-path";
+ import {
+   compareDates,
+-  formatRelativeTime,
++  formatFullDateTime,
++  formatListDate,
+   getDocumentPath,
+   isBlobBacked,
+   lastModified,
+@@ -230,8 +232,24 @@ function SortableHeader<TData>({
+ }
+ 
+ /**
+- * A right-aligned, time-based sortable column rendering a relative timestamp
+- * (e.g. "3 days ago"). Used by the Modified column.
++ * A date cell's visible text: relative ("3 days ago") or an exact locale date
++ * ("Jul 25"), per the user's Settings preference. The full localized date and
++ * time is always the tooltip, so the exact timestamp stays reachable in either
++ * format — and a missing or unparseable value renders an em dash in both.
++ */
++function DateCell({ value }: { value: string | undefined }) {
++  const format = useDateFormat();
++  return (
++    <div className="text-right font-medium" title={formatFullDateTime(value)}>
++      {formatListDate(value, format)}
++    </div>
++  );
++}
++
++/**
++ * A right-aligned, time-based sortable column. Used by the Modified and
++ * Created columns. Sorting compares the raw accessor values, so the order is
++ * independent of how the cell chooses to display them.
+  */
+ function dateColumn(
+   id: string,
+@@ -248,11 +266,7 @@ function dateColumn(
+     ),
+     sortingFn: (a, b, colId) =>
+       compareDates(a.getValue<string>(colId), b.getValue<string>(colId)),
+-    cell: ({ row }) => (
+-      <div className="text-right font-medium">
+-        {formatRelativeTime(row.getValue<string>(id))}
+-      </div>
+-    ),
++    cell: ({ row }) => <DateCell value={row.getValue<string>(id)} />,
+   };
+ }
+ 
+diff --git a/packages/frontend/src/app/settings/page.tsx b/packages/frontend/src/app/settings/page.tsx
+index 96ae8395..b6bbaf83 100644
+--- a/packages/frontend/src/app/settings/page.tsx
++++ b/packages/frontend/src/app/settings/page.tsx
+@@ -1,17 +1,38 @@
+ import { useContext } from "react";
+ import { ThemeProviderContext } from "@/components/theme-provider";
+ import { Switch } from "@/components/ui/switch";
++import {
++  Select,
++  SelectContent,
++  SelectItem,
++  SelectTrigger,
++  SelectValue,
++} from "@/components/ui/select";
++import {
++  formatExactDate,
++  formatRelativeTime,
++} from "@/app/documents/document-list-utils";
++import {
++  setDateFormat,
++  useDateFormat,
++  type DateDisplayFormat,
++} from "@/lib/date-format-preference";
+ 
+ /**
+  * Renders the application settings page.
+  */
+ export default function Settings() {
+   const { theme, setTheme } = useContext(ThemeProviderContext);
++  const dateFormat = useDateFormat();
+ 
+   const handleThemeToggle = () => {
+     setTheme(theme === "dark" ? "light" : "dark");
+   };
+ 
++  // Shown as the option's example so the choice is concrete: a week-old date
++  // reads relatively as "7 days ago" and exactly as a same-year "Jul 25".
++  const sample = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
++
+   return (
+     <div className="p-4 lg:p-6 max-w-2xl space-y-8">
+       <section className="space-y-2">
+@@ -32,6 +53,37 @@ export default function Settings() {
+           />
+         </div>
+       </section>
++
++      <section className="space-y-2">
++        <h2 className="text-lg font-semibold">Dates</h2>
++        <div className="flex items-center justify-between gap-4 rounded-md border p-4">
++          <div>
++            <label htmlFor="date-format" className="text-sm font-medium">
++              Date display format
++            </label>
++            <p className="text-xs text-muted-foreground">
++              How the Modified and Created columns are shown in document lists.
++              Hovering a date always reveals the full date and time.
++            </p>
++          </div>
++          <Select
++            value={dateFormat}
++            onValueChange={(value) => setDateFormat(value as DateDisplayFormat)}
++          >
++            <SelectTrigger id="date-format" className="w-[220px] shrink-0">
++              <SelectValue />
++            </SelectTrigger>
++            <SelectContent>
++              <SelectItem value="relative">
++                Relative ({formatRelativeTime(sample)})
++              </SelectItem>
++              <SelectItem value="exact">
++                Exact date ({formatExactDate(sample)})
++              </SelectItem>
++            </SelectContent>
++          </Select>
++        </div>
++      </section>
+     </div>
+   );
+ }
+diff --git a/packages/frontend/src/lib/date-format-preference.ts b/packages/frontend/src/lib/date-format-preference.ts
+new file mode 100644
+index 00000000..d043315e
+--- /dev/null
++++ b/packages/frontend/src/lib/date-format-preference.ts
+@@ -0,0 +1,59 @@
++import { useSyncExternalStore } from "react";
++
++/**
++ * How the documents list renders its Modified / Created columns.
++ *
++ * - `relative` — "about 1 month ago" (the historical behavior, and the
++ *   default).
++ * - `exact` — a locale-formatted calendar date, e.g. "Jul 25".
++ *
++ * Either way the cell also carries the full localized date + time as its
++ * tooltip, so the exact timestamp is always one hover away.
++ */
++export type DateDisplayFormat = "relative" | "exact";
++
++export const DEFAULT_DATE_FORMAT: DateDisplayFormat = "relative";
++
++const STORAGE_KEY = "wafflebase-date-format";
++
++/**
++ * Same-tab change notification. `storage` only fires in *other* tabs, so the
++ * Settings page and the documents list — separate route trees in the same
++ * tab — need their own event to stay in sync.
++ */
++const CHANGE_EVENT = "wafflebase-date-format-change";
++
++function isFormat(value: unknown): value is DateDisplayFormat {
++  return value === "relative" || value === "exact";
++}
++
++/** The stored preference, falling back to the default on absent/junk values. */
++export function getDateFormat(): DateDisplayFormat {
++  const stored = localStorage.getItem(STORAGE_KEY);
++  return isFormat(stored) ? stored : DEFAULT_DATE_FORMAT;
++}
++
++/** Persist the preference and notify every subscriber in this tab. */
++export function setDateFormat(format: DateDisplayFormat): void {
++  localStorage.setItem(STORAGE_KEY, format);
++  window.dispatchEvent(new Event(CHANGE_EVENT));
++}
++
++function subscribe(onChange: () => void): () => void {
++  window.addEventListener(CHANGE_EVENT, onChange);
++  window.addEventListener("storage", onChange);
++  return () => {
++    window.removeEventListener(CHANGE_EVENT, onChange);
++    window.removeEventListener("storage", onChange);
++  };
++}
++
++/**
++ * Reads the date display preference, re-rendering when it changes — including
++ * when it changes from another component (Settings) or another tab.
++ */
++export function useDateFormat(): DateDisplayFormat {
++  return useSyncExternalStore(subscribe, getDateFormat, () => {
++    return DEFAULT_DATE_FORMAT;
++  });
++}
+diff --git a/packages/frontend/tests/app/documents/document-list-utils.test.ts b/packages/frontend/tests/app/documents/document-list-utils.test.ts
+index cf4d8db5..80d1c1c8 100644
+--- a/packages/frontend/tests/app/documents/document-list-utils.test.ts
++++ b/packages/frontend/tests/app/documents/document-list-utils.test.ts
+@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
+ import type { Document, DocumentType } from "@/types/documents";
+ import {
+   compareDates,
++  formatExactDate,
++  formatFullDateTime,
++  formatListDate,
+   formatRelativeTime,
+   getDocumentPath,
+   lastModified,
+@@ -119,6 +122,71 @@ describe("formatRelativeTime", () => {
+   });
+ });
+ 
++describe("formatExactDate", () => {
++  const now = new Date("2026-08-12T00:00:00.000Z");
++
++  it("omits the year for a date in the current calendar year", () => {
++    const formatted = formatExactDate("2026-07-25T12:00:00.000Z", now);
++    expect(formatted).not.toMatch(/2026/);
++    expect(formatted).toMatch(/25/);
++  });
++
++  it("includes the year for a date outside the current calendar year", () => {
++    expect(formatExactDate("2025-12-01T12:00:00.000Z", now)).toMatch(/2025/);
++  });
++
++  it("keeps the year for a December date compared against January", () => {
++    // Calendar year, not "within the last 12 months": one day earlier but a
++    // different year still shows the year. Built in local time so the
++    // assertion holds in any timezone.
++    const lastDayOf2025 = new Date(2025, 11, 31, 12, 0).toISOString();
++    const firstDayOf2026 = new Date(2026, 0, 1, 12, 0);
++    expect(formatExactDate(lastDayOf2025, firstDayOf2026)).toMatch(/2025/);
++  });
++
++  it("returns an em dash for missing or unparseable values", () => {
++    expect(formatExactDate(undefined)).toBe("—");
++    expect(formatExactDate("")).toBe("—");
++    expect(() => formatExactDate("not-a-date")).not.toThrow();
++    expect(formatExactDate("not-a-date")).toBe("—");
++  });
++});
++
++describe("formatFullDateTime", () => {
++  it("includes the year and a time for the tooltip", () => {
++    const formatted = formatFullDateTime("2026-07-25T15:30:00.000Z");
++    expect(formatted).toMatch(/2026/);
++    expect(formatted).toMatch(/\d{1,2}:\d{2}/);
++  });
++
++  it("returns an em dash for missing or unparseable values", () => {
++    expect(formatFullDateTime(undefined)).toBe("—");
++    expect(() => formatFullDateTime("not-a-date")).not.toThrow();
++    expect(formatFullDateTime("not-a-date")).toBe("—");
++  });
++});
++
++describe("formatListDate", () => {
++  const now = new Date("2026-08-12T00:00:00.000Z");
++
++  it("renders a relative time for the relative format", () => {
++    expect(formatListDate("2024-01-01T00:00:00.000Z", "relative")).toMatch(
++      /ago$/,
++    );
++  });
++
++  it("renders an exact date for the exact format", () => {
++    expect(formatListDate("2025-12-01T12:00:00.000Z", "exact", now)).toMatch(
++      /2025/,
++    );
++  });
++
++  it("falls back to an em dash in both formats", () => {
++    expect(formatListDate(undefined, "relative")).toBe("—");
++    expect(formatListDate(undefined, "exact")).toBe("—");
++  });
++});
++
+ describe("getDocumentPath", () => {
+   it("routes each type to its editor path", () => {
+     expect(getDocumentPath({ id: "d1", type: "sheet" })).toBe("/s/d1");
+diff --git a/packages/frontend/tests/lib/date-format-preference.test.ts b/packages/frontend/tests/lib/date-format-preference.test.ts
+new file mode 100644
+index 00000000..f4b19666
+--- /dev/null
++++ b/packages/frontend/tests/lib/date-format-preference.test.ts
+@@ -0,0 +1,41 @@
++import { beforeEach, describe, expect, it } from "vitest";
++
++import {
++  DEFAULT_DATE_FORMAT,
++  getDateFormat,
++  setDateFormat,
++} from "@/lib/date-format-preference";
++
++describe("date format preference", () => {
++  beforeEach(() => {
++    localStorage.clear();
++  });
++
++  it("defaults to relative when nothing is stored", () => {
++    expect(getDateFormat()).toBe("relative");
++    expect(DEFAULT_DATE_FORMAT).toBe("relative");
++  });
++
++  it("round-trips a stored preference", () => {
++    setDateFormat("exact");
++    expect(getDateFormat()).toBe("exact");
++    setDateFormat("relative");
++    expect(getDateFormat()).toBe("relative");
++  });
++
++  it("falls back to the default on a junk stored value", () => {
++    localStorage.setItem("wafflebase-date-format", "iso-8601-please");
++    expect(getDateFormat()).toBe("relative");
++  });
++
++  it("notifies subscribers in the same tab", () => {
++    let notified = 0;
++    const handler = () => {
++      notified += 1;
++    };
++    window.addEventListener("wafflebase-date-format-change", handler);
++    setDateFormat("exact");
++    window.removeEventListener("wafflebase-date-format-change", handler);
++    expect(notified).toBe(1);
++  });
++});

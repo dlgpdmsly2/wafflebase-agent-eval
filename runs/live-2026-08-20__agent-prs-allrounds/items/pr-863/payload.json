@@ -1,0 +1,516 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/slides.ts",
+      "searchedFor": [],
+      "summary": "Design doc now asserts a blanket \"a dry run never reaches the network\" contract, but six sibling read commands outside the diff still fetch under --dry-run",
+      "evidence": "The change is accompanied by docs/design/cli.md:824-827 (\"Reads honour the flag too … A dry run never reaches the network, so it burns no rate limit and emits no access log even when the command is harmless\"), and the new test header repeats it. That universal claim is false for the read commands the diff did not touch, all of which call the client with no `opts.dryRun` guard: packages/cli/src/commands/slides.ts:40 (`slides list`), slides.ts:81 (`slides get`), packages/cli/src/commands/notes.ts:35 (`notes list`), notes.ts:76 (`notes get`), packages/cli/src/commands/files.ts:85 (`files list`), files.ts:105 (`files get`), and packages/cli/src/commands/sheets-export.ts:39 (`sheets export`, which issues GET /cells before writing the file). An agent that reads the new doc sentence and pre-flights `slides list --dry-run` or `sheets export … --dry-run` still hits the API — and `sheets export` additionally writes the output file. Fix belongs either on those call sites or on the new doc wording (narrow it to the four commands actually changed).",
+      "lens": "blast-radius",
+      "round_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "searchedFor": [
+        "grep dryRun across packages/cli/src",
+        "read notes.ts, files.ts, slides.ts, api-keys.ts, sheets-export.ts action bodies",
+        "grep docs/design/cli.md for dry-run"
+      ],
+      "summary": "New design-doc bullet overstates the behaviour: \"A dry run never reaches the network\" is now a universal claim, but many read commands still fetch under --dry-run",
+      "evidence": "The added bullet reads: \"Reads honour the flag too: `docs list`, `docs get`, `sheets tabs list`, and `sheets cells get` print their GET without fetching. A dry run never reaches the network, so it burns no rate limit and emits no access log even when the command is harmless.\" The second sentence is a blanket guarantee, yet in the same tree `notes list` (packages/cli/src/commands/notes.ts:35), `notes get` (:76), `slides list`/`slides get` (packages/cli/src/commands/slides.ts:35,76), `files list`/`files get` (packages/cli/src/commands/files.ts:85,105), `sheets export` (packages/cli/src/commands/sheets-export.ts:39) and `api-keys list` (packages/cli/src/commands/api-keys.ts:31) all issue the request regardless of `opts.dryRun`. A design doc that promises an invariant the implementation only partially satisfies is worse than an enumerated list; either scope the sentence to the four commands or cover the rest.",
+      "lens": "design-fit",
+      "round_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'dryRun' across packages/cli/src (api-keys.ts, ctx.ts, sheets-export.ts, status.ts, login.ts, logout.ts return no hits)",
+        "Read packages/cli/src/commands/api-keys.ts in full",
+        "Read packages/cli/src/commands/root.ts (global --dry-run declaration)",
+        "Grep 'api-keys' in packages/cli/src/schema/registry.ts for declared safety levels",
+        "Grep 'dry-run' in packages/cli/skills/SKILL.md and packages/cli/README.md",
+        "Grep 'dry-run|dry_run|dryRun' in docs/design/cli.md",
+        "Glob packages/cli/test/**/*.ts — no api-keys dry-run test exists"
+      ],
+      "summary": "`--dry-run` is silently ignored by `api-keys create` / `revoke` / `list`, so the documented \"preview a write first\" safety control mints or destroys a real credential",
+      "evidence": "This PR sweeps `--dry-run` across the remaining read commands and, at docs/design/cli.md:824-827, now states the contract unconditionally: \"A dry run never reaches the network, so it burns no rate limit and emits no access log.\" The credential-management commands are the one namespace that was never swept. `registerApiKeysCommand` never reads `opts.dryRun`: api-keys.ts:15-17 goes straight to `getClient(opts).createApiKey(name)`, :43-45 to `revokeApiKey(keyId)`, :29-31 to `listApiKeys()`. Commander accepts the global `--dry-run` on every subcommand (root.ts:75), so the flag parses and is discarded.\n\nAttack/failure chain: the CLI is explicitly aimed at agents, and the agent guidance says to preview writes with the flag — packages/cli/skills/SKILL.md:67 (\"For write operations, run with `--dry-run` first to show intent\"), docs/design/cli.md:905 (\"`write` … Agent should confirm or use `--dry-run` first\") and :1027. `wafflebase api-keys create ci-key --dry-run` therefore issues a live POST that mints a workspace-scoped API key and prints its secret (`schema/registry.ts:579` declares the response as `{ id, name, prefix, key }`) to stdout — into whatever agent transcript/CI log the user believed was showing an inert preview, with no revocation ever performed. `wafflebase api-keys revoke <id> --dry-run` (registry.ts:593 marks it `destructive`) irreversibly revokes the key the user was only asking to preview, breaking every consumer of that key. Both are credential-lifecycle side effects taken under a flag whose whole contract is \"no side effect\".\n\nEvery other write/destructive path in the CLI honours the flag (cells.ts:62/95/143, tabs.ts:47/71, docs.ts:108/143/161, files.ts:118/136, docs|notes|slides import), which is what makes the gap read as covered.",
+      "lens": "security",
+      "round_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/http-client.ts",
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "Document/tab/cell identifiers are interpolated into request paths unencoded, so a crafted identifier redirects the authenticated request to an arbitrary path on the configured server (mirrored verbatim by the new dry-run preview)"
+        }
+      ],
+      "summary": "Document/tab/cell identifiers are interpolated into request paths without encodeURIComponent, so a caller-supplied id can retarget the credentialed request outside the workspace scope (path traversal / request-target injection)",
+      "evidence": "`getDocument(id)` builds `GET ${base}/documents/${id}` with no encoding (http-client.ts:199); same pattern at :330 listTabs, :340/:342 getCells (docId/tabId raw, only `range` encoded), :345 getCell, :348 setCell, :354 deleteCell, :361 batchCells. `base` is `${server}/api/v1/workspaces/${workspace}` (:82-85). `fetch` parses the string with the WHATWG URL parser, which collapses dot segments, so `docId = \"../../../../workspaces/victim-ws/api-keys\"` turns `wafflebase docs get <id>` into `GET ${server}/workspaces/victim-ws/api-keys` with the user's `Authorization: Bearer ...` header attached — i.e. the client-side workspace scoping in the path is bypassable and any endpoint on the configured host can be reached with the caller's credentials (only server-side authz stands between). The boundary is real because the CLI is explicitly built to be driven by agents (docs/design/cli.md:22-26, 1024-1029), which routinely pass document ids taken from untrusted content; the CLI then acts as a confused deputy. `downloadFileDocument` already uses `encodeURIComponent(docId)` (:254), showing the intended convention the other builders skip. The change under review propagates the same unencoded interpolation into new code (cells.ts:24, docs.ts:126, tabs.ts:15). Confidence is medium because exploitability depends on the backend's own authorization on the reached endpoint and on ids coming from an untrusted source.",
+      "lens": "security",
+      "round_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727"
+    },
+    {
+      "severity": "critical",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'dryRun' in packages/cli/src (no hits in commands/api-keys.ts)",
+        "Read packages/cli/src/commands/api-keys.ts in full",
+        "Grep 'dry_run|dryRun|dry-run' in packages/cli/src/commands/schema.ts (no per-command annotation)"
+      ],
+      "summary": "`api-keys revoke`/`create` still ignore `--dry-run` and execute the mutation",
+      "evidence": "This change adds `opts.dryRun` short-circuits to read commands, but `registerApiKeysCommand` has no `dryRun` check at all: `api-keys create <name>` (api-keys.ts:17 → `createApiKey`) and `api-keys revoke <key-id>` (api-keys.ts:45 → `revokeApiKey`, a DELETE) run the real request under `--dry-run`. A user (or agent) previewing `wafflebase api-keys revoke k-1 --dry-run` irreversibly revokes the key, even though the global flag is documented as 'Show request without executing' (root.ts:75) and docs/design/cli.md advertises dry-run as a first-class agent affordance. A grep for `dryRun` across packages/cli/src returns zero hits in api-keys.ts.",
+      "lens": "correctness",
+      "round_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/notes.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'dryRun' across packages/cli/src to enumerate commands with/without the guard",
+        "Read packages/cli/src/commands/notes.ts, slides.ts (lines 20-150), files.ts in full"
+      ],
+      "summary": "The same `--dry-run`-still-fetches bug is left unfixed in notes/slides/files read commands",
+      "evidence": "The change fixes `docs list`, `docs get`, `tabs list` and `cells get`, but identical read commands elsewhere still hit the network under `--dry-run`: `notes get` (notes.ts:76 `getDocument`), `notes list` (notes.ts:35 `listDocuments`), `slides get` (slides.ts:81), `slides list` (slides.ts:40), `files list` (files.ts:85) and `files get` (files.ts:105). Each of these has no `opts.dryRun` branch, so `--dry-run` performs the very request it promises not to send — the same behavior this PR describes as a bug (burnt rate limit, access-log entry). The fix is partial and leaves the flag's semantics inconsistent across sibling namespaces.",
+      "lens": "correctness",
+      "round_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "summary": "New doc bullet asserts a global invariant (\"Identifiers are URL-encoded into the previewed path exactly as the client encodes them\") that the import/upload previews do not satisfy",
+      "evidence": "cli.md:836-841 states the encoding invariant unconditionally, and 824-830 claims \"A dry run never reaches the network\" across the CLI. But the import previews were left untouched by this change: packages/cli/src/docs/import.ts:155 prints `path: `/documents/${replace}/content`` with a RAW, unencoded id (same in slides/import.ts:177+, notes/import.ts:142+, files/upload.ts:171). Those previews also emit a different envelope — `{ method, path, body }` with no `dry_run: true` and no absolute `url` — so they neither go through `printDryRun` nor honour the documented shape shown at cli.md:813-820. The change hardened and documented one half of the dry-run surface while the doc speaks for all of it.",
+      "lens": "design-fit",
+      "round_commit": "8e41c768fff81d30898a0730d0d1ef359a2687b0"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/http-client.ts",
+      "searchedFor": [],
+      "summary": "The new `seg()` guard is applied to every identifier EXCEPT `config.workspace`, which is still interpolated raw into every request URL — the same traversal vector the change exists to close.",
+      "evidence": "`seg()` is documented as covering \"every interpolated identifier\" (http-client.ts:21-32), but `HttpClient.base` (line 98) builds `${server}/api/v1/workspaces/${this.config.workspace}` unencoded, and the API-key routes repeat it at lines 397, 404 and 415 (`${server}/workspaces/${this.config.workspace}/api-keys`). `dry-run.ts:30` and the new `api-keys.ts:16` mirror the same raw interpolation. `workspace` is untrusted-ish input on exactly the same footing as the ids that were fixed: it comes from `--workspace` argv, `WAFFLEBASE_WORKSPACE` env, the YAML profile, or `session.activeWorkspace` (resolveConfig, config.ts:96-99/121-126/142-147). Attack: a caller/agent/CI environment that controls `WAFFLEBASE_WORKSPACE=ws-1/../../../admin` (or a poisoned `~/.wafflebase/config.yaml` profile, which is read with no validation at config.ts:169-180) makes `fetch` normalise the dot segments and send the request — with the `Authorization: Bearer <api key|JWT>` header attached by `authHeaders` (line 73-83) — to an arbitrary path on the configured server, outside the workspace prefix. That is precisely the impact the diff's own comment cites as the reason to encode ids. Note the ids can no longer be used this way (they are `%2F`-escaped), so `workspace` is now the only remaining lever.",
+      "lens": "security",
+      "round_commit": "8e41c768fff81d30898a0730d0d1ef359a2687b0"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/http-client.ts",
+      "searchedFor": [],
+      "summary": "New `seg()` guard is bypassed by the workspace identifier, which is still interpolated raw into every URL",
+      "evidence": "The change adds `seg()` for \"every interpolated identifier\" (http-client.ts:21-32), but `HttpClient.base` (line 98) builds `${server}/api/v1/workspaces/${this.config.workspace}` with no encoding, and `listApiKeys` (397), `createApiKey` (404) and `revokeApiKey` (415) do the same for the management routes. `config.workspace` reaches the client straight from argv (`--workspace`, root.ts:66) or env/config file, so a value like `../../admin` or `ws-1?x=` retargets the same credentialed request the diff set out to protect — the exact failure mode described in the new doc comment, one segment earlier. `printDryRun` (dry-run.ts:30) interpolates it raw too, so the preview mirrors the mis-targeted URL rather than flagging it. The unit test only covers doc/tab/cell/key ids, not the workspace.",
+      "lens": "correctness",
+      "round_commit": "8e41c768fff81d30898a0730d0d1ef359a2687b0"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/test/http-client-paths.test.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'workspace' in packages/cli/test",
+        "read packages/cli/test/http-client-paths.test.ts",
+        "read packages/cli/test/read-dry-run.test.ts",
+        "grep 'dryRun|dry_run' in packages/cli/test"
+      ],
+      "summary": "The workspace-segment encoding — the change's own headline attacker-reachable input — has no test",
+      "evidence": "Both new suites hardcode a benign workspace: `workspace: 'ws-1'` (http-client-paths.test.ts:17) and `const WORKSPACE = 'ws-1'` (read-dry-run.test.ts:46). The diff adds `seg(this.config.workspace)` in three separate places (`HttpClient.base`, the three api-key URL builders, `printDryRun`, and `apiKeysUrl` in commands/api-keys.ts) and its own doc comment argues `config.workspace` \"is as attacker-reachable as the rest (`--workspace`, `WAFFLEBASE_WORKSPACE`, or a profile in the YAML config)\". Yet `ws-1` encodes to itself, so every one of those `seg()` calls could be deleted and the whole suite would still be green. I grepped `packages/cli/test` for `workspace` (all matches are `ws-1`/`ws-flag`/`wid` style literals) and read both new test files; no case passes a `../` or `?` workspace.",
+      "lens": "test-adequacy",
+      "round_commit": "f9d8f354f1caaedd7032bbe8da6fc3d3c359c8f9"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "summary": "URL construction for the api-keys management routes is duplicated in the command layer instead of reused from HttpClient. `apiKeysUrl()` re-derives `${server}/workspaces/${seg(workspace)}/api-keys[/:id]`, which HttpClient already builds in three places (listApiKeys/createApiKey/revokeApiKey). The whole point of the change is that \"the preview is the request\", yet the preview now depends on a hand-copied mirror that can silently drift (e.g. if the route ever moves under /api/v1). A single exported URL builder on HttpClient (or a dry-run mode on the client) would make the guarantee structural rather than by comment.",
+      "evidence": "function apiKeysUrl(opts, keyId?) { const base = `${server}/workspaces/${seg(config.workspace)}/api-keys`; ... } — duplicating http-client.ts lines ~404-417",
+      "lens": "design-fit",
+      "round_commit": "f9d8f354f1caaedd7032bbe8da6fc3d3c359c8f9"
+    },
+    {
+      "severity": "critical",
+      "file": "packages/cli/src/client/http-client.ts",
+      "summary": "New `seg()` guard is incomplete: `encodeURIComponent` does not escape `.`, so a bare `..` identifier still triggers dot-segment resolution — `api-keys revoke ..` issues `DELETE /workspaces/<ws>/`, which matches the workspace-delete route",
+      "evidence": "`seg()` (http-client.ts:32) is `encodeURIComponent`, which escapes `/` (`%2F`) but leaves `.` untouched: `encodeURIComponent('..') === '..'`. The comment at http-client.ts:23-30 claims every interpolated identifier is now safe from dot-segment resolution, but a segment that IS exactly `..` still resolves.\n\nChain: `wafflebase api-keys revoke ..` → api-keys.ts:76 → `revokeApiKey('..')` → http-client.ts:417 builds `${server}/workspaces/${ws}/api-keys/..` → `fetch` (line 418) normalises with the WHATWG parser to `${server}/workspaces/${ws}/` and sends DELETE with the caller's `Authorization: Bearer <jwt>` (jsonHeaders). Backend: `packages/backend/src/workspace/workspace.controller.ts:57` declares `@Delete('workspaces/:id')` under `JwtAuthGuard`; Nest/Express run with `strict routing` disabled (no `set('strict routing', …)` in packages/backend/src/main.ts:31-41), so the trailing-slash path matches `:id`. `workspace.service.ts:83-92` then deletes the entire workspace (owner + >1 workspace).\n\nSo a key-id of `..` — a plausible value when the id comes from a script, an agent, or untrusted data — turns a scoped `revoke` into irreversible destruction of the whole workspace and its documents. The other `..`-reachable endpoints degrade to 404 (no bare `@Delete()`/`@Get()` on `api/v1/workspaces/:workspaceId`, no `@Delete(':tabId')`), so `/workspaces/:id` is the one live target. Fix: reject or escape dot segments (e.g. map `.`/`..` to `%2E`/`%2E%2E`, or validate the identifier) rather than relying on `encodeURIComponent` alone.",
+      "lens": "security",
+      "round_commit": "f9d8f354f1caaedd7032bbe8da6fc3d3c359c8f9"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "summary": "`--dry-run` preview diverges from the request actually sent for a `..` identifier, and it diverges on exactly the destructive command the preview exists to protect",
+      "evidence": "`apiKeysUrl(opts, '..')` (api-keys.ts:17) prints `${server}/workspaces/<ws>/api-keys/..` because `seg('..') === '..'` (dry-run.ts:12-14). The live command sends the same string to `fetch`, which normalises it to `${server}/workspaces/<ws>/` — a DELETE that `packages/backend/src/workspace/workspace.controller.ts:57` serves as \"delete workspace\". An operator (or agent) who pre-flights `api-keys revoke ..` is shown a URL under `/api-keys/`, concludes the request is key-scoped, and then executes a workspace deletion. The same no-op applies to every `seg()` in dry-run.ts, so the invariant the header comment states (\"the preview is the request\") does not hold for `.`/`..` segments.",
+      "lens": "security",
+      "round_commit": "f9d8f354f1caaedd7032bbe8da6fc3d3c359c8f9"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/config/config.ts",
+      "searchedFor": [],
+      "summary": "`seg()` rejects the empty string, but `resolveConfig` legitimately yields `workspace: ''` — so every command (and every `--dry-run` preview) now fails with a misleading `Invalid identifier \"\"` for an unconfigured caller",
+      "evidence": "`resolveConfig` returns `workspace: ''` on all four resolution paths when no `--workspace`, `WAFFLEBASE_WORKSPACE`, session `activeWorkspace` or profile value exists (packages/cli/src/config/config.ts:100, :125, :147, :163), and `packages/cli/test/config.test.ts:30` asserts exactly that default. `packages/cli/src/commands/login.ts:106` also persists `activeWorkspace = ''` when the account has zero workspaces, and the comment at config.ts:108 records the empty-workspace state as a known, reachable outcome (\"turning every command into a `/workspaces//...` 404\"). After this change `apiV1Base()`/`apiKeysUrl()` call `seg(config.workspace)` (packages/cli/src/client/url.ts:50, :62), which throws `Invalid identifier \"\": a URL path segment cannot be empty, \".\" or \"..\"` for that state. Two out-of-diff consequences: (a) every workspace-scoped command for an unconfigured user now reports `{\"error\":{\"code\":\"ERROR\",\"message\":\"Invalid identifier \\\"\\\"...\"}}` instead of the previous auth/404 error, with nothing pointing at the missing workspace config — agents branching on the documented codes in docs/design/cli.md §9 get an undocumented `ERROR`; (b) `--dry-run` previews, which previously succeeded with no config at all (they only formatted a URL), now fail. The fix belongs on the new code: distinguish \"workspace not configured\" (a clear WORKSPACE_REQUIRED-style error) from \"identifier is a dot segment\".",
+      "lens": "blast-radius",
+      "round_commit": "d71fc7afe512916774a1b690d585141ea5d1387d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/url.ts",
+      "searchedFor": [],
+      "summary": "New empty-segment rejection in `seg()` fires on the *unconfigured workspace* path that `resolveConfig` deliberately produces, breaking every command — including offline `--dry-run` previews",
+      "evidence": "`resolveConfig` returns `workspace: ''` whenever no `--workspace`, `WAFFLEBASE_WORKSPACE`, session `activeWorkspace` or profile workspace is present — packages/cli/src/config/config.ts:100, :126, :147 and :163 (step 4 is even commented \"Nothing available … commands will fail\"). Every consumer now routes through `apiV1Base()` → `seg('')`, which throws. Two out-of-diff consequences: (a) the live path that previously produced `/api/v1/workspaces//documents` and a server 404 envelope (documented at packages/cli/src/config/config.ts:108 and packages/cli/test/config.test.ts:102) now dies with `Invalid identifier \"\": a URL path segment cannot be empty…`, which tells a user nothing about logging in or setting `--workspace`; (b) `printDryRun` (packages/cli/src/client/dry-run.ts:19) also goes through `apiV1Base`, so `wafflebase docs get d1 --dry-run` — a purely offline preview that every skill doc tells agents to run first (packages/cli/skills/docs-manage.md:59) — now throws instead of printing a preview when the user has not logged in yet. No call site supplies a fallback workspace.",
+      "lens": "blast-radius",
+      "round_commit": "d71fc7afe512916774a1b690d585141ea5d1387d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/url.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'Invalid identifier' across packages/cli",
+        "grep 'workspace' across packages/cli/test",
+        "read packages/cli/test/http-client-paths.test.ts, read-dry-run.test.ts, config.test.ts",
+        "glob packages/cli/test/**/*.ts (no url.test.ts exists)"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "New module `url.ts` has no direct unit test; `seg('')` empty-segment rejection and the server trailing-slash normalisation are untested"
+        }
+      ],
+      "summary": "New empty-segment rejection in `seg()` has no test, and it is the branch most likely to fire in normal use (unconfigured workspace defaults to `''`)",
+      "evidence": "`seg()` now throws for `encoded === ''` (url.ts:33). `resolveConfig` defaults `workspace` to `''` in all four branches (packages/cli/src/config/config.ts:100,126,147,164) and config.test.ts:30 asserts that default, so with no workspace configured every command (live and --dry-run) now throws `Invalid identifier \"\"` instead of the previously-documented `/workspaces//...` 404 path (comment at config.ts:108 and config.test.ts:101-104 still describe that old behaviour). No test exercises the empty case: the new suites only cover `..` (http-client-paths.test.ts:131-159, read-dry-run.test.ts:299-320). The new behaviour and the new user-facing error message for the most common misconfiguration ship untested.",
+      "lens": "test-adequacy",
+      "round_commit": "d71fc7afe512916774a1b690d585141ea5d1387d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/url.ts",
+      "summary": "`seg()` folds the *empty* segment into the traversal rejection, but an empty workspace is a documented, expected configuration state, not an attack. `resolveConfig` deliberately returns `workspace: ''` when no `--workspace`/`WAFFLEBASE_WORKSPACE`/profile value exists (packages/cli/src/config/config.ts:100,126,146,164) and the comment at config.ts:108 explicitly anticipates `/workspaces//...` yielding a 404. After this change every command — including `--dry-run` previews — dies with `Invalid identifier \"\": a URL path segment cannot be empty, \".\" or \"..\" — the URL parser resolves those...`, which misdescribes the situation (nothing was \"named\") and hides the real cause (no workspace configured / not logged in). The dot-segment defence does not require conflating the two cases; a distinct \"no workspace configured\" error is what the CLI's error taxonomy (docs/design/cli.md §8.1 exit codes) implies.",
+      "lens": "design-fit",
+      "round_commit": "d71fc7afe512916774a1b690d585141ea5d1387d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read packages/cli/src/commands/login.ts in full",
+        "grep for `state` / PKCE / `code_verifier` in packages/cli/src — none present",
+        "checked the OAuth URL construction at login.ts:36 for a state parameter"
+      ],
+      "summary": "The CLI OAuth loopback callback has no `state`/CSRF binding, so any local process or visited web page can inject an attacker's authorization code and silently log the CLI into the attacker's account (pre-existing, out of diff)",
+      "evidence": "`startCallbackServer` (login.ts:168-182) resolves on the first `GET /callback?code=<anything>` it receives from 127.0.0.1, with no `state` parameter generated, no `state` echoed in the OAuth URL built at line 36 (`?mode=cli&port=${port}`), no Origin/Sec-Fetch check, and no binding between the code and this CLI invocation. The code is then exchanged at line 56 and the resulting tokens persisted with `saveSession` (line 138). Vector: while `wafflebase login` is waiting (30s window, line 237), a page the user is browsing — or any unprivileged local process — issues `fetch`/`img src` to `http://127.0.0.1:<port>/callback?code=<attacker's code>` for candidate ports; the CLI exchanges the attacker's code and writes the attacker's `accessToken`/`refreshToken` and `activeWorkspace` into `~/.wafflebase/session.json`. Every subsequent `docs import` / `files upload` then writes the victim's data into the attacker's workspace. This is classic OAuth login-CSRF / session fixation. Out of the diff, but in the CLI auth path the diff's design doc explicitly discusses (`docs/design/cli.md`: 'The one command the flag does not hold back is `login`'). Fix: generate a random `state`, pass it in the OAuth URL, and reject a callback whose `state` does not match.",
+      "lens": "security",
+      "round_commit": "d71fc7afe512916774a1b690d585141ea5d1387d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/url.ts",
+      "searchedFor": [],
+      "summary": "Relaxing `seg('')` lets an empty identifier silently reach collection endpoints, not the 404 the comment promises",
+      "evidence": "`seg('')` now returns '' (packages/cli/src/client/url.ts:39-46), so out-of-diff callers build trailing-slash paths. Nest 11 runs Express with `strict routing` disabled, where `/…/documents/` matches the collection route: `packages/backend/src/api/v1/documents.controller.ts:34` (`@Get()` list) is what `HttpClient.getDocument('')` (packages/cli/src/client/http-client.ts:202) now hits — returning the whole workspace document list where a single-document read was named. Likewise `getCell(doc, tab, '')` (http-client.ts:352-357) resolves to `packages/backend/src/api/v1/cells.controller.ts:45` (`@Get()`), dumping every cell of the tab instead of one ref. Previously both were refused before the request went out. Only the *workspace* segment truly 404s (`/workspaces//…` cannot match `:workspaceId`); identifier segments do not. Fix likely belongs in the new code: keep the empty segment allowed only for `config.workspace` (e.g. a separate `wsSeg()`), and keep refusing it for document/tab/cell/key ids.",
+      "lens": "blast-radius",
+      "round_commit": "f424b0d9c9c9a65ab04554896b64678146dd2095"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "summary": "New CLI hard-requires an echoed `state`, so it cannot log in against any backend that does not yet echo it (version skew)",
+      "evidence": "packages/cli/src/commands/login.ts:203-210 rejects any `/callback` whose `state` does not match, and the code is only echoed by the backend change in packages/backend/src/auth/auth.controller.ts:130-135. `@wafflebase/cli` is a separately published npm binary (packages/cli/package.json:7-9) pointed at arbitrary servers via `--server` / `WAFFLEBASE_SERVER`, and self-hosting is documented (packages/documentation/developers/self-hosting.md:42). Against a backend deployed before this PR the redirect carries no `state`, so the browser shows `State mismatch`, the listener never settles, and `login` fails after the 30s timeout (login.ts:261-269) with a message that names the wrong cause. Nothing pins a minimum server version.",
+      "lens": "blast-radius",
+      "round_commit": "f424b0d9c9c9a65ab04554896b64678146dd2095"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/auth/github-auth.guard.ts",
+      "summary": "Guard silently drops a `cliState` it does not like, which the new CLI then treats as an injected callback",
+      "evidence": "packages/backend/src/auth/github-auth.guard.ts:31-34 stores `undefined` when `cliState` is not a string matching `CLI_STATE_PATTERN` — including the ordinary Express case where the param arrives duplicated and `req.query.cliState` is an array (a proxy or a user-copied URL can produce that). The flow then completes but the controller omits `&state=` (auth.controller.ts:130-135), and the CLI listener rejects its own genuine callback (packages/cli/src/commands/login.ts:203-210), hanging to the 30s timeout. A silently-degraded flow is worse here than a 400 from `/auth/github`.",
+      "lens": "blast-radius",
+      "round_commit": "f424b0d9c9c9a65ab04554896b64678146dd2095"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Glob packages/cli/test/**",
+        "Grep 'login|callback|cliState|startCallbackServer' in packages/cli/test",
+        "Grep 'stateMatches|timingSafeEqual|State mismatch|cliState' in packages/cli",
+        "Grep '/callback|registerLoginCommand' repo-wide"
+      ],
+      "summary": "The CLI-side nonce check — the central new behavior of this delta — has no test at all",
+      "evidence": "`startCallbackServer`/`stateMatches` in packages/cli/src/commands/login.ts:168-214 add the guard that rejects a `/callback?code=…` lacking this invocation's nonce (400 'State mismatch', without settling the promise). Nothing exercises it: neither helper is exported, `registerLoginCommand` is only wired in packages/cli/src/cli.ts, and no file under packages/cli/test references login, /callback, state matching or 'State mismatch'. The only tests added in this delta are packages/cli/test/url.test.ts (about `seg`) and one backend controller test for the redirect. So the CLI could stop enforcing the nonce (e.g. accept a null state, or compare the wrong field) and the green suite would say nothing — this is precisely the fake-coverage shape: the security fix is described in comments and asserted only on the backend half.",
+      "lens": "test-adequacy",
+      "round_commit": "f424b0d9c9c9a65ab04554896b64678146dd2095"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/auth/github-auth.guard.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Glob packages/backend/src/auth/*.spec.ts",
+        "Grep 'cliState|createState\\(' in packages/backend/src",
+        "Grep 'mode=cli' in packages/backend/test"
+      ],
+      "summary": "New CLI_STATE_PATTERN validation in GitHubAuthGuard is untested — no guard spec exists",
+      "evidence": "This delta adds `CLI_STATE_PATTERN = /^[A-Za-z0-9_-]{16,128}$/` and the `typeof cliState === 'string' && test(...) ? cliState : undefined` branch (github-auth.guard.ts:18, 31-38). There is no `github-auth.guard.spec.ts`: `packages/backend/src/auth/*.spec.ts` contains only auth.controller, jwt.strategy, github.strategy, cli-auth.store and auth.service specs. So neither the accept path (a real 43-char base64url nonce stored on the state), the reject path (malformed/array/absent cliState → stored as undefined), nor the boundary lengths are covered. A pattern that silently rejected the CLI's real nonce format would ship green and break every `wafflebase login` with 'State mismatch'.",
+      "lens": "test-adequacy",
+      "round_commit": "f424b0d9c9c9a65ab04554896b64678146dd2095"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "searchedFor": [],
+      "summary": "The anti-injection nonce is not secret from the very attacker it targets — it is handed to the browser via argv and printed to stderr",
+      "evidence": "The whole defence added here rests on `state` (login.ts:40) being unguessable by \"another local process\" (comment login.ts:33-39, docs/design/cli.md, rest-api.md risk table). But the nonce is embedded in `oauthUrl` (login.ts:44-46), which is (a) printed with `console.error` (login.ts:47) and (b) passed to `open(oauthUrl)` (login.ts:52), which spawns the browser/xdg-open with the full URL as a command-line argument. On Linux/macOS with default settings any local process — including one running as a different unprivileged user — can read that argv (`/proc/<pid>/cmdline`, `ps auxww`). Attack: local attacker polls `ps` during `wafflebase login`, reads `cliState=<nonce>` and `port=<port>`, then starts their own flow `GET /auth/github?mode=cli&port=<victim port>&cliState=<stolen nonce>` authenticating as the ATTACKER's GitHub account. The backend mints a code for the attacker's user and redirects to `http://127.0.0.1:<victim port>/callback?code=…&state=<stolen nonce>` (auth.controller.ts:130-135); `stateMatches` (login.ts:210) passes, the victim's CLI exchanges the attacker's code and saves the attacker's tokens as the session — the exact code-injection/session-fixation this change claims to close. A value-echo nonce cannot fix this because the value the CLI expects is the value it leaks; the standard fix is PKCE (CLI sends `code_challenge` in the URL, keeps the verifier in-process, and `POST /auth/cli/exchange` requires the verifier so a code minted for another challenge cannot be redeemed).",
+      "lens": "security",
+      "round_commit": "f424b0d9c9c9a65ab04554896b64678146dd2095",
+      "adjudication": {
+        "upheld": 1
+      }
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'registerLoginCommand' across packages/cli (only src/cli.ts and login.ts)",
+        "grep 'cliState' across packages/cli/test (no hits)",
+        "read packages/cli/test/login-callback.test.ts in full",
+        "glob packages/cli/test/*.ts for a login command test"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "No test that the nonce is kept out of the stderr banner (the stated reason for splitting the printed URL from `oauthUrl`)"
+        }
+      ],
+      "summary": "The CLI half of the nonce feature — sending `cliState` in the OAuth URL — has no test at all",
+      "evidence": "The whole security property depends on `login`'s action appending `&cliState=${encodeURIComponent(state)}` (login.ts:71-73) and passing the same `state` to `startCallbackServer` (login.ts:58-64). The new suite `packages/cli/test/login-callback.test.ts` only imports `startCallbackServer`/`stateMatches`/`UNBOUND_CALLBACK_MESSAGE` and calls them directly with a nonce it mints itself; nothing imports `registerLoginCommand` or runs the action. If the `&cliState=` term were dropped (or the nonce passed to the server differed from the one in the URL), every test in the diff — CLI and backend — would still pass, while every real login would 400 with UNBOUND_CALLBACK_MESSAGE.",
+      "adjudication": {
+        "upheld": 1
+      },
+      "lens": "test-adequacy",
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "summary": "Headless copy-paste login is broken while the design doc still promises it. `docs/design/cli.md:176` (unchanged by this diff) still says step 3 \"also prints URL for copy-paste in headless environments\", but the happy path now prints `.../auth/github?mode=cli&port=<port>` WITHOUT `cliState`, and the removed line \"If the browser does not open, visit the URL above.\" is only replaced inside the `catch` of `open()`. On a headless box where `open()` resolves without actually launching a browser (a very common case — `open` shells out to xdg-open/`$BROWSER` and frequently succeeds nominally), the only URL the user can copy is the nonce-less one. Following it makes the backend start a flow with `cliState: undefined`, redirect without `state`, and the listener then rejects with UNBOUND_CALLBACK_MESSAGE telling the user to upgrade the server or pass `--allow-unbound-callback` — advice that is false for an up-to-date server and pushes them to disable the very binding this change adds. Either keep printing the full URL (the doc's contract) or update cli.md step 3 and the headless story to match.",
+      "evidence": "login.ts:71-87 builds `oauthUrl` with cliState but prints the stripped form unconditionally; full URL printed only in the `catch`. docs/design/cli.md:176 still claims the URL is printed for copy-paste in headless environments.",
+      "lens": "design-fit",
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "summary": "Attacker-triggerable \"unbound callback\" path aborts the login and advertises the flag that disables the nonce binding",
+      "evidence": "The no-`state` branch is reachable by anyone who can reach the loopback listener, which is exactly the threat model the nonce exists for: a malicious page in the browser (cross-origin `<img src>`/`fetch(..., {mode:'no-cors'})` to `http://127.0.0.1:<port>/callback?code=ATTACKER_CODE`) or any local process can send a callback with no `state` at all. login.ts:263-271 then calls `callbackReject(new Error(UNBOUND_CALLBACK_MESSAGE))`, killing the in-flight login, and UNBOUND_CALLBACK_MESSAGE (login.ts:216-220) asserts a cause the CLI cannot actually distinguish (\"The server ... did not echo this invocation's nonce\") and offers the remedy \"re-run with `wafflebase login --allow-unbound-callback`\". A user who follows the CLI's own advice re-runs with `allowUnbound: true`, at which point the identical nonce-less spray IS accepted (the `received === null` guard is skipped) and the attacker's authorization code is exchanged at `${server}/auth/cli/exchange` and written to `~/.wafflebase/session.json` as the user's session — the precise attack the nonce was added to prevent. Net: an attacker can (a) DoS every login attempt and (b) social-engineer the control off using the tool's own error text. A missing `state` should be treated like a wrong one (400, do not settle, keep waiting) with the version-skew hint deferred to the 30-second timeout, so an injected request cannot cause the abort or the downgrade advice.",
+      "lens": "security",
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "summary": "The URL printed for headless copy-paste omits `cliState`, so the documented headless flow always produces an unbound callback and steers users to `--allow-unbound-callback`",
+      "evidence": "login.ts:71-76 builds `oauthUrl` with `&cliState=<nonce>` but prints `${server}/auth/github?mode=cli&port=${port}` — deliberately nonce-stripped — and the old \"If the browser does not open, visit the URL above.\" line was removed; the full URL is printed only in the `catch` around `open()`. `open()` frequently resolves successfully while opening nothing (SSH sessions with a stub xdg-open, WSL, containers), and docs/design/cli.md:176 still documents step 3 as \"(also prints URL for copy-paste in headless environments)\". A user who copies the printed URL starts a flow with no `cliState`, so `normalizeCliState` returns undefined (github-auth.guard.ts:70), `state.cliState` is falsy at auth.controller.ts:130, and the loopback redirect carries no `state`. The CLI then aborts with UNBOUND_CALLBACK_MESSAGE, which blames the server and recommends `--allow-unbound-callback` — training the ordinary headless user to run every login with the anti-injection binding disabled. The printed line should carry the full URL (or omit the copy-paste affordance entirely and say so).",
+      "lens": "security",
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "searchedFor": [],
+      "summary": "The URL printed for copy-paste omits `cliState`, so copying it makes the login fail with a misleading \"upgrade the server\" message",
+      "evidence": "login.ts:71-76 builds `oauthUrl` with `&cliState=<nonce>` but prints `${server}/auth/github?mode=cli&port=${port}` — the nonce-less form. If the user visits that printed URL (docs/design/cli.md:176 still documents step 3 as \"also prints URL for copy-paste in headless environments\"), the backend guard receives `cliState === undefined`, `normalizeCliState` returns undefined, `createState(mode, port, undefined)` stores a nonce-less flow, and auth.controller.ts:130-134 redirects to `127.0.0.1:<port>/callback?code=…` with NO `state`. The CLI's listener then takes the `received === null && !options.allowUnbound` branch (login.ts:263) and REJECTS the login with UNBOUND_CALLBACK_MESSAGE, which tells the user to \"Upgrade the server, or re-run with --allow-unbound-callback\" — a false diagnosis, since the server is fine and the real cause is that the CLI printed a URL it will not accept the callback for. The login is settled, so it cannot recover.",
+      "lens": "correctness",
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "searchedFor": [],
+      "summary": "The usable OAuth URL is now printed only when `open()` throws, so a headless/no-browser environment can be left with no way to continue",
+      "evidence": "The old code printed the full URL unconditionally plus \"If the browser does not open, visit the URL above.\"; the new code prints the full URL only inside `catch` around `await open(oauthUrl)` (login.ts:78-87). `open()` with the default `wait: false` resolves as soon as the child is spawned and does not reject when the spawned handler (e.g. `xdg-open` under SSH/WSL/headless) fails to surface a browser — and a later child `error` event is not routed to this promise at all. In those cases nothing prints the nonce-carrying URL, and the login dies on the 30-second timeout with \"Login timed out\", while the only URL the user was shown (line 75) is the nonce-less one that cannot complete the flow (see the previous finding).",
+      "lens": "correctness",
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "searchedFor": [],
+      "summary": "New `callbackReject` on a nonce-less callback can fire before any handler is attached, turning an actionable failure into an unhandled-rejection crash",
+      "evidence": "`callbackPromise` (login.ts:235) gets no handler until the action reaches `await waitForCallback()` at line 92, which is after `await import('open')` and `await open(oauthUrl)`. The new branch at login.ts:263-271 rejects that promise from the HTTP handler. Any `GET /callback?code=…` without `state` arriving during that window — trivially producible by any other local process racing the loopback port, and possible for a fast browser leg — rejects an unhandled promise, so Node terminates the process with ERR_UNHANDLED_REJECTION instead of emitting UNBOUND_CALLBACK_MESSAGE through `runCli`'s error envelope. The pre-existing timeout rejection could not hit this window (30 s), so the race is introduced by this change.",
+      "lens": "correctness",
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "searchedFor": [],
+      "summary": "`login` resolves the server itself (`parentOpts.server ?? DEFAULT_SERVER`) and ignores `WAFFLEBASE_SERVER` and the config profile — contradicting the contract this delta re-asserts in the doc comment it rewrote, and inconsistent with every other command",
+      "evidence": "login.ts:25 does `const server = (parentOpts.server ?? DEFAULT_SERVER).replace(/\\/$/, '')`. Every other command goes through `getConfig()` → `resolveConfig()` (packages/cli/src/commands/root.ts:29-36, packages/cli/src/config/config.ts:90-94/115-119/137-141/154-158), which prefers `flags.server ?? process.env.WAFFLEBASE_SERVER ?? session.server ?? profile.server ?? DEFAULT_SERVER`. `--server` has no `.env()` binding on the root program (root.ts:64), so nothing else supplies the env var to `login`. The delta's rewritten docstring (login.ts:219) and the design doc (docs/design/cli.md:226-228) both state the CLI is pointed at a server via \"`--server` / `WAFFLEBASE_SERVER`, self-hosting\". Concrete blast: a self-hoster who exports `WAFFLEBASE_SERVER=https://wb.internal` and runs `wafflebase login` authenticates against `https://api.wafflebase.io` and saves `session.server` = the default; every subsequent command then uses the env server with tokens minted by a different one, producing 401s. Fix belongs in login.ts (route through `resolveConfig`), not in the new code.",
+      "lens": "blast-radius",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/test/login-callback.test.ts",
+      "searchedFor": [
+        "grep allowUnbound|startCallbackServer|startUrl in packages/cli/test",
+        "read packages/cli/test/login-callback.test.ts",
+        "read packages/cli/src/commands/login.ts"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Test 'does not crash when a callback arrives before anyone awaits it' cannot fail — the path it claims to cover no longer rejects"
+        }
+      ],
+      "summary": "Test named \"does not crash when a callback arrives before anyone awaits it\" never exercises a rejection, so it cannot fail if the `callbackPromise.catch(() => {})` guard is removed",
+      "evidence": "The test hits `/callback?code=unbound` with no `state`. In login.ts:306-317 that branch writes a 400 and returns — it never calls `callbackReject`, and `settled` stays false. The only path that rejects `callbackPromise` is the 30s timeout (login.ts:373-385), which this test never triggers (it waits 50 ms and asserts the promise is still pending). So the pre-attached `callbackPromise.catch(() => {})` added at login.ts:259 — the whole behavior the test's comment claims to protect (\"a rejection raised in that window must not surface as an unhandled rejection\") — is never exercised. Deleting line 259 leaves this test green. There are no fake timers anywhere in the file (no `vi.useFakeTimers`), so no other test covers it either.",
+      "lens": "test-adequacy",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/test/login-callback.test.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep allowUnbound|startCallbackServer|startUrl|open\\( in packages/cli/test",
+        "glob packages/cli/test/*.ts",
+        "read login-callback.test.ts in full"
+      ],
+      "summary": "No test covers the `login` action body: nonce minting, `--allow-unbound-callback` wiring into `startCallbackServer`, or that `open()`/stderr receive `startUrl` rather than the nonce-carrying authorize URL",
+      "evidence": "The only test of the command is `registerLoginCommand` → `expect(login?.options.map(o => o.long)).toContain('--allow-unbound-callback')`, which asserts the option exists but nothing about its effect. The action (login.ts:22-83) is where `randomBytes(32)` is minted, `allowUnbound: localOpts.allowUnboundCallback === true` is passed, `setAuthorizeUrl(buildAuthorizeUrl(...))` is called and `open(startUrl)`/`console.error(startUrl)` happen. If the action passed `state` to `open()` (the leak this change exists to prevent), or wired the flag to the wrong option name (commander camel-casing), every test in the file would still pass, because they all call `startCallbackServer`/`buildAuthorizeUrl` directly with hand-built arguments. Searched packages/cli/test for `allowUnbound`, `open(`, `startUrl` — only helper-level uses.",
+      "lens": "test-adequacy",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep UNBOUND_CALLBACK_MESSAGE across repo",
+        "grep useFakeTimers in packages/cli/test",
+        "read packages/cli/test/login-callback.test.ts"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "The new timeout message selection (version-skew message when a nonce-less callback was seen) has no test"
+        }
+      ],
+      "summary": "The changed timeout behavior — reporting UNBOUND_CALLBACK_MESSAGE instead of the generic timeout when only nonce-less callbacks were seen — has no test",
+      "evidence": "login.ts:373-385 now branches the rejection message on `sawUnboundCallback`. No test triggers the 30s timeout: login-callback.test.ts uses only `settledWithin(..., 50)` (which resolves to `null` on non-settlement) and never installs fake timers, and `UNBOUND_CALLBACK_MESSAGE` is asserted only as a 400 response body (line ~99), never as the rejection reason. The version-skew signal the doc comment calls the point of the design is therefore untested.",
+      "lens": "test-adequacy",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep for mocks of 'open' in packages/cli/test",
+        "read packages/cli/test/login-callback.test.ts in full",
+        "glob packages/cli/test/** for a login action test"
+      ],
+      "summary": "No test covers login.ts's actual hand-off: that `open()` and stderr receive `startUrl` and not the nonce-bearing URL",
+      "evidence": "The test titled 'keeps the nonce out of the URL handed to the browser and to stderr' (test line 184) only inspects the `startUrl` string returned by `startCallbackServer` and the `/start` redirect. It never touches the login action handler, so the security property it names — login.ts:66-72 printing `startUrl` and passing `startUrl` (not `buildAuthorizeUrl(...)`) to `open()` — is untested: swapping line 67 or line 72 back to the nonce-carrying URL would break the stated guarantee with every test still green. The only test of the action-registering function (test line 226) asserts merely that the command and the `--allow-unbound-callback` option exist, which says nothing about the hand-off.",
+      "adjudication": {
+        "upheld": 2
+      },
+      "lens": "test-adequacy",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "searchedFor": [],
+      "summary": "Single-use `/start` is at odds with the documented headless copy-paste path it is supposed to preserve",
+      "evidence": "cli.md:176-178 now says step 3 \"Opens (and prints, for copy-paste in headless environments) the nonce-free http://127.0.0.1:<port>/start\", and cli.md:206-211 claims \"the URL a headless user copies is the same one `open()` is given and the same one that works\". Those two properties cannot both hold with a one-shot route: `login` always calls `open(startUrl)` (packages/cli/src/commands/login.ts:72) and only falls into the `catch` when the dynamic import or spawn itself throws — `open()` resolves normally in headless/CI environments where a launcher binary exists (xdg-open, `start`, wslview) but no browser ever renders, and browsers can also issue more than one request to a URL (prefetch/preconnect, restored tab). In those cases the first `GET /start` consumes the nonce and the URL the CLI just told the user to visit (\"If the browser does not open, visit the URL above.\", login.ts:68) answers `410 START_CONSUMED_MESSAGE`, leaving the invocation with no way to complete — a regression against the prior behaviour, which printed a URL that still worked when the browser did not appear. The design doc asserts the property rather than reconciling it (e.g. allowing re-issue until the callback arrives, or only arming single-use after a successful open).",
+      "lens": "design-fit",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Attacker-triggerable `sawUnboundCallback` flips the timeout error into a message that instructs the user to re-run with `--allow-unbound-callback`, i.e. to disable the new callback binding"
+        }
+      ],
+      "summary": "The `--allow-unbound-callback` downgrade lever the comment claims to remove is still attacker-reachable: an attacker-sent nonce-less callback rewrites the timeout message into the \"re-run with --allow-unbound-callback\" nudge",
+      "evidence": "`sawUnboundCallback` is set by *any* caller of `GET /callback?code=x` with no `state` (login.ts:306-315) — reachable by every local process and every page the browser visits — and it is the sole selector for the timeout error text (login.ts:378-380), which is `UNBOUND_CALLBACK_MESSAGE` = \"...re-run with `wafflebase login --allow-unbound-callback` to accept an unbound callback\" (login.ts:222-226). Attack: a local process (1) consumes `/start` so the genuine browser leg can never produce a callback (login.ts:272-275 → 410), (2) sends one nonce-less `/callback?code=…`, (3) waits 30 s. The user is told, in the CLI's own voice, that the server is too old and to re-run with the flag; on that re-run `options.allowUnbound` is true, so the very next nonce-less callback the attacker sends is accepted outright (login.ts:306 short-circuits, 328-370 settles) and the attacker's code becomes the victim's session. The in-code rationale (\"letting one of those abort the login … would hand an attacker a downgrade lever\", login.ts:298-305) and docs/design/rest-api.md:380 assert this lever is gone; it is only delayed by the 30-second timeout. Deciding the message from an attacker-settable flag is the defect — the skew signal should come from something the attacker cannot set (e.g. the absence of the echo on a callback whose nonce matched, or a server capability probe).",
+      "adjudication": {
+        "upheld": 2
+      },
+      "lens": "security",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "`GET /start` hands the login nonce to any unauthenticated local client, widening the nonce-theft surface the change claims to close"
+        }
+      ],
+      "summary": "The new unauthenticated `GET /start` route on the loopback listener serves the nonce in a 302 `Location` to any local process, replacing a platform-restricted argv leak with a universally readable one",
+      "evidence": "`/start` (login.ts:266-281) has no authentication, no Host/Origin/Sec-Fetch check, and answers a 302 whose `Location` is `buildAuthorizeUrl(server, port, state)` — the full nonce in clear. Any process on the machine can poll `http://127.0.0.1:<port>/start` across the ephemeral range and read the header; a tight poll loop reliably beats `await import('open')` + browser spawn (login.ts:71-72), which takes hundreds of ms. Holding the nonce, the attacker completes their own OAuth against the same server and posts `\\/callback?code=<their code>&state=<stolen nonce>` to the victim's listener, which `stateMatches` accepts (login.ts:322) → the victim's `~/.wafflebase/session.json` becomes the attacker's account. The stated motive for `/start` was to keep the nonce out of `open()`'s argv, which is only cross-user readable on Linux with hidepid=0; on macOS/Windows argv is not readable by other users, so this route introduces a nonce-disclosure channel that did not previously exist there. docs/design/rest-api.md's risk table acknowledges the race but characterises it as \"breaks the login visibly rather than leaking silently\" — the victim sees a 410 and a failed login, but the attacker still holds a usable nonce and the listener stays open for the remaining 30s, so the injection succeeds in the same session. A Host-header / `Sec-Fetch-Site` check plus a per-invocation unguessable path (e.g. `/start/<random>`) would close the browser-side and reduce the local-side exposure.",
+      "lens": "security",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/auth/github.strategy.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'csrf|__cliStateToken|createState|consumeState' across repo",
+        "read packages/backend/src/auth/github.strategy.ts",
+        "read packages/backend/src/auth/github-auth.guard.ts",
+        "read packages/backend/src/auth/auth.controller.ts",
+        "read packages/backend/src/auth/cli-auth.store.ts"
+      ],
+      "summary": "The browser (non-CLI) GitHub OAuth flow sends no `state` parameter at all, so it has no CSRF protection — contradicting the risk-table row this diff's rest-api.md edit sits next to",
+      "evidence": "`GitHubStrategy.authenticate` (github.strategy.ts:57-64) sets `opts.state` only when `req.__cliStateToken` is present, and `GitHubAuthGuard` (github-auth.guard.ts:67) only sets that for `mode === 'cli'`. The `super()` options (github.strategy.ts:43-49) do not pass `state: true`, so passport-oauth2 sends no state for the ordinary web login. `githubAuthCallback` (auth.controller.ts:119) therefore takes the `!stateToken` branch, mints cookies and redirects to FRONTEND_URL with nothing tying the callback to the browser that started it. An attacker can complete GitHub OAuth themselves, capture the resulting `?code=` callback URL, and lure the victim's browser to it — the victim's browser then receives `wafflebase_session` / `wafflebase_refresh` cookies for the ATTACKER's account (login CSRF), and any document the victim subsequently creates lands in the attacker's workspace. docs/design/rest-api.md's risk table (edited in this change) states \"OAuth state forgery (CSRF) | Backend generates a random 32-byte CSRF token per OAuth request, stores in a 5-minute in-memory map, and validates on callback\" — that is true only of the CLI branch. Pre-existing, out of diff, but this change re-affirms the claim in the doc it edits.",
+      "lens": "security",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read the whole request handler in packages/cli/src/commands/login.ts (lines 261-371) for any use of req.headers",
+        "grep for Host/Origin/Sec-Fetch/referer/headers in packages/cli/src",
+        "grep for startCallbackServer call sites (only login.ts and test/login-callback.test.ts)",
+        "packages/cli/test/login-callback.test.ts — no test issues a cross-origin/Host-spoofed request"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "Single-use `GET /start` with no Host/Origin check lets any visited web page (or local process) break every concurrent `wafflebase login` on the machine"
+        }
+      ],
+      "summary": "The loopback listener validates no `Host`/`Origin`/`Sec-Fetch-Site` header, so a page the browser visits can consume the single-use nonce hand-off (login denial), and a DNS-rebound origin reaches a secret-serving endpoint",
+      "evidence": "The request handler only inspects `req.url` (login.ts:262) and never looks at `req.headers`. Consequences: (1) any page the victim's browser visits can `fetch('http://127.0.0.1:<p>/start', {mode:'no-cors'})` or embed an iframe across the ephemeral port range; the request is a simple GET so no preflight applies, `startConsumed` flips (login.ts:277) and the real browser leg gets the 410 — a remote-page denial of every `wafflebase login`, plus a nudge into the retry loop that finding #2 weaponises. (2) Because no `Host` allow-list is enforced, the endpoint is reachable under an attacker-controlled hostname via DNS rebinding, i.e. from a same-origin JS context, which is precisely the configuration in which the same-origin argument in docs/design/cli.md:214-217 no longer holds; I could not construct a concrete browser primitive that reads a 302 `Location` even same-origin (`redirect:'manual'` yields an opaqueredirect), which is why confidence is low, but a loopback endpoint whose whole purpose is to serve a secret should not be answerable to requests whose `Host` is not `127.0.0.1:<port>` or that carry a cross-site `Origin`/`Sec-Fetch-Site`. Also unrestricted by method: a HEAD or POST to `/start` consumes it too.",
+      "lens": "security",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/login.ts",
+      "summary": "`GET /start` is single-use and method-agnostic, so any duplicate/speculative request silently breaks the login for 30s",
+      "evidence": "`if (startConsumed) { res.writeHead(410) … }` at login.ts:272-276 marks the redirect consumed on the *first* request of any kind, before the browser has necessarily navigated. Real, non-adversarial duplicates exist: (a) a HEAD/preview/URL-scanner request (the handler never checks `req.method`, so HEAD consumes it), (b) omnibox/link prefetch when the user copy-pastes the printed `http://127.0.0.1:<port>/start` — the very headless path the comment at login.ts:52-65 says must keep working, (c) the user reloading or hitting Back and retrying after a hiccup, (d) a browser launcher that issues the URL twice. In all of these the real navigation gets `410 START_CONSUMED_MESSAGE`, no `/callback` ever arrives, and the CLI blocks the full 30s (login.ts:373-385) before failing with the generic `Login timed out` — with no hint that the one-time link was burnt. The previous code passed the authorize URL directly to `open()` and had no such failure mode, so this is a newly introduced hang/regression on ordinary paths.",
+      "lens": "correctness",
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe"
+    }
+  ]
+}

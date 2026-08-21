@@ -1,0 +1,244 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Cell rewrite in `unsetRangeStyleValues` still routes through `compactCell`, silently dropping spill metadata the calculator depends on"
+        }
+      ],
+      "summary": "New cell-level unset path rebuilds cells with `compactCell`, which silently drops spill metadata (`spillRows`/`spillCols`/`spillAnchor`/`spillBlocked`) that the calculator/renderer depend on",
+      "evidence": "`removeCellStyleKeysInRange` writes `await this.store.set(anchor, compactCell(existing, next))` (packages/sheets/src/model/worksheet/sheet.ts:4366). `compactCell` only copies `v`, `f`, `s` (packages/sheets/src/model/worksheet/style-mutation.ts:57-69), while `Cell` also carries `spillRows`, `spillCols`, `spillAnchor`, `spillBlocked` (packages/sheets/src/model/core/types.ts:209-217), which the array-formula code writes and reads: `sheet.setCell(ref, { v: anchorValue, f: cell.f, s: style, spillRows: rows, spillCols: cols })` (packages/sheets/src/model/worksheet/calculator.ts:136) and `if (cell.spillRows && cell.spillCols && !cell.spillBlocked)` in the paint/expansion loops (packages/sheets/src/model/worksheet/calculator.ts:74, packages/sheets/src/model/worksheet/sheet.ts:1086). So decreasing decimals back to the inherited precision over a styled spill anchor erases its spill region metadata until the next recalculation. (Note: `setStyle` at sheet.ts:3682 already has this shape, so the invariant may already be violated elsewhere; the fix belongs in the new code — preserve the non-style fields, e.g. `{ ...existing, s: next }`-style compaction.)",
+      "lens": "blast-radius",
+      "round_commit": "c4594958de4eb78a08197821117893e314078900"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/test/sheet/decimals.test.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep for changeDecimals/unsetRangeStyleKeys across repo (only decimals.test.ts)",
+        "Grep selectionType|selectAll|selectRow( under packages/sheets/test",
+        "read full packages/sheets/test/sheet/decimals.test.ts"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "New value-mismatch refusal is only tested at the cell layer; the sheet/column/row layer mismatch branches are untested"
+        }
+      ],
+      "summary": "Row-selection and whole-sheet ('all') branches of the new `unsetRangeStyleKeys` are never exercised by any test",
+      "evidence": "The new suite only covers cell (`selectStart`), multi-cell (`selectStart`+`selectEnd`) and column (`selectColumn(1)`) selections. Nothing calls `selectRow(...)` or `selectAll()/selectAllCells()`, so `sheet.ts:4256-4265` (row-style conflict check), `4300-4311` (row-style rewrite) and `4281-4287` (`ownsSheet && this.sheetStyle` rewrite) plus the `!ownsSheet && this.sheetStyle?.[key]` bail at `4243` are entirely uncovered — roughly half the branch surface of the new method. A regression in the row or sheet layer (e.g. writing the wrong key set, or clearing a row style the selection does not own) would keep the suite green.",
+      "lens": "test-adequacy",
+      "round_commit": "c4594958de4eb78a08197821117893e314078900"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "searchedFor": [],
+      "summary": "New clamp makes Decrease at zero destructive when `dp` is stored, breaking the issue's \"equal increases and decreases leave the selection exactly as they found it\" rule",
+      "evidence": "The delta replaces `if (target < 0) return;` with `if (dp + delta < 0 && !explicitDp) return;` plus `const target = Math.max(0, dp + delta)`. So when a cell has an explicitly stored `dp: 0` and the value's own precision is also 0 (e.g. `1234` styled `{dp: 0, nf: 'number'}` from the toolbar), pressing Decrease — which the user reads as a no-op at the floor — now takes the `target === valueDp && explicitDp` branch and unsets `{dp, nf}`, dropping the number format and its grouping separators (`1,234` → `1234`). Pressing Increase afterwards does not restore it: it writes `{dp: 1, nf: 'number'}`. One Decrease + one Increase therefore leaves the cell in a different state than it started, which is exactly the reversibility criterion in docs/tasks/active/20260818-sheets-decimal-round-trip-todo.md:3-5 and docs/design/sheets/sheet-style.md:213-216. Before this delta the same click was an unconditional no-op. It also makes Decrease-at-zero behave differently depending on invisible state (stored vs inferred `dp`), which neither the design doc nor the \"Known deviations\" list records.",
+      "lens": "design-fit",
+      "round_commit": "c4594958de4eb78a08197821117893e314078900"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "`inheritable` gate narrows the spec'd unset rule, so non-plain/number formats keep residue. The todo (docs/tasks/active/20260818-sheets-decimal-round-trip-todo.md:50-53) specifies: `target === valueDp` and `explicitDp` → try to unset, using `['dp','nf']` when `nf === 'number'` and **`['dp']` otherwise**. The implementation instead only attempts an unset when `!nf || nf === 'plain' || nf === 'number'`, so a `currency`/`percent`/date-formatted cell with an explicit `dp` never returns to inheritance: e.g. currency cell holding `12.34` (valueDp 2, default dp 2) → Increase writes `dp: 3` → Decrease targets 2 === valueDp but is blocked by `inheritable`, storing `dp: 2` residue instead of unsetting. That is the same residue class the issue's outcome (\"leave a cell exactly as it started\") is about, just for a different number format.",
+      "evidence": "const inheritable = !nf || nf === 'plain' || nf === 'number'; if (explicitDp && target === valueDp && inheritable) { ... }",
+      "lens": "design-fit",
+      "round_commit": "c4594958de4eb78a08197821117893e314078900"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "`removeCellStyleKeysInRange` rewrites cells through `compactCell`, dropping spill metadata"
+        },
+        {
+          "severity": "minor",
+          "summary": "unsetRangeStyleValues returns true even when it removed nothing, so the caller reports success for a no-op"
+        }
+      ],
+      "summary": "unsetRangeStyleValues treats a missing key as agreement, so a cell that carries only some of the requested keys loses the rest",
+      "evidence": "The conflict scan is `if (cellValue !== undefined && cellValue !== value) return false;` (sheet.ts:4306-4310), but the removal is `omitStyleKeys(existing.s, keys)` — it strips *all* requested keys regardless of which ones the cell actually agreed about. changeDecimals calls it with `{dp, nf:'number'}` (sheet.ts:4208-4210). Scenario: A1 = `12` with `{dp:1, nf:'number'}`, B1 = `12` with `{nf:'number'}` only (no dp). Select A1:B1, press decrease → target 0 === valueDp 0, so unset `{dp:1, nf:'number'}` runs. B1's `nf` matches and its `dp` is undefined, so no conflict is detected; B1 then has both keys omitted and ends up with no style at all, changing its render from `12.00` to `12`. The same asymmetry applies to the col/row/sheet/patch layer checks (sheet.ts:4258-4285), where a layer holding only `nf` and no `dp` is silently accepted and then stripped. The added tests only cover the case where the other cell *disagrees* about a value (currency, dp:5), never the case where it holds a strict subset of the keys.",
+      "lens": "correctness",
+      "round_commit": "c4594958de4eb78a08197821117893e314078900"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "Decrease/increase decimals can change other cells' displayed precision because the unset decision uses only the active cell's `valueDp`",
+      "evidence": "`const { dp, nf, valueDp, explicitDp } = await this.getActiveDecimalState()` (4196) and `if (explicitDp && target === valueDp && inheritable)` (4203) test the ACTIVE cell's raw-value precision but the resulting unset applies to the whole selection. Concretely: A1='1.5', A2='1.2345', select A1:A2. Decrease → writes {dp:0, nf:'number'} for both (shows 2 / 1). Increase → dp=0 explicit, target 1 === valueDp(A1)=1, nf='number' → all dp/nf removed → A1 renders '1.5' (intended) but A2 jumps back to '1.2345', i.e. pressing *increase by one decimal* moved A2 from 0 to 4 decimals. The old code wrote an explicit uniform dp and had no such divergence.",
+      "lens": "correctness",
+      "round_commit": "c4594958de4eb78a08197821117893e314078900"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "Comment/assumption that dropping `nf:'number'` keeps the cell looking the same is false — grouping separators are lost",
+      "evidence": "Lines 4204-4207 justify removing `nf` with \"the cell keeps looking the same\", but `formatValue(value,'number',dp)` goes through `toLocaleString` (format.ts:127-130) which adds thousands separators, while plain format returns the raw string verbatim (format.ts:111-113). For value '1234.5': with {nf:'number',dp:1} the cell shows '1,234.5'; after the unset it shows '1234.5'. The new test at packages/sheets/test/sheet/decimals.test.ts:89-92 encodes exactly this lossy outcome (`toBe('1234.5')`). So decrease-then-increase on a number-formatted cell silently drops the user's number format and its grouping.",
+      "lens": "correctness",
+      "round_commit": "c4594958de4eb78a08197821117893e314078900"
+    },
+    {
+      "severity": "major",
+      "file": "docs/tasks/active/20260818-sheets-decimal-round-trip-lessons.md",
+      "summary": "Lessons doc asserts DefaultStyleValues carries `dp: 2` and that writing `dp: 2` self-erases, but the current code (added as part of this same fix) explicitly excludes `dp` from DefaultStyleValues for exactly the reversibility reason the lessons doc itself describes elsewhere.",
+      "evidence": "docs/tasks/active/20260818-sheets-decimal-round-trip-lessons.md states: \"`DefaultStyleValues` in `packages/sheets/src/model/worksheet/style-mutation.ts` carries `dp: 2`, so writing `dp: 2` self-erases while `dp: 0` ... is stored.\" This contradicts style-mutation.ts lines 14-18, whose comment reads: \"`dp` is deliberately absent even though `formatValue` renders 2 decimals without it: pruning `dp: 2` would make 'no stored dp' and 'dp: 2' the same state, and increase/decrease decimal places rely on telling them apart to know whether a stored `dp` is theirs to remove.\" The design doc confirms current behavior at docs/design/sheets/sheet-style.md lines 242-244: \"`dp` is **not** in `DefaultStyleValues`, so `dp: 2` is stored rather than pruned.\" A reader following the lessons file's own citation to style-mutation.ts will find the opposite of what is claimed there.",
+      "lens": "docs",
+      "round_commit": "cf23856af185d51eb0c8037274adf2a9ab046a69"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/style-mutation.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep spillRows|spillAnchor|compactCell across packages/sheets",
+        "grep spill in packages/sheets/test",
+        "grep setStyle|setRangeStyle|clearFormat in test/sheet/calculation.test.ts",
+        "grep spill in test/sheet/formatting.test.ts",
+        "read test/sheet/decimals.test.ts in full"
+      ],
+      "summary": "compactCell's new spill-field preservation ships with no test",
+      "evidence": "The diff adds four new branches to `compactCell` copying `spillRows`, `spillCols`, `spillAnchor`, `spillBlocked` from the base cell, justified by a comment that \"a style-only rewrite must not detach a dynamic-array anchor from its ghosts\". Nothing in the suite exercises that: `grep -rn 'spill' packages/sheets/test` matches only calculation.test.ts, data-validation.test.ts and formula.test.ts, and `grep -n 'setStyle|setRangeStyle|clearFormat' packages/sheets/test/sheet/calculation.test.ts` returns no matches — the spill tests never mutate styles, and formatting.test.ts never creates a spill. The new decimals.test.ts never sets a spilling formula either. So the regression this hunk fixes (style write on a spill anchor dropping the spill metadata, reachable via sheet.ts:3682 setStyle, sheet.ts:2007 clearCellStylesInRange and the new sheet.ts:4447 unset path) can break again with the suite fully green.",
+      "lens": "test-adequacy",
+      "round_commit": "cf23856af185d51eb0c8037274adf2a9ab046a69"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Round-trip unset of `dp` on currency/percent formats *increases* the displayed decimals, because an absent `dp` means the format's default (2), not the value's own precision"
+        }
+      ],
+      "summary": "Increase/decrease decimals silently deletes a user-chosen `nf: 'number'` format (and its thousands grouping) whenever the stepped dp happens to equal the value's own precision",
+      "evidence": "When `nf === 'number'` the unset request is `{ dp, nf }` (sheet.ts:4219-4220), i.e. the number format itself is removed. The code cannot distinguish an `nf:'number'` the user chose from one a previous step added. Example: A1 = `1234.5` with `{nf:'number', dp:0}` (grouped, no decimals — a state a user reaches with the toolbar or that the importer writes). Click *increase* decimals: dp=0, valueDp=1, target=1===valueDp, selectionRendersAt(1) true → `unsetRangeStyleValues({dp:0, nf:'number'})` strips both keys → display goes from `1,234` to `1234.5`, i.e. the grouping/number format the user chose is destroyed by an increase-decimals click. The existing test 'should keep a number format the user chose' only covers the case where valueDp differs from the target, so this path is untested.",
+      "lens": "correctness",
+      "round_commit": "cf23856af185d51eb0c8037274adf2a9ab046a69"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "Decrease decimals becomes a silent no-op for a multi-cell selection whenever the active cell has no explicit dp, even though other selected cells have decimals to drop",
+      "evidence": "`if (stepped < 0 && !explicitDp) { return; }` (sheet.ts:4198-4202) is decided purely from the ACTIVE cell. Select A1:B1 where A1=`12` (no style → dp=0, explicitDp=false) and B1=`1.2345` (no style). Clicking decrease decimals now returns before touching anything, so B1 keeps 4 decimals. The previous implementation (spreadsheet.ts, removed lines) wrote `{dp: Math.max(0, dp-1), nf:'number'}` over the whole selection, so B1 went to 0 decimals. The new test 'should keep stepping a selection whose active cell is already at zero' only exercises the case where the active cell has an *explicit* dp:0 (the `clamped` branch), so this regression is uncovered.",
+      "lens": "correctness",
+      "round_commit": "cf23856af185d51eb0c8037274adf2a9ab046a69"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/sheets/sheet-style.md",
+      "summary": "Headline outcome (\"Increase then Decrease leaves the cell exactly as it started\") is knowingly not met for grouped values and user-chosen `nf: 'number'`",
+      "evidence": "The task doc's outcome is absolute: \"Increase decimal places followed by Decrease decimal places must leave a cell exactly as it started — including leaving no dp/nf behind\" (docs/tasks/active/20260818-sheets-decimal-round-trip-todo.md:3-5). The implementation's `unsetKeepsRendering` gate means any value ≥ 1000 (`1234.5`) keeps a `{dp, nf:'number'}` residue after an equal number of increases/decreases — asserted as intended by the new test 'should keep the grouping separators the step would flatten' (packages/sheets/test/sheet/decimals.test.ts:96-113) and recorded as a 'Known deviation' in the todo (:87-89) and in sheet-style.md:262-266. The deviation is documented and argued for, but it is a partial fulfilment of the stated outcome rather than the outcome; a reviewer/verifier should confirm the deviation was accepted on the issue (#845) and not just self-granted in the task file.",
+      "lens": "design-fit",
+      "round_commit": "753ec19250741263c30845c490748ef1d22b80ab"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/format.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep `dp:|\\.dp\\b|Math\\.min\\(.*dp|clamp` across packages/sheets/src (no upper-bound clamp on dp anywhere)",
+        "Read packages/sheets/src/model/worksheet/format.ts in full (safeFormat, formatValue)",
+        "Grep `function decimalPlaces` in packages/sheets/src/import (unbounded zero count from formatCode)",
+        "Read packages/sheets/src/import/xlsx-styles.ts:120-300 (mapNumberFormat / detectCurrency / decimalPlaces call sites)",
+        "Grep `catch` in packages/sheets/src/view/worksheet.ts (no try/catch around the render path)",
+        "Grep `toDisplayString` in sheet.ts (formatValue call sites)"
+      ],
+      "summary": "No upper bound on `dp` anywhere; an out-of-range decimal count makes `safeFormat` throw an uncaught `RangeError`, and the value is persisted to the shared document (render DoS reachable from an untrusted .xlsx)",
+      "evidence": "`safeFormat` (format.ts:9-19) only guards against a bad *locale*: the `catch` re-invokes `value.toLocaleString('en-US', options)` with the SAME `options`, so an out-of-range `minimumFractionDigits`/`maximumFractionDigits` (valid range 0–100, 0–20 on older engines) throws a second, uncaught `RangeError` out of `formatValue`. `formatValue` is called on every display path (`Sheet.toDisplayString`, sheet.ts:967; the render helper at sheet.ts:4719) and neither is wrapped in a try/catch (only three `catch` sites exist in view/worksheet.ts, none around render), so the grid stops rendering.\n\nNothing clamps `dp` on the way in:\n- Untrusted file input: `mapNumberFormat` derives `dp` straight from the attacker-supplied xlsx `formatCode` via `decimalPlaces` — `code.match(/\\.(0+)/)` then `match[1].length` (packages/sheets/src/import/xlsx-styles.ts:178-181, used at :279, :282, :297) with no cap. A workbook containing `<numFmt formatCode=\"0.` + 200 zeros + `\"/>` yields `{nf:'number', dp:200}`, which is written into the collaborative document and then crashes the render for the importer and every collaborator who opens the sheet — a persisted, remote-file-triggered availability failure.\n- The code under review is the new owner of the step and clamps only the low side: `const clamped = stepped < 0; const target = clamped ? 0 : stepped;` (packages/sheets/src/model/worksheet/sheet.ts:4208-4209) — `changeDecimals(1)` increments without limit, so ~101 Increase clicks reach the same crash. The new pre-write check also evaluates `formatValue(value, nf, target, options)` (sheet.ts:4295) with that unbounded `target`, so the throw can now happen inside `changeDecimals` itself, before/instead of any write.\nFix directions: clamp `dp` where it is parsed and written (importer + `changeDecimals`), and/or make `safeFormat` fall back to an options-sanitised call rather than re-throwing.",
+      "lens": "security",
+      "round_commit": "753ec19250741263c30845c490748ef1d22b80ab"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/format.ts",
+      "searchedFor": [],
+      "summary": "`safeFormat`'s fallback re-throws for the same bad argument, so an untrusted `dp`/`cu` in stored style crashes every render (persistent client-side DoS)",
+      "evidence": "`safeFormat` (format.ts:14-18) catches a failure from `value.toLocaleString(locale, options)` and retries with `'en-US'` and the *same* `options`. The only errors Intl raises here are argument errors — `RangeError: minimumFractionDigits value is out of range` (dp > 20/100) and `RangeError: Invalid currency code` (a `cu` that is not a well-formed ISO code) — and neither is fixed by changing the locale, so the retry throws again and the RangeError escapes `formatValue`. `formatValue` is called unguarded in the render path (`packages/sheets/src/view/gridcanvas.ts:1596` with `style?.dp` and `currency: style?.cu`, no try/catch) and now also from the new `Sheet.unsetKeepsRendering` (`sheet.ts:4294-4295`, which passes `currency: effective?.cu` straight from stored cell style). Attack: a crafted .xlsx whose `numFmt` code has >20 decimal placeholders reaches `{ nf: 'number', dp: decimalPlaces(...) }` (`packages/sheets/src/import/xlsx-styles.ts:297`) with no upper bound, or a malicious collaborator writes `{nf:'currency', cu:'XX!'}`/`{dp: 300}` into the shared document; every client that renders that cell then throws inside the canvas draw loop and the sheet stops rendering for everyone, persistently, because the bad value is stored. Root cause is pre-existing (the diff relocates the write and adds one new call site), so treat it as a hardening gap this change inherits: `formatValue` should clamp `dp` and validate `cu` (or the fallback should drop the offending option) before handing them to Intl.",
+      "lens": "security",
+      "round_commit": "753ec19250741263c30845c490748ef1d22b80ab"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Decrease-decimals no-op guard inspects raw value precision, not the decimals actually rendered, so it silently swallows a legitimate step"
+        }
+      ],
+      "summary": "Decrease no-op guard (`selectionRendersAt`) inspects only raw values, so a Decrease press does nothing while other selected cells visibly render decimals via their number format",
+      "evidence": "`changeDecimals` line 4198: `if (stepped < 0 && !explicitDp && (await this.selectionRendersAt(0))) return;`. `selectionRendersAt` (4246-4261) only looks at `cell.v` via `decimalsInValue`, never at the cell's effective `nf`/`dp`. Scenario: A1 = '12' plain (active, valueDp 0, no explicit dp) and B1 = '12' with `nf: 'number'` (renders '12.00'). Selecting A1:B1 and pressing Decrease returns early — B1 keeps showing two decimals even though it has decimals to drop. The comment on the guard explicitly claims the check \"has to look past the active cell: a neighbour that still shows decimals has something to lose\", but a neighbour that shows decimals only because of its format is missed.",
+      "lens": "correctness",
+      "round_commit": "753ec19250741263c30845c490748ef1d22b80ab"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "searchedFor": [],
+      "summary": "`unsetKeepsRendering` formats every selected cell with the ACTIVE cell's `nf`, ignoring each cell's own effective format, so an unset can be approved that changes another cell's rendering",
+      "evidence": "Lines 4290-4296 compute `effective = this.resolveEffectiveStyle(...)` but use only `effective?.cu`; the comparison uses the active cell's `nf`/`nfAfter` for every cell. If the active cell has `dp` with plain/undefined `nf` (nf param undefined → both sides return the raw value, always equal) while a neighbour carries `nf: 'percent'` (or 'currency') with the same stored `dp`, the check passes and `unsetRangeStyleValues({dp})` strips that neighbour's `dp` (its style verdict is 'match' since only `dp` is requested). The neighbour then falls back to the format's default 2 decimals instead of the requested `target`, so the step silently renders it wrong (e.g. target 3 → neighbour still shows 2).",
+      "lens": "correctness",
+      "round_commit": "753ec19250741263c30845c490748ef1d22b80ab"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "searchedFor": [],
+      "summary": "The new `clampDecimals` guard only covers the render path; the step/write path still reads an untrusted stored `dp` unclamped",
+      "evidence": "`clampDecimals` (packages/sheets/src/model/worksheet/format.ts:22) is introduced precisely because \"a `dp` can come from anywhere a style can — an imported `.xlsx`, a collaborator's document\". But the write path never passes through it: `getActiveDecimalState` returns `style.dp` raw (packages/sheets/src/model/worksheet/sheet.ts:4184), `changeDecimals` does arithmetic on that raw value (`Math.min(dp + delta, MAX_DECIMAL_PLACES)`, sheet.ts:4202) and then stores the result (`setRangeStyle({ dp: target })`, sheet.ts:4236) and also uses it as the unset match value (`{ dp, nf }`, sheet.ts:4230). A stored non-integer/non-number `dp` therefore round-trips back into the shared document: a `dp` of `\"3\"` from a peer or import makes `dp + delta` string-concatenate to `\"31\"`, which is then written as the new `dp`; a fractional `dp` of 2.5 is stored as 3.5. `getActiveDecimalPlaces` (sheet.ts:4156) likewise hands `style?.dp ?? 2` to callers unclamped. Fix belongs on the new code: clamp in `getActiveDecimalState`/`changeDecimals` before stepping, not only inside `formatValue`.",
+      "lens": "blast-radius",
+      "round_commit": "649324ab3bee55abdb1a15155a4692940bb19c5f"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/format.ts",
+      "searchedFor": [],
+      "summary": "`renderedDecimals` hardcodes 2 decimals for a `dp`-less currency format, contradicting `formatValue`'s currency branch for non-2-digit currencies (KRW, JPY, KWD)",
+      "evidence": "`renderedDecimals` returns `clampDecimals(style?.dp, 2)` for every numeric format (format.ts:160), but `formatValue` deliberately omits the fraction-digit options for currency when `dp === undefined` (format.ts:198-203) so Intl applies the *currency's own* default: 0 for KRW/JPY, 3 for KWD. `resolveCurrencyForLocale` maps KR→KRW and JP→JPY (packages/sheets/src/model/core/locale.ts:47,49), so this is a routine document, not an exotic one. `selectionRendersAt` (sheet.ts:4263) now decides the Decrease no-op through `renderedDecimals`, so a KRW/JPY currency cell that actually renders 0 decimals reports 2, the whole-selection no-op guard is defeated, and Decrease writes an explicit `{dp: 0}` residue onto neighbours that had no style at all — the exact residue the feature exists to avoid. docs/design/sheets/sheet-style.md:257 repeats the same wrong assumption (\"an absent `dp` means the *format's* default of 2\").",
+      "lens": "blast-radius",
+      "round_commit": "649324ab3bee55abdb1a15155a4692940bb19c5f"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/test/sheet/decimals.test.ts",
+      "summary": "`expect(() => sheet.toDisplayString(...)).not.toThrow()` is vacuous — toDisplayString is async so it can never throw synchronously",
+      "evidence": "`Sheet.toDisplayString` is declared `async toDisplayString(ref: Ref): Promise<string>` (packages/sheets/src/model/worksheet/sheet.ts:967). Any error inside it (including the RangeError from Intl this test claims to guard against) becomes a rejected promise, never a synchronous throw, so `.not.toThrow()` passes unconditionally — it would pass even with clamping removed entirely. It also leaves a floating/unawaited promise. The line should be `await expect(sheet.toDisplayString(...)).resolves.toBe(formatValue('1.5','number',20))`. (The preceding `dp === 20` assertion in the same test is meaningful; only this line is fake coverage.)",
+      "lens": "test-adequacy",
+      "round_commit": "649324ab3bee55abdb1a15155a4692940bb19c5f"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/test/model/format.test.ts",
+      "summary": "Clamp tests compare formatValue against formatValue, so they hold for any clamp function including a constant one",
+      "evidence": "`expect(formatValue('1.5','number',400,...)).toBe(formatValue('1.5','number',20,...))` and the -3/0 and NaN/2 pairs both run through the same `clampDecimals` (format.ts:182). If clampDecimals were replaced with `() => 2`, all three pairs would still be equal ('1.50' === '1.50') and the test passes. Nothing pins the clamp to 20, to 0, or to the fallback 2 against an independent oracle. The same self-referential shape appears in decimals.test.ts:536 (`toBe(formatValue('1.5','number',20))`). A literal expectation (e.g. '1.50000000000000000000' for 20, '2' for 0) would actually distinguish the behavior.",
+      "lens": "test-adequacy",
+      "round_commit": "649324ab3bee55abdb1a15155a4692940bb19c5f"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "changeDecimals steps from the raw stored `dp`, so a NaN `dp` propagates into a new write instead of being clamped",
+      "evidence": "`const stepped = Math.min(dp + delta, MAX_DECIMAL_PLACES);` uses `dp` straight from `getActiveDecimalState()`, which returns `style.dp` untouched (sheet.ts:4184). The delta clamps only at format time (`clampDecimals` in formatValue). If the stored `dp` is `NaN` — exactly the hostile/imported value the new clamp exists for — `stepped` is `NaN`, `NaN < 0` is false so `clamped` is false, `target === valueDp` is false, and the function reaches `setRangeStyle({ dp: NaN, ... })`, persisting `NaN` into the style layer. `unsetRangeStyleValues` also can never match it (`NaN !== NaN` → 'conflict'). Every subsequent Increase/Decrease press stays at `NaN` — the control is permanently stuck for that selection — and a NaN is not JSON/CRDT representable, so the value that reaches collaborators is undefined behaviour. Applying `clampDecimals(dp, 2)` before stepping would fix it.",
+      "lens": "correctness",
+      "round_commit": "649324ab3bee55abdb1a15155a4692940bb19c5f"
+    },
+    {
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "summary": "selectionRendersAt's new format-aware check makes Decrease reach a write that clobbers a neighbour's number format with `nf: 'number'`",
+      "evidence": "`if (!nf || nf === 'plain') patch.nf = 'number';` takes `nf` from the ACTIVE cell only, and `setRangeStyle` → `applyStylePatchToExistingCells` (sheet.ts:1978-1991) writes conflicting keys onto each existing cell's own style. So when the active cell has no `nf` and a neighbour has `nf: 'percent'`/`'currency'`, one Decrease silently converts that neighbour to `nf: 'number'` — '0.5' stops reading '50.00%' and reads '0.5'. This delta newly widens the path: `selectionRendersAt` now uses `renderedDecimals`, so selections that previously short-circuited at line 4203 (e.g. plain '12' beside a percent cell storing '12', both 0 decimals by value) now fall through to the write. The new test at decimals.test.ts:504-517 exercises exactly this case and asserts only `dp === 0`, so the lost `nf: 'percent'` on B1 is not caught.",
+      "lens": "correctness",
+      "round_commit": "649324ab3bee55abdb1a15155a4692940bb19c5f"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/api/v1/docs-content.controller.ts::new slide-inline guard accepts an inline with no `style`; every downstream reader dereferences `inline.style` unconditionally, so such a stored inline crashes canvas layout and pptx export for every viewer",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "assertValidSlideInlines (docs-content.controller.ts) only rejects a present non-object style — `{ text: 'x' }` with no style passes, unlike the docs arm which requires an object style. In packages/slides/src/export/pptx/text.ts, runToXml passes inline.style straight into rPrXml, whose first statement `if (s.bold)` throws a TypeError when style is undefined; slides bodies are persisted verbatim with no read-side normalizer (per the controller's own comments), so the stored inline crashes PPTX export for every viewer. The layout.ts:777 citation could not be verified (file not supplied), but the exporter crash alone confirms the defect.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

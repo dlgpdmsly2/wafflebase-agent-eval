@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-867",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/docs/docs-table-context-menu.tsx::table-cell \"none\" still passes `backgroundcolor: \"\"` and is not covered by the new normalization — in the yorkie path the old color survives in the crdt",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified: docs-table-context-menu.tsx:~230 calls editor.applyTableCellStyle({ backgroundColor: \"\" }), and the diff wires normalizeStyleClears only into the InlineStyle paths (block-helpers.ts applyInlineStyle:318 and yorkie-doc-store.ts:~1878), leaving the cell path untouched — the PR's own todo doc even lists applyTableCellStyle as a non-goal. The visible comment on removedInlineStyleAttrs confirms Yorkie styleByPath is merge-only and cannot delete attributes, so if serializeCellStyle drops the falsy '' as the reviewer quotes (line 239), the old backgroundColor survives in the CRDT while the local cache stores '' — a real divergence and silently lost user action. I could not read applyCellStyle (~line 2410) or serializeCellStyle since they fall in the omitted region and no checkout is mounted, so the CRDT-survival mechanism rests on the reviewer's quoted code plus consistent surrounding evidence; hence medium confidence.",
+  "notes": null,
+  "diff_sha256": "sha256:29757d1d0a8be75a5f27394784f11eee577f8e8b4e97d83b384e8bdc5d428dcc",
+  "class_id": null,
+  "class_members": null
+}

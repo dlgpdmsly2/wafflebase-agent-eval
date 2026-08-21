@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-809",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/documents/document-list.tsx::new `datecell` component (preference-driven text + `title` tooltip) has no test at all",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff's added tests (tests/app/documents/document-list-utils.test.ts, tests/lib/date-format-preference.test.ts, tests/components/theme-provider.test.tsx) cover only the pure formatters and the preference store; nothing renders DateCell (document-list.tsx:240-247) or dateColumn's cell, so the title-tooltip acceptance criterion and the formatter wiring are unverified — swapping formatListDate/formatFullDateTime or dropping title= would keep the suite green. The claim is accurate about the code as written. Severity is minor: it is a test-adequacy gap over thin, well-tested glue, not a demonstrated defect. Confidence is medium only because no checkout was mounted, so I could not rule out a pre-existing document-list render test elsewhere in the repo.",
+  "notes": null,
+  "diff_sha256": "sha256:92a208497f492e55209063b742fcc904d92a0adfee8da93852390d8c80a4172a",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,36 @@
+{
+  "run_id": "live-2026-08-20__agent-prs-allrounds",
+  "item_id": "pr-864",
+  "status": "ok",
+  "reason": null,
+  "error": null,
+  "config_hash": "live-agent-review-not-a-config-hash",
+  "corpus_version": "2026-08-20-agent-prs",
+  "panel_sha": "e91dd39b789e1b6b4ed75436207b526ac3b826b1",
+  "gate": {
+    "state": "live-unknown"
+  },
+  "transcript": {
+    "state": "absent"
+  },
+  "duration_ms": null,
+  "duration_source": "not-measured-live-check-run",
+  "live": {
+    "source": "check-runs",
+    "population": "union-of-answered-rounds",
+    "rounds": [
+      {
+        "sha": "e91dd39b789e1b6b4ed75436207b526ac3b826b1",
+        "lens_runs": 6,
+        "findings": 1
+      }
+    ],
+    "rounds_unioned": 1,
+    "records_before_dedupe": 1,
+    "distinct_finding_keys": 1,
+    "exact_re_reports_collapsed": 0,
+    "dedupe": "review-panel.mjs::dedupeFindings — the panel's own rule, composed not re-implemented",
+    "spans_multiple_trees": false,
+    "ingested_from": "panel-ingest.mjs ingest-union"
+  }
+}

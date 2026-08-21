@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "docs/tasks/active/20260812-docs-font-color-reset-todo.md::large unrequested scope beyond the issue's single acceptance criterion",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The diff confirms every element of the claim: the acceptance criterion is satisfied by the toolbar `undefined` change plus `resolveStoredColor` in the paint paths, while the branch additionally ships OOXML Map/coercion hardening across packages/slides/src/export/pptx/{shape,connector,layout,animation,theme}.ts and docs' DOCX_ALIGNMENTS/toHeadingStyleId, a ~370-line PUT validation/repair contract in docs-content.controller.ts, the new shared codec packages/docs/src/model/crdt-attrs.ts, and two independent Yorkie fixes (removeNodeStyle subtree over-removal, the setBlockType table-inline splice guard at yorkie-doc-store.ts:1466–1494). The branch's own todo file (\"Scope grown during review\") explicitly states \"Everything above is issue #728. The work below is not,\" corroborating the claim. That the scope was forced by review findings and the no-split decision was a recorded maintainer call bears on justification, not on whether the unrequested scope exists — it plainly does. As a design-fit finding it is real but process-level: the extra code is itself fixes/hardening, so impact is on reviewability and revert granularity rather than user-facing correctness.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

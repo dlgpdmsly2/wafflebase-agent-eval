@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::the url printed for copy-paste omits `clistate`, so copying it makes the login fail with a misleading \"upgrade the server\" message",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified the full chain in the supplied code: login.ts prints the nonce-less URL (`Opening browser: ${server}/auth/github?mode=cli&port=${port}`) while oauthUrl carries `cliState`; github-auth.guard.ts:26 returns undefined for an absent cliState so a nonce-less flow is stored; auth.controller.ts redirects with no `state` param when `state.cliState` is falsy; and login.ts's listener then rejects with UNBOUND_CALLBACK_MESSAGE (\"Upgrade the server...\") and settles the login. A user copy-pasting the visibly printed URL (still documented as a copy-paste affordance in cli.md step 3) thus gets a login failure with a false server-version diagnosis. It is a deliberate secrecy tradeoff with a fallback (the full URL prints when open() throws), and the failure is recoverable by re-running, so impact is a misleading-error UX defect rather than a functional or security break.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

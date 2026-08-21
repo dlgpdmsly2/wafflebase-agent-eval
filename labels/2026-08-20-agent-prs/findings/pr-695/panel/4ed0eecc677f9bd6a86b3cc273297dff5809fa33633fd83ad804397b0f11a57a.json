@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-695",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/schema/registry.ts::`sheets import` silently ignores `--start` for exported `ref,value,formula` csvs, but the agent-facing schema still advertises it unconditionally",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in the supplied files: `sheets-import.ts` branches `isCellTable(rows) ? buildCellMapFromTable(rows) : buildCellMap(rows, startRow, startCol)`, and `buildCellMapFromTable` (csv-parse.ts) keys cells off the `ref` column only, never touching `startRow`/`startCol` — so `--start` is genuinely inert for a `ref,value,formula[,style]` CSV. The `sheets.import` entry in registry.ts still declares `'--start': { type: 'string', required: false, description: 'Top-left cell', default: 'A1' }` with no qualification, while the PR did add that caveat to `packages/cli/skills/sheets-import-export.md` (\"imported by reference … and `--start` does not apply\"), confirming the registry is the drifted copy. The secondary point — that the by-reference mode is triggered implicitly by header sniffing with no diagnostic, unlike the explicit `--raw` on export — also matches the code. I could not inspect `packages/documentation/developers/cli.md:348` (not supplied and the diff doesn't touch the import options table), so that part of the prose is unverified, but the registry claim alone stands. This is interface/doc drift on the agent-facing schema rather than a runtime bug, so minor.",
+  "notes": null,
+  "diff_sha256": "sha256:96865731bf719c4343397260f43ba2a54b21da7d1788e3a17dfad3ebd526ff29",
+  "class_id": null,
+  "class_members": null
+}

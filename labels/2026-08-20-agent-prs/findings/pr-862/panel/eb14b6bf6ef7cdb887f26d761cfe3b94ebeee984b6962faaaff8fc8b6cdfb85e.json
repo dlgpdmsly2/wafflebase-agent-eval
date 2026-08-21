@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-862",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/model/document.ts::enter at offset 0 of a bulleted heading strands the remembered level on the empty leading bullet; the heading's text loses it (asymmetric with a plain heading)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified from the supplied packages/docs/src/model/document.ts: in splitBlock, a non-empty list-item always yields newType='list-item' (the heading-preserving branch only applies to title/subtitle/heading types), so Enter at offset 0 of a bulleted heading splits into a plain list-item carrying all the text. The PR's own docs (docs/design/docs/docs.md) and the new Yorkie split test confirm applySplitBlock drops headingLevel from the non-heading new half while the original block retains the memory — so at offset 0 the memory strands on the empty leading bullet and the heading text loses it, asymmetric with a plain heading which stays a heading. No test covers offset 0. I could not read applySplitBlock's actual body (empty checkout), hence medium confidence; but every readable line matches the claim. Impact is a narrow edge case that silently loses heading formatting, so minor.",
+  "notes": null,
+  "diff_sha256": "sha256:38089d0e3481456bf46377ddd5a3eb74189cea39b5f3366ee11f4f510e9fa79c",
+  "class_id": null,
+  "class_members": null
+}

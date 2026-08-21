@@ -1,0 +1,403 @@
+diff --git a/docs/design/slides/slides-keyboard-shortcuts.md b/docs/design/slides/slides-keyboard-shortcuts.md
+index 2fcb49d9..2db30927 100644
+--- a/docs/design/slides/slides-keyboard-shortcuts.md
++++ b/docs/design/slides/slides-keyboard-shortcuts.md
+@@ -133,6 +133,37 @@ focused element is inside an interactive widget (`role="dialog"`,
+ `role="menu"`, focused `<button>`, etc.) so the help modal's own Tab
+ navigation doesn't get hijacked by the slides Tab-cycle rule.
+ 
++**Toolbar focus release.** The gate must hold for the *duration* of a
++toolbar interaction, not forever after it. A plain `<button>` keeps focus
++once clicked, and Radix hands focus back to the *trigger* when a dropdown
++closes — so without a counterpart the gate stays engaged and arrow keys /
++`Delete` / the z-order shortcuts stop reaching the canvas until the user
++clicks it again (issue #882). The counterpart is
++`useCanvasFocusRelease()` (`packages/frontend/src/components/toolbar-focus-release.ts`),
++called by the desktop slides toolbar, which marks its root with
++`data-canvas-toolbar`: on `focusin` inside that root it defers one task and
++then blurs the focused control back to `document.body` (via the existing
++`releaseFocusToBody()`), so the next `keydown` targets the body and the
++rules run again. It deliberately does nothing when
++
++- the focused element is not button-like (a toolbar `<input>` — zoom, font
++  size — owns the keyboard while focused),
++- the control's popup is still open (`data-state="open"` /
++  `aria-expanded="true"`; `Toggle`'s `on`/`off` states do not match),
++- the focus did not arrive from a pointer-driven toolbar interaction — the
++  last `pointerdown` must have landed in the toolbar or in a portalled
++  popup, and any `Tab` press clears that, so keyboard navigation into the
++  toolbar keeps focus where the user put it,
++- focus has already moved on by the time the deferred check runs — which is
++  what makes text-edit controls (they end with `editor.focus()` on the
++  hidden textarea) and menu triggers handing focus to their content
++  no-ops.
++
++Board carries its own copy of the same `<button>` branch
++(`packages/frontend/src/app/board/is-editable-target.ts`); the attribute is
++opt-in, so the board toolbar can adopt the hook when that surface is
++verified.
++
+ Exceptions:
+ 
+ - `Cmd+/` (help modal) bypasses the gate — help should always open.
+diff --git a/docs/tasks/active/20260819-slides-toolbar-focus-release-lessons.md b/docs/tasks/active/20260819-slides-toolbar-focus-release-lessons.md
+new file mode 100644
+index 00000000..6b9a6f91
+--- /dev/null
++++ b/docs/tasks/active/20260819-slides-toolbar-focus-release-lessons.md
+@@ -0,0 +1,35 @@
++# Slides Toolbar → Canvas Focus Release — Lessons
++
++Running log of non-obvious findings while implementing
++`20260819-slides-toolbar-focus-release-todo.md` (issue #882).
++
++## Lessons
++
++- **Blurring a button between `pointerdown` and `click` does not cancel the
++  click.** The focus release is scheduled from `focusin` (which fires during
++  `pointerdown`) and can therefore land before the button's own `click`
++  handler. That is safe: a `click` is dispatched to the element under the
++  pointer regardless of focus, so the toolbar action still runs.
++
++- **Radix's "return focus to the trigger" is the actual failure path.** The
++  Escape-after-open repro never produces a click on the toolbar at all —
++  Radix calls `trigger.focus()` on close. So a click-only release would fix
++  the plain-button case and leave the menu case dead; the hook has to watch
++  `focusin`, not `click`.
++
++- **Radix `Toggle` also carries `data-state`, but with `on`/`off`.** The
++  "popup still open" guard has to compare against `"open"` exactly —
++  matching any `data-state` would make every pressed toggle (format painter,
++  Bold) unreleasable.
++
++- **Text-edit controls already end with `editor.focus()`.** Deferring the
++  release by one task and re-reading `document.activeElement` makes those
++  paths self-correcting: by the time the check runs the hidden textarea owns
++  focus, the activeElement is no longer a toolbar button, and the release
++  no-ops. No text-edit special case was needed.
++
++- **Frontend co-located component tests are fine now.** The stale claim in
++  `20260711-slides-gradient-editing-todo.md` ("frontend components have NO
++  RTL tests; test.include is `tests/**` only") no longer holds: `vite.config.ts`
++  includes `src/**/*.test.tsx` and `src/app/slides/toolbar/arrange-menu.test.tsx`
++  drives Radix menus through `@testing-library/user-event`.
+diff --git a/docs/tasks/active/20260819-slides-toolbar-focus-release-todo.md b/docs/tasks/active/20260819-slides-toolbar-focus-release-todo.md
+new file mode 100644
+index 00000000..8d4d59a7
+--- /dev/null
++++ b/docs/tasks/active/20260819-slides-toolbar-focus-release-todo.md
+@@ -0,0 +1,57 @@
++# Slides Toolbar → Canvas Focus Release (issue #882)
++
++**Goal:** After a toolbar control has been used and any menu it opened is
++dismissed, the slide canvas is the keyboard target again — the selected
++element responds to arrow keys, `Delete` and the z-order shortcuts without
++needing another canvas click.
++
++**Diagnosis (from the issue, confirmed in code):** every rule in
++`buildKeyRules` is gated on `!isEditableTarget(e.target)`, and
++`isEditableTarget` answers `true` for a focused `<button>`
++(`packages/slides/src/view/editor/interactions/keyboard.ts:882`). Radix
++returns focus to the *trigger* when a dropdown closes, and a plain button
++keeps focus after a click, so from then on every document-level `keydown`
++carries a toolbar button as `e.target` and every shortcut is skipped. The
++gate is deliberate (Enter on a focused button must activate it; Tab inside
++the shortcuts dialog must not hit the slides Tab-cycle rule) — the gap is
++that nothing hands focus back once the toolbar interaction is over.
++
++**Approach:** keep the gate; release focus at the end of a *pointer-driven*
++toolbar interaction. A new `useCanvasFocusRelease()` hook watches
++`focusin` inside any element marked `data-canvas-toolbar` and, on the next
++task, blurs the focused toolbar button (`releaseFocusToBody()`, the helper
++slides colour palettes already use). Guards:
++
++- only `<button>` / `role="button"` are released — inputs (zoom, font size)
++  legitimately keep focus;
++- a trigger whose popup is still open (`data-state="open"` /
++  `aria-expanded="true"`) is left alone, so opening a menu still works;
++- the release only fires when the focus arrival is part of a pointer-driven
++  interaction (last `pointerdown` landed in the toolbar or in a portalled
++  popup, and no `Tab` has been pressed since) — Tab-navigating into the
++  toolbar keeps focus where the keyboard user put it;
++- the check is deferred one task and re-reads `document.activeElement`, so a
++  trigger that hands focus to its portalled content, and text-edit controls
++  that end with `editor.focus()`, are both no-ops.
++
++## Tasks
++
++- [x] Add `packages/frontend/src/components/toolbar-focus-release.ts` with
++      `CANVAS_TOOLBAR_ATTR` + `useCanvasFocusRelease()`.
++- [x] Mark the desktop slides toolbar root with the attribute and call the
++      hook from `packages/frontend/src/app/slides/toolbar/index.tsx`.
++- [x] Co-located RTL test: plain-button click releases, menu open keeps
++      focus, Escape-close releases, menu-item select releases, Tab into the
++      toolbar keeps focus, input keeps focus.
++- [x] Document the rule in `docs/design/slides/slides-keyboard-shortcuts.md`
++      next to the editable-target gate.
++
++## Out of scope
++
++- The identical `tag === "BUTTON"` branch in
++  `packages/frontend/src/app/board/board-editing-parity`-era
++  `packages/frontend/src/app/board/is-editable-target.ts:27`. The issue
++  flags it as a pointer, not a claim; the new attribute is opt-in, so board
++  can adopt the hook later without touching this change.
++- The mobile slides toolbar (bottom sheets, no hardware keyboard target).
++- Any change to `isEditableTarget` itself.
+diff --git a/packages/frontend/src/app/slides/toolbar/index.tsx b/packages/frontend/src/app/slides/toolbar/index.tsx
+index f4aa237c..d420067f 100644
+--- a/packages/frontend/src/app/slides/toolbar/index.tsx
++++ b/packages/frontend/src/app/slides/toolbar/index.tsx
+@@ -1,6 +1,7 @@
+ import { useEffect, useState } from "react";
+ import type { SlidesEditor, SlidesStore, Theme } from "@wafflebase/slides";
+ import { Toolbar, ToolbarSeparator } from "@/components/ui/toolbar";
++import { useCanvasFocusRelease } from "@/components/toolbar-focus-release";
+ import { useIsMobile } from "@/hooks/use-mobile";
+ import type { ZoomController } from "../zoom-controller";
+ import { getToolbarState, type ToolbarState } from "./state";
+@@ -62,6 +63,11 @@ export function SlidesToolbar({
+   const [state, setState] = useState<ToolbarState>(() =>
+     getToolbarState(editor, store),
+   );
++  // A used toolbar control must not keep the keyboard: the slide canvas
++  // reads shortcuts from a document-level listener that ignores events
++  // targeting a focused <button> (issue #882). The desktop `<Toolbar>`
++  // below opts in with `data-canvas-toolbar` (= `CANVAS_TOOLBAR_ATTR`).
++  useCanvasFocusRelease();
+ 
+   useEffect(() => {
+     // The Google Fonts <link> is injected by useGoogleFontsLink() in
+@@ -101,7 +107,7 @@ export function SlidesToolbar({
+   }
+ 
+   return (
+-    <Toolbar>
++    <Toolbar data-canvas-toolbar="">
+       <UndoRedoGroup store={store} />
+       <ToolbarSeparator />
+       <FormatPainterButton editor={editor} />
+diff --git a/packages/frontend/src/components/toolbar-focus-release.test.tsx b/packages/frontend/src/components/toolbar-focus-release.test.tsx
+new file mode 100644
+index 00000000..dacdd2a3
+--- /dev/null
++++ b/packages/frontend/src/components/toolbar-focus-release.test.tsx
+@@ -0,0 +1,94 @@
++/**
++ * `useCanvasFocusRelease` — issue #882.
++ *
++ * The failure being guarded: after any toolbar control is used, the focused
++ * toolbar `<button>` becomes the `keydown` target and the slides editor
++ * skips every shortcut rule. These tests drive a miniature toolbar (a plain
++ * button, a Radix dropdown, a text input) the way the repro does and assert
++ * where focus ends up.
++ */
++
++import { describe, expect, it } from "vitest";
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import {
++  DropdownMenu,
++  DropdownMenuContent,
++  DropdownMenuItem,
++  DropdownMenuTrigger,
++} from "@/components/ui/dropdown-menu";
++import { useCanvasFocusRelease } from "./toolbar-focus-release";
++
++function Harness() {
++  useCanvasFocusRelease();
++  return (
++    <div data-canvas-toolbar="">
++      <button type="button">Format painter</button>
++      <input aria-label="Zoom" defaultValue="100%" />
++      <DropdownMenu>
++        <DropdownMenuTrigger>Arrange</DropdownMenuTrigger>
++        <DropdownMenuContent>
++          <DropdownMenuItem>Bring to front</DropdownMenuItem>
++        </DropdownMenuContent>
++      </DropdownMenu>
++    </div>
++  );
++}
++
++/** Focus back on the body is what makes the canvas the keydown target. */
++async function expectFocusReleased() {
++  await waitFor(() => expect(document.activeElement).toBe(document.body));
++}
++
++describe("useCanvasFocusRelease", () => {
++  it("releases focus after a plain toolbar button is clicked", async () => {
++    render(<Harness />);
++    await userEvent.click(screen.getByRole("button", { name: "Format painter" }));
++    await expectFocusReleased();
++  });
++
++  it("keeps focus on a trigger whose menu is open", async () => {
++    render(<Harness />);
++    const trigger = screen.getByRole("button", { name: "Arrange" });
++    await userEvent.click(trigger);
++    await screen.findByRole("menu");
++    // Radix moves focus into the portalled content; either way the trigger
++    // must not be blurred out from under an open menu.
++    await waitFor(() => expect(document.activeElement).not.toBe(document.body));
++    expect(trigger.getAttribute("data-state")).toBe("open");
++  });
++
++  it("releases focus when the menu is dismissed with Escape", async () => {
++    render(<Harness />);
++    await userEvent.click(screen.getByRole("button", { name: "Arrange" }));
++    await screen.findByRole("menu");
++    await userEvent.keyboard("{Escape}");
++    await expectFocusReleased();
++  });
++
++  it("releases focus after a menu item is selected", async () => {
++    render(<Harness />);
++    await userEvent.click(screen.getByRole("button", { name: "Arrange" }));
++    await userEvent.click(await screen.findByRole("menuitem"));
++    await expectFocusReleased();
++  });
++
++  it("leaves a focused toolbar input alone", async () => {
++    render(<Harness />);
++    const input = screen.getByLabelText("Zoom");
++    await userEvent.click(input);
++    await new Promise((resolve) => setTimeout(resolve, 0));
++    expect(document.activeElement).toBe(input);
++  });
++
++  it("keeps focus when the toolbar is reached with Tab", async () => {
++    render(<Harness />);
++    const button = screen.getByRole("button", { name: "Format painter" });
++    // A prior pointer interaction must not make the next Tab release focus.
++    await userEvent.click(button);
++    await expectFocusReleased();
++    await userEvent.tab();
++    await new Promise((resolve) => setTimeout(resolve, 0));
++    expect(document.activeElement).toBe(button);
++  });
++});
+diff --git a/packages/frontend/src/components/toolbar-focus-release.ts b/packages/frontend/src/components/toolbar-focus-release.ts
+new file mode 100644
+index 00000000..e6156c22
+--- /dev/null
++++ b/packages/frontend/src/components/toolbar-focus-release.ts
+@@ -0,0 +1,118 @@
++import { useEffect } from "react";
++import { releaseFocusToBody } from "./menu-focus";
++
++/**
++ * Toolbar → canvas focus release for the Canvas-rendered editors.
++ *
++ * The slides editor reads shortcuts from a document-level `keydown`
++ * listener and skips every rule whose `e.target` is "not the slide canvas"
++ * — which includes a focused `<button>` (see `isEditableTarget()` in
++ * `packages/slides/src/view/editor/interactions/keyboard.ts`). That gate is
++ * deliberate: without it, Enter on a focused toolbar button would enter
++ * text-edit mode instead of activating the button. The problem is that a
++ * plain `<button>` keeps focus after a click, and Radix hands focus back to
++ * the *trigger* when a dropdown closes — so once any toolbar control has
++ * been touched, the gate stays engaged and arrow keys / Delete / the
++ * z-order shortcuts silently stop reaching the canvas (issue #882).
++ *
++ * This hook closes that gap by dropping focus back to the body once a
++ * pointer-driven toolbar interaction is finished. Opt a toolbar in by
++ * setting the `CANVAS_TOOLBAR_ATTR` attribute — written literally as
++ * `data-canvas-toolbar=""`, since a computed key does not type-check as a
++ * JSX spread — on its root element.
++ */
++
++/** Marks a toolbar root whose focus should return to the canvas. */
++export const CANVAS_TOOLBAR_ATTR = "data-canvas-toolbar";
++
++const TOOLBAR_SELECTOR = `[${CANVAS_TOOLBAR_ATTR}]`;
++
++/**
++ * Portalled surfaces a toolbar control can open. A pointer-down inside one
++ * of these still counts as "the user is working the toolbar", so selecting
++ * a menu item releases focus the same way clicking the trigger does.
++ */
++const POPUP_SELECTOR =
++  '[role="menu"], [role="dialog"], [role="listbox"], [data-radix-popper-content-wrapper]';
++
++/**
++ * True while `el` is a trigger whose popup is open. Radix sets both
++ * attributes on an open trigger; the `data-state` comparison is against
++ * `"open"` exactly, because `Toggle` uses the same attribute for
++ * `"on"`/`"off"` and a pressed toggle must still be releasable.
++ */
++function hasOpenPopup(el: Element): boolean {
++  return (
++    el.getAttribute("aria-expanded") === "true" ||
++    el.getAttribute("data-state") === "open"
++  );
++}
++
++/**
++ * Only button-like toolbar controls are released. Text inputs inside a
++ * toolbar (zoom, font size) legitimately own the keyboard while focused.
++ */
++function isReleasable(el: Element | null): boolean {
++  return (
++    el instanceof HTMLElement &&
++    el.closest(TOOLBAR_SELECTOR) !== null &&
++    (el.tagName === "BUTTON" || el.getAttribute("role") === "button") &&
++    !hasOpenPopup(el)
++  );
++}
++
++function isPointerDrivenTarget(target: EventTarget | null): boolean {
++  if (!(target instanceof Element)) return false;
++  return (
++    target.closest(TOOLBAR_SELECTOR) !== null ||
++    target.closest(POPUP_SELECTOR) !== null
++  );
++}
++
++export function useCanvasFocusRelease(): void {
++  useEffect(() => {
++    // Whether the focus we are about to see arrived as part of a
++    // pointer-driven toolbar interaction. A `Tab` press clears it so a
++    // keyboard user who deliberately tabs into the toolbar — or who
++    // tabbed to a trigger and then dismissed its menu — keeps focus
++    // where they put it.
++    let pointerDriven = false;
++    let pending: ReturnType<typeof setTimeout> | undefined;
++
++    const onPointerDown = (e: Event) => {
++      pointerDriven = isPointerDrivenTarget(e.target);
++    };
++
++    const onKeyDown = (e: KeyboardEvent) => {
++      if (e.key === "Tab") pointerDriven = false;
++    };
++
++    const onFocusIn = (e: FocusEvent) => {
++      if (!pointerDriven) return;
++      if (
++        !(e.target instanceof Element) ||
++        e.target.closest(TOOLBAR_SELECTOR) === null
++      ) {
++        return;
++      }
++      // Defer one task and re-read `document.activeElement`: a menu
++      // trigger hands focus to its portalled content, and text-edit
++      // controls end with `editor.focus()`. Either way focus has left the
++      // button by the time this runs, and the release no-ops.
++      clearTimeout(pending);
++      pending = setTimeout(() => {
++        if (isReleasable(document.activeElement)) releaseFocusToBody();
++      }, 0);
++    };
++
++    document.addEventListener("pointerdown", onPointerDown, true);
++    document.addEventListener("keydown", onKeyDown, true);
++    document.addEventListener("focusin", onFocusIn, true);
++    return () => {
++      clearTimeout(pending);
++      document.removeEventListener("pointerdown", onPointerDown, true);
++      document.removeEventListener("keydown", onKeyDown, true);
++      document.removeEventListener("focusin", onFocusIn, true);
++    };
++  }, []);
++}

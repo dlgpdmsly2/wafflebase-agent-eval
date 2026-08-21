@@ -1,0 +1,64 @@
+{
+  "run_id": "live-2026-08-20__agent-prs-r1",
+  "item_id": "pr-862",
+  "status": "ok",
+  "reason": null,
+  "error": null,
+  "config_hash": "live-agent-review-not-a-config-hash",
+  "corpus_version": "2026-08-20-agent-prs",
+  "panel_sha": "6e588728321eeec883b2e58554f63875f7f54838",
+  "gate": {
+    "state": "live-unknown"
+  },
+  "transcript": {
+    "state": "absent"
+  },
+  "duration_ms": null,
+  "duration_source": "not-measured-live-check-run",
+  "live": {
+    "source": "check-runs",
+    "review_commit": "6e588728321eeec883b2e58554f63875f7f54838",
+    "lens_runs": 6,
+    "lenses": [
+      "agent-review-blast-radius",
+      "agent-review-correctness",
+      "agent-review-design-fit",
+      "agent-review-docs",
+      "agent-review-security",
+      "agent-review-test-adequacy"
+    ],
+    "per_lens": {
+      "agent-review-docs": {
+        "conclusion": "success",
+        "n": 0,
+        "reason": null
+      },
+      "agent-review-blast-radius": {
+        "conclusion": "failure",
+        "n": 1,
+        "reason": null
+      },
+      "agent-review-test-adequacy": {
+        "conclusion": "success",
+        "n": 0,
+        "reason": null
+      },
+      "agent-review-design-fit": {
+        "conclusion": "failure",
+        "n": 2,
+        "reason": null
+      },
+      "agent-review-security": {
+        "conclusion": "success",
+        "n": 0,
+        "reason": null
+      },
+      "agent-review-correctness": {
+        "conclusion": "success",
+        "n": 0,
+        "reason": null
+      }
+    },
+    "ingested_from": "panel-ingest.mjs"
+  }
+}

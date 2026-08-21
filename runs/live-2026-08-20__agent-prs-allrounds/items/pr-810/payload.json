@@ -1,0 +1,1036 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/table-renderer.ts",
+      "summary": "Table-cell text still paints legacy `color: ''` through `??`, so the #728 stale-fillStyle bug survives inside tables",
+      "evidence": "`packages/docs/src/view/table-renderer.ts:457` — `const runTextColor = defaultColorResolver(style.color) ?? Theme.defaultColor;` and `:564` — `ctx.fillStyle = defaultColorResolver(cellBlock.inlines[0]?.style.color) ?? Theme.defaultColor;`. Table blocks never go through `renderRun` (paint-layout skips `block.type === 'table'` at lines 221 and 277; table-renderer does its own `ctx.font`/`ctx.fillStyle`/`ctx.fillText` at 451-483 and the list-marker path at 558-565). `defaultColorResolver` returns strings verbatim (`packages/docs/src/model/color.ts:16`), so a stored `color: ''` yields `''`, `ctx.fillStyle = ''` is ignored by the canvas, and the run keeps whatever the previous pass set — the table content pass runs *after* the selection layer (see the comment at table-renderer.ts:471-474 and the explicit `ctx.fillStyle = focused ? Theme.selectionColor : ...` at :442). The task doc for this change explicitly declines a data migration (docs/tasks/active/20260812-docs-font-color-reset-todo.md:51-52), so already-saved `''` values are the intended coverage of the renderer guard — and text in tables is not covered. Fix belongs in table-renderer.ts:457/564 (`|| Theme.defaultColor`).",
+      "lens": "blast-radius",
+      "round_commit": "541b7ff395a9b320495370712b2427bbe174bf58"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/paint-layout.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep renderListMarker across repo",
+        "read packages/docs/test/view/render-list-marker.test.ts in full",
+        "Grep \"color: ''\" / 'color: \"\"' under packages/docs/test",
+        "read new paint-layout.test.ts hunk"
+      ],
+      "summary": "renderListMarker's `?? → ||` change has no test exercising an empty-string marker color",
+      "evidence": "The diff changes `ctx.fillStyle = resolveColor(colorSource) ?? theme.defaultColor` to `|| theme.defaultColor`, but the only marker test file, packages/docs/test/view/render-list-marker.test.ts, exercises only '#FF9900' / '#1155cc' / no-color cases (lines 57-112) — every one of which passes identically before and after the change. No test passes `marker: { color: '' }` or `inline: { color: '' }`, so a regression back to `??` (marker painted in the stale fillStyle, the exact #728 failure mode) would keep the suite green. The task doc itself checks off '`renderListMarker` marker color' under the fix but lists no test for it (docs/tasks/active/20260812-docs-font-color-reset-todo.md:35,37-40).",
+      "lens": "test-adequacy",
+      "round_commit": "541b7ff395a9b320495370712b2427bbe174bf58"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/color.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep resolveColorAtPosition across repo (tests + call sites in editor.ts, text-box-editor.ts)",
+        "read packages/docs/test/model/color.test.ts in full"
+      ],
+      "summary": "resolveColorAtPosition's `?? → ||` change (caret color) is untested for the empty-string case",
+      "evidence": "Both changed lines in color.ts switch to `||` so a stored `color: ''` falls back. packages/docs/test/model/color.test.ts:104-156 covers missing block, seam offsets, role-with-no-resolver, and no-color-set — all unchanged by `??` vs `||`. There is no case with `style: { color: '' }` on either the in-span branch or the trailing `last` branch, so the caret-color half of the fix (and the trailing-inline branch generally) has zero discriminating coverage.",
+      "lens": "test-adequacy",
+      "round_commit": "541b7ff395a9b320495370712b2427bbe174bf58"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/table-renderer.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep resolveColor( across repo",
+        "Grep style.color / .color in packages/docs/src",
+        "read paint-layout.ts 220-470, 540-560",
+        "Grep applyStyle({color …) in frontend",
+        "read docs/tasks/active/20260812-docs-font-color-reset-todo.md"
+      ],
+      "summary": "Renderer guard for legacy `color: ''` is missing in the table text path, so the issue's symptom persists for text inside tables",
+      "evidence": "The task doc promises \"Renderer treats a falsy resolved color as unset, so documents already saved with `color: \"\"` … render with the theme default instead of a stale `fillStyle`\" and enumerates paintRun / renderListMarker / resolveColorAtPosition. But table cell text is painted by a separate path that still uses `??`:\npackages/docs/src/view/table-renderer.ts:457 `const runTextColor = defaultColorResolver(style.color) ?? Theme.defaultColor;`\npackages/docs/src/view/table-renderer.ts:564 `ctx.fillStyle = defaultColorResolver(cellBlock.inlines[0]?.style.color) ?? Theme.defaultColor;`\nWith a stored empty string these assign `''`, which the canvas ignores — exactly the failure mode of #728 (the previous pass is the selection/backgrounds fill). Acceptance criterion \"reset the text color → the text is uncolored\" therefore still fails for already-saved docs whose colored text lives in a table.",
+      "lens": "design-fit",
+      "round_commit": "541b7ff395a9b320495370712b2427bbe174bf58"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "searchedFor": [],
+      "summary": "Stored color values are interpolated into DOCX XML attributes without escaping, while adjacent attributes in the same element are escaped — an arbitrary color string (which this change confirms can be persisted verbatim) yields OOXML injection in the exported document.",
+      "evidence": "This change is built on the premise that a non-color string can end up stored as `InlineStyle.color` (e.g. the legacy `color: \"\"` the diff now guards against at paint time, and `defaultColorResolver` passes any string through verbatim at packages/docs/src/model/color.ts:16). The renderer path is now hardened, but the DOCX export path is not: packages/docs/src/export/docx-style-map.ts:71-77 does `defaultColorResolver(style.color)` then `parts.push(`<w:color w:val=\"${colorHex.replace('#','')}\"/>`)` and the same for `w:fill`, with no `escapeXmlAttr` — even though the very same function escapes `style.fontFamily` two lines earlier (docx-style-map.ts:53-56, with a comment explicitly warning about attribute injection). Vector: an actor who can write a color value that is not from the fixed palette (a collaborator writing the Yorkie Tree style attribute directly via the docs/slides API, or a crafted imported DOCX/PPTX whose color string survives import) sets e.g. `color = '#000\" /><w:rStyle w:val=\"x'`; on export the string closes the element and injects attacker-chosen OOXML into a file other users open. I could not confirm an end-to-end write path that bypasses the palette, hence low confidence, but the escaping asymmetry inside one function is concrete.",
+      "lens": "security",
+      "round_commit": "541b7ff395a9b320495370712b2427bbe174bf58"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/table-renderer.ts",
+      "searchedFor": [],
+      "summary": "The '' -> invalid fillStyle fix was not applied to the table renderer, so text in table cells still inherits the previous fill",
+      "evidence": "The fix converts a falsy resolved color to a fallback in `paint-layout.ts:389/558` and `color.ts:75/80`, but the parallel table text path still uses `??`: `const runTextColor = defaultColorResolver(style.color) ?? Theme.defaultColor;` (table-renderer.ts:457) and `ctx.fillStyle = defaultColorResolver(cellBlock.inlines[0]?.style.color) ?? Theme.defaultColor;` (table-renderer.ts:564). `defaultColorResolver('')` returns `''` (color.ts:16 `if (typeof c === 'string') return c;`), so `??` keeps `''` and `ctx.fillStyle = ''` is ignored by canvas — the run keeps whatever the previous pass set. In this very function the immediately preceding pass sets `ctx.fillStyle = focused ? Theme.selectionColor : Theme.selectionColorInactive` (table-renderer.ts:442), which is exactly the failure mode issue #728 describes. Documents already saved with `color: \"\"` (nothing migrates them — `parseInlineStyle` keeps `''` verbatim, yorkie-doc-store.ts:176) therefore still render wrong inside tables.",
+      "lens": "correctness",
+      "round_commit": "541b7ff395a9b320495370712b2427bbe174bf58"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/paint-layout.ts",
+      "searchedFor": [],
+      "summary": "Collapsing '' to `undefined` after the resolver bypasses theme-aware fallback, painting legacy cleared runs in the docs default color on themed slides",
+      "evidence": "`const resolvedColor = resolveColor(style.color) || undefined;` then `let textColor = resolvedColor ?? theme.defaultColor;`. For slides the injected resolver (packages/slides/src/view/canvas/text-renderer.ts:52-63 `makeColorResolver`) maps a *missing* color to the deck theme's text color (`themeText`), but a legacy `''` reaches the resolver, comes back `''`, and is turned into the docs `theme.defaultColor` (near-black) instead of being re-resolved as \"no color\" through the theme. On a dark deck theme, runs whose color was cleared before this fix paint dark-on-dark (effectively invisible) rather than in the theme text color. The correct handling is to fall back to `resolveColor(undefined)`. The same shape appears at renderListMarker (paint-layout.ts:558, `resolveColor(colorSource) || theme.defaultColor`) and in resolveColorAtPosition (packages/docs/src/model/color.ts:75/80, `|| fallback` where the slides caller passes the docs `Theme.cursorColor`, text-box-editor.ts:578-583), so the caret over such a run also reverts to the docs cursor color on a dark slide.",
+      "lens": "correctness",
+      "round_commit": "541b7ff395a9b320495370712b2427bbe174bf58"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-exporter.ts",
+      "searchedFor": [],
+      "summary": "DOCX table-cell `w:fill` still interpolates an untrusted color string unescaped — bypasses the XML escaping this delta added to run properties",
+      "evidence": "The delta closes attribute injection for `<w:color>` / `<w:shd w:fill>` inside `buildRunPropertiesXml` (packages/docs/src/export/docx-style-map.ts:78-84). The very same OOXML attribute is written for table cells without any escaping: `packages/docs/src/export/docx-exporter.ts:309-311` — `const hex = cell.style.backgroundColor.replace('#', ''); tcPrParts.push(`<w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"${hex}\"/>`)`. `CellStyle.backgroundColor` is a plain `string` (packages/docs/src/model/types.ts:441) fed from untrusted input: the DOCX importer builds it verbatim from the source file's `w:fill` attribute (`packages/docs/src/import/docx-style-map.ts:174`: `result.backgroundColor = `#${fill}``, and docx-importer.ts:431 copies it onto the cell), and HTML paste writes `td.style.backgroundColor` (packages/docs/src/view/clipboard.ts:417). Import → export round-trip therefore emits e.g. `w:fill=\"a\"/><w:b\"`, breaking the element / injecting OOXML in the exported document (also reachable from the CLI export path, packages/cli/src/docs/docx-export.ts). Fix belongs on docx-exporter.ts:310 (reuse `escapeXmlAttr`, ideally exported from docx-style-map.ts).",
+      "lens": "blast-radius",
+      "round_commit": "5e6181600bcfde575637317e08b7cc88be444164"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/paint-layout.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep underlineColor in packages/docs (src+test)",
+        "grep 728|resolveStoredColor across packages/docs",
+        "read packages/docs/test/view/paint-layout.test.ts lines 100-210",
+        "read packages/docs/test/view/render-list-marker.test.ts",
+        "read packages/docs/test/view/table-renderer.test.ts new describe block"
+      ],
+      "summary": "Underline-color '' fallback changed with no test covering it",
+      "evidence": "The delta changed `ctx.strokeStyle = resolveColor(style.underlineColor) ?? textColor` to `resolveStoredColor(resolveColor, style.underlineColor) ?? textColor` (paint-layout.ts:453). That is a real behavior change: pre-change an `underlineColor: ''` assigned '' to strokeStyle (silently ignored by canvas, inheriting whatever stroke color the previous pass left), post-change it falls back to the run's text color. No test exercises it: grepping `underlineColor` across packages/docs finds hits only in src (types.ts, text-editor.ts, paint-layout.ts) and never in test/. The added #728 tests cover only text color (paint-layout.test.ts 'renderRun cleared text color'), list markers (render-list-marker.test.ts), table cell text/markers (table-renderer.test.ts) and the helper itself (model/color.test.ts) — none set `underlineColor`. paint-layout.test.ts already has a stroke-recording ctx (`makeStrokeCtx`, asserts `s.color`), so a test would be cheap.",
+      "lens": "test-adequacy",
+      "round_commit": "5e6181600bcfde575637317e08b7cc88be444164"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/text.ts",
+      "searchedFor": [],
+      "summary": "PPTX export does not adopt the PR's \"'' means unset\" convention, so legacy cleared colors serialize as `<a:srgbClr val=\"\"/>`",
+      "evidence": "The plan (docs/tasks/active/20260812-docs-font-color-reset-todo.md, Non-goals) explicitly declines a migration: documents keep `color: \"\"` forever and every consumer is expected to treat it as unset. This delta pushed that convention through the canvas painters (paint-layout, table-renderer, resolveColorAtPosition) and through DOCX (where `defaultColorResolver('')` is falsy so the element is skipped), but the PPTX run/marker serializers guard with `!= null` only: `if (s.color != null) children.push('<a:solidFill>' + colorChildXml(storedColorToThemeColor(s.color)) + '</a:solidFill>')` (text.ts:263-266), and likewise `marker.color != null` (line 134), `s.backgroundColor != null` (270), `s.underlineColor != null` (277). A stored `''` therefore reaches `colorChildXml`, which emits `<a:srgbClr val=\"\"/>` — an invalid OOXML color attribute — for exactly the decks this PR says will keep carrying `''`. Since slides reuses the docs rich-text model, this is the same issue-#728 surface the delta chose to fix everywhere else and is the one paint/serialize path left inconsistent.",
+      "lens": "design-fit",
+      "round_commit": "5e6181600bcfde575637317e08b7cc88be444164"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-exporter.ts",
+      "searchedFor": [],
+      "summary": "DOCX table-cell `w:shd w:fill` is still interpolated unescaped — the sibling of the injection this delta just fixed for run properties",
+      "evidence": "This delta hardens `buildRunPropertiesXml` so `color`/`backgroundColor` go through `escapeXmlAttr` before landing in `<w:color w:val=\"…\">` / `<w:shd w:fill=\"…\">` (packages/docs/src/export/docx-style-map.ts:79,83). The identical sink one level up is left raw: `DocxExporter.tableToXml` does `const hex = cell.style.backgroundColor.replace('#','')` and emits `<w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"${hex}\"/>` with no escaping (docx-exporter.ts:310-311). `CellStyle.backgroundColor` is a plain `string` (packages/docs/src/model/types.ts:441) and is populated verbatim from untrusted import: the DOCX importer sets `result.backgroundColor = '#' + fill` straight from the `w:shd/@w:fill` attribute value (packages/docs/src/import/docx-style-map.ts:171-174), which the XML parser has already entity-decoded. Attack chain: attacker crafts a .docx whose table cell carries `w:fill=\"a&quot;/&gt;&lt;w:p&gt;…\"`, a victim imports it (value becomes `#a\"/><w:p>…`) and re-exports/shares as .docx; the exporter writes that string into the attribute, closing `w:fill=\"` and injecting arbitrary attacker-chosen OOXML into `word/document.xml` (and into header1.xml/footer1.xml, which route through the same `blockToXml`→`tableToXml`). Because it is arbitrary element injection into a Word document opened by a third party, it can escalate beyond corruption (e.g. injected field/`w:instrText` constructs), and it also defeats escaping-based expectations set by the diff. `escapeXmlAttr` in docx-style-map.ts:25 is module-private, so the exporter cannot currently reuse it — export it (or route cell fills through a shared helper) and escape at line 311.",
+      "lens": "security",
+      "round_commit": "5e6181600bcfde575637317e08b7cc88be444164"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep for style.color assignments in packages/docs/src (clipboard.ts, import/docx-style-map.ts)",
+        "grep for hex validation regex in packages/docs/src/export/*",
+        "read pdf-style-map.styleColor which DOES validate with /^#?([0-9a-f]{6})$/i",
+        "read full buildRunPropertiesXml"
+      ],
+      "summary": "DOCX `w:color`/`w:shd@w:fill` still emit non-hex color strings verbatim — escaping fixes well-formedness but not schema validity",
+      "evidence": "Line 77-85 now escape the resolved color, and the comment explicitly acknowledges that `InlineStyle.color` \"really can hold a non-palette string (DOCX/PPTX import…)\". But `escapeXmlAttr(colorHex.replace('#',''))` still emits whatever string arrived. `packages/docs/src/view/clipboard.ts:150-155` copies pasted HTML CSS straight into `style.color` / `style.backgroundColor`, and browsers normalize those to `rgb(255, 0, 0)` / `rgba(…)`. Exporting such a doc produces `<w:color w:val=\"rgb(255, 0, 0)\"/>`, which is not an `ST_HexColor` (6 hex digits or `auto`) — Word typically flags the part as unreadable content rather than rendering the color. The change touched exactly these two lines and hardened only the injection axis; a `/^[0-9a-fA-F]{6}$/` (or CSS-color→hex normalization) check before emitting would make the attribute valid and would make `escapeXmlAttr` unnecessary here.",
+      "lens": "correctness",
+      "round_commit": "5e6181600bcfde575637317e08b7cc88be444164"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/text.ts",
+      "summary": "PPTX export still writes arbitrary docs color strings into `<a:srgbClr val>`; the same untrusted, non-hex values this delta now normalizes on the DOCX side (rgb()/rgba() from HTML paste) produce an invalid ST_HexColorRGB deck.",
+      "evidence": "This delta added `toDocxHexColor` because `InlineStyle.color` can hold non-hex CSS (`packages/docs/src/view/clipboard.ts:151` and `:154` copy `el.style.color` / `el.style.backgroundColor` verbatim, i.e. `rgb(255, 0, 0)`). Slide text boxes edit the SAME docs model through the docs `TextEditor` (`packages/docs/src/view/text-box-editor.ts:46,666`, which routes paste through `parseHtmlToBlocks` at `packages/docs/src/view/text-editor.ts:1117`). On PPTX export the value goes `packages/slides/src/export/pptx/text.ts:277` → `storedColorToThemeColor` (`:185` → `colorFromStringOrTheme`) → `packages/slides/src/export/pptx/color.ts:36`, which only strips a leading `#`, upper-cases and XML-escapes: the emitted attribute becomes `<a:srgbClr val=\"RGB(255, 0, 0)\"/>`. Same for `backgroundColor` (`:284`), `underlineColor` (`:291`) and `marker.color` (`:134`). The new `hasColor` guard only rejects `''`, so this sink is left with the exact class of defect the docs sibling just fixed.",
+      "lens": "blast-radius",
+      "round_commit": "d07791b997622e1d68c2eea81382e42260e458ee"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/text.ts",
+      "summary": "The new `hasColor` guard only recognizes the string form of the legacy cleared color; the `{ kind: 'srgb', value: '' }` shape the docs model explicitly documents as reachable still reaches `<a:srgbClr val=\"\"/>`.",
+      "evidence": "`packages/docs/src/model/color.ts:40-43` (the counterpart fix in this PR) states that a cleared color can also arrive as \"an `{ kind: 'srgb', value: '' }` shape\". `hasColor` (`packages/slides/src/export/pptx/text.ts:180`) tests only `c != null && c !== ''`, so that object passes, `storedColorToThemeColor` returns it unchanged (`:186`), and `colorChildXml` (`packages/slides/src/export/pptx/color.ts:36`) emits `<a:srgbClr val=\"\"/>` — precisely the invalid ST_HexColorRGB the guard's own doc comment says PowerPoint rejects. Fix belongs on the new guard (or, better, on `colorChildXml` so every caller is covered).",
+      "lens": "blast-radius",
+      "round_commit": "d07791b997622e1d68c2eea81382e42260e458ee"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/text.ts",
+      "summary": "PPTX export only guards the `''` case, so the same invalid-OOXML class the delta fixes for DOCX remains for slides",
+      "evidence": "This delta argues (docx-style-map.ts:39-51, and the todo doc bullet \"DOCX export normalizes the resolved color into a valid ST_HexColor\") that `InlineStyle.color` may legitimately hold `rgb(…)` from HTML paste, `#abc`, `#RRGGBBAA`, or hostile junk, and that emitting such a value verbatim yields a document the consumer refuses to open. The PPTX sink is the identical shape but only got a `''` check: `hasColor` (text.ts:180) returns true for `'rgb(0, 128, 255)'`, and `colorChildXml` (packages/slides/src/export/pptx/color.ts:35) merely strips `#` and escapes, emitting `<a:srgbClr val=\"RGB(0, 128, 255)\"/>` — not a valid `ST_HexColorRGB`. Slides text boxes go through the docs `TextEditor` (packages/slides/src/view/editor/text-box-editor.ts:34 imports from @wafflebase/docs) whose paste path calls `parseHtmlToBlocks` (packages/docs/src/view/text-editor.ts:1117), and that copies browser CSS colors verbatim (packages/docs/src/view/clipboard.ts:151-154). So the reachable path the delta cites as the motivation for `toDocxHexColor` is left unfixed on the PPTX side. Additionally `hasColor` only tests the string arm, so the equivalent `{ kind: 'srgb', value: '' }` shape (explicitly acknowledged in packages/docs/src/model/color.ts:40-43 as reachable) still reaches `colorChildXml` and emits `val=\"\"`, the exact output the new guard exists to prevent.",
+      "lens": "design-fit",
+      "round_commit": "d07791b997622e1d68c2eea81382e42260e458ee"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/text.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "`hasColor` misses the object form of the cleared color, `{ kind: 'srgb', value: '' }`, which still serializes as `<a:srgbClr val=\"\"/>`"
+        }
+      ],
+      "summary": "PPTX export's new `hasColor` guard only filters the empty string; every other non-hex color string (CSS `rgb(...)` from HTML paste, color keywords) still reaches `<a:srgbClr val=\"…\"/>` and produces a deck PowerPoint rejects",
+      "evidence": "`hasColor()` (text.ts:180) returns true for any non-empty string, so `storedColorToThemeColor` → `colorFromStringOrTheme` → `colorChildXml` (color.ts:35) emits `escapeXmlAttr(value.replace(/^#/,'').toUpperCase())`. For a run whose `style.color` is `rgb(255, 0, 0)` this writes `<a:srgbClr val=\"RGB(255, 0, 0)\"/>` — not a valid `ST_HexColorRGB`, exactly the failure mode the DOCX half of this same commit fixed with `toDocxHexColor`. The value is reachable: slides text boxes run the docs `TextEditor` (packages/slides/src/view/editor/text-box-editor.ts:109), whose HTML-paste path assigns browser-normalized CSS verbatim — `style.color = el.style.color` (packages/docs/src/view/clipboard.ts:151) and `style.backgroundColor = el.style.backgroundColor` (line 154). The delta hardened docs/DOCX against precisely this input but left the slides emitter guarding only `''`.",
+      "lens": "correctness",
+      "round_commit": "d07791b997622e1d68c2eea81382e42260e458ee"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "searchedFor": [],
+      "summary": "`toDocxHexColor` silently discards alpha, so a fully transparent color (`rgba(r,g,b,0)` / `#RRGGBB00`) exports as an opaque solid shading instead of no shading",
+      "evidence": "Line 62 (`#RRGGBBAA` → `v.slice(0,6)`) and line 66-72 (`rgba(...)` → alpha group ignored via `(?:,[^)]*)?`) both drop the alpha channel unconditionally. `rgba(0, 0, 0, 0)` therefore yields `000000` and the exporter writes `<w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"000000\"/>` — a solid black block behind text that is transparent on screen. This is reachable from the same HTML-paste source the doc comment cites (packages/docs/src/view/clipboard.ts:154 stores whatever CSS the browser hands back, including `rgba(...)` with alpha 0). Alpha 0 should map to \"no fill\" rather than to the RGB triple.",
+      "lens": "correctness",
+      "round_commit": "d07791b997622e1d68c2eea81382e42260e458ee"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/docs/docs-docx-import-export.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "glob docs/design/**/*.md",
+        "grep 'w:color|w:shd|color' docs/design/docs/docs-docx-import-export.md",
+        "grep 'srgbClr|StoredColor|color' docs/design/slides/slides-pptx-export.md",
+        "grep 'design doc|docs/design' CONTRIBUTING.md",
+        "diff contains no docs/design changes"
+      ],
+      "summary": "New OOXML export color policy is not recorded in any design doc (CONTRIBUTING requires updating the canonical subsystem doc for non-trivial changes)",
+      "evidence": "The diff changes documented export mappings — `docs-docx-import-export.md:299-312` still states the plain `<w:color w:val>` / `<w:shd w:fill>` ↔ `style.color`/`backgroundColor` correspondence, and `slides-pptx-export.md:148-151` still documents `{kind:'srgb'} → <a:srgbClr val=\"RRGGBB\">` unconditionally, with no mention of the new rules introduced here (non-hex values drop the attribute/child, fully transparent colors drop, partial alpha renders opaque, `''` means unset). No `docs/design/**` file is touched by the diff; the only written record is the task plan `docs/tasks/active/20260812-docs-font-color-reset-todo.md`, which CONTRIBUTING.md:13-16,56-58 treats as the plan, not the design record. If reviewers consider this a bugfix only, no doc is owed; if the new shared model-level normalizer and export drop-policy count as a data-model/export contract change, the canonical docs should be updated rather than left stale.",
+      "lens": "design-fit",
+      "round_commit": "eb773207645ad1596d1e1a97da5cabf9ac8259be"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "DOCX attribute injection via `style.alignment`: the sibling sink in the very function this change hardened is still interpolated raw into `<w:jc w:val=\"...\"/>`"
+        }
+      ],
+      "summary": "`style.alignment` is interpolated unescaped and unvalidated into `<w:jc w:val=\"…\">` — the same OOXML attribute-injection sink class this change hardens for colors, three lines below the fixed code",
+      "evidence": "buildParagraphPropertiesXml does `const align = style.alignment === 'justify' ? 'both' : style.alignment;` then `parts.push(`<w:jc w:val=\"${align}\"/>`)` for anything that is not the literal 'left' (docx-style-map.ts:123-126). Unlike `fontFamily` (escaped at line 70-71) and now `color`/`backgroundColor` (normalized at 95/99), `align` gets neither escaping nor an allowlist. BlockStyle.alignment is typed as a closed union, but the runtime value comes from the Yorkie tree attributes with an unchecked cast: `partial.alignment = attrs.alignment as BlockStyle['alignment']` (packages/frontend/src/app/docs/yorkie-doc-store.ts:220), and `normalizeBlockStyle` only spreads defaults (packages/docs/src/model/types.ts:272-274) — no validation anywhere on that path. Attack: a collaborator with write access to a shared doc (or anything writing the tree attr, incl. the backend docs-tree serializer) sets the block attribute `alignment` to `center\"/><w:pStyle w:val=\"x` (or `a\" w:x=\"`); when any other user exports the document, DocxExporter emits that string verbatim into word/document.xml (and header1.xml/footer1.xml via buildHeaderFooterXml), closing the `<w:jc>` element and injecting attacker-chosen OOXML into a file other users open in Word. Note the PPTX exporter does allowlist the same field (`ALGN[block.style.alignment] ?? 'l'`, packages/slides/src/export/pptx/text.ts:79), which is the pattern missing here. Confidence is medium only because I could not confirm the Yorkie server accepts an arbitrary `alignment` attribute value from a peer client; the exporter-side sink itself is unambiguous.",
+      "lens": "security",
+      "round_commit": "eb773207645ad1596d1e1a97da5cabf9ac8259be"
+    },
+    {
+      "severity": "major",
+      "claimType": "absence",
+      "searchedFor": [
+        "read assertValidDocsBody / assertValidBlock in packages/backend/src/api/v1/docs-content.controller.ts:239-306",
+        "grep 'ALIGNMENTS|isAlignment|alignment ===|validAlign' across all packages/**/src (only layout.ts, the toolbar, and the docx export ternary match — no validator)",
+        "grep \"'center'|'right'|'justify'\" in packages/backend/src (only .spec.ts fixtures)",
+        "read normalizeBlockStyle (packages/docs/src/model/types.ts:272) — plain spread, no validation",
+        "read parseBlockStyle in both packages/backend/src/yorkie/docs-tree.ts:152 and packages/frontend/src/app/docs/yorkie-doc-store.ts:217",
+        "grep 'w:fill=|w:color=|w:val=\"${|srgbClr val=' across **/src/**/*.ts to enumerate every OOXML attribute sink",
+        "grep 'w:hyperlink|href' in packages/docs/src/export",
+        "read packages/docs/src/export/docx-exporter.ts in full (tcPr/sectPr/rels/image sinks)"
+      ],
+      "summary": "The docs content PUT API validates only the *shape* of `style`, not its values, so arbitrary strings persist into the CRDT and reach unescaped OOXML attribute sinks",
+      "evidence": "`assertValidBlock` (packages/backend/src/api/v1/docs-content.controller.ts:254-306) checks `id`, `type`, that `style` is an object, and array-ness of `inlines`/`tableData.rows`/`cells` — deliberately, per its own comment, \"just the fields the writer unconditionally dereferences\". No block-style or inline-style value is validated. `writeDocsRoot` then persists them verbatim (packages/backend/src/yorkie/docs-tree.ts:143, 174-184).\n\nThis is the enabling half of the `w:jc` injection above and is the reason that fixing only the color sinks leaves the class open: every current and future string-valued style field that an exporter interpolates is attacker-controlled. Surveyed the whole DOCX/PPTX attribute surface for other reachable string sinks — `fontFamily` is escaped (docx-style-map.ts:70-73, pptx text.ts:300), `headingLevel` is coerced with `Number()` (yorkie-doc-store.ts:438, docs-tree.ts:409) so at worst yields `Heading NaN`, `verticalAlign`/`borderStyle` are cast unchecked (yorkie-doc-store.ts:251,257) but the DOCX table writer emits no `vAlign`/`tcBorders` (docx-exporter.ts:301-323), `image.src` never enters XML (only the zip + an internally generated rId), and DOCX emits no hyperlinks at all — so `alignment` is the one live string sink today. Validating style values at the trust boundary (or per-sink allowlists) would make that robust rather than incidental.",
+      "lens": "security",
+      "round_commit": "eb773207645ad1596d1e1a97da5cabf9ac8259be"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/color.ts",
+      "searchedFor": [
+        "read model/color.ts",
+        "read slides makeColorResolver in view/canvas/text-renderer.ts",
+        "read slides resolveColor in model/theme.ts"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "`resolveStoredColor` normalizes only the bare `''` before the resolver, so the `{ kind: 'srgb', value: '' }` form the PPTX exporter explicitly guards against still bypasses the theme branch"
+        }
+      ],
+      "summary": "`resolveStoredColor` only collapses the bare `''` before the resolver, so the `{ kind: 'srgb', value: '' }` form the docstring calls reachable lands on the docs default instead of the theme color",
+      "evidence": "`return resolve(c === '' ? undefined : c) || undefined;` — the pre-resolver normalization matches only the string `''`. For `{ kind: 'srgb', value: '' }` (a shape the function's own doc comment and the new PPTX test both call reachable) slides' `makeColorResolver` → `resolveColor` (slides/src/model/theme.ts:100-116) returns `''`, which the trailing `|| undefined` turns into `undefined`, so `renderRun`/`renderListMarker` fall back to `theme.defaultColor` (docs near-black) rather than the deck theme's text color. That is exactly the dark-deck failure the comment says the 'before' half exists to prevent, just for the object arm.",
+      "lens": "correctness",
+      "round_commit": "eb773207645ad1596d1e1a97da5cabf9ac8259be"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep onReset/color: \"\" across packages/frontend/src",
+        "read serializeCellStyle + applyCellStyle in yorkie-doc-store.ts",
+        "grep removeStyleByPath call sites",
+        "read docs-table-context-menu.tsx:230"
+      ],
+      "summary": "Table-cell \"No fill\" reset still cannot clear the stored fill — the #728 reset class the diff fixes for runs is left broken for cells",
+      "evidence": "The diff fixes run color/highlight resets by passing `undefined` (handled by `removedInlineStyleAttrs` + `tree.removeStyleByPath`, yorkie-doc-store.ts:144/1881). The cell path was not updated: `docs-table-context-menu.tsx:230` calls `editor.applyTableCellStyle({ backgroundColor: \"\" })`; `serializeCellStyle` (yorkie-doc-store.ts:238) does `if (s.backgroundColor) attrs.backgroundColor = ...`, so the empty string is dropped from the attribute map, and `applyCellStyle` (line 2426) only calls `tree.styleByPath(...)` with no `removeStyleByPath`. Because `styleByPath` merges, the previous `backgroundColor` attribute survives in the CRDT: locally the cache shows `''` (renders as no fill), but the fill reappears for peers and after reload. Same root cause as issue #728, one call site away from the guard the diff added.",
+      "lens": "correctness",
+      "round_commit": "eb773207645ad1596d1e1a97da5cabf9ac8259be"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep assertValidDocsBody|assertValidBlock across repo",
+        "read docs-content.controller.ts:120-334",
+        "grep headers|footers|header in packages/backend/src/yorkie/docs-tree.ts"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "Slides PUT arm never validates the docs blocks its text elements carry, so the same alignment guard does not apply there"
+        }
+      ],
+      "summary": "New `style.alignment` validation is bypassed by header/footer blocks in the same PUT body",
+      "evidence": "`assertValidDocsBody` only iterates `body.blocks` (docs-content.controller.ts:249-251), but `writeDocsRoot` also persists `document.header.blocks` and the footer counterpart verbatim (packages/backend/src/yorkie/docs-tree.ts:289-293). A PUT payload carrying `{ blocks: [], header: { marginFromEdge: 0, blocks: [{ id:'b1', type:'paragraph', style:{ alignment: 'center\"/><w:jc w:val=\"right' }, inlines: [] }] } }` reaches Yorkie without ever passing through `assertValidBlockStyle`, and those same blocks are fed to `buildParagraphPropertiesXml` when header1.xml/footer1.xml are generated. The exporter's new `DOCX_ALIGNMENTS` clamp is what still saves the file, so the API-level guard the diff advertises is only half-applied. Fix belongs in `assertValidDocsBody`: validate `header`/`footer` blocks too.",
+      "lens": "blast-radius",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/slides/slides-pptx-export.md",
+      "summary": "Design doc claims the shared `toRgbHexColor` normalizes `<a:srgbClr val>` in `color.ts`, but the implementation only normalizes at the two call sites in `export/pptx/text.ts`",
+      "evidence": "The doc edit is placed under the \"**Colors (`color.ts`)**\" bullet: \"`{ kind: 'srgb', hex }` → `<a:srgbClr val=\"RRGGBB\">`, where the hex is first normalized by the shared `toRgbHexColor`\". But `packages/slides/src/export/pptx/color.ts:35` is untouched and still does `escapeXmlAttr(c.value.replace(/^#/, '').toUpperCase())`. Every other srgbClr sink that flows through `colorChildXml`/`solidFillXml`/`gradFillXml` (shape fills, gradient stops, shadow colors, `theme.ts:84` clrScheme) therefore still emits whatever string the model holds. The doc describes a sink-level invariant that the change implements only at the caller level for run/marker text, so the normalization is at the wrong layer and the doc overstates the guarantee.",
+      "lens": "design-fit",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Backend block-alignment value validation is unrequested scope, unrelated to the issue, and changes the REST contract"
+        }
+      ],
+      "summary": "Alignment hardening (backend PUT validation + `DOCX_ALIGNMENTS` closed map) is unrelated to the originating color-reset issue (#728) — unrequested scope creep",
+      "evidence": "Every other hunk in the change is traceable to #728 (empty-string reset color: `resolveStoredColor`, `toRgbHexColor`, the picker passing `undefined`, cell-style attribute removal). `assertValidBlockStyle` in the backend controller and `DOCX_ALIGNMENTS` in `docs-style-map.ts` validate `style.alignment`, which no path in #728 touches. It is a separate concern (OOXML attribute injection via alignment) bundled into a rendering/data-model bug fix, with a new API-level 400 behavior that is not recorded in `docs/design/rest-api.md`.",
+      "lens": "design-fit",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/docs/docs-tables.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'removeStyleByPath|removedInlineStyleAttrs' in docs/design (only docs-intent-preserving-edits.md:240, about applyCellSpan)",
+        "grep 'applyCellStyle|backgroundColor|No fill|Reset' in docs/design/docs/docs-tables.md",
+        "read docs/design/docs/docs-tables.md:125-170",
+        "glob docs/design/**/*.md for a cell-style/table-styling doc"
+      ],
+      "summary": "Cell-style clear semantics changed but the canonical tables design doc was not updated (still shows `backgroundColor=\"\"` as a stored cell attribute)",
+      "evidence": "This delta adds `removedCellStyleAttrs` + `removeStyleByPath` to `applyCellStyle` (packages/frontend/src/app/docs/yorkie-doc-store.ts:249,2432), establishing the convention that a cleared cell attribute is REMOVED from the Yorkie cell node rather than merged over with an empty value. The canonical subsystem doc `docs/design/docs/docs-tables.md` — the doc that specifies the cell node attribute set (lines 156-166) and shows the tree shape — still depicts `cell(backgroundColor=\"\" …)` at line 138 and describes `backgroundColor` simply as \"CSS color string\" with no mention that clearing removes the attribute. Two design docs WERE updated in this PR (docs-docx-import-export.md, slides-pptx-export.md), so the omission is specific to the table cell-style contract this delta actually changes.",
+      "lens": "design-fit",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "summary": "The new API-side alignment allowlist never runs on header/footer blocks (or on slides text-body blocks), so the same value it rejects can still be persisted through the same endpoint",
+      "evidence": "`assertValidBlockStyle` is only reached from `assertValidBlock`, and `assertValidDocsBody` (controller.ts:249-251) walks only `body.blocks`. But `writeDocsRoot` also persists `document.header.blocks` and `document.footer.blocks` (`packages/backend/src/yorkie/docs-tree.ts:289-303`, each child built with the same `buildBlockNode`, whose `serializeBlockStyle` writes `alignment: style.alignment` verbatim at `:143`). So `PUT /api/v1/workspaces/:ws/documents/:id/content` with `{\"blocks\":[],\"header\":{\"marginFromEdge\":0,\"blocks\":[{\"id\":\"b1\",\"type\":\"paragraph\",\"style\":{\"alignment\":\"center\\\"/><w:jc w:val=\\\"right\"},\"inlines\":[]}]}}` bypasses the gate entirely, and the value flows to the *same* sink via `DocxExporter.buildHeaderFooterXml` → `blockToXml` → `buildParagraphPropertiesXml`, landing in `word/header1.xml`. The identical hole exists on the slides arm: `assertValidSlidesBody`/`assertValidElement` (controller.ts:415-435) check only `id`/`type`/`frame`, so element text-body blocks carry arbitrary `style.alignment` into `ALGN[...]` in the PPTX exporter. Header/footer blocks also skip every other block check (`id`, `type`, `style`, `inlines`), so a malformed block reaches `buildBlockNode` unguarded. Exploitability of the alignment payload is currently blocked by the exporter-side lookup — but that lookup has the prototype-chain hole reported separately, and the guard reads as covering a sink it does not cover. Fix: run `assertValidBlock` over `body.header?.blocks` / `body.footer?.blocks` (and over slides element text bodies).",
+      "lens": "security",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/model/color.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "New `isEmptyStoredColor` dereferences a null `StoredColor`, crashing the render path on attacker-controlled slide JSON (stored DoS)"
+        }
+      ],
+      "summary": "New `isEmptyStoredColor` dereferences an untrusted `StoredColor` without a type guard — a `null` color or an `{ kind: 'srgb', value: <non-string> }` persisted through the content PUT API throws a TypeError inside the paint path, crashing the renderer for every viewer of the document (stored DoS).",
+      "evidence": "`isEmptyStoredColor` (packages/docs/src/model/color.ts:59-63) does `if (c === undefined) return false;` then `typeof c === 'string' ? ... : c.kind === 'srgb' && c.value.trim() === ''`. For `c === null` (typeof 'object', not undefined) it evaluates `c.kind` → `TypeError: Cannot read properties of null`. For `{ kind: 'srgb', value: 42 }` it evaluates `(42).trim()` → `TypeError: c.value.trim is not a function`. Before this delta the same input was harmless: `resolve(c === '' ? undefined : c)` passed `null` straight to the resolver, and slides' `makeColorResolver` (packages/slides/src/view/canvas/text-renderer.ts:55) returns the theme text color for `c == null`, while `resolveColor` (packages/slides/src/model/theme.ts:102) returns a non-string `value` verbatim without throwing. Attack path: an authenticated caller (workspace member or API key) PUTs a slides body to `PUT /api/v1/workspaces/:ws/documents/:id/content`; `assertValidSlidesBody`/`assertValidElement` (packages/backend/src/api/v1/docs-content.controller.ts:415-435) validate only `id`/`type`/`frame`, and `writeSlidesRoot` assigns `root.slides = document.slides` verbatim (packages/backend/src/yorkie/slides-tree.ts:104), so `slides[i].elements[j].text.blocks[k].inlines[l].style.color = null` (or `{kind:'srgb',value:42}`) is persisted unchanged. Every client that renders the deck reaches `resolveStoredColor` from `paintLayout` (packages/docs/src/view/paint-layout.ts:388, 453, 555), `table-renderer.ts:464/573` and `resolveColorAtPosition` (color.ts:182) and throws, so the canvas render loop dies for all collaborators until the poisoned value is removed out-of-band. Fix: make the guard total (`typeof c !== 'object' || c === null` → false; `typeof c.value === 'string' && c.value.trim() === ''`).",
+      "lens": "security",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/text.ts",
+      "summary": "PPTX `<a:pPr lvl>` still raw-interpolates untrusted `block.listLevel` in the same function whose color children were just hardened",
+      "evidence": "`const lvl = block.listLevel ? ` lvl=\"${block.listLevel}\"` : '';` interpolates the model value with no numeric coercion or closed lookup, into `<a:pPr algn=\"${algn}\"${lvl}...>` (line 114). Unlike docs blocks (whose Yorkie Tree attributes are re-read with `Number(attrs.listLevel)` — frontend yorkie-doc-store.ts:459, backend docs-tree.ts:414), slides text bodies are plain JSON persisted verbatim by `writeSlidesRoot` (packages/backend/src/yorkie/slides-tree.ts:104) with no per-block validation in `assertValidElement` (docs-content.controller.ts:415-435). Vector: PUT slides content with `data.blocks[0].listLevel = '0\"><a:buNone/><a:pPr algn=\"l'`; a victim exporting the deck gets attacker-chosen OOXML written into `ppt/slides/slideN.xml`. Same defect class as the `<w:jc>` case this change fixed; `<a:alpha val=\"${c.alpha}\"/>` and the lumMod/tint/shade siblings in packages/slides/src/export/pptx/color.ts:25-29 interpolate model values raw for the same reason.",
+      "lens": "security",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "DOCX_ALIGNMENTS lookup walks Object.prototype, so `constructor`/`toString`/`__proto__` bypass the \"closed map\" and land in <w:jc w:val>"
+        },
+        {
+          "severity": "minor",
+          "summary": "`DOCX_ALIGNMENTS` lookup walks the prototype chain, so `alignment` values like `toString`/`constructor`/`valueOf` bypass the `?? 'left'` fallback"
+        }
+      ],
+      "summary": "`DOCX_ALIGNMENTS` lookup is not actually closed — prototype keys (`toString`, `constructor`, `__proto__`, `valueOf`) resolve to inherited values that get interpolated into `w:jc/@w:val`",
+      "evidence": "`const align = DOCX_ALIGNMENTS[style.alignment as string] ?? 'left'` indexes a plain object literal, so the prototype chain is consulted. `style.alignment === 'toString'` yields `Object.prototype.toString` (a function), which is `!== 'left'` and is stringified into `<w:jc w:val=\"function toString() { [native code] }\"/>`; `'__proto__'` yields `[object Object]`. The doc comment above claims `w:jc w:val` \"can only ever carry an ST_Jc token\", which is false — the result is a schema-invalid `ST_Jc` value that Word can refuse to open, i.e. the exact failure the change set out to prevent. Use `Object.hasOwn(DOCX_ALIGNMENTS, ...)`, a `Map`/`Set`, or `Object.create(null)`. The same pattern exists in the slides sink the comment cites as the model (`packages/slides/src/export/pptx/text.ts:79`, `ALGN[block.style.alignment] ?? 'l'`), so it is not clamped there either.",
+      "lens": "correctness",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read assertValidBlock / assertValidBlockStyle in docs-content.controller.ts",
+        "grep marginTop|alignment in packages/backend/src/yorkie/docs-tree.ts",
+        "grep normalizeBlockStyle in packages/docs/src",
+        "grep style.marginTop|style.lineHeight in packages/docs/src/view/layout.ts",
+        "grep writeDocsRoot|assertValidDocsBody across packages/backend/src to enumerate write paths"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "New block-style value validation is bypassed by the slides arm of the same PUT endpoint (and by docs header/footer blocks)"
+        }
+      ],
+      "summary": "New block-style value validation covers only `alignment`; the numeric BlockStyle fields still accept arbitrary values that become NaN in layout",
+      "evidence": "`assertValidBlockStyle` validates `style.alignment` only. `writeDocsRoot` (packages/backend/src/yorkie/docs-tree.ts:145) writes `marginTop: String(style.marginTop)` verbatim, and the read path does `partial.marginTop = Number(attrs.marginTop)` (docs-tree.ts:160) with `normalizeBlockStyle` being a bare spread (packages/docs/src/model/types.ts:272-274, no numeric coercion/guard). A PUT with `style: { marginTop: \"abc\" }` therefore lands NaN in the model, and `packages/docs/src/view/layout.ts:383` does `y += block.style.marginTop`, NaN-ing the cumulative y for every subsequent block — the whole document renders blank/garbled for every collaborator, with no way to fix it from the UI. Same exposure for `marginBottom`, `lineHeight`, `textIndent`, `marginLeft`.",
+      "lens": "correctness",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/yorkie/docs-tree.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read assertValidBlock/assertValidBlockStyle in docs-content.controller.ts",
+        "read serializeBlockStyle/parseBlockStyle in packages/backend/src/yorkie/docs-tree.ts",
+        "grep normalizeBlockStyle in packages/docs/src/model/types.ts"
+      ],
+      "summary": "Block-style validation checks alignment values but still lets `style: {}` through, persisting the literal string \"undefined\" and NaN geometry into the CRDT",
+      "evidence": "The new test explicitly asserts `{ blocks: [{ id, type:'paragraph', style: {}, inlines: [] }] }` passes validation. `writeDocsRoot`'s `serializeBlockStyle` then produces `alignment: undefined` and `lineHeight: String(undefined) === 'undefined'` (docs-tree.ts:143-148); `parseBlockStyle` (line 159) does `Number('undefined') → NaN` and `normalizeBlockStyle` spreads that NaN over the default, so `marginTop`/`lineHeight` become NaN and `computeLayout`'s `y += block.style.marginTop` NaNs out the whole document layout. If the controller is now validating block-style *values*, the required numeric fields are the ones that actually corrupt the document when missing.",
+      "lens": "correctness",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/pdf-style-map.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep backgroundColor in packages/docs/src/export",
+        "read pdf-style-map.ts styleColor",
+        "grep toRgbHexColor usages across packages"
+      ],
+      "summary": "PDF export sink was not routed through the new shared normalizer, so pasted `rgb(...)` and `#RGB` colors render as solid black",
+      "evidence": "`toRgbHexColor`'s doc comment claims \"Every export sink that writes a color into an OOXML attribute needs this\", and DOCX/PPTX were converted, but `styleColor()` still does `/^#?([0-9a-f]{6})$/i` and returns `{r:0,g:0,b:0}` on any mismatch. The very inputs the diff says are routine (`rgb(255, 0, 0)` from `view/clipboard.ts` HTML paste, and `#abc` shorthand) therefore export as BLACK text in PDF, and via pdf-painter.ts:758 / pdf-table-painter.ts:173 as a black highlight/cell fill behind the text — visibly wrong output rather than a dropped attribute.",
+      "lens": "correctness",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "critical",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "searchedFor": [],
+      "summary": "Cell-style attribute removal uses a *range* over the whole cell subtree, so `backgroundColor` is also stripped from every inline (text highlight) and nested-table node inside the cell",
+      "evidence": "`applyCellStyle` now does `tree.removeStyleByPath(cellPath, endPath, removeAttrs)` with `endPath = [...cellPath]` and last index +1 — a position range that spans the cell node AND all of its descendants (blocks, inlines, nested tables). Yorkie's tree style/removeStyle applies to every non-text node in the range (the same reason `setBlockType`'s `removeStyleByPath(blockPath, blockPath+1, ['listKind','listLevel'])` at line 1439 reaches inline nodes too — harmlessly, because those keys don't exist there). Here the attribute name collides: inline nodes store text highlight under the very same key `backgroundColor` (`serializeInlineStyle` line 122, `parseInlineStyle` line 177), and nested table cells store `backgroundColor`/`border*`/`padding`. So the new \"No fill\" reset (docs-table-context-menu.tsx:233 → `{ backgroundColor: undefined }`) silently deletes the highlight colour of every run in the cell and the fills/borders of any nested table — irreversible data loss in the CRDT. The in-memory cache is only patched for the cell (`cell.style = merged`), so the loss is invisible until reload/remote sync, and the added test (yorkie-doc-store.test.ts:2031) uses a cell whose inlines have no `backgroundColor`, so it cannot catch this. A per-node removal (or an explicit `removeStyleByPath` restricted to the cell element only, e.g. by re-setting the descendants' attrs) is needed.",
+      "lens": "correctness",
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "summary": "Frontend's copy of parseBlockStyle/serializeBlockStyle was not hardened alongside the backend's, so documents already carrying the poisoned attributes still read as NaN in the editor",
+      "evidence": "The diff hardens `packages/backend/src/yorkie/docs-tree.ts` so a partial block style is neither written as the literal string \"undefined\" nor read back as NaN. The frontend reads and writes the *same* Yorkie Tree attributes with its own untouched implementation: `serializeBlockStyle` (packages/frontend/src/app/docs/yorkie-doc-store.ts:206-215) unconditionally does `String(style.lineHeight)` etc., and `parseBlockStyle` (same file, lines 217-226) does `if ('lineHeight' in attrs) partial.lineHeight = Number(attrs.lineHeight)` with no `Number.isFinite` guard and `if ('alignment' in attrs) partial.alignment = attrs.alignment` with no `typeof === 'string'` guard. Since the PUT validation accepted `style: {}` *before* this change too (`assertValidBlock` only checked `typeof b.style === 'object'`), any document already written by the old backend serializer holds `alignment: \"undefined\"` / `lineHeight: \"undefined\"`. The backend now heals those on read; the browser editor still turns them into NaN geometry (`normalizeBlockStyle` at packages/docs/src/model/types.ts:272 is a bare spread and keeps NaN) and, on the next block-style edit, re-serializes them as the string \"NaN\" back into the CRDT (yorkie-doc-store.ts:1511). The fix belongs in the frontend reader/writer, mirroring docs-tree.ts.",
+      "lens": "blast-radius",
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "summary": "The new removeCellNodeStyle helper silently changed the removal semantics of the pre-existing applyCellSpan path from removeStyleByPath to an index-range tree.removeStyle",
+      "evidence": "`applyCellSpan` previously cleared `colSpan`/`rowSpan` with `tree.removeStyleByPath(cellPath, endPath, attrsToRemove)`; the diff replaces that with `removeCellNodeStyle` (yorkie-doc-store.ts:277-285), which computes `tree.pathToIndex(cellPath)` and calls `tree.removeStyle(from, from + 1, attrs)`. `tree.removeStyle` appears nowhere else in the repo (only `removeStyleByPath` at yorkie-doc-store.ts:1463 and :1920 and `pathToIndex` at :925), the frontend package has no `tsc` lane at all, and the index arithmetic assumption ('a child node starts exactly at idx + 1') is asserted only in a comment. If the index range does not select the cell element node, unmerging a cell (`applyCellSpan(..., { colSpan: 1 })`) stops clearing the attribute in the CRDT. The existing regression tests for that path (packages/frontend/tests/app/docs/yorkie-doc-store.test.ts:2097-2116) assert via `store.getDocument()`, i.e. the local cache — which the diff's own new tests deliberately bypass with `new YorkieDocStore(doc)` — so a CRDT-level regression on the span path would pass CI unnoticed and only surface for collaborators / after reload.",
+      "lens": "blast-radius",
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/yorkie/docs-tree.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep NaN|Number.isFinite|removeStyle in packages/backend/src/yorkie/docs-tree.spec.ts",
+        "read docs-tree.spec.ts lines 1-140"
+      ],
+      "summary": "The new non-finite guard in `parseBlockStyle` (the legacy-document read path) has no test",
+      "evidence": "`parseBlockStyle` was changed to skip attributes whose `Number(...)` is not finite, and `alignment` is now only taken when `typeof attrs.alignment === 'string'`. The comment explicitly motivates this with \"a document written before the serializer above\" (i.e. existing CRDTs holding the literal string \"undefined\"). The only new test (docs-tree.spec.ts:98 'falls back to the block defaults for a partial style') exercises the WRITE path via `writeDocsRoot` with `style: {}`, which now never emits those attributes — so the read-side guard is never hit. Nothing constructs a tree whose block attrs contain `lineHeight: \"undefined\"`/`\"abc\"` and asserts the defaults come back instead of NaN.",
+      "lens": "test-adequacy",
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "searchedFor": [
+        "grep serializeBlockStyle/parseBlockStyle across packages"
+      ],
+      "summary": "Block-style serializer is duplicated backend/frontend; only the backend copy was hardened, so the two CRDT encoders now diverge",
+      "evidence": "packages/backend/src/yorkie/docs-tree.ts `serializeBlockStyle`/`parseBlockStyle` were changed to emit only present/finite fields and to ignore non-finite attributes, but the near-identical copy in packages/frontend/src/app/docs/yorkie-doc-store.ts:206-227 still does `alignment: style.alignment` / `String(style.lineHeight)` unconditionally and `Number(attrs.x)` without a finite check. Both write and read the same Yorkie Tree, so the same document is now encoded/decoded by two different rule sets — the repo's reuse expectation would put this logic in one shared module instead.",
+      "lens": "design-fit",
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/color.ts",
+      "summary": "PPTX color modifier attributes (`alpha`, `tint`, `shade`, `lumMod`, `lumOff`) are still interpolated raw after this change removed the file's only XML escaping",
+      "evidence": "This diff deletes `import { escapeXmlAttr } from './xml.js'` from `color.ts` and replaces the escaped hex with `toRgbHexColor(c.value) ?? '000000'`, on the stated theory that normalization subsumes escaping. But lines 25-29 of the same function still do `mods.push(`<a:lumMod val=\"${c.lumMod}\"/>`)` … `<a:alpha val=\"${c.alpha}\"/>` with no coercion, and after this change nothing in the file escapes anything.\n\nVector: those fields are typed `number` but are *persisted JSON*. `packages/backend/src/yorkie/slides-tree.ts:101-104` assigns `root.slides = document.slides` verbatim, and `assertValidElement` (packages/backend/src/api/v1/docs-content.controller.ts:393-413) validates only `id`, `type` and `frame` — element `fill`/`stroke`/`effects` colors are never inspected. An authenticated workspace member (or an API key) PUTs an element whose fill is `{ kind: 'srgb', value: '#ffffff', alpha: '0\"/><a:hlinkClick r:id=\"rId2' }`. When any user later exports the deck, `fillXml → solidFillXml → colorChildXml` emits `<a:alpha val=\"0\"/><a:hlinkClick r:id=\"rId2\"/>` — attacker-chosen OOXML elements inside the generated slide part.\n\nThe same sink is reachable from the function this diff actually rewrote: `packages/slides/src/export/pptx/text.ts:213-216` copies `out.tint = c.tint; out.shade = c.shade` straight off an untrusted docs `StoredColor` role object, so `{ kind:'role', role:'accent1', tint:'1\"/><a:alpha val=\"0' }` on an inline style reaches `<a:tint val=…>` unescaped even though the srgb arm right above it is now normalized.",
+      "lens": "security",
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read assertValidBlock/assertValidDocsBody in full (controller.ts:239-312)",
+        "grep for cell.style / serializeCellStyle in packages/backend",
+        "read buildInlineNode/serializeInlineStyle in docs-tree.ts",
+        "checked for any normalization between validation and writeDocsRoot in putContent"
+      ],
+      "summary": "PUT /content validation still leaves table-cell `style` and inline items unvalidated, and the writer dereferences both → HTTP 500 instead of 400",
+      "evidence": "The diff annotates `assertValidBlock` with the claim that shape validation covers what the writer dereferences (\"Shape only. Style *values* are not constrained here…\"). But the cell loop only checks `Array.isArray(cell.blocks)` (controller.ts:292-298) — it never checks `cell.style`. `serializeCellStyle` in packages/backend/src/yorkie/docs-tree.ts:197-198 does `const s = cell.style; if (s.backgroundColor)`, so a payload like `{blocks:[{id:'t',type:'table',style:{},tableData:{columnWidths:[1],rows:[{cells:[{blocks:[]}]}]}}]}` throws `TypeError: Cannot read properties of undefined (reading 'backgroundColor')` inside `doc.update` (controller.ts:163-165) → 500, the exact failure the guard's own header comment says it exists to prevent. Same gap for `inlines` items: only `Array.isArray(b.inlines)` is checked (controller.ts:309), while `buildInlineNode` does `inline.text.length` and `serializeInlineStyle(inline.style)` (docs-tree.ts:250,254), so `inlines:[null]` or `inlines:[{text:'x'}]` also 500s.",
+      "lens": "correctness",
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/yorkie/docs-tree.ts",
+      "searchedFor": [
+        "read writeDocsRoot/buildTreeChildren/readDocsRoot in packages/backend/src/yorkie/docs-tree.ts",
+        "grep marginFromEdge across backend",
+        "read assertValidDocsBody for header/footer checks"
+      ],
+      "summary": "`writeDocsRoot` still persists the literal string \"undefined\" for header/footer `marginFromEdge`, which reads back as NaN — the same poisoning the diff fixed for block styles",
+      "evidence": "The diff replaced the unconditional `String(style.lineHeight)` writes in `serializeBlockStyle` precisely because \"writing those absent fields unconditionally would persist … the literal string `\\\"undefined\\\"` … which `parseBlockStyle` then reads back as `NaN`\". Two functions below, `buildTreeChildren` still does `attributes: { marginFromEdge: String(document.header.marginFromEdge) }` (docs-tree.ts:316 and :326) with no guard, and `readDocsRoot` inverts it as `attrs.marginFromEdge ? Number(attrs.marginFromEdge) : DEFAULT_HEADER_MARGIN_FROM_EDGE` (docs-tree.ts:464-466) — `\"undefined\"` is truthy, so `Number(\"undefined\")` = NaN reaches `header.marginFromEdge` and the layout engine. `assertValidDocsBody` never validates `body.header`/`body.footer` at all, so a PUT with `header: { blocks: [] }` (no marginFromEdge) is accepted and produces exactly this. The same unvalidated `document.header.blocks.map(...)` (docs-tree.ts:317) also TypeErrors on `header: {}` → 500.",
+      "lens": "correctness",
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "New numeric/enum block-style validation rejects PUT bodies the API previously accepted and round-tripped"
+        }
+      ],
+      "summary": "New block-style value validation is bypassable through the slides arm of the same PUT endpoint",
+      "evidence": "`assertValidBlockStyle` / `assertValidBlock` are only reached from `assertValidDocsBody` (controller.ts:250, 285). The slides arm (`assertValidSlidesBody` → `assertValidSlide` → `assertValidElement`, controller.ts:495-520) validates only `id`/`type`/`frame` and never walks `element.data.blocks`, yet slide text elements hold the *same* docs `Block`/`BlockStyle` shape (packages/slides/src/model/element.ts `TextBody.blocks`). A deck PUT with `elements[0].data.blocks[0].style.marginTop = \"lots\"` or `style.alignment = 'center\"/><w:jc…'` is persisted verbatim (yorkie-slides-store stores blocks as plain JSON) and later reaches `normalizeBlockStyle`, which is a bare spread (packages/docs/src/model/types.ts:273), so the string flows into `computeLayout` (`y += block.style.marginTop`) and NaN-poisons the layout for every viewer — exactly the failure the docs arm now 400s on. Fix belongs on the new validation code (extend it to slide element text bodies).",
+      "lens": "blast-radius",
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "searchedFor": [
+        "marginFromEdge across repo",
+        "serializeMarginFromEdge",
+        "parseMarginFromEdge"
+      ],
+      "summary": "marginFromEdge serializer/parser guard added on the backend copy of the codec but not mirrored in the frontend copy the diff claims is kept in sync",
+      "evidence": "The diff adds `serializeMarginFromEdge` / `parseMarginFromEdge` to packages/backend/src/yorkie/docs-tree.ts and states the two codecs must agree (see the new comment at packages/frontend/src/app/docs/yorkie-doc-store.ts:224 'Kept byte-identical in behavior with the backend's copy'). The frontend copy still writes `attributes: { marginFromEdge: String(header.marginFromEdge) }` at yorkie-doc-store.ts:728, :769, :2724, :2732 — persisting the literal string \"undefined\" — and still reads `marginFromEdge: Number(attrs.marginFromEdge ?? '48')` at :526 and :532 with no `Number.isFinite` guard, so a legacy or hand-edited attribute reads back as NaN and the frontend then re-persists String(NaN). The rendering client is precisely the consumer the backend guard was added to protect.",
+      "lens": "blast-radius",
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "searchedFor": [
+        "setBlockType call sites in packages/docs/src",
+        "removeStyleByPath in yorkie-doc-store.ts"
+      ],
+      "summary": "Node-scoped attribute removal introduced for cells, but the sibling subtree-range removal in setBlockType is left as-is on an invariant that may not hold",
+      "evidence": "The diff introduces `removeCellNodeStyle` because `removeStyleByPath(path, path+1, …)` spans the whole subtree, and its comment asserts the block-level calls 'get away with it only because keys like `listKind` exist on no descendant'. `setBlockType` at yorkie-doc-store.ts:1490-1494 still does the subtree-range removal of `headingLevel`/`listKind`/`listLevel`. A table block's descendants are cell blocks that DO carry `listKind`/`listLevel`/`headingLevel` (buildBlockNode serializes them for cell blocks), so if `setBlockType` is ever reached with a table block id (e.g. a multi-block selection toggled to a list via `forEachBlockInSelection`), every list-item/heading inside the table's cells is silently stripped. Confirming reachability requires checking whether the selection walkers in packages/docs/src/view/text-editor.ts skip `type === 'table'` blocks.",
+      "lens": "blast-radius",
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep assertValid in packages/backend/src/api/v1",
+        "read assertValidSlide/assertValidElement",
+        "grep textBody in backend api/v1"
+      ],
+      "summary": "New block validator still doesn't cover the slides arm of the same endpoint, so the guarantee it advertises is partial",
+      "evidence": "`assertValidDocsBody` now walks body blocks, header/footer blocks and table-cell blocks through `assertValidBlock` (alignment allowlist, finite geometry, inline shape). The same controller's slides arm (`assertValidSlide` / `assertValidElement`, lines ~461-519) never validates `element.textBody.blocks`, even though slide text bodies are docs `Block`s persisted verbatim and read back by `packages/slides/src/export/pptx/text.ts` (`ALGN`, `listLevelAttr`). The change's own lessons file records exactly this failure mode: \"a validator that walks only one of the writer's inputs is worse than none, because it reads as coverage\" (docs/tasks/active/20260812-docs-font-color-reset-lessons.md:70-73). Either extend the walker to slide text bodies or drop the API-side allowlist and rely on the sinks.",
+      "lens": "design-fit",
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/docs/docs-collaboration.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep lineHeight|alignment= in docs/design/docs",
+        "read docs/design/docs/docs-collaboration.md 60-90"
+      ],
+      "summary": "Yorkie Tree wire format changed (block style attributes now optional/omitted) with no design-doc update",
+      "evidence": "Both codecs (`packages/backend/src/yorkie/docs-tree.ts` and `packages/frontend/src/app/docs/yorkie-doc-store.ts`) now omit absent block-style attributes and ignore non-finite ones on read — a change to the persisted CRDT schema and its read/write contract. docs-collaboration.md still documents `<block ... alignment=\"left\" lineHeight=\"1.5\">` with \"Attributes carry `id`, `type`, and block-level style properties\", i.e. always-present attributes, and says nothing about the new omit/default-on-read rule. The diff updated docs-docx-import-export.md, docs-tables.md and slides-pptx-export.md but not the doc that owns this schema.",
+      "lens": "design-fit",
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/rest-api.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep validation|400|Bad Request|docs/content in docs/design/rest-api.md",
+        "read rest-api.md 205-265"
+      ],
+      "summary": "PUT /content validation contract (new 400s: alignment allowlist, inline shape, header/footer walk) is not recorded in the API design doc",
+      "evidence": "rest-api.md §5.4 describes `PUT .../content` as \"replaces the Yorkie root with the body JSON\" and documents only the 409 type mismatch. The change makes the endpoint reject payloads it previously accepted (alignment outside left/center/right/justify, non-finite `style.marginTop`, an inline without `style`, a table cell without `style`, a malformed header/footer block, a non-finite `header.marginFromEdge`) — an API contract change for CLI/API-key clients with no doc update anywhere under docs/design/.",
+      "lens": "design-fit",
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "summary": "Frontend header/footer `marginFromEdge` read was left without the NaN guard the backend copy just got — a legacy/poisoned attribute still yields NaN in the renderer",
+      "evidence": "The change hardens the backend reader (`parseMarginFromEdge` in packages/backend/src/yorkie/docs-tree.ts:353 falls back to DEFAULT_HEADER_MARGIN_FROM_EDGE for any non-finite attribute) and adds a backend test for the literal string `\"undefined\"`. The frontend store — the code that actually lays out and paints the header — still does `marginFromEdge: Number(attrs.marginFromEdge ?? '48')` at lines 526 and 532, so a node written by the pre-guard serializer (`marginFromEdge: \"undefined\"`) reads back as `NaN`. That NaN flows into `getHeaderYStart`/`getFooterYStart` (packages/docs/src/view/pagination.ts:260,274) and `doc-canvas.ts:272/318`, i.e. NaN geometry in the layout/paint path — exactly the failure mode the backend fix declares unacceptable. The companion writer at lines 728/769/2724/2732 also still does `String(header.marginFromEdge)`, so an absent value is re-persisted as the literal \"undefined\" instead of being omitted like `serializeMarginFromEdge` now does on the backend.",
+      "lens": "correctness",
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "summary": "New `style.alignment` whitelist on PUT disagrees with the reader, which passes any string through — a read-modify-write (CLI pull/push) of a document holding a legacy alignment value now 400s",
+      "evidence": "`assertValidBlockStyle` rejects any `style.alignment` not in {left,center,right,justify}. But `parseBlockStyle` (packages/backend/src/yorkie/docs-tree.ts:177 and the frontend copy at yorkie-doc-store.ts:244) accepts *any* string, including the literal \"undefined\" that the old unconditional serializer (`alignment: style.alignment` with an undefined value) could have persisted, and any other legacy token. So GET returns `style.alignment: \"undefined\"` and the very next PUT of that untouched body is rejected with 400 — the round-trip the controller comment calls \"identity on the JSON shape\" is no longer identity for such documents. The numeric fields were deliberately hardened on the read side (non-finite → default) but `alignment` was not, leaving validator and reader inconsistent.",
+      "lens": "correctness",
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read docs-content.controller.ts lines 425-560",
+        "grep 'notes?:' in packages/slides/src/model/presentation.ts",
+        "grep staticElements in packages/slides/src/model/layout.ts",
+        "grep writeSlidesRoot callers across repo"
+      ],
+      "summary": "The new slide-text block validation is reachable around: only slides[*].elements is walked, while layouts[*].staticElements, masters[*] elements and slides[*].notes carry the same docs Blocks through the same PUT into the same layout engine and exporters, unvalidated.",
+      "evidence": "assertValidSlidesBody only loops b.slides (docs-content.controller.ts:459-462) and assertValidSlide merely checks Array.isArray(s.notes) (line 490). But Slide.notes: Block[] (packages/slides/src/model/presentation.ts:45) and layout/master staticElements (packages/slides/src/model/layout.ts:70,80,105) hold the same docs Block / element shapes the new assertValidTextBodyBlocks guards for slides[*].elements. writeSlidesRoot (packages/backend/src/yorkie/slides-tree.ts:93) bulk-assigns layouts, masters and notes verbatim, so the exact out-of-range style.alignment or non-finite marginTop the diff now rejects via slides[i].elements[j].data.blocks still reaches the deck via layouts[k].staticElements[j].data.blocks or slides[i].notes[n].style on the same endpoint.",
+      "lens": "blast-radius",
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/tests/components/text-formatting/color-reset.test.ts",
+      "summary": "Color-reset test cannot distinguish `{ color: undefined }` from `{}` — the exact distinction the fix depends on",
+      "evidence": "`expect(editor.applyStyle).toHaveBeenCalledWith({ color: undefined })` (and the `backgroundColor` twin at line 87) uses jest/vitest recursive equality, which treats an explicitly-`undefined` property as equal to an absent one — `expect({}).toEqual({color: undefined})` passes. The whole point of the change is that the key must be PRESENT with value `undefined`, because the store's clear path keys off `key in style && style[key] === undefined` (see `removedCellStyleAttrs` in packages/frontend/src/app/docs/yorkie-doc-store.ts:248 and `removedInlineStyleAttrs` at :148). A regression that passed `{}` (key dropped) would leave the stale attribute on the CRDT node and still pass this test. The test does catch the old `\"\"` behavior, so it is not fully vacuous, but it does not cover the property it claims to. A `Object.keys(call[0])` / `'color' in call[0]` assertion would close it.",
+      "lens": "test-adequacy",
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'notes|Block\\[\\]|TextBody' in packages/slides/src/model",
+        "Read packages/slides/src/model/presentation.ts (Slide/Layout types)",
+        "Read packages/backend/src/api/v1/docs-content.controller.ts assertValidSlidesBody/assertValidSlide/assertValidElement",
+        "Read packages/slides/src/model/element.ts TextBody usage sites"
+      ],
+      "summary": "Slides PUT block-style validation is advertised as covering \"every text body\" but skips `slide.notes`, `layouts[].placeholders`/`staticElements`, and `masters[]` — the same partial-coverage failure the task's own lessons doc calls out",
+      "evidence": "`assertValidSlide` only checks `Array.isArray(s.notes)` and then walks `s.elements`; `assertValidSlidesBody` checks `themes`/`masters`/`layouts` are arrays and never descends into them. But `Slide.notes: Block[]` (packages/slides/src/model/presentation.ts:45) and `Layout.placeholders: PlaceholderSpec[]` / `staticElements: Element[]` (presentation.ts:61-62) hold the same docs `Block`s reaching the same layout engine (see packages/slides/src/model/placeholder-blocks.ts). docs/design/rest-api.md (new text) states: \"the same block-style value checks are applied to the docs `Block`s inside every text body — text elements, shape text, table cells and group children\", and docs/tasks/active/20260812-docs-font-color-reset-lessons.md:71-73 records the rule \"a validator that walks only one of the writer's inputs is worse than none, because it reads as coverage.\" A `NaN` marginTop or unknown alignment can still be PUT through `slides[i].notes[0].style` or through a layout placeholder.",
+      "lens": "design-fit",
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/shape.ts",
+      "searchedFor": [],
+      "summary": "Untrusted shape `data.kind` is interpolated into the OOXML `prst` attribute with no allowlist and no escaping — reachable from the v1 content PUT API that this change now walks",
+      "evidence": "`kindToPrst(kind)` returns the model value verbatim (`return kind === 'pentagonArrow' ? 'homePlate' : kind;`) and it is interpolated raw at shape.ts:94 `<a:prstGeom prst=\"${kindToPrst(data.kind)}\">`. `ShapeKind` is a type-only union, so the value is whatever JSON was persisted. Attack: PUT /api/v1/workspaces/:wid/documents/:did/content with `{\"meta\":{...},\"themes\":[],\"masters\":[],\"layouts\":[],\"slides\":[{\"id\":\"s\",\"layoutId\":\"l\",\"background\":{},\"notes\":[],\"elements\":[{\"id\":\"e\",\"type\":\"shape\",\"frame\":{},\"data\":{\"kind\":\"rect\\\"/><a:evil x=\\\"\"}}]}]}`. The new `assertValidElement` (docs-content.controller.ts:504-556) walks exactly this element and validates only `data.text` block styles, so `data.kind` passes; `writeSlidesRoot` (slides-tree.ts:105) stores `slides` verbatim. Any later PPTX export by a viewer emits attacker-chosen XML into ppt/slides/slideN.xml. This is the same sink class the change hardened for `w:jc`/`algn`/`srgbClr val`, missed here.",
+      "lens": "security",
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep writeSlidesRoot/assertValidSlidesBody across packages/backend/src",
+        "read packages/backend/src/yorkie/slides-tree.ts",
+        "read packages/slides/src/model/presentation.ts (Slide.notes, Layout.placeholders)",
+        "grep notes in packages/slides/src/export/pptx"
+      ],
+      "summary": "The new slides-arm block-style validation is bypassable within the same endpoint: `slides[].notes`, `layouts[].placeholders`/`staticElements` and `masters[]` hold the same docs Block/Element shapes and are persisted verbatim with no validation at all",
+      "evidence": "`assertValidSlide` only does `Array.isArray(s.notes)` (controller.ts:490-494) yet `Slide.notes` is `Block[]` (packages/slides/src/model/presentation.ts:45) — the same docs blocks that reach the same layout engine and are exported through `notesSlideToXml` → `textBodyToXml` (packages/slides/src/export/pptx/slide.ts:205). `assertValidSlidesBody` (controller.ts:452-458) checks only that `themes`/`masters`/`layouts` are arrays, and `writeSlidesRoot` (slides-tree.ts:102-105) assigns all four verbatim; `Layout.placeholders` is `ElementInit[]` carrying text bodies (presentation.ts:56-63). So a caller rejected for `slides[0].elements[0].data.blocks[0].style.alignment` can store the identical value in the same request via `slides[0].notes[0].style.alignment` or `layouts[0].placeholders[0].data.blocks[0].style`. docs/design/rest-api.md advertises the check for 'the docs Blocks inside every text body', so the gate reads as coverage it does not have.",
+      "lens": "security",
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "summary": "Slides text-body style validation is stricter than the slides reader, so a GET → edit → PUT round-trip of an existing deck can now 400",
+      "evidence": "`assertValidTextBodyBlocks` calls `assertValidBlockStyle` (line 602), which throws on any present style value that is not a finite number (`value !== undefined && (typeof value !== 'number' || !Number.isFinite(value))`, controller line 329-336) — so `lineHeight: null`, `marginTop: null`, or an alignment outside `BLOCK_ALIGNMENTS` is a 400. Unlike the docs arm, slide text bodies are persisted and returned VERBATIM (`writeSlidesRoot`/`readSlidesRoot` store plain JSON; the comment at line 570-576 states this explicitly and deliberately relaxes only the *structural* checks). Consequently a deck already holding such a value is readable through GET but no longer writable through PUT — the CLI read-modify-write flow breaks on data the caller never touched. The docs arm avoids this because `parseBlockStyleAttrs` drops the same values on read; the slides arm has no such normalizer. Either normalize on the slides read path or make the slides style check drop-and-continue instead of throwing.",
+      "lens": "correctness",
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "summary": "Group children are now validated with the full `assertValidElement`, which can reject decks that previously round-tripped",
+      "evidence": "`assertValidElement` now recurses into `data.children` (line 550-555) and applies the full element contract — non-empty `id` (line 509) and an object `frame` (line 519) — to nested elements that were never validated before. Group children are persisted verbatim as JSON with no reader-side normalization, so any legacy/imported group child missing `id` or `frame` turns a previously-accepted PUT into a 400, breaking GET → edit → PUT for that deck. The docs arm sidesteps this only because `readDocsRoot` synthesizes the fields it demands; nothing does that for slides.",
+      "lens": "correctness",
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/theme.ts",
+      "summary": "PPTX theme `<a:srgbClr val>` sink bypasses the new `toRgbHexColor` normalizer the diff establishes for every other color sink",
+      "evidence": "`packages/slides/src/export/pptx/theme.ts:83-84` still does `const hex = escapeXmlAttr(toSrgbHex(theme.colors[role]))` → `<a:srgbClr val=\"${hex}\"/>`, where `toSrgbHex` (theme.ts:64) is only `hex.replace(/^#/,'').toUpperCase()`. The diff's new invariant (packages/slides/src/export/pptx/color.ts:52-60: \"every attribute this function emits is either [0-9A-F]{6}, a closed ROLE_TO_SCHEME value, or a finite number\") does not hold for this file because it never routes through `colorChildXml`. `themes[]` is stored verbatim by `writeSlidesRoot` and the new `assertValidSlidesBody` validates only that `themes` is an array (packages/backend/src/api/v1/docs-content.controller.ts:472-478), so an API caller can put `rgb(255,0,0)`, `''`, or `a\"/><x y=\"` in `theme.colors[role]` and the exported deck carries a schema-invalid (escaped-but-non-hex) `ST_HexColorRGB` that PowerPoint refuses to open.",
+      "lens": "blast-radius",
+      "round_commit": "82b297659605b67a2395ccb87a070b7cf52739f2"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/shape.ts",
+      "summary": "Sibling object-literal attribute lookups (`DASH_VAL`, `KIND_TO_OOXML`, `SIZE_TO_OOXML`, `BUILT_IN_TO_TYPE`) were left as prototype-chain-walking `Record` lookups after the diff converted ALGN/UNDERLINE/PRST/DOCX_ALIGNMENTS to Maps for exactly that reason",
+      "evidence": "packages/slides/src/export/pptx/shape.ts:122/143 `DASH_VAL[stroke.dash] ?? 'dash'` → `<a:prstDash val=\"…\"/>`; packages/slides/src/export/pptx/connector.ts:55-56 `KIND_TO_OOXML[a.kind] ?? 'triangle'` / `SIZE_TO_OOXML[a.size] ?? 'med'`; packages/slides/src/export/pptx/layout.ts:53 `BUILT_IN_TO_TYPE[layout.id] ?? 'blank'`. All four read persisted, PUT-settable values (`stroke.dash`, arrowhead kind/size, `layouts[].id` — none validated by the new `assertValidLayout`), so a stored `'constructor'`/`'toString'` resolves to an inherited `Object.prototype` member, survives the `??` fallback and is stringified into an OOXML attribute — the precise failure mode the diff documents at packages/slides/src/export/pptx/text.ts:62-69 and packages/docs/src/export/docx-style-map.ts:110-118.",
+      "lens": "blast-radius",
+      "round_commit": "82b297659605b67a2395ccb87a070b7cf52739f2"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep setBlockType|applyCellSpan|removeStyleByPath|listKind in packages/frontend/tests/app/docs/yorkie-doc-store.test.ts",
+        "read packages/frontend/tests/app/docs/yorkie-doc-store.test.ts lines 1868-1969",
+        "grep removeNodeStyle in packages/frontend/src/app/docs/yorkie-doc-store.ts"
+      ],
+      "summary": "setBlockType's switch from a path-range removal to the node-scoped removeNodeStyle has no test",
+      "evidence": "The diff changes three removal sites from `removeStyleByPath(path, path+1, …)` to `removeNodeStyle` and documents the bug being fixed (\"on a table block it would also strip `listKind`/`listLevel`/`headingLevel` from every block nested in its cells\"). Two of the three sites got dedicated nested-preservation regressions in packages/frontend/tests/app/docs/yorkie-doc-store.test.ts ('should not strip backgroundColor from nodes inside the cell', 'should clear colSpan in the CRDT without touching nested cells'). The setBlockType site (line 1459) got none: the `describe('setBlockType')` block (test file lines 1868-1969) only covers a plain block losing listKind/listLevel and a cell-internal block being retyped — nothing sets a table block's type while nested list-item blocks exist inside its cells, so the exact regression the comment describes would pass unnoticed.",
+      "lens": "test-adequacy",
+      "round_commit": "82b297659605b67a2395ccb87a070b7cf52739f2"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "summary": "`<w:pStyle w:val=\"Heading${headingLevel}\">` is still interpolated raw in the very function the diff hardened against attacker-chosen alignment values",
+      "evidence": "The diff routes `<w:jc w:val>` through the closed `DOCX_ALIGNMENTS` map and adds a design-doc table claiming \"every value-typed attribute is therefore resolved through a converter that can fail closed\" (docs/design/docs/docs-docx-import-export.md §3.3). Ten lines above the new lookup, `buildParagraphPropertiesXml` still does `parts.push(`<w:pStyle w:val=\"Heading${headingLevel}\"/>`)` with neither `escapeXmlAttr` nor a converter, guarded only by `if (headingLevel)` — any non-empty string is truthy. `block.headingLevel` is untrusted at the same level `alignment` is: the v1 content PUT validator (`assertValidBlock`, docs-content.controller.ts:360-443) checks `id`/`type`/`style`/`inlines` and never looks at `headingLevel`, so `PUT .../content` with `{blocks:[{id:'b',type:'heading',headingLevel:'1\"/><w:jc w:val=\"right', style:{}, inlines:[]}]}` stores it verbatim. Attacker: a workspace member poisons a shared doc; any other member exporting DOCX gets attacker-chosen OOXML (e.g. field codes) in word/document.xml, header1.xml and footer1.xml. I could not complete the chain end-to-end: both CRDT readers coerce it (`Number(attrs.headingLevel)` at packages/backend/src/yorkie/docs-tree.ts:396 and packages/frontend/src/app/docs/yorkie-doc-store.ts:473), so today the string arrives at the exporter as NaN and the sink emits `HeadingNaN`. The sink is therefore unexploitable-by-accident rather than injection-proof, which is exactly the property the diff set out to establish here — hence low confidence, major impact if a caller ever reaches DocxExporter without the CRDT round-trip (note `putContent` echoes the raw request body back rather than re-reading, docs-content.controller.ts:175).",
+      "lens": "security",
+      "round_commit": "82b297659605b67a2395ccb87a070b7cf52739f2"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read controller.ts assertValidSlideBlocks / assertValidTextBodyBlocks in full",
+        "grep `inline\\.text\\.` and `.text.length` in packages/docs/src/view/layout.ts",
+        "read packages/slides/src/view/canvas/text-renderer.ts (only block *style* is normalized before layout, not inlines)",
+        "grep for a slides read-path inline normalizer (migrateElement / normalizeBlockStyle) — none touches inline.text"
+      ],
+      "summary": "The new slides-arm block walker validates block styles but not inline entries, so a PUT can still store a slide text block whose `inlines[i].text` is missing/non-string — which throws inside the docs layout engine for every viewer",
+      "evidence": "`assertValidSlideBlocks` (controller.ts:683-720) checks only `block.style` and recurses into `tableData`. The docs arm added exactly the opposite guard for the same `Block` shape — 'buildInlineNode reads inline.text.length … an element missing either turns a malformed PUT into a 500' (controller.ts:422-442). Slide text bodies are persisted verbatim as JSON by `writeSlidesRoot`, then laid out by the SAME docs engine: `packages/docs/src/view/layout.ts:286` does `const len = inline.text.length` and 289/290 `inline.text.slice(...)`. A payload of `{slides:[{…,elements:[{id,type:'text',frame:{},data:{blocks:[{style:{},inlines:[{}]}]}}]}]}` is accepted, and thereafter `computeLayout` throws a TypeError on every render of that slide (all viewers), not just a 400 for the caller. The stated round-trip rationale only justifies tolerating *omitted* `id`/`inlines`, not an inline entry with a non-string `text`.",
+      "lens": "correctness",
+      "round_commit": "82b297659605b67a2395ccb87a070b7cf52739f2"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "searchedFor": [],
+      "summary": "New slide-inline guard accepts an inline with no `style`; every downstream reader dereferences `inline.style` unconditionally, so such a stored inline crashes canvas layout and PPTX export for every viewer",
+      "evidence": "The new `assertValidSlideInlines` only rejects a *non-object* `style` (`inline.style !== undefined && inline.style !== null && typeof !== 'object'`), so `{ text: 'x' }` with no style passes. Consumers that the diff does not show: `packages/docs/src/view/layout.ts:777` reads `inline.style.image` unconditionally inside `measureSegments` (TypeError on undefined), and `packages/slides/src/export/pptx/text.ts:291` (`rPrXml`) reads `s.bold` on the same value straight off `runToXml` (`text.ts:226`). The docs arm of the very same controller requires a present object style (`docs-content.controller.ts:437`), so a payload rejected through `blocks[*]` is accepted through a deck's text bodies/notes/layout placeholders and then breaks readers rather than the caller. Fix belongs on the new guard (require an object `style`, or make readers default it).",
+      "lens": "blast-radius",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "searchedFor": [
+        "grep assertValidSlideBlocks/assertValidTextBodyBlocks callers",
+        "grep inlines in packages/slides/src and packages/frontend/src/app/slides",
+        "packages/slides/src/model/migrate.ts",
+        "packages/docs/src/view/layout.ts"
+      ],
+      "summary": "The guard tolerates a slide block with `inlines` entirely absent, but the shared docs layout engine dereferences `block.inlines` unconditionally — the same crash class the guard was added to close is still reachable by simply omitting the field",
+      "evidence": "`assertValidSlideInlines` returns early for `undefined`/`null` (documented as legitimate for placeholder bodies), and `assertValidSlideBlocks` never requires the field. Out-of-diff consumers: `packages/docs/src/view/layout.ts:152/154` (`resolveBlockInlines` returns `block.inlines` / calls `block.inlines.map`) and `measureSegments` at `packages/docs/src/view/layout.ts:767` iterates `inlines.length` — undefined propagates to a TypeError. Nothing normalizes slide blocks on read: `packages/slides/src/model/migrate.ts` has no `blocks`/`inlines` handling, and `writeSlidesRoot` (`packages/backend/src/yorkie/slides-tree.ts:93`) stores the JSON verbatim. Backend spec line 1008 ('accepts a slide text block that omits id/inlines') shows the tolerance is deliberate, so the fix is either defaulting `inlines` to `[]` at the writer/reader or rejecting the omission.",
+      "lens": "blast-radius",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.spec.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'assertValidSlideInlines' across repo",
+        "grep 'inlines' in packages/backend/src/api/v1/docs-content.controller.spec.ts",
+        "grep 'inlines\\[0\\]' in packages/backend",
+        "read spec lines 726-1029 (slides body shape validation block)"
+      ],
+      "summary": "New slide-inline validation (`assertValidSlideInlines`) ships with no test in the slides arm of the controller spec",
+      "evidence": "The delta adds `assertValidSlideInlines` (docs-content.controller.ts:711-770) which rejects non-array `inlines`, non-object entries, non-string `text`, and non-object `style` inside every slide text body. The `slides body shape validation` describe block (spec lines 616-1027) has cases for `style.alignment`, `style.marginTop`, `style.lineHeight`, `style.textIndent`, notes, group children, layout placeholders/staticElements, and a positive case that omits `inlines` entirely (line 1008) — but not a single case asserting a malformed inline is rejected through the slides path. The only `inlines: [{ text: 5 }]` case (line 536) is the docs arm and asserts `/blocks\\[0\\]\\.inlines\\[0\\]/`, which the pre-existing docs validator already satisfied, so it cannot fail if the new slides guard is deleted. Nothing in the suite pins the new error paths or the deliberate `undefined/null` tolerance for a *present* but empty inline list.",
+      "lens": "test-adequacy",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'headingLevel|toHeadingStyleId|buildParagraphPropertiesXml' repo-wide",
+        "grep 'headingLevel|pStyle' in packages/docs/test/export/docx-style-map.test.ts",
+        "grep 'Heading[1-6]|w:pStyle' in packages/docs/test"
+      ],
+      "summary": "`toHeadingStyleId` sanitization of `headingLevel` into `<w:pStyle w:val>` has no test",
+      "evidence": "The delta replaces `if (headingLevel) parts.push(`<w:pStyle w:val=\"Heading${headingLevel}\"/>`)` with a range-checked `toHeadingStyleId`. packages/docs/test/export/docx-style-map.test.ts contains no occurrence of `headingLevel` or `pStyle` at all (grep returned no matches in that file; the only `Heading1` hit in packages/docs/test is docx-parser.test.ts:145, an import fixture). So nothing asserts that a valid level still emits `Heading3`, that `0`/`7`/`NaN`/`1.5` drop the element, or that a hostile string such as `1\"/><w:jc w:val=\"right` is no longer interpolated — the exact class of test the same file already has for `alignment` (line 149) and colors (lines 78/91). Deleting `toHeadingStyleId` and restoring the raw interpolation would leave the suite green.",
+      "lens": "test-adequacy",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/theme.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'themeToXml|toSrgbHex|clrScheme' repo-wide",
+        "read packages/slides/test/export/pptx/theme.test.ts in full",
+        "grep 'hostile|constructor|__proto__' in packages/slides/test/export"
+      ],
+      "summary": "`toSrgbHex` now routes theme colors through `toRgbHexColor` with a black fallback — untested, and the existing theme test mirrors the OLD implementation",
+      "evidence": "packages/slides/test/export/pptx/theme.test.ts only ever calls `themeToXml(defaultLight, 1)`; every color assertion uses well-formed `#RRGGBB` values. Its round-trip test (lines 63-79) recomputes the expected value with `h.replace(/^#/, '').toUpperCase()` — literally the old `toSrgbHex` body — so it passes identically before and after the change and cannot detect a regression in the new normalizer. No test feeds a theme color that `toRgbHexColor` rejects (e.g. `'#FFF\"/><a:srgbClr val=\"000000'`, `'rgb(1,2,3)'`, `''`) to pin either the injection-free `[0-9A-F]{6}` guarantee or the documented `'000000'` degradation.",
+      "lens": "test-adequacy",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/connector.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'constructor|prototype|hostile|__proto__' in packages/slides/test/export",
+        "grep 'dash|routing|prstDash|prstGeom|headEnd' in packages/slides/test/export/pptx",
+        "glob packages/slides/test/export/**/*.ts",
+        "read packages/slides/test/export/pptx/theme.test.ts"
+      ],
+      "summary": "The Record→Map conversions in connector.ts, shape.ts and layout.ts (prototype-chain guard plus a new `?? 'line'` routing fallback) have no tests",
+      "evidence": "This delta converts `ROUTING_PRST`, `KIND_TO_OOXML`, `SIZE_TO_OOXML` (connector.ts), `DASH_VAL` (shape.ts) and `BUILT_IN_TO_TYPE` (layout.ts) to `Map`s and adds a new `?? 'line'` fallback for unknown routing (previously `prst=\"undefined\"` was emitted). Grepping packages/slides/test/export for `constructor|prototype|hostile|__proto__` returns hits only for `kindToPrst` (shape.test.ts:19-22, added in an earlier round) and text.test.ts:150 — none for routing, arrowhead kind/size, dash or layout id. connector.test.ts only exercises the three legitimate routings and a well-formed arrowhead; shape.test.ts never exercises `stroke.dash`; theme.test.ts only feeds `BUILT_IN_LAYOUTS` ids to `layoutToXml`. Reverting any of these five to the object literal (or dropping the new routing fallback) would keep the suite green, even though the prior round established the `kindToPrst('constructor')` test as the pattern for exactly this change.",
+      "lens": "test-adequacy",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/rest-api.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'assertValid|content PUT' docs/design",
+        "read docs/design/rest-api.md:225-274",
+        "git diff hunks for docs/design/* in this delta"
+      ],
+      "summary": "The canonical REST-API design doc now contradicts the code this delta adds. `rest-api.md` §\"PUT validation contract\" states that on the slides walk \"the structural block checks (`id`, `inlines`, a present `style`) are not applied\" — deliberately relaxed so a GET→edit→PUT round-trip of an older deck cannot 400. This delta adds `assertValidSlideInlines` (docs-content.controller.ts:704/741), which does hold a *present* `inlines` on a slide block to a contract (array of objects, string `text`, object `style`), i.e. a structural check on `inlines` in the slides arm. The doc was not updated in the same change (the sibling DOCX doc *was* updated for `toHeadingStyleId`), leaving the documented contract wrong and the new relaxation boundary (present-only vs required) unrecorded. It also silently narrows the stated round-trip guarantee: a legacy deck whose stored inline lacks `text` now 400s on re-PUT, which the doc explicitly says must not happen.",
+      "lens": "design-fit",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/slides/slides-pptx-export.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'clrScheme|injection|Map|prstDash' docs/design/slides/slides-pptx-export.md",
+        "read slides-pptx-export.md:110-260",
+        "grep toRgbHexColor docs/design"
+      ],
+      "summary": "`packages/slides/src/export/pptx/theme.ts` now routes every `<a:clrScheme>` slot value through `toRgbHexColor` with a `000000` fallback (a behavior change: a stored theme color the normalizer cannot express now exports as black instead of being passed through). `slides-pptx-export.md` §3 maintains an explicit taxonomy of color sinks — \"omittable sinks drop the color\" vs \"mandatory sinks fall back to 000000\" — and §5 still describes the theme as a plain `ColorScheme → <a:clrScheme>` mapping. The new mandatory sink and its fallback are not recorded there, even though the parallel DOCX change in this same delta did add a converter/failure-behavior row to `docs/design/docs/docs-docx-import-export.md`. The closed-`Map` attribute lookups added here (routing `prst`, arrowhead kind/size, `prstDash`, layout `type`) are likewise undocumented in that doc's round-trip tables.",
+      "lens": "design-fit",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/animation.ts",
+      "searchedFor": [
+        "grep 'Record<string, string>|Record<[A-Za-z]+, string>' packages/slides/src/export",
+        "read packages/slides/src/export/pptx/color.ts",
+        "read packages/slides/src/export/pptx/animation.ts:60-170"
+      ],
+      "summary": "The delta's stated design principle — \"attribute lookups over persisted JSON must be closed `Map`s with an explicit fallback, because an object literal consults the prototype chain and an unknown key emits `undefined`\" — is applied to connector routing/arrowheads, shape dash and layout type, but sibling sinks in the same exporter are left as bare object literals with no fallback at all: `animation.ts` `TYPE_TO_TAG[t.type]` (line 90), `DIR_TO_ATTR[t.direction]` (line 95), `CATEGORY_TO_CLASS`/`START_TO_NODE_TYPE`/`EFFECT_TO_PRESET`, and `color.ts` `ROLE_TO_SCHEME[c.role]` (color.ts:49) — whose own comment at color.ts:31 already asserts it is \"a closed ROLE_TO_SCHEME value\" and whose doc comment claims an \"unknown-`role` arm\" fallback that does not exist in code. Applying the hardening pattern to a subset leaves the exporter inconsistent and the invariant the comments claim untrue.",
+      "lens": "design-fit",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pptx/animation.ts",
+      "summary": "OOXML attribute injection sink left unsealed by the sweep: `anim.durationMs` / `anim.delayMs` / `anim.pptxPreset.id` are interpolated raw into `<p:cTn dur=…>`, `presetID=` and `<p:cond delay=>`",
+      "evidence": "Attack: a caller with write access to a deck PUTs `slides[0].animations = [{ elementId: <an id that exists on the slide>, start: 'onClick', category: 'entrance', effect: 'fadeIn', durationMs: \"500\\\"><p:evil/><p:cTn id=\\\"0\\\" dur=\\\"1\" }]`. The backend never validates `slide.animations` — `assertValidSlide` (packages/backend/src/api/v1/docs-content.controller.ts:518-558) checks only id/layoutId/background/elements/notes — and `writeSlidesRoot` stores the slide object verbatim (packages/backend/src/yorkie/slides-tree.ts:105). No read-side codec normalizes it (grep for `durationMs` in packages/slides/src finds no migration). On PPTX export, `slideToXml` calls `animationsToTimingXml(slide.animations ?? [], spidMap)` (packages/slides/src/export/pptx/slide.ts:163) and `effectParXml` emits `` `<p:cTn id=\"0\" dur=\"${anim.durationMs}\" …` `` (animation.ts:221), `` presetID=\"${presetID}\" `` (line 222, where presetID = the persisted `pptxPreset.id`) and `` delay=\"${anim.delayMs ?? 0}\" `` (line 223) with no coercion and no escaping — unlike the sibling values `presetClass`/`presetSubtype` on the same lines, which ARE run through `escapeXmlAttr`. The string closes the attribute and injects attacker-chosen elements/attributes into ppt/slides/slideN.xml of any .pptx a victim later exports (`renumberCTnIds` is a plain regex and does not sanitize). Every other numeric sink in the exporters is safe because it passes through `Math.round`/`pxToEmu*` (NaN, not a string) — these three are the exception.",
+      "lens": "security",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "searchedFor": [],
+      "summary": "setBlockType on a table block inserts a stray inline node as the table node's first child, shifting every row index — the new test exercises exactly this call and only passes because the reader filters children by type 'row'",
+      "evidence": "The delta adds `store.setBlockType(tableBlock.id, 'table')` (packages/frontend/tests/app/docs/yorkie-doc-store.test.ts, 'should not strip list/heading attrs from blocks nested in its cells'). In setBlockType, after the styleByPath/removeNodeStyle writes, the `else if (block.inlines.length === 0)` branch at yorkie-doc-store.ts:1469 runs for any non-HR/page-break type; a table block always has `inlines: []` (treeNodeToBlock:443), so `tree.editByPath([...blockPath,0],[...blockPath,0], buildInlineNode({text:'',style:{}}))` inserts an `inline` element as child 0 of the TABLE node. Nothing filters that out on write. Read-back hides it (treeNodeToBlock:432 keeps only `c.type === 'row'`), so the new assertions pass — but the CRDT tree now has rows at child indices 1..n while `findBlockInTable`/`resolveBlockTreePath` (lines 791-813, 820) address a cell block as `[...tablePath, rowIdx, cellIdx, blockIdx]`, i.e. row r at child index r. Any subsequent edit to a cell of that table therefore targets the wrong tree node (off by one) or the stray inline. The guard `if (type === 'horizontal-rule' || type === 'page-break')` should also exclude `type === 'table'` (and any block carrying tableData).",
+      "lens": "correctness",
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/export/pdf.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep assertValidElementData / assertValidNestedElement across repo",
+        "grep `el.data.` and `data.children` in packages/slides/src",
+        "read migrate.ts migrateElement",
+        "read docs-content.controller.ts:596-700"
+      ],
+      "summary": "Group elements with an absent (or non-array-children) `data` still pass the walk and are stored, crashing every consumer that dereferences `el.data.children`",
+      "evidence": "The delta added a repair for `type === 'text'` before the generic `if (!data || typeof data !== 'object') return;` at packages/backend/src/api/v1/docs-content.controller.ts:640, but a `group` element still falls into that early return, and line 671 (`Array.isArray(data.children) ? data.children : []`) silently skips a non-array `children`. Consumers dereference it unconditionally: packages/slides/src/export/pdf.ts:227 `if (el.type === 'group') walk(el.data.children);`, packages/slides/src/model/group.ts:382 `result.push(...flattenElements(el.data.children));`, packages/slides/src/model/slide-size.ts:36 `if (el.type === 'group' && el.data.refSize == null)`. `migrateElement` (packages/slides/src/model/migrate.ts:155-156) returns non-shape elements untouched, so nothing repairs it on read — exactly the failure mode the new text repair exists to prevent, left reachable for groups.",
+      "lens": "blast-radius",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/model/slide-size.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep `data.rows` in packages/slides/src",
+        "read pdf.ts textBodiesOf",
+        "read table-renderer.ts paintCellContents"
+      ],
+      "summary": "Table elements with an absent `data` or non-array `rows` are accepted and stored; `el.data.rows` is read unconditionally by the height scaler and PDF exporter",
+      "evidence": "packages/backend/src/api/v1/docs-content.controller.ts:640 returns early when a table element has no `data`, and :647 (`Array.isArray(data.rows) ? data.rows : []`) skips a non-array `rows`. Out-of-diff consumers dereference it: packages/slides/src/model/slide-size.ts:41 `for (const row of el.data.rows) row.height = ...` and packages/slides/src/export/pdf.ts:240 `for (const row of el.data.rows)`. The delta repairs an absent *cell body* for exactly this reason but leaves the enclosing `data`/`rows` absence, which is the same TypeError-for-every-viewer, untouched.",
+      "lens": "blast-radius",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/view/canvas/table-renderer.ts",
+      "summary": "The new table-cell guard silently skips a cell that is not a plain object (null, string, array), storing the crashing shape it was added to prevent",
+      "evidence": "The delta added `if (!cell || typeof cell !== 'object' || Array.isArray(cell)) continue;` (packages/backend/src/api/v1/docs-content.controller.ts:653), which accepts and stores such a cell. The renderer then does `ctx.fillStyle = resolveStrokeColor(cell.style.fill, theme)` (packages/slides/src/view/canvas/table-renderer.ts:209) and `isBlocksEmpty(cell.body.blocks)` (:229), and the PDF exporter does `bodies.push(cell.body)` then reads `body.blocks` (packages/slides/src/export/pdf.ts:241) — a TypeError for every viewer. Fix belongs in the new cell branch: reject (as the text-`data` array case does) or repair, rather than `continue`.",
+      "lens": "blast-radius",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep `cell.style` in packages/slides/src",
+        "read table-renderer.ts:200-240",
+        "read docs-content.controller.ts:390-420"
+      ],
+      "summary": "A slide table cell with no `style` is still accepted, but the table renderer dereferences `cell.style` unconditionally",
+      "evidence": "packages/slides/src/view/canvas/table-renderer.ts:209 `resolveStrokeColor(cell.style.fill, theme)` reads `cell.style` with no guard, yet the (now-extended) cell branch at packages/backend/src/api/v1/docs-content.controller.ts:654-667 only handles `cell.body`. The docs arm of this same controller already treats a missing cell `style` as a 400 for the identical reason (docs-content.controller.ts:410-414), so the slides arm is inconsistent with both its own docs arm and its own stated rationale.",
+      "lens": "blast-radius",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "summary": "The new array-rejection rule is applied only to a text element's `data`; every other text-body entry point still repairs an array into a dropped expando — the exact hole the delta claims to close.",
+      "evidence": "The delta adds `if (typeof body !== 'object' || Array.isArray(body)) throw` for `type === 'text'` (lines 631-635) with the rationale that a repair on an array becomes an expando JSON drops. But `assertValidTextBody` (line 678) still only guards `!body || typeof body !== 'object'`, so an array passes and reaches `assertValidTextBodyBlocks`, which does `body.blocks = []` on the array (line 715) — dropped by JSON serialization, storing exactly the crashing shape. This path is reached for a shape's `data.text`, and for a table cell's `body` (the other case this same delta touches, line 664). rest-api.md as amended by this diff asserts \"no deck is ever persisted in a shape that would be a TypeError for its viewers\", so the rule is stated globally but implemented in one branch only.",
+      "lens": "design-fit",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep cell.body|body.blocks in packages/slides/src/view/canvas/table-renderer.ts",
+        "read assertValidElementData / assertValidTextBody in docs-content.controller.ts",
+        "read the amended rest-api.md hunk"
+      ],
+      "summary": "A table cell that is not an object is silently skipped rather than repaired or rejected, leaving a stored shape the table renderer dereferences unconditionally.",
+      "evidence": "The delta adds `if (!cell || typeof cell !== 'object' || Array.isArray(cell)) continue;` (line 653). A cell that is `null`, a string, or an array is therefore stored verbatim, and `table-renderer.ts:229` reads `cell.body.blocks` unconditionally on every cell — the identical failure mode the very next lines repair for an absent `body`. The rule the diff writes into docs/design/rest-api.md (\"the value is rejected instead, so no deck is ever persisted in a shape that would be a TypeError for its viewers\") is not met for this branch.",
+      "lens": "design-fit",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/rest-api.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'data\\.rows|data\\.children' in packages/slides/src",
+        "read assertValidElementData branches for shape/table/group",
+        "read docs/design/rest-api.md §5.5 area"
+      ],
+      "summary": "The design-doc paragraph added here overstates what the validator does: `table` and `group` elements with an absent or array `data` are still accepted and stored, and their readers dereference `data.rows` / `data.children` unconditionally.",
+      "evidence": "The new paragraph claims the repair \"covers every other field a stored deck's readers dereference unconditionally\" and concludes \"no deck is ever persisted in a shape that would be a TypeError for its viewers\". But `assertValidElementData` still returns early for any non-text element with missing/array `data` (`if (!data || typeof data !== 'object') return;`, line 640), while `packages/slides/src/model/slide-size.ts:41` (`for (const row of el.data.rows)`), `packages/slides/src/export/pdf.ts:240`, and `packages/slides/src/model/group.ts:150/221/285` read `el.data.rows` / `el.data.children` with no guard. Either the doc claim should be scoped to the fields actually covered, or table/group `data` should get the same repair.",
+      "lens": "design-fit",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "docs/tasks/active/20260812-docs-font-color-reset-todo.md",
+      "summary": "The task doc under review contains text addressed at the review panel telling reviewers how to weigh scope findings (\"Scope is a maintainer call, not a lens verdict\"), i.e. content in the branch attempting to pre-empt a design-fit lens verdict.",
+      "evidence": "Lines 121-177 (\"Scope grown during review\", \"Split decision\", \"Scope is a maintainer call, not a lens verdict — restructuring the branch is the one remedy that cannot be applied by an agent acting on a review finding … it is not evidence about the finding's merits\") are directed at the reviewing process rather than at the design. Recording a split decision is legitimate; instructing the reviewer on which verdicts are admissible is not. Note it also concedes (line 147) that item 3, the ~600-line non-color OOXML attribute rewrite, is \"unrequested scope\" relative to issue #728's single acceptance criterion (line 181).",
+      "lens": "design-fit",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "docs/tasks/active/20260812-docs-font-color-reset-todo.md",
+      "summary": "Large unrequested scope beyond the issue's single acceptance criterion",
+      "evidence": "The issue's acceptance criterion is one line: \"Type text, select it, reset the text color → the text is uncolored (default ink), not the selection color.\" The branch satisfies that with the toolbar `undefined` change plus `resolveStoredColor` in the paint paths. Everything else is additional programs of work: OOXML injection hardening of non-color attributes (`packages/slides/src/export/pptx/{shape,connector,layout,animation,theme}.ts`, docs `DOCX_ALIGNMENTS`/`toHeadingStyleId`), a new ~350-line backend PUT validation contract for docs *and* slides bodies (`packages/backend/src/api/v1/docs-content.controller.ts`), a shared CRDT attribute codec (`packages/docs/src/model/crdt-attrs.ts`), and two independent Yorkie CRDT bugs (`removeNodeStyle` subtree over-removal, the `setBlockType` table-inline splice). The branch's own todo file (\"Scope grown during review\", lines 116-166) acknowledges this and argues against splitting. Each of items 3, 4 and 6 there is independently issue-worthy, testable and revertible, and none is needed for the stated outcome — this is the definition of scope creep for this lane, even if each item is defensible on its merits.",
+      "lens": "design-fit",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "critical",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'scopes' across packages/backend/src",
+        "read combined-auth.guard.ts / workspace-scope.guard.ts / api-key.strategy.ts",
+        "grep '@Put|@Post|@Delete|@Patch|scopes' across packages/backend/src/api/v1",
+        "prisma schema ApiKey.scopes default"
+      ],
+      "summary": "PUT /content accepts read-scoped API keys — no `write` scope gate, unlike the sibling v1 mutating endpoints",
+      "evidence": "`ApiKey.scopes` is a real capability: `CreateApiKeyDto` (packages/backend/src/api-key/api-key.dto.ts:12-25) lets an owner mint a key with `scopes: ['read']`, `ApiKeyStrategy.validate` puts it on `req.user.scopes` (api-key.strategy.ts:25), and two other v1 handlers enforce it — `documents.controller.ts:108` (`if (!req.user.scopes?.includes('write')) throw new ForbiddenException(...)`) and `files.controller.ts:80` whose comment says outright \"Without this a read-scoped key could create documents.\" `ApiV1DocsContentController.putContent` (docs-content.controller.ts:126-199) is guarded only by `CombinedAuthGuard` + `WorkspaceScopeGuard`; the scope guard checks *workspace identity* only (workspace-scope.guard.ts:26-32) and neither guard reads `scopes` (grep for `scopes` across packages/backend/src returns no hit in this controller or in combined-auth.guard.ts). Attack: hold a `['read']`-scoped `wfb_…` key for a workspace, `PUT /api/v1/workspaces/:wid/documents/:did/content` with any valid body — `writeSlidesRoot`/`writeDocsRoot`/`writeNoteRoot` are a documented *destructive replace* (slides-tree.ts:87-92, \"every top-level slides field on the root is overwritten\"), so a read-only credential silently gains full write/destroy over every doc, deck and note in the workspace. The same omission covers cells.controller.ts:105/131/150, tabs.controller.ts:80/103, images.controller.ts:35/99 and documents.controller.ts:48/79, so the pattern is systemic and the two existing checks make the surface read as covered.",
+      "lens": "security",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "summary": "The new absent-`data` repair covers only `type === 'text'`; every other element type still persists with no `data` and TypeErrors in every viewer",
+      "evidence": "The delta adds a repair so a text element without `data` is stored as `{ blocks: [] }`, then falls through to the pre-existing guard `if (!data || typeof data !== 'object') return;` (line 640) for all other types. But the renderer dereferences `element.data` unconditionally for *every* type: `packages/slides/src/view/canvas/element-renderer.ts:257` (`element.data.effects?.shadow`) runs for shape/image/table/chart, :200-201 (`element.data.refSize`) and :241 (`for (const child of element.data.children)`) run for groups — none of them optional-chained on `data` itself, and `drawElementBody` only wraps the paint in `try/finally` (no catch, line 191), so the throw escapes the whole slide render. Attack: any caller with write access PUTs `{\"id\":\"e1\",\"type\":\"group\",\"frame\":{}}` (or `type:\"image\"`, or `type:\"group\", data:[]` — an array passes `typeof data === 'object'` and `data.children` is then undefined). The validator accepts it, `writeSlidesRoot` stores it verbatim, `migrateElement` (packages/slides/src/model/migrate.ts:155-156) repairs shapes only — so the deck is now unrenderable for every viewer of the workspace, a persistent, stored denial of service. The delta's own rest-api.md hunk claims \"no deck is ever persisted in a shape that would be a TypeError for its viewers\", which makes the remaining hole read as closed.",
+      "lens": "security",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "summary": "Table-element repair fills in `cell.body` but leaves `cell.style`, `columnWidths` and non-object cells/rows unrepaired — the same stored-crash it claims to close",
+      "evidence": "The new cell loop repairs an absent `body` (line 654-662) but skips any cell that is null or an array (`line 653: continue`) and never touches `cell.style` or `data.columnWidths`. `packages/slides/src/view/canvas/table-renderer.ts` reads all of these unconditionally, and *earlier* in the same pass than the body it repairs: line 41 `data.columnWidths.length` (crashes on `{\"type\":\"table\",\"frame\":{},\"data\":{}}`, which this validator accepts because `rows` is coerced via `Array.isArray(data.rows) ? data.rows : []`), line 100/201 `row.cells[c]` (a row with no `cells` array is skipped by the validator at line 650 and crashes here), and line 203 `cell.style.fill` (a cell with a `body` but no `style` passes validation and TypeErrors before the repaired `cell.body.blocks` at line 229 is ever reached). Attack: PUT a deck with such a table; it is stored verbatim (`writeSlidesRoot`) and no read-side migration repairs it (`migrateElement` handles shapes only), so every viewer's render of that slide throws — persistent DoS. The added repair makes the path read as hardened while the adjacent required fields on the exact loop it rewrote are still unguarded.",
+      "lens": "security",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/slides/src/model/migrate.ts",
+      "summary": "`LAYOUT_ID_MIGRATIONS[slide?.layoutId]` is a plain-object lookup keyed by attacker-controlled data — the exact prototype-chain pattern this branch claims it swept",
+      "evidence": "`assertValidSlide` (docs-content.controller.ts:528) accepts any non-empty string for `layoutId`, and `writeSlidesRoot` stores it verbatim. On read, `migrateSlide` does `LAYOUT_ID_MIGRATIONS[slide?.layoutId] ?? slide?.layoutId ?? 'blank'` against a `Record<string,string>` object literal (migrate.ts:8). `layoutId: \"constructor\"` yields the `Object` constructor function, `\"__proto__\"` yields `Object.prototype`, `\"toString\"`/`\"valueOf\"` yield functions — so a field typed `string` becomes a function/object inside the live model and flows on into `doc.layouts.find(l => l.id === slide.layoutId)` (presentation.ts:215/231), `layoutEditSlideId` string interpolation (layout.ts:245) and `layoutIdToPath.get(slide.layoutId)` in the PPTX exporter (export/pptx/index.ts:341), plus any re-serialization of the migrated slide back into Yorkie. This is the same defect class the branch's own lessons file records for `ROLE_TO_SCHEME[c.role]` and explicitly warns is under-swept (\"grep the pass for the pattern, don't trust the prose\", docs/tasks/active/20260812-docs-font-color-reset-lessons.md:143); this lookup was not converted to a `Map`. I could not complete a chain past type confusion / crash to a stronger impact, hence low confidence.",
+      "lens": "security",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "searchedFor": [
+        "table-renderer.ts isCovered/paddingOf",
+        "packages/slides/src/export/pdf.ts cell.body"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "An absent `data` is repaired for `text` elements only; `table` and `group` elements with no `data` are still accepted and crash the same readers"
+        }
+      ],
+      "summary": "Array / non-object table cells are silently skipped by the new guard and stored, crashing the renderer — inconsistent with the array rejection the same diff adds for a text element's `data`",
+      "evidence": "`if (!cell || typeof cell !== 'object' || Array.isArray(cell)) continue;` (line 653) lets `cells: [[]]` or `cells: [null]` through unvalidated and unrepaired into `writeSlidesRoot` (controller line 193, which stores the body verbatim). Downstream, an array cell is truthy so `isCovered(cell)` is false (table-renderer.ts:396) and `paddingOf(cell)` immediately throws on `cell.style.padding` (table-renderer.ts:581, reached from :106). A `null` cell survives the renderer's `!cell` guard but crashes the PDF exporter at `bodies.push(cell.body)` (packages/slides/src/export/pdf.ts:241). The same diff explicitly rejects an array as a text element's `data` for exactly this reason (lines 631-635); a table cell gets a silent `continue` instead.",
+      "lens": "correctness",
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf"
+    }
+  ]
+}

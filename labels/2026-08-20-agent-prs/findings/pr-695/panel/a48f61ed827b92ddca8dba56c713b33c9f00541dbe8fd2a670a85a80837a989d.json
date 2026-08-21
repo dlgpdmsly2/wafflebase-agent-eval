@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-695",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/auth/github-auth.guard.ts::`get /auth/github?mode=cli&port=<n>` is an unauthenticated, csrf-able endpoint that mints a full-privilege auth code for the *victim* and delivers it to an attacker-chosen 127.0.0.1 port; the new nonce does not help because the attacker supplies the nonce",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in the supplied files: github-auth.guard.ts:29-42 mints a CLI state token purely from `req.query.mode/port/nonce` with no origin, referer, or user-intent check, and auth.controller.ts (`githubAuthCallback`) then calls `createCode(user.id)` for the authenticated victim and redirects to `http://127.0.0.1:${port}/callback?code=…&state=<attacker-supplied nonce>`; `@Post('cli/exchange')` has no `@UseGuards`, so any holder of that code gets the victim's access+refresh tokens. The claim's central point is correct — the nonce only binds the genuine CLI's listener, and in this direction the attacker chooses it, so it provides no protection. Exploitation does require something the attacker controls (or that logs URLs) listening on the victim's loopback, since the attacker page cannot read the cross-origin 127.0.0.1 response; that precondition (plus the fact that the CSRF-able initiation endpoint predates this diff, which only adds the nonce) is why I rate it major rather than critical.",
+  "notes": null,
+  "diff_sha256": "sha256:96865731bf719c4343397260f43ba2a54b21da7d1788e3a17dfad3ebd526ff29",
+  "class_id": null,
+  "class_members": null
+}

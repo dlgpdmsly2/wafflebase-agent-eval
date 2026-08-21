@@ -1,0 +1,37 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "docs/tasks/active/20260809-analytics-details-permission-lessons.md",
+      "summary": "Lessons file documents committing/pushing with `--no-verify` to bypass the verify pipeline, presented as an accepted workaround rather than flagged as an exception.",
+      "evidence": "\"The commit/push used `--no-verify`; the touched lanes (backend analytics jest, frontend vitest, frontend eslint) were run individually and CI covers the rest.\" — while the note explains the pre-existing unrelated typecheck failure that motivated it and lists mitigations, it still normalizes bypassing the local verification hook as a way to get a commit/push through, which is the kind of practice future readers could copy without the same care.",
+      "lens": "docs"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/analytics/document-analytics.tsx",
+      "claimType": "absence",
+      "searchedFor": [
+        "Glob packages/frontend/src/app/analytics/**",
+        "Grep HttpError in packages/frontend/src/api",
+        "read packages/frontend/src/api/analytics.ts",
+        "looked for __tests__ dir under app/analytics"
+      ],
+      "summary": "New 403-specific error message in DocumentAnalyticsPage has no test",
+      "evidence": "The diff adds a distinct rendering branch: `error instanceof HttpError && error.status === 403` renders a permission-specific message instead of \"Failed to load analytics.\" No test exercises either branch. There is no test file for document-analytics.tsx (globbed packages/frontend/src/app/analytics/** — only date-range.test.ts, format.test.ts, series.test.ts, views-trend-chart.test.tsx exist), and the new test added by this PR (packages/frontend/src/app/workspaces/__tests__/workspace-analytics.test.tsx) covers only the ranking page. So nothing verifies that getDocumentAnalytics actually surfaces an `HttpError` instance with `.status === 403` through react-query (it goes through `assertOk` in api/http-error.ts and `fetchWithAuth`); if the thrown error were wrapped or a different class, the page would silently keep showing the generic text and every suite would still be green.",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "major",
+      "file": "packages/backend/src/analytics/analytics-warehouse.service.ts",
+      "searchedFor": [
+        "grep isDocumentManager / getDocumentAnalytics / getWorkspaceAnalytics call sites",
+        "read analytics-warehouse.service.ts in full",
+        "prisma schema Document model id default"
+      ],
+      "summary": "Hand-rolled SQL quoting for StarRocks escapes only single quotes, not backslashes",
+      "evidence": "`sql()` (analytics-warehouse.service.ts:33-35) builds every warehouse predicate by string interpolation (`buildQueries` line 89, `buildWorkspaceQueries` line 152; the `byDocument` query feeding the `documentRows` mapper touched by this diff at line 226) and escapes only `'` by doubling. StarRocks speaks the MySQL protocol, where a trailing backslash in a literal escapes the closing quote (`'a\\'` swallows the delimiter), so a value ending in `\\` would let the remainder of the string continue the SQL expression — e.g. `... document_id = 'x\\' AND 1=1 OR '` — reading arbitrary `view_events` rows across workspaces. I could not complete the vector: the only strings reaching `sql()` are `day()` output (derived from `Date`, safe) and document ids, and ids are server-generated UUIDs (`prisma/schema.prisma:42 id String @default(uuid())`) that must round-trip a `findUnique`/`findMany` before being interpolated, so no attacker-controlled string currently reaches the quoter. Reported as a defense-in-depth gap on the escaping helper; it is pre-existing code, not added by this diff.",
+      "lens": "security"
+    }
+  ]
+}

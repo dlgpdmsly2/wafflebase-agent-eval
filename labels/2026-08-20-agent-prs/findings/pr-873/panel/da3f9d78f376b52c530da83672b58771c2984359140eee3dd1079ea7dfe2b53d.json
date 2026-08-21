@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-873",
+  "arm": "panel",
+  "finding_key": "packages/sheets/src/model/worksheet/sheet.ts::new clamp makes decrease at zero destructive when `dp` is stored, breaking the issue's \"equal increases and decreases leave the selection exactly as they found it\" rule",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:1"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Traced changeDecimals in the diff (packages/sheets/src/model/worksheet/sheet.ts): with stored dp: 0, valueDp 0, nf 'number', the guard `dp + delta < 0 && !explicitDp` does not fire because explicitDp is true; target clamps to 0, equals valueDp, and the unset branch fires, stripping {dp, nf} and (per the change's own docs) the grouping separators — where the old code's Math.max(0, dp-1) write was a state no-op. A following Increase writes {dp: 1, nf: 'number'}, not the original style, so the change's own stated equal-clicks reversibility guarantee fails in this branch, and the \"Known deviations\" only cover the no-stored-dp no-op case. The claim slightly misquotes the old code and the round trip from dp:0 was already asymmetric pre-change, but the destructive Decrease-at-floor behavior it identifies is genuinely present and newly introduced.",
+  "notes": null,
+  "diff_sha256": "sha256:729cb83a1f576206c1d4f1b92b0ef2d1f83d5ccf7edd801a5e998cc6b538d1a1",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,118 @@
+{
+  "findings": [
+    {
+      "severity": "critical",
+      "file": "packages/frontend/src/lib/date-format-preference.ts",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Unguarded `localStorage.setItem` in `setDateFormat` throws out of the Select's `onValueChange`, so the preference silently fails to apply instead of degrading"
+        }
+      ],
+      "summary": "Unguarded `localStorage.getItem` in `getDateFormat` is called as the `useSyncExternalStore` snapshot on every render of the documents list and Settings page; a storage SecurityError takes the whole list down",
+      "evidence": "`getDateFormat()` (line 31-34) does a bare `localStorage.getItem(STORAGE_KEY)` and is passed directly as `getSnapshot` to `useSyncExternalStore` (line 56), so it runs on every render of `DateCell` (document-list.tsx:241) and of Settings (page.tsx:26). Accessing `localStorage` throws outright (SecurityError) in Safari private mode, with third‑party/blocked storage, and in sandboxed iframes — the repo already knows this and guards every other such read: `board-grid.ts:220-228` (`try { localStorage.getItem } catch { return DEFAULT }`), `font-recents.ts:23-26`, `analytics.ts:47-53`. Here the throw happens during render, so instead of falling back to `DEFAULT_DATE_FORMAT` it propagates and blanks the entire document list — the exact failure mode the surrounding date-parsing guards were written to avoid.",
+      "lens": "correctness",
+      "round_commit": "3fce337f938d316e075ecadeed3d2a8313cb9c3f"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/components/theme-provider.tsx",
+      "searchedFor": [
+        "grep localStorage|sessionStorage in packages/frontend/src",
+        "grep ThemeProvider in packages/frontend/src",
+        "read App.tsx mount tree"
+      ],
+      "summary": "The new try/catch around localStorage does not achieve its stated goal: ThemeProvider, which wraps the entire app (including the documents list), still reads localStorage unguarded during render",
+      "evidence": "packages/frontend/src/components/theme-provider.tsx:41 does `return (localStorage.getItem(storageKey) as Theme) || defaultTheme;` inside a `useState` initializer, with no try/catch. `App.tsx:73` mounts `<ThemeProvider defaultTheme=\"system\" storageKey=\"vite-ui-theme\">` around all routes, so it renders before/above `document-list.tsx:241`'s `useDateFormat()`. In exactly the environments the new comments cite (Safari private mode, blocked third-party storage, sandboxed iframe — note theme-provider.tsx:36 explicitly supports the iframe case), theme-provider throws first and the whole app blanks, so hardening `getDateFormat` alone does not prevent the failure described in packages/frontend/src/lib/date-format-preference.ts:44-48. Fix belongs in theme-provider (or by reusing a shared safe-storage helper such as the ones at packages/frontend/src/app/notes/notes-settings.ts:12-28 and src/components/text-formatting/font-recents.ts:23-26).",
+      "lens": "blast-radius",
+      "round_commit": "1ce04b838dcd89418ed85fcebc5b5e30ef810702"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/lib/date-format-preference.ts",
+      "searchedFor": [],
+      "summary": "Memory fallback is unreachable when writes fail but reads succeed (e.g. QuotaExceededError), so the preference silently reverts",
+      "evidence": "`getDateFormat` returns the stored value first (line 41-42) and only consults `memoryFormat` if the read threw or the stored value is absent/junk. The failure mode the new code claims to handle is not only all-or-nothing SecurityError: `localStorage.setItem` also throws QuotaExceededError (full storage / iOS Safari) while `getItem` keeps working. In that case storage still holds the previous valid value (say \"relative\"), `setDateFormat(\"exact\")` sets `memoryFormat = \"exact\"`, the write throws and is swallowed, the CHANGE_EVENT fires, subscribers re-read via `getDateFormat`, the read succeeds and returns \"relative\" — the Settings `Select` snaps back to the old value with no explanation, exactly the outcome the comment on lines 61-64 says the try/catch prevents. A correct fix is to consult `memoryFormat` first (or set it only when the write actually fails and prefer it over the stale stored value). Note the new test masks this: it mocks BOTH `setItem` and `getItem` to throw, so the read-works/write-fails combination is never exercised.",
+      "lens": "correctness",
+      "round_commit": "1ce04b838dcd89418ed85fcebc5b5e30ef810702"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/lib/date-format-preference.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep useDateFormat across packages/frontend",
+        "grep DateCell|formatListDate across packages/frontend",
+        "glob packages/frontend/tests/**/*.{ts,tsx}",
+        "read tests/lib/date-format-preference.test.ts in full"
+      ],
+      "summary": "`useDateFormat`/`subscribe` — the mechanism that makes the preference reactive — has no test at all",
+      "evidence": "tests/lib/date-format-preference.test.ts only exercises the plain functions `getDateFormat`/`setDateFormat`. The only \"notification\" test (lines 35-44) attaches its own raw `window.addEventListener(\"wafflebase-date-format-change\", ...)` and counts dispatches; it never calls `subscribe()` or renders `useDateFormat`. If `subscribe` were a no-op, registered the wrong event, or failed to unsubscribe on cleanup, or if the `getServerSnapshot` argument were wrong, every test in the suite would still pass. The headline behavior of the change (Settings choice instantly updating the documents list, and cross-tab sync via the `storage` event) is therefore entirely uncovered — the `storage` listener at line 79 has no test whatsoever. Frontend already has React component/hook tests (e.g. tests/components/notifications/use-mark-read.test.tsx), so this is testable here.",
+      "lens": "test-adequacy",
+      "round_commit": "f1a6416d428f58e69b2925725d8672c5240d366b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/components/theme-provider.tsx",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'theme-provider|ThemeProvider' in packages/frontend/tests",
+        "grep 'localStorage|storageKey' in packages/frontend/tests",
+        "glob packages/frontend/tests/**/*.{ts,tsx}"
+      ],
+      "summary": "New `readStoredTheme`/`writeStoredTheme` localStorage guards ship with no test",
+      "evidence": "The diff changes theme-provider behavior from \"throws (blanking every route) when localStorage access throws\" to \"falls back to default / silently drops persistence\". Grepping tests/ for `theme-provider`/`ThemeProvider` returns no files, and only tests/lib/date-format-preference.test.ts and tests/components/text-formatting/font-recents.test.ts mention localStorage at all. Nothing can fail if the try/catch guards are removed or if the fallback returns the wrong value (e.g. `null` vs `defaultTheme`), while the analogous guards in date-format-preference.ts did get read/write-throw tests.",
+      "lens": "test-adequacy",
+      "round_commit": "f1a6416d428f58e69b2925725d8672c5240d366b"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/frontend.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "Glob docs/design/**/*.md (no documents-last-modified.md date/preference doc matched the feature)",
+        "Grep 'preference|localStorage' in docs/design/frontend.md → only line 539 theme",
+        "Grep 'formatRelativeTime|Modified column|settings page' across docs/ → only task files",
+        "read CONTRIBUTING.md design-doc rules"
+      ],
+      "summary": "No design doc added or updated for the new user-preference subsystem. CONTRIBUTING.md:13-16 and :56-58 require a feature / non-trivial change to write or update a doc under docs/design/ (fold into the canonical subsystem doc). This PR introduces a new persisted-preference store (`packages/frontend/src/lib/date-format-preference.ts`, storage key `wafflebase-date-format`, custom `wafflebase-date-format-change` event, `useSyncExternalStore` hook) plus a new Settings section, yet docs/design/frontend.md — which documents the analogous Theme System and its `\"vite-ui-theme\"` localStorage key at lines 534-545 — is untouched. Only docs/tasks/active/20260812-date-display-format-{todo,lessons}.md were added, and a task plan is not a design doc.",
+      "evidence": "docs/design/frontend.md \"### Theme System ... Persists the user's choice in `localStorage` under \\\"vite-ui-theme\\\"\" — no equivalent entry for the new date-format preference.",
+      "lens": "design-fit",
+      "round_commit": "f1a6416d428f58e69b2925725d8672c5240d366b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/documents/document-list.tsx",
+      "claimType": "absence",
+      "searchedFor": [
+        "Glob packages/frontend/tests/app/{documents,settings}/**",
+        "Grep 'dateColumn|DateCell|document-list|settings/page' in packages/frontend",
+        "Grep -i 'date-format|date display format' repo-wide"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "New DateCell component (preference-driven text + full date/time tooltip) has no test"
+        }
+      ],
+      "summary": "New `DateCell` component (preference-driven text + `title` tooltip) has no test at all",
+      "evidence": "`DateCell` is the whole point of the feature in the list: it calls `useDateFormat()`, renders `formatListDate(value, format)` and sets `title={formatFullDateTime(value)}` (document-list.tsx:240-247). The added tests only cover the pure helpers (tests/app/documents/document-list-utils.test.ts) and the store (tests/lib/date-format-preference.test.ts). Nothing renders `DateCell` or `dateColumn`'s cell, so the acceptance criterion \"both columns carry a `title` tooltip with the full localized date+time in every format\" is unverified — swapping the two formatters, dropping `title=`, or passing the wrong value would leave the suite green. The frontend also has no `tsc` lane, so a wrong prop wouldn't be caught elsewhere either. Searched: tests/app/documents/ contains only document-list-utils.test.ts and tab-name.test.ts; grep for `DateCell`/`document-list` across packages/frontend returns no test file.",
+      "lens": "test-adequacy",
+      "round_commit": "8d84b94adcb204157634a895f33e3166dfd78a59"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/components/theme-provider.tsx",
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "`readStoredTheme` returns an unvalidated string that is cast to `Theme`, so a junk stored value is applied as an html class and as `resolvedTheme`"
+        }
+      ],
+      "summary": "`readStoredTheme` result is cast to `Theme` without validation; a junk stored value can throw from `classList.add`",
+      "evidence": "Line 65: `return (readStoredTheme(storageKey) as Theme) || defaultTheme;`. The new helper hardens the *access* but still returns any string unvalidated. A stored value containing whitespace (e.g. left by an older build, an extension, or a manual edit) flows into the effect at line 87 as `root.classList.add(theme)`, which throws `InvalidCharacterError` for a string with a space — an exception thrown from the provider's effect, i.e. the whole app. Any other junk value also silently mislabels `resolvedTheme` via the `theme as ResolvedTheme` cast at line 86. The sibling module added in this same change (`date-format-preference.ts`, `isFormat`) validates; this one does not.",
+      "lens": "correctness",
+      "round_commit": "8d84b94adcb204157634a895f33e3166dfd78a59"
+    }
+  ]
+}

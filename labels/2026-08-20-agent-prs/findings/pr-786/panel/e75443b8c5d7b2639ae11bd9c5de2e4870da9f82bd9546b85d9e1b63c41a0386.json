@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/auth/auth.controller.ts::no test covers the pkce challenge flowing from the consumed state into the minted code — the whole protection could be silently disabled and the suite stays green",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Working dir is empty, so I judged from the supplied diff and the full auth.controller.ts. The only place the state's challenge reaches a code is auth.controller.ts `createCode(user.id, state.codeChallenge)`; any test exercising that path would have to build state via the *new* 4-argument `createState(mode, port, nonce, codeChallenge)` signature introduced in this diff, and therefore would appear as an added line in auth.controller.spec.ts — none does. The only challenged-code tests (the added `PKCE binding` describe) call `cliAuthStore.createCode(42, challenge)` directly, bypassing `githubAuthCallback`, and the added nonce-echo test builds state with a nonce only and asserts nothing about the code. github-auth.guard.spec.ts likewise stops at \"the challenge is in the store\". So dropping `state.codeChallenge` at the call site would leave the suite green: a real coverage gap on a security control, though not a live defect in the shipped code.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

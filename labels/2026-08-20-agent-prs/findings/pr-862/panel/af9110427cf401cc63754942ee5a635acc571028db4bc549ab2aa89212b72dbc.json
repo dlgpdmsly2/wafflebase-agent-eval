@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-862",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/model/types.ts::the new 'headinglevel is inert on a list-item' invariant is asserted in a comment but nothing tests it (export/serialize/clipboard readers)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified from the diff: every new test (packages/docs/test/view/list-heading-roundtrip.test.ts and the yorkie-doc-store.test.ts additions) asserts only type/headingLevel/list attrs on stores and Doc blocks; none feeds a list-item carrying headingLevel to any reader (markdown/docx/pdf export, blockStyleId, toolbar, clipboard). The design's safety explicitly rests on the \"readers gate on type === 'heading'\" invariant stated in the Block doc comment in packages/docs/src/model/types.ts, but nothing enforces it — a reader that stopped gating would pass all tests in this diff. Since the list-item+headingLevel state could not exist before this PR, pre-existing suite tests could not cover it. Confidence is medium because no checkout is mounted, so I could not inspect the reader files or the rest of the suite to fully rule out an existing test.",
+  "notes": null,
+  "diff_sha256": "sha256:38089d0e3481456bf46377ddd5a3eb74189cea39b5f3366ee11f4f510e9fa79c",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::no test covers login.ts's actual hand-off: that `open()` and stderr receive `starturl` and not the nonce-bearing url",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "packages/cli/test/login-callback.test.ts's \"keeps the nonce out of the URL handed to the browser and to stderr\" test (~lines 188–212) only asserts on startCallbackServer's returned startUrl and the /start redirect; it never runs the login action handler, mocks open(), or captures stderr, and the registerLoginCommand test (~line 226) only checks the command/option exist. Reverting login.ts:67/72 (console.error and open(startUrl)) to the nonce-carrying buildAuthorizeUrl would pass all supplied tests, so the named hand-off property is indeed untested. Confidence is medium only because other CLI test files (bin.test.ts, namespaces.test.ts) were not supplied, though nothing suggests they cover the login hand-off. It is a test gap, not a shipped-behavior defect, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-695",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/api-keys.ts::new `default:` throw in `format()` fires *after* side effects at the ~12 unvalidated `output()` call sites; only status/ctx/schema validate `--format` up front",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in formatter.ts:44-56 that format() now throws InvalidFormatError on any non-json/table/csv value, and in formatter.ts:58-61 that output() performs no validation of its own. api-keys.ts:14-23 and cells.ts:66/92/139 pass the raw opts.format into output() only after the mutation has been awaited, inside a try/catch that routes to outputError and sets process.exitCode = 1 — so a succeeded write reports failure and its payload (for api-keys create, the once-only raw key) is never printed. Only status.ts, ctx.ts and schema.ts in this diff call parseOutputFormat() up front, so the claim's core assertion is accurate. The claim slightly overreaches in blaming the key's loss on this change (the pre-change path printed \"undefined\" and also lost it); what is genuinely new is the exit-code inversion and the resulting retry hazard, and the trigger is a malformed flag rather than a normal-path input, which keeps impact bounded.",
+  "notes": null,
+  "diff_sha256": "sha256:96865731bf719c4343397260f43ba2a54b21da7d1788e3a17dfad3ebd526ff29",
+  "class_id": null,
+  "class_members": null
+}

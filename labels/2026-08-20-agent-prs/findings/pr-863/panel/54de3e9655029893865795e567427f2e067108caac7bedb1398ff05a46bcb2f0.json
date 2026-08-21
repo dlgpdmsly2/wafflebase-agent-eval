@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::the cli oauth loopback callback has no `state`/csrf binding, so any local process or visited web page can inject an attacker's authorization code and silently log the cli into the attacker's account (pre-existing, out of diff)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against packages/cli/src/commands/login.ts as supplied: the OAuth URL (`${server}/auth/github?mode=cli&port=${port}`) carries no state, and the loopback handler in startCallbackServer resolves on the first GET /callback with any `code` param, with no state/Origin check; the code is then exchanged and saved via saveSession. This matches RFC 8252's login-CSRF concern for loopback redirects; the random port and 30s window reduce but don't eliminate exploitability. The claim correctly notes it is pre-existing and outside the diff. Possible server-side mitigations in rest-api.md are unverifiable here, but the CLI-side binding the claim says is missing is indeed missing.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

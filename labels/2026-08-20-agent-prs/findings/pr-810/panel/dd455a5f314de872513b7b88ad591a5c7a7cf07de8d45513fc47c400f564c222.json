@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/docs/yorkie-doc-store.ts::block-style serializer is duplicated backend/frontend; only the backend copy was hardened, so the two crdt encoders now diverge",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff hardens only packages/backend/src/yorkie/docs-tree.ts (serializeBlockStyle/parseBlockStyle now emit/accept only finite values) and touches nothing block-style-related in packages/frontend/src/app/docs/yorkie-doc-store.ts. The backend file's header explicitly says it is a \"deliberate, narrowly-scoped mirror\" of the frontend store and suggests extracting a shared helper, so the frontend copy retaining the old unconditional String()/Number() pattern is almost certain — though the excerpt omits lines 161-2918, so I could not read the frontend serializeBlockStyle directly (hence medium confidence). The divergence is real; impact is modest since the frontend editor always supplies fully-populated BlockStyle, leaving mainly the frontend reader's residual NaN vulnerability to legacy \"undefined\" attributes.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

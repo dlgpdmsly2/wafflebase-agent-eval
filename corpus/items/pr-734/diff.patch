@@ -1,0 +1,418 @@
+diff --git a/docs/tasks/active/20260809-workspace-settings-owner-gating-lessons.md b/docs/tasks/active/20260809-workspace-settings-owner-gating-lessons.md
+new file mode 100644
+index 00000000..162482ec
+--- /dev/null
++++ b/docs/tasks/active/20260809-workspace-settings-owner-gating-lessons.md
+@@ -0,0 +1,23 @@
++# Lessons — workspace settings owner gating (issue #733)
++
++## What we learned
++
++- The page already had the right primitive (`isOwner`); the bug was that
++  sections added later (Members, Invites) never applied it. When a page
++  grows section by section, the permission predicate has to be applied at
++  each new section, not just defined once.
++- "Hide every control the backend rejects" is not quite the rule. Check
++  the backend guard per action: `WorkspaceService.removeMember` skips
++  `assertOwner` when requester == target, so the member row's own trash
++  icon is a working "leave workspace" action. Hiding it wholesale behind
++  `isOwner` would have removed working functionality while fixing a
++  cosmetic one.
++- The Invites *list* endpoint is owner-gated too, so for a non-owner the
++  whole section was dead weight (a 403'd query rendering "No active
++  invites"). Gating the section — rather than just its buttons — also
++  drops a request that could only ever fail.
++
++## Follow-ups
++
++- None. The backend authorization was already correct; this was purely a
++  UI-affordance fix.
+diff --git a/docs/tasks/active/20260809-workspace-settings-owner-gating-todo.md b/docs/tasks/active/20260809-workspace-settings-owner-gating-todo.md
+new file mode 100644
+index 00000000..42e02661
+--- /dev/null
++++ b/docs/tasks/active/20260809-workspace-settings-owner-gating-todo.md
+@@ -0,0 +1,35 @@
++# Workspace settings — gate owner-only controls (issue #733)
++
++## Problem
++
++`/w/:workspaceId/settings` renders three owner-only controls to every
++member: the remove-member trash icon, "Create Invite", and the
++revoke-invite trash icon. All three call backend endpoints guarded by
++`assertOwner`, so a non-owner clicking them just gets an error toast.
++`isOwner` already exists in `workspace-settings.tsx` and correctly gates
++the API Keys and Danger Zone sections.
++
++## Scope
++
++Frontend only — `packages/frontend/src/app/workspaces/workspace-settings.tsx`.
++No backend change: the server-side authorization is already correct.
++
++## Plan
++
++- [ ] Gate the whole Invites section behind `isOwner` (the invite *list*
++      endpoint `GET /workspaces/:id/invites` is `assertOwner` too, so a
++      non-owner's query 403s and the section can only ever read "No active
++      invites"). Also set `enabled: !!isOwner` on the invites query, matching
++      the existing api-keys query.
++- [ ] Gate the remove-member trash icon: render it when the viewer is an
++      owner, or when the row is the viewer's own membership. `removeMember`
++      permits self-removal (`requesterId === targetUserId` skips
++      `assertOwner`), so a member removing themselves is a working action and
++      must not be hidden.
++- [ ] Verify no other owner-only control on the page is ungated.
++
++## Acceptance criteria (from the issue)
++
++- Non-owner members do not see the remove-member trash icon (for other
++  members), "Create Invite", or the revoke-invite trash icon.
++- Owners see all three unchanged.
+diff --git a/packages/frontend/src/app/workspaces/__tests__/workspace-settings.test.tsx b/packages/frontend/src/app/workspaces/__tests__/workspace-settings.test.tsx
+new file mode 100644
+index 00000000..633f091b
+--- /dev/null
++++ b/packages/frontend/src/app/workspaces/__tests__/workspace-settings.test.tsx
+@@ -0,0 +1,124 @@
++import { describe, it, expect, vi, beforeEach } from "vitest";
++import { render, screen, waitFor } from "@testing-library/react";
++import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
++import { MemoryRouter, Route, Routes } from "react-router-dom";
++
++import WorkspaceSettings from "@/app/workspaces/workspace-settings";
++import { fetchMe } from "@/api/auth";
++import { fetchWorkspace, fetchInvites } from "@/api/workspaces";
++import type { WorkspaceDetail, WorkspaceInvite } from "@/api/workspaces";
++
++vi.mock("@/api/auth", () => ({
++  fetchMe: vi.fn(),
++  isAuthExpiredError: () => false,
++}));
++
++vi.mock("@/api/workspaces", () => ({
++  fetchWorkspace: vi.fn(),
++  fetchWorkspaces: vi.fn(),
++  updateWorkspace: vi.fn(),
++  deleteWorkspace: vi.fn(),
++  fetchInvites: vi.fn(),
++  createInvite: vi.fn(),
++  revokeInvite: vi.fn(),
++  removeMember: vi.fn(),
++  fetchApiKeys: vi.fn(),
++  createApiKey: vi.fn(),
++  revokeApiKey: vi.fn(),
++}));
++
++const OWNER = {
++  id: "m-owner",
++  role: "owner",
++  joinedAt: "2026-01-01T00:00:00.000Z",
++  user: { id: 1, username: "owner", email: "owner@example.com" },
++};
++const MEMBER = {
++  id: "m-member",
++  role: "member",
++  joinedAt: "2026-01-02T00:00:00.000Z",
++  user: { id: 2, username: "member", email: "member@example.com" },
++};
++const OTHER_MEMBER = {
++  id: "m-other",
++  role: "member",
++  joinedAt: "2026-01-03T00:00:00.000Z",
++  user: { id: 3, username: "other", email: "other@example.com" },
++};
++
++const WORKSPACE: WorkspaceDetail = {
++  id: "ws-1",
++  name: "Acme",
++  slug: "acme",
++  createdAt: "2026-01-01T00:00:00.000Z",
++  members: [OWNER, MEMBER, OTHER_MEMBER],
++};
++
++const INVITE: WorkspaceInvite = {
++  id: "inv-1",
++  token: "tok",
++  role: "member",
++  createdAt: "2026-01-01T00:00:00.000Z",
++  expiresAt: null,
++};
++
++/**
++ * Renders the settings page as the user with the given id.
++ */
++function renderAs(userId: number) {
++  vi.mocked(fetchMe).mockResolvedValue({
++    id: userId,
++    username: "u",
++    email: "u@example.com",
++  } as Awaited<ReturnType<typeof fetchMe>>);
++  vi.mocked(fetchWorkspace).mockResolvedValue(WORKSPACE);
++  vi.mocked(fetchInvites).mockResolvedValue([INVITE]);
++
++  const client = new QueryClient({
++    defaultOptions: { queries: { retry: false } },
++  });
++  return render(
++    <QueryClientProvider client={client}>
++      <MemoryRouter initialEntries={["/w/acme/settings"]}>
++        <Routes>
++          <Route
++            path="/w/:workspaceId/settings"
++            element={<WorkspaceSettings />}
++          />
++        </Routes>
++      </MemoryRouter>
++    </QueryClientProvider>,
++  );
++}
++
++describe("WorkspaceSettings owner-only controls", () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++  });
++
++  it("shows member/invite management to an owner", async () => {
++    renderAs(OWNER.user.id);
++
++    // One trash icon per non-owner member.
++    await waitFor(() =>
++      expect(screen.getAllByLabelText("Remove member")).toHaveLength(2),
++    );
++    expect(screen.getByText("Create Invite")).toBeTruthy();
++    await waitFor(() =>
++      expect(screen.getByLabelText("Revoke invite")).toBeTruthy(),
++    );
++  });
++
++  it("hides them from a non-owner member", async () => {
++    renderAs(MEMBER.user.id);
++
++    await waitFor(() => expect(screen.getByText("Members")).toBeTruthy());
++    // Only the viewer's own row keeps a trash icon: self-removal is
++    // permitted by the backend, unlike removing someone else.
++    expect(screen.getAllByLabelText("Remove member")).toHaveLength(1);
++    expect(screen.queryByText("Create Invite")).toBeNull();
++    expect(screen.queryByText("Invites")).toBeNull();
++    expect(screen.queryByLabelText("Revoke invite")).toBeNull();
++    expect(vi.mocked(fetchInvites)).not.toHaveBeenCalled();
++  });
++});
+diff --git a/packages/frontend/src/app/workspaces/workspace-settings.tsx b/packages/frontend/src/app/workspaces/workspace-settings.tsx
+index 20b39e59..58157ec1 100644
+--- a/packages/frontend/src/app/workspaces/workspace-settings.tsx
++++ b/packages/frontend/src/app/workspaces/workspace-settings.tsx
+@@ -79,12 +79,6 @@ export default function WorkspaceSettings() {
+     }
+   }, [workspace]);
+ 
+-  const { data: invites = [] } = useQuery<WorkspaceInvite[]>({
+-    queryKey: ["workspaces", workspaceId, "invites"],
+-    queryFn: () => fetchInvites(workspaceId!),
+-    enabled: !!workspaceId,
+-  });
+-
+   const { data: me } = useQuery({
+     queryKey: ["me"],
+     queryFn: fetchMe,
+@@ -94,6 +88,12 @@ export default function WorkspaceSettings() {
+     me &&
+     workspace?.members.some((m) => m.user.id === me.id && m.role === "owner");
+ 
++  const { data: invites = [] } = useQuery<WorkspaceInvite[]>({
++    queryKey: ["workspaces", workspaceId, "invites"],
++    queryFn: () => fetchInvites(workspaceId!),
++    enabled: !!workspaceId && !!isOwner,
++  });
++
+   const updateMutation = useMutation({
+     mutationFn: (data: { name?: string; slug?: string }) =>
+       updateWorkspace(workspaceId!, data),
+@@ -322,19 +322,20 @@ export default function WorkspaceSettings() {
+                     <Badge variant="secondary">{member.role}</Badge>
+                   </TableCell>
+                   <TableCell className="text-right">
+-                    {member.role !== "owner" && (
+-                      <Button
+-                        variant="ghost"
+-                        size="sm"
+-                        className="text-destructive hover:text-destructive"
+-                        aria-label="Remove member"
+-                        onClick={() =>
+-                          removeMemberMutation.mutate(member.user.id)
+-                        }
+-                      >
+-                        <Trash2 className="h-4 w-4" />
+-                      </Button>
+-                    )}
++                    {member.role !== "owner" &&
++                      (isOwner || member.user.id === me?.id) && (
++                        <Button
++                          variant="ghost"
++                          size="sm"
++                          className="text-destructive hover:text-destructive"
++                          aria-label="Remove member"
++                          onClick={() =>
++                            removeMemberMutation.mutate(member.user.id)
++                          }
++                        >
++                          <Trash2 className="h-4 w-4" />
++                        </Button>
++                      )}
+                   </TableCell>
+                 </TableRow>
+               ))}
+@@ -343,78 +344,82 @@ export default function WorkspaceSettings() {
+         </div>
+       </section>
+ 
+-      <Separator />
++      {/* Invites — owner-only: listing invites is owner-gated too. */}
++      {isOwner && (
++        <>
++          <Separator />
+ 
+-      {/* Invites */}
+-      <section className="space-y-2">
+-        <div className="flex items-center justify-between">
+-          <div>
+-            <h2 className="text-lg font-semibold">Invites</h2>
+-            <p className="text-sm text-muted-foreground">
+-              Manage pending invitations to this workspace.
+-            </p>
+-          </div>
+-          <Button
+-            size="sm"
+-            onClick={() => createInviteMutation.mutate()}
+-            disabled={createInviteMutation.isPending}
+-            className="flex items-center gap-2"
+-          >
+-            <Plus className="w-4 h-4" />
+-            Create Invite
+-          </Button>
+-        </div>
+-        {invites.length > 0 ? (
+-          <div className="rounded-md border">
+-            <Table>
+-              <TableHeader>
+-                <TableRow>
+-                  <TableHead>Role</TableHead>
+-                  <TableHead>Expires</TableHead>
+-                  <TableHead className="text-right">Actions</TableHead>
+-                </TableRow>
+-              </TableHeader>
+-              <TableBody>
+-                {invites.map((invite) => (
+-                  <TableRow key={invite.id}>
+-                    <TableCell>
+-                      <Badge variant="secondary">{invite.role}</Badge>
+-                    </TableCell>
+-                    <TableCell className="text-sm text-muted-foreground">
+-                      {invite.expiresAt
+-                        ? new Date(invite.expiresAt).toLocaleDateString()
+-                        : "Never"}
+-                    </TableCell>
+-                    <TableCell className="text-right space-x-1">
+-                      <Button
+-                        variant="ghost"
+-                        size="sm"
+-                        aria-label="Copy invite link"
+-                        onClick={() => copyInviteLink(invite.token)}
+-                      >
+-                        <Copy className="h-4 w-4" />
+-                      </Button>
+-                      <Button
+-                        variant="ghost"
+-                        size="sm"
+-                        className="text-destructive hover:text-destructive"
+-                        aria-label="Revoke invite"
+-                        onClick={() =>
+-                          revokeInviteMutation.mutate(invite.id)
+-                        }
+-                      >
+-                        <Trash2 className="h-4 w-4" />
+-                      </Button>
+-                    </TableCell>
+-                  </TableRow>
+-                ))}
+-              </TableBody>
+-            </Table>
+-          </div>
+-        ) : (
+-          <p className="text-sm text-muted-foreground">No active invites.</p>
+-        )}
+-      </section>
++          <section className="space-y-2">
++            <div className="flex items-center justify-between">
++              <div>
++                <h2 className="text-lg font-semibold">Invites</h2>
++                <p className="text-sm text-muted-foreground">
++                  Manage pending invitations to this workspace.
++                </p>
++              </div>
++              <Button
++                size="sm"
++                onClick={() => createInviteMutation.mutate()}
++                disabled={createInviteMutation.isPending}
++                className="flex items-center gap-2"
++              >
++                <Plus className="w-4 h-4" />
++                Create Invite
++              </Button>
++            </div>
++            {invites.length > 0 ? (
++              <div className="rounded-md border">
++                <Table>
++                  <TableHeader>
++                    <TableRow>
++                      <TableHead>Role</TableHead>
++                      <TableHead>Expires</TableHead>
++                      <TableHead className="text-right">Actions</TableHead>
++                    </TableRow>
++                  </TableHeader>
++                  <TableBody>
++                    {invites.map((invite) => (
++                      <TableRow key={invite.id}>
++                        <TableCell>
++                          <Badge variant="secondary">{invite.role}</Badge>
++                        </TableCell>
++                        <TableCell className="text-sm text-muted-foreground">
++                          {invite.expiresAt
++                            ? new Date(invite.expiresAt).toLocaleDateString()
++                            : "Never"}
++                        </TableCell>
++                        <TableCell className="text-right space-x-1">
++                          <Button
++                            variant="ghost"
++                            size="sm"
++                            aria-label="Copy invite link"
++                            onClick={() => copyInviteLink(invite.token)}
++                          >
++                            <Copy className="h-4 w-4" />
++                          </Button>
++                          <Button
++                            variant="ghost"
++                            size="sm"
++                            className="text-destructive hover:text-destructive"
++                            aria-label="Revoke invite"
++                            onClick={() =>
++                              revokeInviteMutation.mutate(invite.id)
++                            }
++                          >
++                            <Trash2 className="h-4 w-4" />
++                          </Button>
++                        </TableCell>
++                      </TableRow>
++                    ))}
++                  </TableBody>
++                </Table>
++              </div>
++            ) : (
++              <p className="text-sm text-muted-foreground">No active invites.</p>
++            )}
++          </section>
++        </>
++      )}
+ 
+       {/* API Keys */}
+       {isOwner && (

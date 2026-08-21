@@ -1,0 +1,11 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/cli/src/docs/import.ts",
+      "summary": "The new envelope validation is bypassed by the import/upload paths, which still forward any upstream body verbatim",
+      "evidence": "The diff centralises the rule \"only forward a body whose `error` is an object with a string `code`\" for the six content/export sites. Four other command paths reach stderr with the *same* unvalidated pass-through the change was meant to eliminate:\n- `packages/cli/src/docs/import.ts:164` — `io.stderr(JSON.stringify(res.data ?? { error: { code: 'HTTP_ERROR' } }, null, 2))`\n- `packages/cli/src/slides/import.ts:194` — same line\n- `packages/cli/src/notes/import.ts:159` — same line\n- `packages/cli/src/files/upload.ts:217` — same line\nThese hit the very same backend content endpoint (`PUT /documents/:id/content`, which `docs/design/cli.md:1029` documents as returning `TYPE_MISMATCH`), so an Express/Nest 404/500 body (`{message, error: \"Not Found\", statusCode}`) is non-null, skips the `??` fallback, and is printed as if it were the documented envelope — `error.code` reads `undefined`. Worse, `packages/cli/skills/docs-import-docx.md:84` and `packages/cli/skills/slides-import-pptx.md:72` explicitly document `HTTP_ERROR` as the code agents branch on when \"the server rejected the create or content PUT\" — the exact case where the fallback does not fire. Fix belongs at these four sites (route them through `forwardUpstreamError`-equivalent logic, or an `isErrorEnvelope`-gated `io.stderr`).",
+      "lens": "blast-radius"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::`login` labels every backend failure `unauthorized`, contradicting the documented error matrix (5xx → system) and the exit-code column",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in the supplied packages/cli/src/commands/login.ts: all three `failFromBackend` call sites (exchange, /auth/me, /workspaces) pass a hard-coded fallback `code: 'UNAUTHORIZED'` irrespective of HTTP status, and the /workspaces one even interpolates `HTTP ${wsRes.status}` into the message while still coding it UNAUTHORIZED. Since `backendErrorEnvelope` only takes an upstream `code` when the body has a nested `error` *object*, Nest's default `{statusCode, message, error: \"Internal Server Error\"}` for a 5xx falls through to the fallback, so a 500 is emitted to agents as `UNAUTHORIZED` — a stable-but-wrong code on exactly the field #661 tells agents to branch on. `failFromBackend` also ends in `process.exit(1)` while packages/cli/README.md (touched by this PR) documents exit `2` for auth/system errors, though that exit-code mismatch pre-dates this change. I could not read docs/design/cli.md §10 itself (not supplied), so the exact matrix wording/line numbers are unverified, but the code-level mislabeling is real.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

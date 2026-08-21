@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/slides/src/export/pptx/shape.ts::untrusted shape `data.kind` is interpolated into the ooxml `prst` attribute with no allowlist and no escaping — reachable from the v1 content put api that this change now walks",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/slides/src/export/pptx/shape.ts: kindToPrst returns the model string verbatim and shapeToXml interpolates it into `<a:prstGeom prst=\"${kindToPrst(data.kind)}\">` with no allowlist or escaping, while the same function escapes el.id. Verified in packages/backend/src/api/v1/docs-content.controller.ts that assertValidElement checks only id/type/frame and, for shape elements, only data.text — data.kind passes untouched and writeSlidesRoot persists slides verbatim. The chain (PUT hostile kind → stored → PPTX export emits attacker XML) is exactly the sink class the PR hardened for algn/w:jc/srgbClr but missed here. Requires workspace write access and the payload lands in an exported file, so major rather than critical.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

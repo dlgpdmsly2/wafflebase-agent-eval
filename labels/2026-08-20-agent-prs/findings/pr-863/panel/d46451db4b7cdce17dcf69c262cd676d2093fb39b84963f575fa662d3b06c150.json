@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/auth/github.strategy.ts::the browser (non-cli) github oauth flow sends no `state` parameter at all, so it has no csrf protection — contradicting the risk-table row this diff's rest-api.md edit sits next to",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified against the supplied sources: github.strategy.ts:43-49 passes no `state: true`/store to passport-oauth2, and authenticate() (lines ~57-64) sets `opts.state` only when `req.__cliStateToken` exists; github-auth.guard.ts sets that token only for `mode === 'cli'` (its own test asserts the web flow gets no state and no `createState` call). So the browser OAuth flow sends and verifies no state, leaving it open to login CSRF, while the rest-api.md risk-table row edited in this diff claims per-request CSRF tokens are validated on callback — true only of the CLI branch. Confidence is medium rather than high because the full web branch of githubAuthCallback was not supplied and I relied on standard passport-oauth2 null-state-store semantics; the defect is also pre-existing, which the claim acknowledges.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

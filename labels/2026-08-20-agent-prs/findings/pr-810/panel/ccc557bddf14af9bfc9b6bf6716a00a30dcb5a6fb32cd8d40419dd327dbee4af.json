@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/slides/src/export/pptx/color.ts::pptx color modifier attributes (`alpha`, `tint`, `shade`, `lummod`, `lumoff`) are still interpolated raw after this change removed the file's only xml escaping",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/slides/src/export/pptx/color.ts: colorChildXml interpolates lumMod/lumOff/tint/shade/alpha into XML attributes with no coercion or escaping, and the diff removed the file's only escapeXmlAttr use. Verified in packages/slides/src/export/pptx/text.ts that storedColorToThemeColor copies tint/shade verbatim from persisted StoredColor role objects into that sink, so the untrusted-string chain the claim describes exists; the PR's own threat model (Map lookups, listLevel clamping, \"the static type is a claim\") treats exactly these persisted values as untrusted. The backend slides-tree.ts leg was not supplied, but the text.ts path alone confirms the defect. Minor caveat: the raw modifier interpolation predates this diff, but the claim about the code as written is correct.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

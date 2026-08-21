@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/output/formatter.ts::scope: two unrelated efforts are bundled in one change. (a) oauth security hardening — cli nonce echo, pkce s256, browser double-submit `state` cookie, `/auth` access-log redaction — touching backend auth guard/controller/store and cli login; and (b) the cli error-envelope refactor attributed to #661 — one-line envelopes, `command` attribution, shared `errorenvelope`/`backenderrorenvelope`, session-command conversion — touching ~20 cli files. only the `login` failure-reporting rewrite sits at their intersection. no originating issue accompanied this review, so i cannot map either half to an acceptance criterion; if the charter is one of the two, the other half is unrequested scope.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "nit",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The diff does contain two distinguishable workstreams: backend OAuth hardening (packages/backend/src/auth/github-auth.guard.ts, auth.controller.ts, cli-auth.store.ts, app.module.ts logSafeUrl) and the CLI error-envelope refactor (packages/cli/src/output/formatter.ts errorEnvelope/backendErrorEnvelope plus ~20 call-site files), intersecting only at packages/cli/src/commands/login.ts. So the factual observation is correct, and the PR itself concedes it in docs/tasks/active/20260812-cli-login-loopback-binding-todo.md (\"**Where it landed.** It rides the #661 branch again (PR #786), not a separate one\"), justifying it because both halves touch login.ts. Where the claim overreaches is \"unrequested scope\"/\"cannot map either half to an acceptance criterion\": both halves ship their own todo docs with issue references (#661 and #654/#655) and explicit acceptance-criteria lists in this same diff. It is a process/design-fit observation with no user-visible or correctness impact, hence nit-level.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

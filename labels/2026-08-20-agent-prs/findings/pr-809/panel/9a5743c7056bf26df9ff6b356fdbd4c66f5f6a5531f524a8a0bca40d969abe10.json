@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-809",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/components/theme-provider.tsx::`readstoredtheme` result is cast to `theme` without validation; a junk stored value can throw from `classlist.add`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against theme-provider.tsx: line 65 casts readStoredTheme's raw string to Theme with no validation, and the effect at line 87 calls root.classList.add(theme) with that value — DOMTokenList.add throws InvalidCharacterError on tokens containing whitespace, which would crash the root provider's effect and blank the app. A non-whitespace junk value silently corrupts resolvedTheme via the `theme as ResolvedTheme` cast at line 86. The claim is accurate, including the contrast with date-format-preference.ts's isFormat guard. Severity is minor because the unvalidated cast predates this PR and requires an externally corrupted localStorage value under the app's own key to trigger.",
+  "notes": null,
+  "diff_sha256": "sha256:92a208497f492e55209063b742fcc904d92a0adfee8da93852390d8c80a4172a",
+  "class_id": null,
+  "class_members": null
+}

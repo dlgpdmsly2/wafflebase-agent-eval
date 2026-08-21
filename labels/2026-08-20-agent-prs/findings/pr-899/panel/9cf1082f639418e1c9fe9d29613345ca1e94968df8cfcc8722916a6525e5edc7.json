@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-899",
+  "arm": "panel",
+  "finding_key": "docs/design/slides/slides-keyboard-shortcuts.md::canonical design doc not updated for the new `data-text-edit-keepalive` exemption. the doc's \"it deliberately does nothing when\" list (lines 147-160) is the spec for this hook and is now incomplete; worse, its last bullet asserts text-edit controls are handled purely by the deferred activeelement re-read (\"which is what makes text-edit controls … no-ops\"), which the delta contradicts by adding an explicit keepalive special case in `toolbar-focus-release.ts:76`. contributing expects the behaviour change to be folded into the canonical subsystem doc.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The hook explicitly exempts `data-text-edit-keepalive` controls in isReleasable() (toolbar-focus-release.ts:~43,76, plus a dedicated test), but the design doc's \"It deliberately does nothing when\" list in slides-keyboard-shortcuts.md lists only four guards and never mentions the keepalive attribute. Moreover, the doc's fourth bullet attributes text-edit safety solely to the deferred activeElement re-read, while the code's own comment explains keepalive controls hold focus and would be wrongly released by that mechanism alone — so the doc is both incomplete and misleading. I could not verify the CONTRIBUTING reference, but the doc/code mismatch is directly verifiable from the supplied files. Doc-only issue, no runtime impact.",
+  "notes": null,
+  "diff_sha256": "sha256:5c74f9ed85834db65072188cc10eb123e0733a9662c5a76f5d67d0b3a9ec3c3f",
+  "class_id": null,
+  "class_members": null
+}

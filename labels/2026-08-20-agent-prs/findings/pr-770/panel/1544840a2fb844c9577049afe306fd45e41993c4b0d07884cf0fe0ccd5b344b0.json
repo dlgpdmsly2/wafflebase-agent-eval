@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-770",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/docs/image-fetcher.ts::image-fetch ssrf guard is check-then-connect: an attacker who controls dns for a hostname they place in a document's image `src` can rebind between `assertresolvedhostispublic` and `fetch`, reaching 169.254.169.254 from the operator's machine.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against packages/cli/src/docs/image-fetcher.ts: assertResolvedHostIsPublic (≈lines 243–277) does a dns.lookup check, then createImageFetcher calls fetchImpl(current, {redirect:'manual'}) with the hostname, letting undici re-resolve independently — a genuine check-then-connect window with no connection pinning. The code comment (\"This is not DNS-rebinding-proof… needs connection pinning below fetch\") and docs/design/cli.md explicitly acknowledge this open gap, so the claim correctly describes the code. Severity is tempered because exploitation needs attacker-controlled DNS plus winning a TTL race, the result is blind SSRF (bytes land in the operator's own export), and the limitation is a documented, deliberate residual risk rather than an unhandled surprise.",
+  "notes": null,
+  "diff_sha256": "sha256:c8d92aec1ba53fee531a623b425919c02a8f52c6e84365c25deec98bcb5d3e3d",
+  "class_id": null,
+  "class_members": null
+}

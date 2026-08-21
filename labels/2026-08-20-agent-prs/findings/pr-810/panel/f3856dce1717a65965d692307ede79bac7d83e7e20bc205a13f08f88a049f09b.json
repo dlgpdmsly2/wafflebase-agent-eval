@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-810",
+  "arm": "panel",
+  "finding_key": "packages/frontend/tests/components/text-formatting/color-reset.test.ts::color-reset test cannot distinguish `{ color: undefined }` from `{}` — the exact distinction the fix depends on",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified: the test (color-reset.test.ts:78-88) asserts via toHaveBeenCalledWith({ color: undefined }), and vitest/jest recursive equality treats an explicitly-undefined key as equal to an absent one, so a call with {} would also pass. The store's clear path (removedInlineStyleAttrs / removedCellStyleAttrs in yorkie-doc-store.ts) keys off `key in style && style[key] === undefined`, so key presence is exactly the property that matters and the test cannot detect its loss. The test still catches the original `\"\"` regression, so the impact is a coverage gap, not a broken test — a minor test-adequacy defect.",
+  "notes": null,
+  "diff_sha256": "sha256:788bbeadc2afdb444a36e87aeb5d05bf67710bacbf40e63ea69bd9bc2752d23a",
+  "class_id": null,
+  "class_members": null
+}

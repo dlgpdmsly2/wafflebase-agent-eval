@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-809",
+  "arm": "panel",
+  "finding_key": "docs/design/frontend.md::no design doc added or updated for the new user-preference subsystem. contributing.md:13-16 and :56-58 require a feature / non-trivial change to write or update a doc under docs/design/ (fold into the canonical subsystem doc). this pr introduces a new persisted-preference store (`packages/frontend/src/lib/date-format-preference.ts`, storage key `wafflebase-date-format`, custom `wafflebase-date-format-change` event, `usesyncexternalstore` hook) plus a new settings section, yet docs/design/frontend.md — which documents the analogous theme system and its `\"vite-ui-theme\"` localstorage key at lines 534-545 — is untouched. only docs/tasks/active/20260812-date-display-format-{todo,lessons}.md were added, and a task plan is not a design doc.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied diff and repo files: the diff adds only docs/tasks/active/ files and code — no docs/design/ change. CONTRIBUTING.md's TL;DR and \"Features and non-trivial changes\" section require a design doc under docs/design/ for feature PRs and explicitly distinguish task plans from design docs. docs/design/frontend.md's \"Theme System\" section documents the analogous localStorage-backed preference (\"vite-ui-theme\"), and no equivalent entry exists for the new wafflebase-date-format preference/hook/event, so the claim's every factual element holds. It is a documentation/process gap with no runtime impact, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:92a208497f492e55209063b742fcc904d92a0adfee8da93852390d8c80a4172a",
+  "class_id": null,
+  "class_members": null
+}

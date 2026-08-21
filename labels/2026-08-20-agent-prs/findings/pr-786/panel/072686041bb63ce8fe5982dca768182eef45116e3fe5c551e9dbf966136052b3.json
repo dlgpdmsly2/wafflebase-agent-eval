@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::the cli login url — which carries the whole nonce + pkce challenge pair — is handed to `open()`, i.e. placed in a child process's argv, where any local user can read it and defeat all three new loopback bindings",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified in packages/cli/src/commands/login.ts: `openBrowser` passes the full start URL (nonce + code_challenge) to `open(url)`, which spawns `xdg-open`/`open` with the URL in argv, readable by other local users — undercutting the deliberate effort in `announceLoginUrl` to keep that URL out of stderr/logs. The replay chain also holds against the code shown: a local attacker reusing the URL gets their own `browserBinding` cookie in `GitHubAuthGuard.canActivate` (so that binding does not stop them), `AuthController.githubAuthCallback` mints a code carrying the copied challenge and echoes the victim's nonce, `nonceMatches` in login.ts passes, and `CliAuthStore.consumeCode` accepts the victim's verifier since it hashes to the copied challenge — victim's CLI ends up holding the attacker's tokens. I rate it minor rather than higher because the exploit window is ~30s (listener lifetime), requires a hostile local co-tenant, and any browser launch inherently exposes the URL in some process's argv (the `open` Windows path may even use stdin), so the real error is the docs' claim that the cookie binding closes the shared-host case.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

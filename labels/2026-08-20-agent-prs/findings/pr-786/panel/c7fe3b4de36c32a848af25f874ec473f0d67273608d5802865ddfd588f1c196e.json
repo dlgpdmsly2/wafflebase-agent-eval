@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/auth/github.strategy.ts::the renamed `__clistatetoken` → `__oauthstate` handoff from guard to strategy is not covered by any test",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "In `packages/backend/src/auth/github.strategy.ts` the new `authenticate` reads `(req as { __oauthState?: string }).__oauthState` and assigns `opts.state`; the only writer is `github-auth.guard.ts` (`req.__oauthState = stateToken` / `= this.startWebState(context)`), and both sides use untyped `req`/inline casts, so a divergent rename would compile silently and, per the strategy's own comment about passport-oauth2's always-succeeding `NullStore`, would ship an authorization request with no CSRF binding. The diff adds `github-auth.guard.spec.ts` (writer side only) and extends `auth.controller.spec.ts` (callback/exchange side only); it adds or modifies no test that invokes `authenticate` or inspects `opts.state`, so the guard→strategy handoff is indeed uncovered by this change. I could not read the pre-existing `github.strategy.spec.ts` (empty working directory, file not supplied), so the claim that it asserts only endpoint URLs is inferred from the fact that the rename required no edit to it — strong but indirect. Scored minor because this is a missing regression test on a security-relevant seam rather than a defect in the shipped behavior.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

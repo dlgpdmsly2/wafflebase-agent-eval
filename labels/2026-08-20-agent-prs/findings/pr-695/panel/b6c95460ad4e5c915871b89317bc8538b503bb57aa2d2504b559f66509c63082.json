@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-695",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/components/login-form.tsx::new login-error ui (login_errors map + generic fallback + page wiring of ?error=) has no test at all",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The diff is stated to be the whole change, and it adds substantial tests on the backend (cli-login-confirm.middleware.spec.ts, github-auth.guard.spec.ts, github.strategy.spec.ts, auth.controller.spec.ts additions) and CLI side (login.test.ts, login-command.test.ts, status.test.ts, etc.) but touches no frontend test file at all. The new user-visible half — `error` prop, `LOGIN_ERRORS` map with the `oauth_state` key, `GENERIC_LOGIN_ERROR` fallback and the `role=\"alert\"` paragraph in packages/frontend/src/components/login-form.tsx, plus `useSearchParams().get(\"error\")` wiring in app/login/page.tsx — is brand-new behaviour, so no pre-existing test could exercise it either. That matches the claim: a misspelled `oauth_state` key or a dropped prop would silently degrade the retry message with a green suite. Severity is minor: it is a presentational/UX branch, and the security property (no session issued) is asserted in auth.controller.spec.ts; I could not grep packages/frontend/tests to confirm the cited theme-provider test exists, but that only affects the \"testable area\" argument, not the omission itself.",
+  "notes": null,
+  "diff_sha256": "sha256:96865731bf719c4343397260f43ba2a54b21da7d1788e3a17dfad3ebd526ff29",
+  "class_id": null,
+  "class_members": null
+}

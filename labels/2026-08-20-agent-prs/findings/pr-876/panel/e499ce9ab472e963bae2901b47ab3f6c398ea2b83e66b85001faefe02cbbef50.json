@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-876",
+  "arm": "panel",
+  "finding_key": "packages/docs/test/model/document.test.ts::the mixed-key branch of `styleoffasclear` (one style object containing both a style-supplied key and a non-supplied key) is never exercised, though the test comment claims it is",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:8"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against document.test.ts:345-367 and styleOffAsClear in document.ts: the test issues two separate applyInlineStyle calls ({italic:false} then {bold:false}) despite the line-360 comment claiming \"in the same write\". Traced the hypothesized regression (cleared = {} instead of { ...style }): both test calls and all other new single-key-patch tests still pass under it, since the spread only matters when one patch mixes a kept key and a cleared key. No combined boolean-off patch exists anywhere in the shown tests, so the mixed-key copy-on-write branch is genuinely unexercised. Real test-adequacy gap, though the production code itself is correct.",
+  "notes": null,
+  "diff_sha256": "sha256:5da908b6ad1e0866826464f4260f44141c87d6b6825011ed2d9788eaf681c704",
+  "class_id": null,
+  "class_members": null
+}

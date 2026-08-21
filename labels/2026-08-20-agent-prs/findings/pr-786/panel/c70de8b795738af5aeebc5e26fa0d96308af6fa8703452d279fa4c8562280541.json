@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/logging/log-safe-url.ts::`logsafeurl` redacts only `/auth` query strings, so the share-link credential in `get /documents/:id/file?token=<share token>` is still written to the access log verbatim",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:6"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: `logSafeUrl` (log-safe-url.ts:22, `/^\\/auth(?:\\/|$)/`) only redacts query strings on `/auth`, and app.module.ts:70 applies it to `req.url` for every request. `document-file.controller.ts:40` does accept a share-link credential as `@Query('token')` and uses it in `assertCanRead` to grant read access, so that path's query string (token included) reaches pino unredacted — and app.module.ts's `customLogLevel` puts 4xx at `warn`, so rejected/mismatched-token attempts are logged at a level visible under the default `info`. The claim is factually correct about the code, though impact is dampened: a successful `GET /documents/:id/file` is a non-mutation and logs at `debug` (silent at default level), so only 4xx attempts (already-expired/wrong-document tokens, plus the 403 case where a valid token is presented for another document) surface by default, and the leak is pre-existing rather than introduced by this diff — it is an incompleteness of the newly added control.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

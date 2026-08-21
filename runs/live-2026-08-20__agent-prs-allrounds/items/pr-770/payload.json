@@ -1,0 +1,294 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/cli/src/docs/import.ts",
+      "summary": "The new envelope validation is bypassed by the import/upload paths, which still forward any upstream body verbatim",
+      "evidence": "The diff centralises the rule \"only forward a body whose `error` is an object with a string `code`\" for the six content/export sites. Four other command paths reach stderr with the *same* unvalidated pass-through the change was meant to eliminate:\n- `packages/cli/src/docs/import.ts:164` — `io.stderr(JSON.stringify(res.data ?? { error: { code: 'HTTP_ERROR' } }, null, 2))`\n- `packages/cli/src/slides/import.ts:194` — same line\n- `packages/cli/src/notes/import.ts:159` — same line\n- `packages/cli/src/files/upload.ts:217` — same line\nThese hit the very same backend content endpoint (`PUT /documents/:id/content`, which `docs/design/cli.md:1029` documents as returning `TYPE_MISMATCH`), so an Express/Nest 404/500 body (`{message, error: \"Not Found\", statusCode}`) is non-null, skips the `??` fallback, and is printed as if it were the documented envelope — `error.code` reads `undefined`. Worse, `packages/cli/skills/docs-import-docx.md:84` and `packages/cli/skills/slides-import-pptx.md:72` explicitly document `HTTP_ERROR` as the code agents branch on when \"the server rejected the create or content PUT\" — the exact case where the fallback does not fire. Fix belongs at these four sites (route them through `forwardUpstreamError`-equivalent logic, or an `isErrorEnvelope`-gated `io.stderr`).",
+      "lens": "blast-radius",
+      "round_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/output/formatter.ts",
+      "summary": "Real backend error messages are now discarded on every non-envelope failure (401/403/404/400 validation), because the backend has no global exception filter and returns Nest's default `{message, error:'Not Found', statusCode}` bodies",
+      "evidence": "The backend's v1 API throws plain Nest exceptions and no global exception filter exists (grep for `ExceptionFilter|useGlobalFilters` in packages/backend/src returned nothing). So the *common* failure bodies the CLI receives are framework-shaped, not the envelope: packages/backend/src/api/v1/files.controller.ts:141 `throw new NotFoundException('Document has no file')`, files.controller.ts:81 / documents.controller.ts:109 `throw new ForbiddenException('This API key does not have write access')`, workspace-scope.guard.ts:28 ForbiddenException, cells.controller.ts:58 `NotFoundException('Tab not found')`. Before this change `wafflebase files download <id>` / `files upload` / `docs import` printed that body, so the human/agent-readable cause (\"Document has no file\", \"This API key does not have write access\") reached stderr. After it, `upstreamErrorJson` (formatter.ts:127-132) and `forwardUpstreamError` (formatter.ts:109) drop the body entirely and emit only `{error:{code:'HTTP_ERROR'|'ERROR', message:'HTTP 404'}}`. Only the code shape is fixed; the diagnostic text is lost for every real backend error except the two hand-built envelopes (TYPE_MISMATCH, SESSION_EXPIRED). docs/design/cli.md:1039 documents the opposite intent for backend failures — \"(original message preserved)\". The fix belongs on the new helpers: carry the framework body's `message` (and `statusCode`) into the envelope's `message` instead of throwing it away.",
+      "lens": "blast-radius",
+      "round_commit": "e6831785c5c70d3e7b90992dd33cc674ec8bb7b6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/scripts/verify-visual-browser.mjs",
+      "summary": "Adding index.html's own families (Inter/Fraunces/JetBrains Mono) to the font gate makes every visual capture, in every section, hard-depend on fonts.googleapis.com resolving within 10s",
+      "evidence": "packages/frontend/index.html:12 requests Inter/Fraunces/JetBrains Mono on every page load, so those FontFaces are registered for *all* harness pages, not just slides sections. Previously the polled set was only the four families useGoogleFontsLink() injects (so `document.fonts.check` matched nothing and returned true trivially on the ~200 non-slides captures). Now, if the css2 stylesheet loads but the font binaries fail or are slow (restricted-network CI, cold cache), the faces stay unloaded/errored and the new `waitForFunction(..., {timeout: 10000})` at verify-visual-browser.mjs:384 fails for every one of the 220 baselines under packages/frontend/tests/visual/baselines/, not just the two sections that drifted. The swallowed `.catch(() => {})` on `fonts.load` (line 374) removes the previous fast failure, so the symptom becomes a timeout per page. Worth confirming the visual lane has egress to fonts.googleapis.com; otherwise the enumerated set should be limited to families the section under capture actually registers, or the poll should tolerate errored faces.",
+      "lens": "blast-radius",
+      "round_commit": "e6831785c5c70d3e7b90992dd33cc674ec8bb7b6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/scripts/verify-visual-browser.mjs",
+      "summary": "Unrelated scope creep: a frontend visual-harness font-waiting rewrite is bundled into a CLI error-envelope change",
+      "evidence": "The diff's stated subject is the CLI upstream-error forwarding helpers (`forwardUpstreamError` / `upstreamErrorJson` in packages/cli/src/output/formatter.ts) applied across docs/notes/slides/files. The hunk in packages/frontend/scripts/verify-visual-browser.mjs is a wholly separate concern: it expands VISUAL_FONT_FAMILIES with Inter/Fraunces/JetBrains Mono, adds a VISUAL_FONT_WEIGHTS matrix, adds a catch-all `status !== 'loading'` poll, and relocates `waitForFontsReady(page)` from before the harness-root wait to after the section-ready wait (capturePass). It shares no module, no test, and no acceptance criterion with the CLI work, and it materially changes when screenshots are taken in the visual-baseline lane (a change that can shift/invalidate the ~220 pinned baselines described in docs/design/harness-engineering.md). It should be its own change so it can be reviewed and baselined independently.",
+      "lens": "design-fit",
+      "round_commit": "e6831785c5c70d3e7b90992dd33cc674ec8bb7b6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/output/formatter.ts",
+      "summary": "The two new helpers emit different `error.code` for the identical failure condition, splitting the agent-facing contract",
+      "evidence": "For the same input — a non-envelope upstream failure — `forwardUpstreamError` throws `HTTP <status>`, which `outputError` flattens to `{\"error\":{\"code\":\"ERROR\",\"message\":\"HTTP 404\"}}` (formatter.ts:46,109), while `upstreamErrorJson` returns `{\"error\":{\"code\":\"HTTP_ERROR\",\"message\":\"HTTP 404\"}}` (formatter.ts:129). The new test file asserts both divergent shapes (test/upstream-error.test.ts:191 expects `code: 'ERROR'` for `docs content`; :462 expects `code: 'HTTP_ERROR'` for `docs import`). The whole justification in the doc comments is that agents branch on `code`; making the code depend on which command family happened to fail is exactly the ambiguity the change set out to remove. One helper (or one code) would satisfy the same goal.",
+      "lens": "design-fit",
+      "round_commit": "e6831785c5c70d3e7b90992dd33cc674ec8bb7b6"
+    },
+    {
+      "severity": "major",
+      "summary": "Reviewer did not produce a valid verdict: review query hit a run limit: error_max_structured_output_retries after 26 turns — Failed to provide valid structured output after 5 attempts (raise the ceiling or simplify the task; retrying will not help)",
+      "lens": "security",
+      "round_commit": "e6831785c5c70d3e7b90992dd33cc674ec8bb7b6"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/output/formatter.ts",
+      "searchedFor": [],
+      "summary": "Non-envelope backend error bodies now lose their `message` entirely — Nest's detailed 400/403/404 messages are replaced by a bare `HTTP <status>`",
+      "evidence": "`isErrorEnvelope` only accepts `{error:{code:string}}`. The backend produces that shape for exactly one case (`TYPE_MISMATCH_BODY`, packages/backend/src/api/v1/docs-content.controller.ts:42). Every other failure is a stock Nest exception — e.g. `throw new BadRequestException(\"Invalid block at ${path}: 'id' must be a non-empty string\")` (docs-content.controller.ts:260), `NotFoundException('Document has no file')` (files.controller.ts:141), `ForbiddenException('This API key does not have write access')` (files.controller.ts:81) — which serialize to `{message, error:'Bad Request', statusCode}`. Before this change those bodies were printed verbatim, so the operator saw *which* block was invalid or *why* access was denied. Now `upstreamErrorJson` returns `{error:{code:'HTTP_ERROR',message:'HTTP 400'}}` and `forwardUpstreamError` throws `HTTP 400` into `outputError`, discarding the only diagnostic the server sent. Rejecting the mis-shaped envelope is right; dropping the `message` string with it is a real regression in error reporting on the most common failure paths (validation, auth, not-found) across docs/notes/slides import, files upload/download and all six content/export commands. Folding a string `body.message` (or `body.error` when it is a string) into the synthesized envelope's `message` would preserve it.",
+      "lens": "correctness",
+      "round_commit": "e6831785c5c70d3e7b90992dd33cc674ec8bb7b6"
+    },
+    {
+      "severity": "major",
+      "file": "docs/tasks/active/20260811-cli-upstream-error-envelope-todo.md",
+      "summary": "Acceptance criteria claim content/export paths report code \"ERROR\" for an Express-shaped 404, but the code they describe (formatter.ts) throws `UpstreamHttpError` with `readonly code = 'HTTP_ERROR'`, which `outputError`'s `errorCode()` reads directly — so the content/export path also reports `HTTP_ERROR`, not `ERROR`. The doc's own file (`formatter.ts:132-135`) even states the intent is that both paths report the *same* `HTTP_ERROR` code so an agent needn't branch on which command it ran — directly contradicting the acceptance criterion two sections later.",
+      "evidence": "\"An Express-shaped 404 body reaches stderr as `{\\\"error\\\":{\\\"code\\\":\\\"ERROR\\\",\\\"message\\\":\\\"HTTP 404\\\"}}` on the content/export paths\" — checked against packages/cli/src/output/formatter.ts:137-138 (`class UpstreamHttpError { readonly code = 'HTTP_ERROR'; }`) and the docstring at formatter.ts:132-135 (\"Carries `code` so `outputError` reports the same `HTTP_ERROR` that `upstreamErrorJson` writes\"), and formatter.ts:41-46 (`errorCode` reads `error.code` when present). The content/export path (forwardUpstreamError -> throw UpstreamHttpError -> outputError) therefore yields `HTTP_ERROR`, not `ERROR`, for a non-envelope body.",
+      "lens": "docs",
+      "round_commit": "c345a47699bebe5fe5c12d9816122347befd7473"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/output/formatter.ts",
+      "searchedFor": [],
+      "summary": "Content/export paths now report `HTTP_ERROR`, not the `ERROR` code the task's acceptance criteria specify",
+      "evidence": "docs/tasks/active/20260811-cli-upstream-error-envelope-todo.md:44-47 states the acceptance criterion: \"An Express-shaped 404 body reaches stderr as {\\\"error\\\":{\\\"code\\\":\\\"ERROR\\\",\\\"message\\\":\\\"HTTP 404\\\"}} on the content/export paths and {\\\"error\\\":{\\\"code\\\":\\\"HTTP_ERROR\\\",...}} on the import/upload/download paths\". The implementation instead defines `UpstreamHttpError { readonly code = 'HTTP_ERROR' }` so `outputError` emits `HTTP_ERROR` on the content/export paths too, and the new test (packages/cli/test/upstream-error.test.ts:219) asserts the new behaviour. Unifying the code may well be the better contract, but the acceptance criterion and the todo doc were not updated to record the deviation, so the documented spec and shipped behaviour now disagree.",
+      "lens": "design-fit",
+      "round_commit": "c345a47699bebe5fe5c12d9816122347befd7473"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/README.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep HTTP_ERROR in docs/design",
+        "grep HTTP_ERROR in packages/cli/skills",
+        "read packages/cli/README.md Errors section",
+        "read docs/design/cli.md §9-§10"
+      ],
+      "summary": "New `HTTP_ERROR` code on content/export paths contradicts the documented error-code contract in README/design doc, which the diff does not update",
+      "evidence": "packages/cli/README.md:116-120 documents \"Typed errors (e.g., INVALID_DOCX, TYPE_MISMATCH, CONFIRMATION_REQ) carry a command-specific code agents can branch on; everything else reports \\\"ERROR\\\"\". After this change `docs/slides/notes content|export` emit `HTTP_ERROR` (and a `HTTP <status>: <detail>` message) for every non-envelope failure, a new code that agents may branch on. Neither README nor docs/design/cli.md §10's Error Matrix (docs/design/cli.md:1024-1042, which maps backend 5xx/401/403 to exit 2 with codes SYSTEM/UNAUTHORIZED, not exit 1 / HTTP_ERROR) is touched by the diff; the corresponding skill files for content/export also list no HTTP_ERROR.",
+      "lens": "design-fit",
+      "round_commit": "c345a47699bebe5fe5c12d9816122347befd7473"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/scripts/verify-visual-browser.mjs",
+      "searchedFor": [],
+      "summary": "Visual-harness change downgrades the font-readiness gate to a warning, the opposite of the posture its own task doc states, and the doc is not updated",
+      "evidence": "docs/tasks/active/20260811-visual-inter-font-race-todo.md:52-56 (\"Notes\") justifies the fix on the basis that \"The check() wait already hard-fails (10s timeout) if a family never becomes available, so pulling Inter into the same set keeps the existing risk posture: an unreachable fonts.googleapis.com now reports a clear timeout instead of an opaque pixel diff.\" The diff introduces `settle()` (formatter of warnings) and wraps both the `fonts.check()` poll and the catch-all poll in it, so an unloaded font now yields exactly the opaque pixel diff the task says it is replacing. The plan checklist (lines 44-47) contains no item for making the wait best-effort, and the todo doc is not amended in this diff.",
+      "lens": "design-fit",
+      "round_commit": "c345a47699bebe5fe5c12d9816122347befd7473"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/docs.ts",
+      "searchedFor": [
+        "grep 'HTTP \\${res.status}' in packages/cli/src",
+        "grep forwardUpstreamError|upstreamErrorJson across packages",
+        "read http-client.ts sessionExpiredBody/request"
+      ],
+      "summary": "New envelope-forwarding helper is not applied to the many other command sites, which still discard a real backend envelope (e.g. SESSION_EXPIRED) as `{code:\"ERROR\"}`",
+      "evidence": "`forwardUpstreamError`/`upstreamErrorJson` are wired into only 6 command sites (docs/notes/slides content+export) and the import/upload/download orchestrators. Every other site still does `if (!res.ok) throw new Error(`HTTP ${res.status}`)` — docs.ts:80,107,121,139,157; notes.ts:40,67,81,99,117; slides.ts:45,72,86,104,122; cells.ts:25,65,91,143; tabs.ts:16,49,75; files.ts:86,106,124,142; api-keys.ts:18,32,46. That path throws away the response body entirely, including bodies that *are* the documented envelope: `HttpClient.sessionExpiredBody()` (http-client.ts:157) returns `{error:{code:'SESSION_EXPIRED',message:'Session expired. Run `wafflebase login`.'}}` with `ok:false, status:401` (http-client.ts:181), so `wafflebase docs get <id>` on an expired JWT session emits `{error:{code:\"ERROR\",message:\"HTTP 401\"}}` and the actionable `code` an agent is supposed to branch on is lost. Same for any backend envelope on those endpoints. The change makes the CLI's error contract depend on which subcommand was run, which is exactly what the new helper's doc comment says must not happen.",
+      "lens": "correctness",
+      "round_commit": "c345a47699bebe5fe5c12d9816122347befd7473"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/test/upstream-error.test.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'batchCells|sheets import|cells.*batch' in packages/cli/test",
+        "read packages/cli/test/upstream-error.test.ts in full",
+        "read packages/cli/test/output.test.ts region around sheets cells batch",
+        "grep forwardUpstreamError call-site counts per src file"
+      ],
+      "summary": "`sheets cells batch` and `sheets import` were converted to `forwardUpstreamError` but no test drives either through a failing upstream response",
+      "evidence": "The delta changes `!res.ok` handling in packages/cli/src/commands/cells.ts (batch, line ~146) and packages/cli/src/commands/sheets-import.ts (line ~90), yet the new CASES table in upstream-error.test.ts (lines 218-245) — introduced with the comment \"Every other command that talks to the backend\" — lists sheets cells get/set/delete but not `sheets cells batch`, and lists `sheets export` but not `sheets import`. Grep over packages/cli/test for `batchCells`/`sheets import` finds only output.test.ts:315 (malformed --data JSON, fetch never called) and schema/namespace tests, none of which exercise a non-ok response. These are the two paths with extra pre-request logic (stdin/CSV parsing, dry-run, imported-count merge), so a site that regressed to `throw new Error('HTTP <status>')` there would ship undetected — precisely what the end-to-end block claims to prevent.",
+      "lens": "test-adequacy",
+      "round_commit": "7a3e4843addc8d328526fa931d0e386fb829d203"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "Spec says a backend 401/403 reports code `UNAUTHORIZED`; the code path this delta makes universal never emits it. The HTTP client synthesises `{error:{code:'SESSION_EXPIRED'}}` (packages/cli/src/client/http-client.ts:156-164) and `forwardUpstreamError` forwards it verbatim; a 403 or a 401 whose body is a Nest default becomes `HTTP_ERROR`. No source file in packages/cli emits `UNAUTHORIZED`. The delta's own formatter comment and new matrix row bless `SESSION_EXPIRED` as the 401 code without retir"
+        }
+      ],
+      "summary": "The two new Error Matrix rows contradict the rows and prose they sit next to instead of reconciling them. Immediately below, `Backend 5xx or network | 2 | SYSTEM` and above, `Backend 401/403 | 2 | UNAUTHORIZED`; §8.1 (cli.md:780-782) and packages/cli/README.md:127-128 both state `2` = system error (network, auth). The behaviour this delta generalises to *every* backend command is exit `1` with `HTTP_ERROR` (or a verbatim envelope) for 401/403/5xx alike — `forwardUpstreamError`/`outputError` only ever set `process.exitCode = 1` (packages/cli/src/output/formatter.ts:62,175). Since the PR is the change that makes this the universal path and it edits the very table that records the contract, the stale exit-2 rows should have been folded in or removed; as it stands the canonical design doc describes two mutually exclusive behaviours for the same HTTP responses and an agent branching on exit code (which the doc explicitly invites) gets it wrong.",
+      "evidence": "cli.md:1039-1041 new rows say exit 1 / HTTP_ERROR; cli.md:1038 `Backend 401/403 | 2 | UNAUTHORIZED`; cli.md:1042 `Backend 5xx or network | 2 | SYSTEM`; cli.md:780-782 `2` system error (network, auth).",
+      "lens": "design-fit",
+      "round_commit": "7a3e4843addc8d328526fa931d0e386fb829d203"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/output/formatter.ts",
+      "searchedFor": [],
+      "summary": "Verbatim, uncapped forwarding of upstream response bodies now happens on every CLI command — untrusted upstream content flows unfiltered into agent-consumed stderr",
+      "evidence": "`forwardUpstreamError` (formatter.ts:169-179) prints `JSON.stringify(res.data, null, 2)` in full whenever `res.data.error.code` happens to be a string. `isErrorEnvelope` (formatter.ts:76-85) validates only that one field: everything else in the body — an arbitrarily long `error.message`, sibling fields, a stack trace, an internal identifier — is echoed verbatim. The sibling non-envelope path deliberately hardens the same data (`MAX_UPSTREAM_MESSAGE = 500` at formatter.ts:90 and the `startsWith('<')` HTML rejection at formatter.ts:117); the verbatim path has neither cap nor filter, so the hardening is bypassed simply by including `error.code`. Before this delta only six commands could reach that path; this delta routes ~25 more `!res.ok` branches (docs.ts:80/107/121/139/157, notes.ts:40..117, slides.ts:45..122, cells.ts:29/69/95/147, tabs.ts:20/53/79, files.ts:90/110/128/146, api-keys.ts:22/36/50, sheets-import.ts:91, sheets-export.ts:43) through it. Attack: a compromised, malicious, or MITM'd server (`--server` / `WAFFLEBASE_SERVER` / config profile is free-form and the URL scheme is not pinned, config.ts:90-94) answers any request with `{\"error\":{\"code\":\"SESSION_EXPIRED\",\"message\":\"<megabytes of text, or instructions aimed at the reading agent>\"}}`. packages/cli/README.md explicitly positions this stderr line as what AI agents branch on, so the payload lands directly in an agent's context, and it can also spoof CLI-reserved codes (TYPE_MISMATCH, CONFIRMATION_REQ) to steer behaviour. Note JSON.stringify does escape control chars, so ANSI/terminal escape injection is not possible — the vector is content/volume, not terminal control. Suggested fix: apply the same length cap (and a field whitelist of `code`/`message`) on the verbatim path.",
+      "lens": "security",
+      "round_commit": "7a3e4843addc8d328526fa931d0e386fb829d203"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/http-client.ts",
+      "searchedFor": [],
+      "summary": "`api-keys` commands bypass `send()`, so the SESSION_EXPIRED/refresh invariant this delta asserts does not hold for them",
+      "evidence": "The delta routes `api-keys create/list/revoke` (api-keys.ts:22,36,50) through `forwardUpstreamError`, and the new comment in formatter.ts:153-158 plus the new test cases (upstream-error.test.ts:242-244) assert the invariant \"every command that talks to the backend\" reports the same code, \"the client's own 401 SESSION_EXPIRED most of all\". But `listApiKeys` (http-client.ts:365-371), `createApiKey` (372-382) and `revokeApiKey` (383-389) call `fetch` directly instead of `this.send(...)`: they never attempt `refreshSession()` on a 401 and never synthesize `sessionExpiredBody()`. Under JWT auth an expired access token on these three commands (a) is not retried after a refresh that would have succeeded — the command fails where every other command succeeds — and (b) surfaces the raw server 401 body, which `forwardUpstreamError` reports as `HTTP_ERROR`, not `SESSION_EXPIRED`. The code an agent branches on therefore still depends on which subcommand it ran, which is exactly the bug this change claims to close; the new tests do not catch it because the fetch stub never exercises the 401/refresh path.",
+      "lens": "correctness",
+      "round_commit": "7a3e4843addc8d328526fa931d0e386fb829d203"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/cli.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'Invalid path segment' across docs/ and packages/cli",
+        "grep 'encodeURIComponent|segment' in docs/design/cli.md",
+        "read docs/design/cli.md §8.1, §9, §10 (lines 780-1100)",
+        "grep 'api-keys|refresh' in docs/design/cli.md"
+      ],
+      "summary": "The new hard-failure mode introduced by `seg()` is not recorded in the design doc. `HttpClient` now throws `Invalid path segment: \"..\"` (a plain `Error`, so it surfaces as code `ERROR`) for a document/tab/cell/workspace id of `.` or `..`, and silently percent-encodes every other id. §10's Error Matrix — which this same PR rewrites in detail, down to 80/500/4000-character bounds — has no row for it, and §3/§8 say nothing about id encoding. The PR documents its error contract meticulously while leaving the one new agent-visible failure it introduces undocumented.",
+      "lens": "design-fit",
+      "round_commit": "3c2d9043989fd4728a38846372a6659e80c878d0"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/dry-run.ts",
+      "searchedFor": [
+        "grep for fetch( in packages/cli/src",
+        "grep for /documents/${ and workspaces/${ across packages/cli/src",
+        "read packages/cli/src/client/dry-run.ts and http-client.ts",
+        "read docs/design/cli.md §8.2 and §10"
+      ],
+      "summary": "New doc claims dot-segment ids are always refused and that ids are always one segment, but the `--dry-run` path bypasses `seg()` entirely",
+      "evidence": "The delta adds to docs/design/cli.md an unconditional error-matrix row — \"Workspace / document / tab / cell id is `.` or `..` | 1 | ERROR | ... (refused before any request is sent)\" — and prose that \"Every id the client interpolates into a request URL ... is percent-encoded\". The dry-run preview, which §8.2 defines as \"prints the request that would be sent\", builds its URL independently in `printDryRun` (`${server}/api/v1/workspaces/${config.workspace}${path}`) from raw, unencoded ids supplied by the command layer (e.g. packages/cli/src/commands/cells.ts:55, docs.ts:188, notes.ts:140). So `wafflebase docs content '..' --dry-run` exits 0 and prints a traversing URL rather than the documented ERROR/exit 1, and the previewed URL does not match the URL the real call would send for any id needing encoding. Either the doc row needs a dry-run carve-out or `printDryRun` should share the same segment encoding.",
+      "lens": "design-fit",
+      "round_commit": "4ea512db3d2f27b8ac44fc4780255aaf580647da"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/dry-run.ts",
+      "searchedFor": [],
+      "summary": "`--dry-run` bypasses the new one-segment encoding and the `.`/`..` refusal, printing a traversal URL as \"the request that would be sent\"",
+      "evidence": "The delta documents (docs/design/cli.md §10 additions) that every id the client interpolates is percent-encoded by `seg()` and that a `.`/`..` id is refused with exit 1 \"before any request is sent\". That guarantee lives only in `HttpClient` (packages/cli/src/client/http-client.ts:71-76). The second, parallel URL builder — `printDryRun` (packages/cli/src/client/dry-run.ts:13) — interpolates `config.workspace` and the caller-built `path` raw:\n\n  const url = `${server}/api/v1/workspaces/${config.workspace}${path}`;\n\nand every command builds that `path` from raw argv ids and returns *before* the client is ever touched: `packages/cli/src/commands/cells.ts:52-58` (`/documents/${docId}/tabs/${tab}/cells/${ref}`), `cells.ts:85-90`, `cells.ts:133-139`, `tabs.ts:48`, `tabs.ts:72`, `sheets-import.ts:84`, `notes.ts:94`, `notes.ts:112`, `notes.ts:140`, `files.ts:63`, `files.ts:123`, `files.ts:141`, `docs.ts:134`.\n\nAttack/exposure: `wafflebase sheets cells set '../../../../workspaces/other-ws/api-keys/key-1' A1 x --dry-run` exits 0 and prints `\"url\": \"https://api…/api/v1/workspaces/ws-1/documents/../../../../workspaces/other-ws/api-keys/key-1/tabs/…\"`, and `--workspace ..` / a doc id of `..` is likewise not refused here (no `seg()` call in this file at all). docs/design/cli.md:815-826 promises dry-run \"prints the request that would be sent\", and the CLI is explicitly aimed at agents (docs/design/cli.md:22-26), which are the consumers most likely to take the printed URL and run it through `curl -H \"Authorization: Bearer …\"` — executing exactly the out-of-base request, with the session's bearer token and the command's method, that `seg()` was added to prevent. Even absent that, the preview now misreports the request: the real send would either 404 on an escaped literal id or throw `Invalid path segment`.\n\nFix is one line: route the dry-run URL through the same `seg()` (export it) so preview and send agree, and so the dot-segment refusal fires on the dry-run path too.",
+      "lens": "security",
+      "round_commit": "4ea512db3d2f27b8ac44fc4780255aaf580647da"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/client/dry-run.ts",
+      "searchedFor": [
+        "packages/cli/test/dry-run.test.ts",
+        "grep printDryRun( across packages/cli/src",
+        "grep dry-run/dryRun across packages/cli/test"
+      ],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "The query-string exemption in `assertNoDotSegments` (`path.split('?')[0]`) has no test"
+        }
+      ],
+      "summary": "New `assertNoDotSegments` guard in `printDryRun` is not exercised by any test — the dry-run tests that claim to cover it pass through `seg()` instead",
+      "evidence": "`packages/cli/test/dry-run.test.ts:97-111` are the only tests for the refusal. Both drive `sheets cells batch`, and `packages/cli/src/commands/cells.ts:137` already applies `seg(docId)`/`seg(tab)` before calling `printDryRun`, so `seg()` throws first; the workspace case (test line 105) is caught by `seg(config.workspace)` at dry-run.ts:29. I grepped every `printDryRun(` call site (cells, tabs, docs, notes, slides, files, sheets-import) — all interpolate ids via `seg()`, so no caller can hand `printDryRun` a raw `.`/`..` segment. Deleting `assertNoDotSegments` entirely leaves all four dry-run tests green: the guard ships with coverage that cannot fail for it.",
+      "lens": "test-adequacy",
+      "round_commit": "f13d70f8d39a8940a0d9dba534e43010bdd21b3b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/files/download.ts",
+      "summary": "`files download` falls back to the raw, unsanitized `docId` as the output filename, allowing an arbitrary-path file create outside the CWD",
+      "evidence": "`resolveDownloadTarget` deliberately reduces the *server-supplied* Content-Disposition name to a bare filename (`basename(serverName)`, line 26) and even rejects `.`/`..` — but when that name is absent it returns `docId` verbatim (line 27) with no `basename`, no dot-segment rejection. `docId` reaches this function straight from argv (`commands/files.ts:67`, `{ docId, out, ... }`) and, in the agent workflow this CLI is built for, is typically copied out of a `docs list` / `files list` response, i.e. it is server-controlled. Vector: a hostile or compromised backend lists a document whose `id` is `../../../../home/user/.config/autostart/x.desktop`; the agent runs `wafflebase files download <id>` with no `--out`; the request is sent (percent-encoded, so it reaches the malicious server fine), the server answers 200 with bytes and omits `Content-Disposition`, and `writeBinary` → `defaultBinaryIO.writeFile` (`output/binary.ts:63`) creates that path with the `wx` flag. `wx` only blocks *overwriting* an existing file — creating a new file anywhere the user can write succeeds, and `--force` removes even that limit. The file's own doc comment claims a title of `../../.bashrc` \"must not decide where the CLI writes\", which holds for the Content-Disposition branch but not for the fallback.",
+      "lens": "security",
+      "round_commit": "f13d70f8d39a8940a0d9dba534e43010bdd21b3b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/api/documents.ts",
+      "summary": "The id-escapes-its-segment fix was applied only to the CLI; the credentialed frontend API client still interpolates route-param ids into request paths unencoded",
+      "evidence": "This change establishes the rule (docs/design/cli.md §10: \"Ids are one path segment each\") and enforces it in `HttpClient`/`printDryRun`. The frontend client, which talks to the same API with the user's session via `fetchWithAuth`, has the identical unencoded pattern and no `seg()` equivalent: `documents.ts:46` (`GET /documents/${id}`), `:64`/`:87` (PATCH), `:109` (POST copy), `:154` (DELETE), plus `share-links.ts:60/78`, `files.ts:22`, `analytics.ts:127`. The ids come from `useParams()` (e.g. `notes-detail.tsx:213` → `fetchDocument(id!)`, `board-detail.tsx:140`), and react-router hands the param back percent-decoded, so a link of the form `/n/%2E%2E%2F%2E%2E%2F<other-endpoint>` yields `id = '../../<other-endpoint>'`, which `fetch` resolves — issuing the component's own method (GET on mount, DELETE/PATCH on a user action) against an endpoint the app never named, with the victim's credentials. Confidence low because I did not confirm the route pattern accepts a slash-bearing param end-to-end or find a high-impact target endpoint; the vector class is the same one the diff fixes on the CLI side.",
+      "lens": "security",
+      "round_commit": "f13d70f8d39a8940a0d9dba534e43010bdd21b3b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/docs/image-fetcher.ts",
+      "summary": "SSRF: `docs export` / `slides export` fetch arbitrary absolute URLs taken from document content with no scheme or host restriction",
+      "evidence": "`resolveImageUrl` passes through any value matching `/^[a-z][a-z0-9+.-]*:/i` untouched (line 28) and `createImageFetcher` fetches it (line 49), with the resolved URL echoed into the error message on failure (line 52). The `src` comes from the document body — content another workspace member, a shared doc, or an agent authored — so `wafflebase docs export <id> out.pdf` will GET e.g. `http://169.254.169.254/latest/meta-data/iam/...` or `http://127.0.0.1:<port>/` from the operator's machine and embed the response bytes into the exported PDF/DOCX, which is commonly shared back. No allowlist, no loopback/link-local rejection, no redirect limit. Pre-existing and untouched by this diff; raised here because it is the same 'untrusted content decides which URL we request' class the change is otherwise closing, and nothing in the enforced lanes covers it. Confidence low on exploitability (I did not verify a deployment where an attacker can plant an image inline in a doc the victim exports).",
+      "lens": "security",
+      "round_commit": "f13d70f8d39a8940a0d9dba534e43010bdd21b3b"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/pdf-image-painter.ts",
+      "searchedFor": [],
+      "summary": "New image-fetch guard aborts the whole docs PDF/DOCX export when one image is refused — the exporters have no per-image catch",
+      "evidence": "`collectAndEmbedImages` (packages/docs/src/export/pdf-image-painter.ts:57) does `const blob = await fetcher(src);` inside the loop with no try/catch, and `DocxExporter.export` does the same at packages/docs/src/export/docx-exporter.ts:76. `createImageFetcher` (packages/cli/src/commands/docs.ts:261) now *throws* for any image whose host is non-public or whose scheme is not http/https/data, where previously it only threw on a non-OK HTTP status. So a self-hosted install serving blobs from an internal host (MinIO, a second port on the API box), or a doc carrying an intranet/`file:`-style `src` from an import, turns `wafflebase docs export` from \"PDF with a missing/failed image\" into \"whole export fails\" — and the CLI has no `WAFFLEBASE_IMAGE_HOSTS` set by default. Note the inconsistency: the slides PDF path *does* swallow per-image failures (packages/slides/src/export/pdf.ts:282-284), so the same guarded refusal degrades gracefully there and is fatal in docs. Fix belongs either in the new fetcher (skip vs. throw policy) or in the docs exporters.",
+      "lens": "blast-radius",
+      "round_commit": "02b9dd488b7095b29cd1ddc826f75fdf394075a4"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/docs/image-fetcher.ts",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "major",
+          "summary": "New `assertFetchableImageUrl` host guard can break existing `docs export` / `slides export` runs against self-hosted or split-origin deployments"
+        }
+      ],
+      "summary": "The new image-host guard uses exact origin equality against `--server`, but the frontend persists ABSOLUTE image URLs into document content, so existing docs can stop exporting on any self-hosted/dev origin mismatch",
+      "evidence": "`resolveImageUrl` in packages/frontend/src/app/spreadsheet/image-upload.ts:127-129 rewrites every backend image URL to absolute before it is written into the CRDT (\"EVERY path that writes a backend image URL into a CRDT document has to apply this\"), so stored `src` values are e.g. `http://localhost:3000/images/...` in dev and whatever `VITE_BACKEND_API_URL` is in a self-hosted install. `assertFetchableImageUrl` exempts such a URL only via `sameOriginAsServer` (string origin equality) or `WAFFLEBASE_IMAGE_HOSTS`. Any alias mismatch between the browser's API origin and the CLI's configured `server` — `localhost` vs `127.0.0.1`, http vs https, a second port, or a private-IP API host reached under a different name — now makes the previously-working `docs export` (packages/cli/src/commands/docs.ts:261) and `slides export` (packages/cli/src/commands/slides.ts:209) fail with \"non-public address\" for documents that used to embed fine. Consumers of `createImageFetcher` outside the diff inherit this without change.",
+      "lens": "blast-radius",
+      "round_commit": "02b9dd488b7095b29cd1ddc826f75fdf394075a4"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/api/url.ts",
+      "summary": "`seg()` is added as two byte-identical copies (packages/cli/src/client/url.ts and packages/frontend/src/api/url.ts) while `@wafflebase/core` already ships a `/url` subpath that exists precisely as the shared URL-safety primitive home (`isSafeUrl`/`SAFE_PROTOCOLS`, packages/core/src/url/index.ts, whose own header documents the 'previously duplicated across packages, hoisted here' pattern). docs/design/README.md line 166 lists `/url` as a shipped core subpath, and packages/frontend/package.json already depends on `@wafflebase/core`, so at minimum the frontend copy should have been `@wafflebase/core/url`. The change instead institutionalises the duplication in prose (docs/design/frontend.md: 'The CLI enforces the same rule ... with its own copy'), which is the reuse expectation this repo states it works against. The CLI's lack of a core dependency is a defensible reason for one copy, but it is not addressed as a tradeoff anywhere.",
+      "evidence": "packages/core/src/url/index.ts:1-14 (shared URL-safety primitive, 'previously duplicated across the engine packages ... hoisted here'); docs/design/README.md:166 ('Shipped subpaths: /tokens, /geometry, /url'); packages/frontend/package.json:57 depends on @wafflebase/core; new identical seg() in packages/cli/src/client/url.ts:25 and packages/frontend/src/api/url.ts:19",
+      "lens": "design-fit",
+      "round_commit": "02b9dd488b7095b29cd1ddc826f75fdf394075a4"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/docs/image-fetcher.ts",
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "Document-controlled image fetches have no timeout and no response-size cap, so an image `src` can hang or OOM an export on the operator's machine."
+        }
+      ],
+      "summary": "Image-fetch SSRF guard is check-then-connect: an attacker who controls DNS for a hostname they place in a document's image `src` can rebind between `assertResolvedHostIsPublic` and `fetch`, reaching 169.254.169.254 from the operator's machine.",
+      "evidence": "`assertResolvedHostIsPublic` (image-fetcher.ts:243-277) resolves `bareHostname(url.hostname)` via `dns.lookup` and refuses non-public answers, then `createImageFetcher` calls `fetchImpl(current, {redirect:'manual'})` (image-fetcher.ts:319) with the *hostname*, so undici performs its own independent resolution. Vector: a workspace member (or an agent-generated doc) writes an image inline `src` of `http://rebind.attacker.tld/x.png`; the attacker serves a 1s-TTL A record that answers `93.184.216.34` for the guard's lookup and `169.254.169.254` for undici's. `wafflebase docs export doc-1 out.pdf` then issues the GET against the cloud instance-metadata endpoint from inside the operator's network. The code comment at image-fetcher.ts:232-235 and docs/design/cli.md acknowledge this, but packages/cli/README.md:39 states without qualification that \"A hostname is resolved before it is fetched and refused the same way if it answers with a non-public address\" — a guard that reads as covering a named attack is the case nobody re-audits. Exfiltration is limited (the bytes land in the operator's PDF, not the attacker's hands), so this is primarily blind SSRF; closing it needs address pinning below `fetch` (resolve once, dial the vetted IP with a Host header / custom undici connector).",
+      "lens": "security",
+      "round_commit": "02b9dd488b7095b29cd1ddc826f75fdf394075a4"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/docs/image-fetcher.ts",
+      "summary": "`isPrivateHost` omits several non-public address ranges (multicast, 240/4 + broadcast, 192.0.0.0/24, 198.18/15) and every IPv6 form that embeds an IPv4 address other than ::ffff:, so 6to4/NAT64 spellings of the metadata endpoint pass the guard.",
+      "evidence": "image-fetcher.ts:84-109 enumerates only 0/8, 10/8, 127/8, 169.254/16, 172.16-31, 192.168/16, 100.64/10 for IPv4 and `::`, `::1`, fc00::/7, fe80::/10 for IPv6, with `unwrapIpv4Mapped` (line 117) folding only the `::ffff:` prefix. Vector: a document `src` of `http://[64:ff9b::a9fe:a9fe]/latest/meta-data/iam/security-credentials/` (NAT64 well-known prefix) or `http://[2002:a9fe:a9fe::]/...` (6to4) is an IP literal, so `assertResolvedHostIsPublic` early-returns at line 257 (`isIpLiteral` is true for anything containing ':'), and `isPrivateHost` returns false because neither hextet pattern matches — the export GETs the metadata endpoint on any host behind a NAT64/6to4 gateway. Same shape for `http://255.255.255.255/` and 224.0.0.0/4 multicast, which reach the local segment rather than the internet. Likelihood depends on the deployment having such a gateway, hence low confidence; impact if reached is the same metadata read the guard exists to stop.",
+      "lens": "security",
+      "round_commit": "02b9dd488b7095b29cd1ddc826f75fdf394075a4"
+    }
+  ]
+}

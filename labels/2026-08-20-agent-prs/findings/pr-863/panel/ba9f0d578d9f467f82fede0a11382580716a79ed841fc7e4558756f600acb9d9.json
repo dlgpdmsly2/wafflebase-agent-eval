@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::the usable oauth url is now printed only when `open()` throws, so a headless/no-browser environment can be left with no way to continue",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified at packages/cli/src/commands/login.ts:73–90: the \"Opening browser\" line prints a nonce-less URL, and the full nonce-carrying oauthUrl is printed only in the catch around `await open(oauthUrl)`. The `open` package with default wait:false resolves once the opener child is spawned and does not reject when xdg-open later fails to surface a browser (SSH/headless/container), so those environments never see the usable URL and hit the 30s timeout. The nonce-less URL that is printed cannot complete the flow either: the listener (login.ts:263–271) rejects a nonce-less callback unless --allow-unbound-callback is set. This regresses the headless copy-paste path the design doc explicitly promises.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

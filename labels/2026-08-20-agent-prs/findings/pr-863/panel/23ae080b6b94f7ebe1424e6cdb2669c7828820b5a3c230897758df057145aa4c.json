@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/commands/login.ts::`get /start` is single-use and method-agnostic, so any duplicate/speculative request silently breaks the login for 30s",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied packages/cli/src/commands/login.ts: the /start branch checks only url.pathname, never req.method, and sets startConsumed on the first request of any kind, so a HEAD/prefetch/scanner/duplicate-open request burns the one-time 302 and the real navigation gets 410. With no /callback, the 30s timeout then rejects with the generic 'Login timed out' message (sawUnboundCallback is false), giving no hint the link was consumed. Single-use is an intentional security tradeoff, but the method-agnostic consumption and the undiagnosed benign-duplicate failure are real; impact is an intermittent, recoverable login hang with a misleading error, so I rate it minor.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

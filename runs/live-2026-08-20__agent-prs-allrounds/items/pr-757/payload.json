@@ -1,0 +1,81 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-editor.ts",
+      "searchedFor": [],
+      "summary": "Keyboard toggle reads RAW run styles while the toolbar's getRangeStyleSummary() layers named-style inline defaults — the two still disagree (e.g. built-in Heading 6 is italic)",
+      "evidence": "New `isStyleOnInSelection` reads `(inline.style as Record<string, unknown>)[key]` with no named-style layer (packages/docs/src/view/text-editor.ts:3021), and its docstring claims it \"Mirrors the toolbar's `getRangeStyleSummary()` decision so keyboard and toolbar agree\". But the out-of-diff toolbar source layers style defaults: packages/docs/src/view/editor.ts:2847 `const defaults = styleDefaultsForBlock(block);` then `{ ...defaults, ...inline.style }` (editor.ts:2855). `BUILTIN_STYLES['heading-6'].inline` contains `italic: true` (packages/docs/src/model/named-styles.ts:91), and any user-redefined style can add bold/italic/underline (see packages/docs/test/model/named-styles.test.ts:97 producing `{fontSize:28, bold:true}`). Result: with a selection inside a Heading 6, the toolbar Italic button reads pressed and one click removes italic, while Cmd+I computes inRange=false and writes `italic:true` — a visually no-op first press, i.e. the same class of bug #715 the change claims to close. Fix belongs on the new `visit()` in text-editor.ts (layer `resolveStyleInline(blockStyleId(block), this.doc.document.styles)` under the run style), or the docstring's parity claim must be dropped.",
+      "lens": "blast-radius",
+      "round_commit": "cd773b7df094ab9e1ab6aa807b2b8fba68e52437"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/slides/toolbar/mobile-toolbar.tsx",
+      "claimType": "absence",
+      "searchedFor": [
+        "Grep 'mobile-toolbar|TextEditMobileBar' in packages/frontend/tests (no matches)",
+        "Grep 'isStyleOn' across packages/frontend (only src files, no tests)"
+      ],
+      "summary": "Slides mobile toolbar's duplicated B/I/U toggle logic changed with no test",
+      "evidence": "`TextEditMobileBar` carries its own copy of the bold/italic/underline toggle + pressed-state logic (now reading `getRangeStyleSummary()` via `isStyleOn`). The diff adds dedicated regression tests for the other two copies of this logic (`tests/components/text-formatting/text-format-toggles.test.ts` for the shared `TextFormatGroup`, `tests/app/docs/docs-formatting-toolbar-header-footer.test.tsx` for the docs slim toolbar) but none for this one. Grepping packages/frontend/tests for `mobile-toolbar`/`TextEditMobileBar` returns no files, so nothing pins that this third copy inverts the range value rather than the caret value — it can silently regress to the caret-based bug.",
+      "lens": "test-adequacy",
+      "round_commit": "cd773b7df094ab9e1ab6aa807b2b8fba68e52437"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-editor.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep styleDefaultsForBlock in packages/docs/src",
+        "read editor.ts:975-1010, 2786-2860",
+        "grep resolveStyleInline repo-wide",
+        "packages/docs/test/model/named-styles.test.ts"
+      ],
+      "summary": "Keyboard range read omits named-style inline defaults, so keyboard and toolbar can still disagree — the acceptance goal of the fix",
+      "evidence": "`isStyleOnInSelection` tests `(inline.style as Record<string, unknown>)[key]` only. `getRangeStyleSummary` (editor.ts:2847 / :2791) layers `styleDefaultsForBlock(block)` = `resolveStyleInline(blockStyleId(block), doc.document.styles)` under each run, and named styles can carry `bold` (see `packages/docs/test/model/named-styles.test.ts:97`: `resolveStyleInline('heading-1', docStyles)` → `{ fontSize: 28, bold: true }`). On such a block with no explicit run bold, the toolbar reports on → click removes, while Cmd+B computes off → applies bold. The todo's stated outcome (\"Without it the keyboard and the fixed toolbar disagreed on the same selection\") is therefore only partially met.",
+      "lens": "design-fit",
+      "round_commit": "cd773b7df094ab9e1ab6aa807b2b8fba68e52437"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/docs-formatting-toolbar.tsx",
+      "searchedFor": [],
+      "summary": "Header/footer B/I/U can no longer turn a style OFF for selections inside header/footer table cells (empty range summary)",
+      "evidence": "The slim header/footer toggles now decide from `editor.getRangeStyleSummary()`. That implementation (packages/docs/src/view/editor.ts:2891-2945) resolves cell-internal blocks through `layout.blockParentMap` — the BODY layout only (declared at editor.ts:937; header/footer cell parentage lives in `headerLayout`/`footerLayout` and is merged only into `doc.setBlockParentMap` at editor.ts:1405-1412). For a header/footer selection whose endpoints are cell-internal blocks, `doc.getBlockIndex(...)` returns -1 (context blocks are the header's top-level blocks), `layout.blockParentMap.get(...)` returns undefined, and the last fallback only covers `anchor.blockId === focus.blockId`. So any multi-block-within-one-cell or cross-cell selection in a header/footer table produces `{}` → `isStyleOn(undefined) === false` → the click always sends `{bold:true}`, and bold can never be removed. The previous `getSelectionStyle()` used `doc.findBlock`, which resolves header/footer + cell blocks, so it did toggle correctly. Note the keyboard path added in this diff uses `getActiveLayout().blockParentMap` (text-editor.ts:3998-4002) and is correct here, so keyboard and toolbar now disagree — the opposite of the change's stated goal.",
+      "lens": "correctness",
+      "round_commit": "cd773b7df094ab9e1ab6aa807b2b8fba68e52437"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-editor.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep effectiveVisual|styleDefaultsAtCursor across packages",
+        "grep headingLevel in packages/docs/test/view (7 files, none of them pending-style*)",
+        "read packages/docs/test/view/backward-selection-toggle.test.ts in full",
+        "grep pending|heading in test/view/pending-style-editor.test.ts"
+      ],
+      "summary": "Collapsed-caret keyboard toggle now layers named-style defaults (`effectiveVisual`) — no test covers that branch",
+      "evidence": "`toggleStyle` changed from `!visual[key]` to `!(inRange ?? !!effectiveVisual[key])`. `isStyleOnInSelection` returns `undefined` when there is no selection, so the *only* thing exercising the new `styleDefaultsAtCursor()` layer is the collapsed-caret path (Cmd+I with the caret inside a Heading 6 should stage `italic:false` in the pending style). Every new engine test that touches heading-6 (packages/docs/test/view/backward-selection-toggle.test.ts:242 `selectAll`, :258 'Cmd+I removes the style-provided italic') creates a real range first, so it goes through `isStyleOnInSelection` and would pass even if `effectiveVisual` were reverted to `visual`. No test in test/view/pending-style*.test.ts uses a heading block at all (grep for `headingLevel` in pending-style-integration.test.ts: 0 hits).",
+      "lens": "test-adequacy",
+      "round_commit": "675c5bfed334cc810e3d51b4f39083bc27f97660"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-box-editor.ts",
+      "summary": "The change collapses the *range* walk into one model traversal but leaves the *caret* walk triplicated — and the new copy is introduced with a \"Mirrors getSelectionStyleImpl in view/editor.ts\" comment, exactly the pattern this change's own lessons doc rejects",
+      "evidence": "New `caretStyle(withStyleDefaults)` in `view/text-box-editor.ts` (~line 829-861) is a hand copy of `getSelectionStyleImpl(withStyleDefaults)` in `view/editor.ts:1001-1017`, and `TextEditor.getStyleAtCursor()` + the new `styleDefaultsAtCursor()` (`view/text-editor.ts:2966-2992`) are a third copy of the same walk. The bug this PR fixes for text boxes (caret read missing named-style defaults) was caused precisely by that duplication — see docs/tasks/active/20260810-docs-range-aware-toggles-lessons.md:42 (\"'Mirrors X' in a header comment is a promise no one can keep\") and :54 (\"Model traversals belong in model/\"). The caret read touches only Doc state (findBlock, inlines, resolveStyleInline), so it could have joined `model/range-runs.ts` alongside `visitStyledRunsInRange`. The three copies already differ (editor.ts/text-box use `findBlock`, text-editor's `getStyleAtCursor` uses `getBlock`), so the same drift can recur.",
+      "lens": "design-fit",
+      "round_commit": "675c5bfed334cc810e3d51b4f39083bc27f97660"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/view/text-editor.ts",
+      "summary": "Cmd+\\ (clear formatting) and Cmd+Alt+V (format painter) bypass the new cell-rectangle route and clear/restyle the ENTIRE table when a cell rectangle is selected",
+      "evidence": "The change makes `Doc.applyInlineStyle` explicitly ignore `range.tableCellRange` (\"the editors route a cell rectangle to `applyStyleToCellRange` above this call\", document.ts:357) and adds `applyInlineStyleToCells` for that shape. `TextEditor.toggleStyle` (text-editor.ts:2924) and `editor.ts` `applyStyleImpl` (editor.ts:1043) do route rectangles, but two other writers do not:\n\n- `TextEditor.clearFormatting` — `this.doc.applyInlineStyle(range, clearStyle)` (text-editor.ts:2862) with no `range.tableCellRange` check.\n- Format-painter apply — `this.doc.applyInlineStyle(this.selection.range, this.styleBuffer)` (text-editor.ts:1010), same omission.\n\nFor a multi-cell rectangle the anchor and focus live in different cells, so `visitRangeSlices` falls to the top-level branch (range-slices.ts:149-155): both endpoints normalize to the *same* parent table block, `fromIdx === toIdx`, and the table branch at range-slices.ts:168-176 visits every block of every cell. Result: Cmd+\\ over a 2×2 selection in a 10×10 table strips inline formatting from all 100 cells, and format painter repaints all of them. This is destructive to user formatting outside the selection. (The behaviour predates the diff, but the diff is exactly what establishes `applyInlineStyleToCells` as the required route and leaves these two call sites unconverted.)",
+      "lens": "correctness",
+      "round_commit": "675c5bfed334cc810e3d51b4f39083bc27f97660"
+    }
+  ]
+}

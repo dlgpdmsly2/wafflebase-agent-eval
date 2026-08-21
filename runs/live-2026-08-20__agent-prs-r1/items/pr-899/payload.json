@@ -1,0 +1,53 @@
+{
+  "findings": [
+    {
+      "severity": "critical",
+      "file": "packages/frontend/src/components/text-formatting/font-family-picker.tsx",
+      "summary": "New global focus-release contradicts the existing \"dismiss must restore focus to the trigger\" contract of the keepalive dropdowns used by the slides text-edit toolbar, stranding focus on <body> while the in-place text box is still mounted",
+      "evidence": "`font-family-picker.tsx:155-158` — `if (family === null) { // No pick — let Radix restore focus to the trigger so Esc / outside-click dismiss does not strand focus on <body>. return; }` and the identical guard in `text-paragraph-group.tsx:94-101`. Both controls are rendered inside the slides text-edit toolbar (`packages/frontend/src/app/slides/toolbar/text-edit-section.tsx:65,89`), which now sits under `data-canvas-toolbar`. The new hook only clears its `pointerDriven` flag on `Tab`, so after the user opens one of these menus with the mouse and dismisses it with Escape or an outside click, Radix restores focus to the trigger, `focusin` fires inside the toolbar, and the deferred `releaseFocusToBody()` blurs the trigger. Because these triggers carry `data-text-edit-keepalive`, the docs text-box editor deliberately skipped its commit (`packages/docs/src/view/text-box-editor.ts:736-751`) and the in-place editor is still mounted — but nothing holds focus any more. Subsequent keys now target `document.body`, which is exactly what `isEditableTarget()` gates on (`packages/slides/src/view/editor/interactions/keyboard.ts:177,211`), so Delete/Backspace deletes the element being edited and printable keys drive canvas rules instead of typing. Fix belongs in the new hook (skip release while the editor is in text-edit mode / for `[data-text-edit-keepalive]` controls).",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/board/board-toolbar.tsx",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep data-canvas-toolbar / useCanvasFocusRelease across repo",
+        "grep SlidesToolbar usages in *.tsx",
+        "read packages/frontend/src/app/board/board-toolbar.tsx",
+        "grep isEditableTarget in packages/slides/src"
+      ],
+      "summary": "BoardToolbar reuses the same SlidesEditor keyboard gate but was not opted into the fix, so issue #882 remains reproducible on boards",
+      "evidence": "`packages/frontend/src/app/board/board-toolbar.tsx:178` renders `<Toolbar>` with no `data-canvas-toolbar` and never calls `useCanvasFocusRelease()`, while its own header comment (lines 91-106) states it drives the reused `SlidesEditor` and reuses the slides toolbar's leaf controls off the same `getToolbarState`. Since the shortcut gate lives in `packages/slides/src/view/editor/interactions/keyboard.ts` (shared by boards), every board toolbar button still parks focus on a `<button>` and silently kills arrow/Delete/z-order shortcuts.",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/components/toolbar-focus-release.test.tsx",
+      "summary": "\"keeps focus on a trigger whose menu is open\" does not exercise the open-popup guard — it passes even if `hasOpenPopup()` is deleted",
+      "evidence": "The test clicks the Radix `DropdownMenuTrigger`, then asserts only `document.activeElement !== document.body` and `trigger.getAttribute(\"data-state\") === \"open\"`. Radix portals `DropdownMenuContent` to `document.body` and moves focus into it on open, so at the deferred `setTimeout` in `toolbar-focus-release.ts:103` `document.activeElement` is the portalled menu content, which fails `el.closest(TOOLBAR_SELECTOR) !== null` (line 58) long before `!hasOpenPopup(el)` (line 60) is ever consulted. Consequently `hasOpenPopup()` — including the deliberate exact-`\"open\"` comparison documented at toolbar-focus-release.ts:38-49 — has no test that can fail if it is wrong or removed. The second assertion (`data-state === \"open\"`) is also already implied by the preceding `await screen.findByRole(\"menu\")`, so it re-asserts Radix's own state rather than the hook's behavior. The comment in the test (\"either way the trigger must not be blurred\") advertises coverage the assertions do not provide.",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/components/toolbar-focus-release.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read all of packages/frontend/src/components/toolbar-focus-release.test.tsx",
+        "grep for canvas-toolbar|useCanvasFocusRelease|CANVAS_TOOLBAR_ATTR across repo",
+        "glob packages/frontend/src/app/slides/**/*.test.tsx"
+      ],
+      "summary": "No test covers the documented `data-state=\"on\"` (Radix Toggle) case, i.e. that a pressed toggle IS still released",
+      "evidence": "toolbar-focus-release.ts:38-49 states the `data-state` check compares against `\"open\"` exactly \"because `Toggle` uses the same attribute for `on`/`off` and a pressed toggle must still be releasable\" — the Bold/Italic-style buttons in the real slides toolbar. The harness (toolbar-focus-release.test.tsx:22-36) contains only a plain `<button>`, an `<input>` and a dropdown; no element with `data-state=\"on\"`/`aria-pressed`. If the comparison were loosened to `startsWith`/truthiness, every pressed toggle would silently stop releasing focus and the whole reported bug (#882) would return for toggles, with the suite still green.",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "critical",
+      "file": "packages/frontend/src/components/toolbar-focus-release.ts",
+      "searchedFor": [],
+      "summary": "Focus release fires while a slides text-box edit session is still alive (keepalive path), re-arming destructive canvas shortcuts against the element being edited",
+      "evidence": "The hook is mounted on the whole slides `<Toolbar>` (index.tsx:110), including the `text-edit` contextual section. The docs text-box editor deliberately keeps the edit session mounted when focus moves from the textarea to a control tagged `data-text-edit-keepalive` (packages/docs/src/view/text-box-editor.ts:736-751: \"skip the commit so the text-box stays mounted, and the control's own handler re-focuses via api.focus()\"). For dropdown-style keepalive controls the re-focus only happens on the *swatch/item-selected* path — `useMenuCloseHandlers` (menu-focus.ts:52-57) explicitly lets Escape / outside-dismiss fall through to Radix's default focus-to-trigger without calling `editor.focus()`. In that state focus sits on the keepalive trigger `<button>`, which is exactly what `isEditableTarget()` (packages/slides/.../interactions/keyboard.ts:882) relied on to suppress the document-level rules. `isReleasable()` has no text-edit guard, so line 104 blurs that button to `document.body`; the slides keydown listener is bound to `document` unconditionally (editor.ts:2727) so with target=body the Delete/Backspace rule (keyboard.ts:215-231) now removes the element the user is still editing, and the printable-key type-to-edit rule (keyboard.ts:663-679) re-enters edit mode with `initialText`. Uncommitted text plus the whole element can be destroyed by one Delete press.",
+      "lens": "correctness"
+    }
+  ]
+}

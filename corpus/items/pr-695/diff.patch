@@ -1,0 +1,1027 @@
+diff --git a/docs/design/cli.md b/docs/design/cli.md
+index 7dd366ac..1ef4ebc9 100644
+--- a/docs/design/cli.md
++++ b/docs/design/cli.md
+@@ -447,8 +447,13 @@ wafflebase schema sheets.cells.get         # show parameters and response shape
+ wafflebase schema docs.content
+ wafflebase schema cell.get                 # alias → resolves to sheets.cells.get
+ 
++# Auth state (JSON by default; agents branch on `loggedIn`)
++wafflebase status
++wafflebase status --format table            # human-readable key/value
++
+ # Context switching
+-wafflebase ctx list                        # list workspaces (* = active)
++wafflebase ctx list                        # [{ id, name, active }]
++wafflebase ctx list --format table         # human-readable table
+ wafflebase ctx switch "Team Workspace"
+ 
+ # API key management
+@@ -702,6 +707,26 @@ Exit codes: `0` success, `1` user error (bad input, not found),
+ `2` system error (network, auth). Agents can branch on the exit code
+ without parsing the error body.
+ 
++Every command that renders a *result* routes it through `output()`,
++including the session commands `status` and `ctx list`, which used to
++print English sentences and ignore `--format`. (Commands that only
++acknowledge an action — `login`, `logout`, `ctx switch` — still print a
++prose line.) `status` reports the answer to "am I logged in?" as data
++and still exits `0` when there is no session:
++
++```json
++{ "loggedIn": false, "message": "Not logged in. Run `wafflebase login`." }
++```
++
++`ctx list` cannot answer without a session, so it emits the standard
++error body with `"code": "NOT_LOGGED_IN"` and exits `1`.
++
++An unsupported `--format` value is rejected with
++`"code": "INVALID_FORMAT"` rather than ignored. Validation is
++per-command because `docs`/`slides`/`notes` `content` and `export`
++deliberately reuse the same global `--format` flag for their own
++vocabularies (`md`, `text`, `pdf`, `docx`, `pptx`).
++
+ #### 8.2 Dry-Run
+ 
+ `--dry-run` validates inputs, resolves the target API endpoint, and
+diff --git a/docs/tasks/active/20260806-cli-status-ctx-structured-output-lessons.md b/docs/tasks/active/20260806-cli-status-ctx-structured-output-lessons.md
+new file mode 100644
+index 00000000..ca7672c6
+--- /dev/null
++++ b/docs/tasks/active/20260806-cli-status-ctx-structured-output-lessons.md
+@@ -0,0 +1,47 @@
++# Lessons — CLI `status` / `ctx list` structured output (#635)
++
++## The global `--format` flag is overloaded on purpose
++
++The obvious fix for "`--format bogus` is silently accepted" is
++`commander`'s `.choices(['json','table','csv'])` on the global option in
++`createProgram()`. That would have broken `docs content --format md`,
++`docs export out.pdf --format pdf`, `slides export --format pptx`, and
++`notes export --format md`: those commands deliberately **do not**
++redeclare `--format` and instead reuse the global one, validating the
++value themselves (`parseContentFormat`, `detectExportFormat`). Two
++source comments in `commands/docs.ts` spell this out. Validation has to
++stay per-command; the shared helper is `parseOutputFormat()` for
++commands that actually render through `output()`.
++
++## `wafflebase schema` already declared the intended shapes
++
++`src/schema/registry.ts` had `ctx.list` documented as
++`array of { id, name, active }` and `status` as `{ user, server,
++workspace, session }` long before either command emitted JSON — the
++registry was the spec and the implementation had drifted from it. Worth
++checking the registry first when fixing any CLI output: it says what
++agents were promised.
++
++## Adding a `default:` throw to a shared formatter needs a call-site audit
++
++Giving `format()` a validating `default:` branch is only safe if every
++`output()` caller is inside a `try/catch` that routes to `outputError`.
++`commands/schema.ts` was the one exception out of 31 call sites, and
++`bin.ts` has no top-level handler — so `wafflebase schema --format
++bogus` went from printing a literal `undefined` (exit 0) to dumping a
++Node stack trace. Self-review caught it; the smoke test that found it
++was two commands long. Widening a shared helper's failure mode is a
++call-site audit, not a local change.
++
++The same applies to widening what a shared *renderer* accepts:
++teaching `formatTable` to render a single object reached
++`schema --format table`, which passes `{ commands: [...] }` and started
++printing `[object Object]`. `formatCsv` had already solved that by
++JSON-serializing non-scalars; the new path had to do the same.
++
++## Flat payloads over nested for CLI output
++
++`formatTable` and `formatCsv` operate on records of scalars; a nested
++`{ user: { username, email } }` renders as `[object Object]` in a table
++and a JSON blob in CSV. Since the non-JSON formats are now the *human*
++path (JSON being the default), `status` emits a flat record.
+diff --git a/docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md b/docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md
+new file mode 100644
+index 00000000..82e609a4
+--- /dev/null
++++ b/docs/tasks/active/20260806-cli-status-ctx-structured-output-todo.md
+@@ -0,0 +1,104 @@
++# CLI: route `status` / `ctx list` through `output()` (#635)
++
++## Problem
++
++`docs/design/cli.md` §8.1 promises "All output is JSON by default. Errors
++are also JSON so agents can parse success and failure uniformly." Two
++commands break that contract:
++
++- `wafflebase status` prints bare English sentences via `console.log`,
++  never reads `opts.format`, and never calls `output()`.
++- `wafflebase ctx list` does the same (prose `*`-marker list).
++- Both silently accept `--format bogus` — no signal that the value is
++  unsupported.
++
++`status` is the first command an agent runs to decide whether to prompt
++for login, so `JSON.parse` on its stdout throws at the very start of a
++session.
++
++## Approach
++
++1. Add `parseOutputFormat()` to `src/output/formatter.ts` — validates a
++   raw `--format` value against `json | table | csv` and throws an
++   `Error` carrying `code = 'INVALID_FORMAT'` so `outputError()` emits a
++   structured JSON body. Also give `format()` a validating `default:`
++   branch so no command can `console.log(undefined)` on a bad format.
++   The global `--format` flag is deliberately overloaded by
++   `docs/slides/notes content|export` (`md`/`text`/`pdf`/`docx`/`pptx`),
++   so validation must stay per-command — commander `.choices()` on the
++   global option would break those.
++2. `status`: build a flat structured payload and route it through
++   `output()`. Flat (not nested) so `--format table` / `--format csv`
++   render usefully — that is the documented human path now that JSON is
++   the default.
++3. `ctx list`: emit `[{ id, name, active }]` — exactly the shape
++   `wafflebase schema ctx.list` already declares. Drop the prose
++   `formatWorkspaceList` helper; `--format table` covers the human view.
++4. Update the `status` response shape in `src/schema/registry.ts` to
++   match what the command now emits.
++5. Tests in `test/status.test.ts` / `test/ctx.test.ts` over the pure
++   payload builders + `parseOutputFormat`.
++6. Touch up `docs/design/cli.md` where it describes the prose output.
++
++## Emitted shapes
++
++`status`, logged in:
++
++```json
++{
++  "loggedIn": true,
++  "user": "hackerwins",
++  "email": "h@example.com",
++  "server": "http://localhost:3000",
++  "workspaceId": "e98ff707-...",
++  "workspaceName": "hackerwins's Workspace",
++  "session": "valid",
++  "expiresAt": "2026-08-07T00:00:00.000Z"
++}
++```
++
++`status`, not logged in (still exit 0 — reporting "no session" *is* the
++command succeeding):
++
++```json
++{
++  "loggedIn": false,
++  "message": "Not logged in. Run `wafflebase login`."
++}
++```
++
++`ctx list`:
++
++```json
++[{ "id": "e98ff707-...", "name": "Team Workspace", "active": true }]
++```
++
++## Decisions
++
++- **`status` exits 0 when not logged in.** It answered the question it
++  was asked; agents branch on `loggedIn`.
++- **`ctx list` exits 1 with a JSON `NOT_LOGGED_IN` error when there is
++  no session.** It cannot list anything, and sibling `ctx switch`
++  already errors + exits 1 in that state. This is a behavior change
++  beyond the literal ask; disclosed in the PR.
++- Keep `ctx switch` prose as-is: out of scope for this issue.
++
++## Checklist
++
++- [x] `parseOutputFormat()` + validating `format()` default in
++      `src/output/formatter.ts`
++- [x] `status` routed through `output()`; `--format` honoured; bogus
++      rejected
++- [x] `ctx list` routed through `output()`; `--format` honoured; bogus
++      rejected
++- [x] `schema` registry `status` response updated
++- [x] unit tests: status payload, ctx list payload, format validation
++- [x] `docs/design/cli.md` prose references updated
++- [x] draft PR opened, `Fixes #635`
++- [x] `schema` wrapped in try/catch (found in self-review: it was the
++      only `output()` caller without one, so `format()`'s new throw
++      escaped as an uncaught exception)
++- [x] `formatTable` JSON-serializes nested values (found in
++      self-review: `schema --format table` printed `[object Object]`)
++- [x] `packages/documentation/developers/cli.md` (published page)
++      updated — it still advertised the deleted `*` active marker
+diff --git a/packages/cli/src/commands/ctx.ts b/packages/cli/src/commands/ctx.ts
+index 363f1e21..e52db6f8 100644
+--- a/packages/cli/src/commands/ctx.ts
++++ b/packages/cli/src/commands/ctx.ts
+@@ -1,17 +1,43 @@
+ import { Command } from 'commander';
++import { getGlobalOpts } from './root.js';
++import {
++  output,
++  outputError,
++  parseOutputFormat,
++} from '../output/formatter.js';
+ import { loadSession, saveSession } from '../config/session.js';
+ import type { WorkspaceInfo } from '../config/session.js';
+ 
+-export function formatWorkspaceList(
++export interface WorkspaceRow {
++  id: string;
++  name: string;
++  active: boolean;
++}
++
++/**
++ * Structured workspace list — the shape `wafflebase schema ctx.list`
++ * has always advertised. The active workspace is flagged by the
++ * `active` field rather than a `*` prefix; `--format table` renders it
++ * as a column for humans.
++ */
++export function buildWorkspaceList(
+   workspaces: WorkspaceInfo[],
+   activeId: string,
+-): string {
+-  return workspaces
+-    .map((ws) => {
+-      const marker = ws.id === activeId ? '*' : ' ';
+-      return `${marker} ${ws.id.slice(0, 8)}  ${ws.name}`;
+-    })
+-    .join('\n');
++): WorkspaceRow[] {
++  return workspaces.map((ws) => ({
++    id: ws.id,
++    name: ws.name,
++    active: ws.id === activeId,
++  }));
++}
++
++/** Thrown when a command needs a session and none is on disk. */
++class NotLoggedInError extends Error {
++  readonly code = 'NOT_LOGGED_IN';
++
++  constructor() {
++    super('Not logged in. Run `wafflebase login`.');
++  }
+ }
+ 
+ export function findWorkspace(
+@@ -41,15 +67,23 @@ export function registerCtxCommand(program: Command): void {
+   ctx
+     .command('list')
+     .description('List workspaces')
+-    .action(() => {
+-      const session = loadSession();
+-      if (!session) {
+-        console.log('Not logged in. Run `wafflebase login`.');
+-        return;
++    .action(function (this: Command) {
++      const opts = getGlobalOpts(this);
++      try {
++        const fmt = parseOutputFormat(opts.format);
++        const session = loadSession();
++        // Unlike `status`, this command cannot answer without a
++        // session, so it reports a structured error and exits 1. The
++        // exit code matches `ctx switch`, which still prints prose.
++        if (!session) throw new NotLoggedInError();
++        output(
++          buildWorkspaceList(session.workspaces, session.activeWorkspace),
++          fmt,
++          opts.quiet,
++        );
++      } catch (e) {
++        outputError(e, opts.quiet);
+       }
+-      console.log(
+-        formatWorkspaceList(session.workspaces, session.activeWorkspace),
+-      );
+     });
+ 
+   ctx
+diff --git a/packages/cli/src/commands/schema.ts b/packages/cli/src/commands/schema.ts
+index 570514f4..b73a7e08 100644
+--- a/packages/cli/src/commands/schema.ts
++++ b/packages/cli/src/commands/schema.ts
+@@ -1,6 +1,10 @@
+ import { Command } from 'commander';
+ import { getGlobalOpts } from './root.js';
+-import { output } from '../output/formatter.js';
++import {
++  output,
++  outputError,
++  parseOutputFormat,
++} from '../output/formatter.js';
+ import { getCommandSchema, getAllCommandSchemas } from '../schema/registry.js';
+ 
+ export function registerSchemaCommand(program: Command) {
+@@ -10,27 +14,36 @@ export function registerSchemaCommand(program: Command) {
+     .action(function (this: Command, commandName?: string) {
+       const opts = getGlobalOpts(this);
+ 
+-      if (commandName) {
+-        const schema = getCommandSchema(commandName);
+-        if (!schema) {
+-          console.error(
+-            JSON.stringify(
+-              { error: { code: 'NOT_FOUND', message: `Unknown command: ${commandName}` } },
+-              null,
+-              2,
+-            ),
+-          );
+-          process.exitCode = 1;
+-          return;
++      // Wrapped like every other `output()` call site so a rejected
++      // `--format` surfaces as the documented JSON error body instead of
++      // an uncaught exception — `bin.ts` has no top-level handler.
++      try {
++        const fmt = parseOutputFormat(opts.format);
++
++        if (commandName) {
++          const schema = getCommandSchema(commandName);
++          if (!schema) {
++            console.error(
++              JSON.stringify(
++                { error: { code: 'NOT_FOUND', message: `Unknown command: ${commandName}` } },
++                null,
++                2,
++              ),
++            );
++            process.exitCode = 1;
++            return;
++          }
++          output(schema, fmt, opts.quiet);
++        } else {
++          const commands = getAllCommandSchemas().map((c) => ({
++            name: c.name,
++            description: c.description,
++            safety: c.safety,
++          }));
++          output({ commands }, fmt, opts.quiet);
+         }
+-        output(schema, opts.format, opts.quiet);
+-      } else {
+-        const commands = getAllCommandSchemas().map((c) => ({
+-          name: c.name,
+-          description: c.description,
+-          safety: c.safety,
+-        }));
+-        output({ commands }, opts.format, opts.quiet);
++      } catch (e) {
++        outputError(e, opts.quiet);
+       }
+     });
+ }
+diff --git a/packages/cli/src/commands/status.ts b/packages/cli/src/commands/status.ts
+index 961290ad..10d3360f 100644
+--- a/packages/cli/src/commands/status.ts
++++ b/packages/cli/src/commands/status.ts
+@@ -1,33 +1,72 @@
+ import { Command } from 'commander';
++import { getGlobalOpts } from './root.js';
++import {
++  output,
++  outputError,
++  parseOutputFormat,
++} from '../output/formatter.js';
+ import { loadSession, isSessionExpired } from '../config/session.js';
++import type { Session } from '../config/session.js';
++
++/**
++ * `status` payload. Flat (rather than nesting user / workspace /
++ * session objects) so `--format table` and `--format csv` — the human
++ * paths now that JSON is the default — render every field instead of
++ * `[object Object]`.
++ */
++export interface StatusPayload {
++  loggedIn: boolean;
++  /** Present only when logged out; tells a human what to do next. */
++  message?: string;
++  user?: string;
++  email?: string;
++  server?: string;
++  workspaceId?: string;
++  /** `null` when the active workspace is absent from the session list. */
++  workspaceName?: string | null;
++  session?: 'valid' | 'expired';
++  expiresAt?: string;
++}
++
++export const NOT_LOGGED_IN_MESSAGE = 'Not logged in. Run `wafflebase login`.';
++
++/**
++ * Build the structured auth state for a session, or the logged-out
++ * payload when there is none. Pure so it can be asserted without
++ * spawning the CLI.
++ */
++export function buildStatus(session: Session | null): StatusPayload {
++  if (!session) {
++    return { loggedIn: false, message: NOT_LOGGED_IN_MESSAGE };
++  }
++
++  const ws = session.workspaces.find((w) => w.id === session.activeWorkspace);
++
++  return {
++    loggedIn: true,
++    user: session.user.username,
++    email: session.user.email,
++    server: session.server,
++    workspaceId: session.activeWorkspace,
++    workspaceName: ws ? ws.name : null,
++    session: isSessionExpired(session) ? 'expired' : 'valid',
++    expiresAt: session.expiresAt,
++  };
++}
+ 
+ export function registerStatusCommand(program: Command): void {
+   program
+     .command('status')
+     .description('Show current auth state')
+-    .action(() => {
+-      const session = loadSession();
+-      if (!session) {
+-        console.log('Not logged in. Run `wafflebase login`.');
+-        return;
++    .action(function (this: Command) {
++      const opts = getGlobalOpts(this);
++      try {
++        const fmt = parseOutputFormat(opts.format);
++        // Being logged out is a successful answer to "what is my auth
++        // state?", so this stays exit 0 — agents branch on `loggedIn`.
++        output(buildStatus(loadSession()), fmt, opts.quiet);
++      } catch (e) {
++        outputError(e, opts.quiet);
+       }
+-
+-      console.log(
+-        `Logged in as ${session.user.username} (${session.user.email})`,
+-      );
+-      console.log(`Server:    ${session.server}`);
+-
+-      const ws = session.workspaces.find(
+-        (w) => w.id === session.activeWorkspace,
+-      );
+-      const wsLabel = ws
+-        ? `${ws.name} (${session.activeWorkspace.slice(0, 8)}...)`
+-        : session.activeWorkspace;
+-      console.log(`Workspace: ${wsLabel}`);
+-
+-      const expired = isSessionExpired(session);
+-      console.log(
+-        `Session:   ${expired ? 'expired' : 'valid'} (expires ${session.expiresAt})`,
+-      );
+     });
+ }
+diff --git a/packages/cli/src/output/formatter.ts b/packages/cli/src/output/formatter.ts
+index d873f75d..afa2da90 100644
+--- a/packages/cli/src/output/formatter.ts
++++ b/packages/cli/src/output/formatter.ts
+@@ -4,6 +4,42 @@ import { formatCsv } from './csv.js';
+ 
+ export type OutputFormat = 'json' | 'table' | 'csv';
+ 
++export const OUTPUT_FORMATS: readonly OutputFormat[] = ['json', 'table', 'csv'];
++
++/**
++ * Thrown for an unsupported `--format` value. Carries a structured
++ * `code` so `outputError` reports `INVALID_FORMAT` rather than a bare
++ * `ERROR`, letting agents tell a bad flag from a failed request.
++ */
++export class InvalidFormatError extends Error {
++  readonly code = 'INVALID_FORMAT';
++
++  constructor(value: string) {
++    super(
++      `Invalid --format "${value}". Use one of: ${OUTPUT_FORMATS.join(', ')}.`,
++    );
++  }
++}
++
++/**
++ * Narrow a raw `--format` value to an `OutputFormat`, throwing on
++ * anything else. Commands that render through `output()` call this
++ * before doing any work, so an unsupported format fails loudly instead
++ * of being ignored.
++ *
++ * Validation is per-command, not a `commander` `.choices()` on the
++ * global `--format` option: `docs`/`slides`/`notes` `content` and
++ * `export` deliberately reuse that same global flag for their own
++ * vocabularies (`md`, `text`, `pdf`, `docx`, `pptx`) and validate it
++ * themselves.
++ */
++export function parseOutputFormat(value: string): OutputFormat {
++  if (!OUTPUT_FORMATS.includes(value as OutputFormat)) {
++    throw new InvalidFormatError(value);
++  }
++  return value as OutputFormat;
++}
++
+ export function format(data: unknown, fmt: OutputFormat): string {
+   switch (fmt) {
+     case 'json':
+@@ -12,6 +48,11 @@ export function format(data: unknown, fmt: OutputFormat): string {
+       return formatTable(data);
+     case 'csv':
+       return formatCsv(data);
++    default:
++      // `fmt` is typed, but it originates from an unvalidated CLI flag;
++      // without this branch an unsupported value fell through the
++      // switch and printed a bare "undefined".
++      throw new InvalidFormatError(String(fmt));
+   }
+ }
+ 
+diff --git a/packages/cli/src/output/table.ts b/packages/cli/src/output/table.ts
+index 3df32b35..17505e8c 100644
+--- a/packages/cli/src/output/table.ts
++++ b/packages/cli/src/output/table.ts
+@@ -1,8 +1,41 @@
+ /**
+- * Format an array of objects as an aligned text table.
++ * Render one value of a key/value table. Nested values are
++ * JSON-serialized rather than left to `String()`, which would print
++ * `[object Object]` for the nested payloads some commands emit
++ * (`schema <command>`). Mirrors what `formatCsv` already does.
++ */
++function cell(value: unknown): string {
++  if (value !== null && typeof value === 'object') return JSON.stringify(value);
++  return String(value ?? '');
++}
++
++/**
++ * Format a single object as an aligned two-column key/value table.
++ * Single-record commands (`status`, `docs get`, `schema`) are the
++ * human-readable path now that JSON is the default, and a
++ * one-row-per-field layout reads better there than a very wide single
++ * row.
++ */
++function formatRecord(record: Record<string, unknown>): string {
++  const keys = Object.keys(record);
++  if (keys.length === 0) return '(no results)';
++
++  const width = Math.max(...keys.map((k) => k.length));
++  return keys.map((k) => `${k.padEnd(width)}  ${cell(record[k])}`).join('\n');
++}
++
++/**
++ * Format an array of objects as an aligned text table. A single
++ * non-array object is rendered as a key/value table instead.
+  */
+ export function formatTable(data: unknown): string {
+-  if (!Array.isArray(data) || data.length === 0) return '(no results)';
++  if (!Array.isArray(data)) {
++    if (data !== null && typeof data === 'object') {
++      return formatRecord(data as Record<string, unknown>);
++    }
++    return '(no results)';
++  }
++  if (data.length === 0) return '(no results)';
+ 
+   const rows = data as Record<string, unknown>[];
+   const keys = Object.keys(rows[0]);
+diff --git a/packages/cli/src/schema/registry.ts b/packages/cli/src/schema/registry.ts
+index 1f24ecdf..004bc2f4 100644
+--- a/packages/cli/src/schema/registry.ts
++++ b/packages/cli/src/schema/registry.ts
+@@ -60,7 +60,17 @@ const registry: CommandSchema[] = [
+     description: 'Show current auth state',
+     safety: 'read-only',
+     parameters: {},
+-    response: { user: 'string', server: 'string', workspace: 'string', session: 'string' },
++    response: {
++      loggedIn: 'boolean',
++      message: 'string (logged out only)',
++      user: 'string',
++      email: 'string',
++      server: 'string',
++      workspaceId: 'string',
++      workspaceName: 'string | null',
++      session: "'valid' | 'expired'",
++      expiresAt: 'string',
++    },
+   },
+   {
+     name: 'ctx.list',
+diff --git a/packages/cli/test/ctx.test.ts b/packages/cli/test/ctx.test.ts
+index 03350686..cee32db1 100644
+--- a/packages/cli/test/ctx.test.ts
++++ b/packages/cli/test/ctx.test.ts
+@@ -1,8 +1,6 @@
+ import { describe, it, expect } from 'vitest';
+-import {
+-  formatWorkspaceList,
+-  findWorkspace,
+-} from '../src/commands/ctx.js';
++import { buildWorkspaceList, findWorkspace } from '../src/commands/ctx.js';
++import { format } from '../src/output/formatter.js';
+ import type { WorkspaceInfo } from '../src/config/session.js';
+ 
+ const workspaces: WorkspaceInfo[] = [
+@@ -10,27 +8,42 @@ const workspaces: WorkspaceInfo[] = [
+   { id: 'abc12345-aaaa-bbbb-cccc-dddddddddddd', name: 'Team Workspace' },
+ ];
+ 
+-describe('formatWorkspaceList', () => {
+-  it('marks the active workspace with *', () => {
+-    const output = formatWorkspaceList(workspaces, workspaces[0].id);
+-    const lines = output.split('\n');
+-    expect(lines[0]).toMatch(/^\*/);
+-    expect(lines[1]).toMatch(/^ /);
++describe('buildWorkspaceList', () => {
++  it('flags the active workspace', () => {
++    const rows = buildWorkspaceList(workspaces, workspaces[0].id);
++    expect(rows[0].active).toBe(true);
++    expect(rows[1].active).toBe(false);
+   });
+ 
+-  it('shows truncated IDs and workspace names', () => {
+-    const output = formatWorkspaceList(workspaces, workspaces[0].id);
+-    expect(output).toContain('e98ff707');
+-    expect(output).toContain("hackerwins's Workspace");
+-    expect(output).toContain('abc12345');
+-    expect(output).toContain('Team Workspace');
++  it('flags the second workspace when it is active', () => {
++    const rows = buildWorkspaceList(workspaces, workspaces[1].id);
++    expect(rows[0].active).toBe(false);
++    expect(rows[1].active).toBe(true);
+   });
+ 
+-  it('marks the second workspace when it is active', () => {
+-    const output = formatWorkspaceList(workspaces, workspaces[1].id);
+-    const lines = output.split('\n');
+-    expect(lines[0]).toMatch(/^ /);
+-    expect(lines[1]).toMatch(/^\*/);
++  it('emits full IDs and names in session order', () => {
++    const rows = buildWorkspaceList(workspaces, workspaces[0].id);
++    expect(rows).toEqual([
++      {
++        id: 'e98ff707-1111-2222-3333-444444444444',
++        name: "hackerwins's Workspace",
++        active: true,
++      },
++      {
++        id: 'abc12345-aaaa-bbbb-cccc-dddddddddddd',
++        name: 'Team Workspace',
++        active: false,
++      },
++    ]);
++  });
++
++  it('returns an empty array when there are no workspaces', () => {
++    expect(buildWorkspaceList([], 'none')).toEqual([]);
++  });
++
++  it('is JSON-parseable as emitted by the default format', () => {
++    const rows = buildWorkspaceList(workspaces, workspaces[0].id);
++    expect(JSON.parse(format(rows, 'json'))).toEqual(rows);
+   });
+ });
+ 
+diff --git a/packages/cli/test/output.test.ts b/packages/cli/test/output.test.ts
+index aa17739c..d2bddc2d 100644
+--- a/packages/cli/test/output.test.ts
++++ b/packages/cli/test/output.test.ts
+@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+ import { formatJson } from '../src/output/json.js';
+ import { formatTable } from '../src/output/table.js';
+ import { formatCsv } from '../src/output/csv.js';
+-import { format, outputError } from '../src/output/formatter.js';
++import {
++  format,
++  outputError,
++  parseOutputFormat,
++  InvalidFormatError,
++} from '../src/output/formatter.js';
+ import { InvalidDocxError } from '../src/docs/docx-import.js';
+ 
+ describe('formatJson', () => {
+@@ -29,6 +34,41 @@ describe('formatTable', () => {
+   it('returns no results for empty array', () => {
+     expect(formatTable([])).toBe('(no results)');
+   });
++
++  it('formats a single object as a key/value table', () => {
++    const result = formatTable({ loggedIn: true, user: 'hackerwins' });
++    const lines = result.split('\n');
++    expect(lines).toHaveLength(2);
++    expect(lines[0]).toMatch(/^loggedIn\s+true$/);
++    expect(lines[1]).toMatch(/^user\s+hackerwins$/);
++  });
++
++  it('returns no results for an object with no fields', () => {
++    expect(formatTable({})).toBe('(no results)');
++  });
++
++  it('returns no results for scalars', () => {
++    expect(formatTable('nope')).toBe('(no results)');
++    expect(formatTable(null)).toBe('(no results)');
++  });
++});
++
++describe('parseOutputFormat', () => {
++  it('accepts the supported formats', () => {
++    expect(parseOutputFormat('json')).toBe('json');
++    expect(parseOutputFormat('table')).toBe('table');
++    expect(parseOutputFormat('csv')).toBe('csv');
++  });
++
++  it('rejects an unsupported format with a structured code', () => {
++    expect(() => parseOutputFormat('bogus')).toThrow(InvalidFormatError);
++    try {
++      parseOutputFormat('bogus');
++    } catch (e) {
++      expect((e as InvalidFormatError).code).toBe('INVALID_FORMAT');
++      expect((e as Error).message).toContain('json, table, csv');
++    }
++  });
+ });
+ 
+ describe('formatCsv', () => {
+@@ -86,6 +126,12 @@ describe('format dispatcher', () => {
+   it('dispatches to csv', () => {
+     expect(format(data, 'csv')).toContain('a\n1');
+   });
++
++  it('throws instead of printing "undefined" for an unknown format', () => {
++    expect(() =>
++      format(data, 'bogus' as unknown as 'json'),
++    ).toThrow(InvalidFormatError);
++  });
+ });
+ 
+ describe('outputError', () => {
+diff --git a/packages/cli/test/status.test.ts b/packages/cli/test/status.test.ts
+new file mode 100644
+index 00000000..0260fe23
+--- /dev/null
++++ b/packages/cli/test/status.test.ts
+@@ -0,0 +1,242 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import {
++  buildStatus,
++  NOT_LOGGED_IN_MESSAGE,
++  registerStatusCommand,
++} from '../src/commands/status.js';
++import { registerCtxCommand } from '../src/commands/ctx.js';
++import { registerSchemaCommand } from '../src/commands/schema.js';
++import { createProgram } from '../src/commands/root.js';
++import { format } from '../src/output/formatter.js';
++import type { Session } from '../src/config/session.js';
++import { writeFileSync, mkdtempSync, rmSync } from 'node:fs';
++import { join } from 'node:path';
++import { tmpdir } from 'node:os';
++
++function makeSession(overrides: Partial<Session> = {}): Session {
++  return {
++    server: 'http://localhost:3000',
++    user: {
++      id: 1,
++      username: 'hackerwins',
++      email: 'hackerwins@example.com',
++      photo: null,
++    },
++    accessToken: 'access',
++    refreshToken: 'refresh',
++    expiresAt: '2099-01-01T00:00:00.000Z',
++    activeWorkspace: 'e98ff707-1111-2222-3333-444444444444',
++    workspaces: [
++      {
++        id: 'e98ff707-1111-2222-3333-444444444444',
++        name: "hackerwins's Workspace",
++      },
++    ],
++    ...overrides,
++  };
++}
++
++describe('buildStatus', () => {
++  it('reports loggedIn: false with a next-step message when there is no session', () => {
++    expect(buildStatus(null)).toEqual({
++      loggedIn: false,
++      message: NOT_LOGGED_IN_MESSAGE,
++    });
++  });
++
++  it('reports the full auth state for a valid session', () => {
++    expect(buildStatus(makeSession())).toEqual({
++      loggedIn: true,
++      user: 'hackerwins',
++      email: 'hackerwins@example.com',
++      server: 'http://localhost:3000',
++      workspaceId: 'e98ff707-1111-2222-3333-444444444444',
++      workspaceName: "hackerwins's Workspace",
++      session: 'valid',
++      expiresAt: '2099-01-01T00:00:00.000Z',
++    });
++  });
++
++  it('marks an elapsed session as expired', () => {
++    const payload = buildStatus(
++      makeSession({ expiresAt: '2000-01-01T00:00:00.000Z' }),
++    );
++    expect(payload.session).toBe('expired');
++    expect(payload.expiresAt).toBe('2000-01-01T00:00:00.000Z');
++  });
++
++  it('reports workspaceName: null when the active workspace is unknown', () => {
++    const payload = buildStatus(makeSession({ activeWorkspace: 'missing-id' }));
++    expect(payload.workspaceId).toBe('missing-id');
++    expect(payload.workspaceName).toBeNull();
++  });
++
++  it('is JSON-parseable in both states (the §8.1 contract)', () => {
++    expect(JSON.parse(format(buildStatus(null), 'json')).loggedIn).toBe(false);
++    expect(
++      JSON.parse(format(buildStatus(makeSession()), 'json')).loggedIn,
++    ).toBe(true);
++  });
++
++  it('renders every field under --format table', () => {
++    const table = format(buildStatus(makeSession()), 'table');
++    expect(table).toContain('hackerwins');
++    expect(table).toContain('http://localhost:3000');
++    expect(table).toContain('valid');
++    expect(table).not.toContain('[object Object]');
++  });
++});
++
++/**
++ * End-to-end wiring: drive the real commander program so the
++ * `--format` plumbing (the actual defect in #635) is covered, not just
++ * the payload builders. `WAFFLEBASE_SESSION` points at a path that does
++ * not exist, giving the logged-out branch without touching a real
++ * session file.
++ */
++describe('status / ctx list command wiring', () => {
++  let stdout: ReturnType<typeof vi.spyOn>;
++  let stderr: ReturnType<typeof vi.spyOn>;
++  const originalExitCode = process.exitCode;
++  const originalSessionPath = process.env.WAFFLEBASE_SESSION;
++  let tempDirs: string[] = [];
++
++  beforeEach(() => {
++    stdout = vi.spyOn(console, 'log').mockImplementation(() => {
++      /* swallow */
++    });
++    stderr = vi.spyOn(console, 'error').mockImplementation(() => {
++      /* swallow */
++    });
++    process.env.WAFFLEBASE_SESSION = '/nonexistent/wafflebase-session.json';
++    process.exitCode = 0;
++    tempDirs = [];
++  });
++
++  afterEach(() => {
++    stdout.mockRestore();
++    stderr.mockRestore();
++    process.exitCode = originalExitCode;
++    for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
++    if (originalSessionPath === undefined) {
++      delete process.env.WAFFLEBASE_SESSION;
++    } else {
++      process.env.WAFFLEBASE_SESSION = originalSessionPath;
++    }
++  });
++
++  function run(argv: string[]): void {
++    const program = createProgram();
++    registerStatusCommand(program);
++    registerCtxCommand(program);
++    registerSchemaCommand(program);
++    program.parse(argv, { from: 'user' });
++  }
++
++  /** Point `WAFFLEBASE_SESSION` at a real session file on disk. */
++  function withSession(session: Session): string {
++    const dir = mkdtempSync(join(tmpdir(), 'wafflebase-cli-test-'));
++    const path = join(dir, 'session.json');
++    writeFileSync(path, JSON.stringify(session));
++    process.env.WAFFLEBASE_SESSION = path;
++    tempDirs.push(dir);
++    return path;
++  }
++
++  function lastStdout(): string {
++    return String(stdout.mock.calls.at(-1)?.[0]);
++  }
++
++  function lastStderr(): string {
++    return String(stderr.mock.calls.at(-1)?.[0]);
++  }
++
++  it('emits JSON from `status` by default', () => {
++    run(['status']);
++    expect(JSON.parse(lastStdout())).toEqual({
++      loggedIn: false,
++      message: NOT_LOGGED_IN_MESSAGE,
++    });
++    expect(process.exitCode).toBe(0);
++  });
++
++  it('honors `status --format csv`', () => {
++    run(['status', '--format', 'csv']);
++    expect(lastStdout().split('\n')[0]).toBe('loggedIn,message');
++  });
++
++  it('rejects `status --format bogus` with a JSON error and exit 1', () => {
++    run(['status', '--format', 'bogus']);
++    expect(stdout).not.toHaveBeenCalled();
++    expect(JSON.parse(lastStderr()).error.code).toBe('INVALID_FORMAT');
++    expect(process.exitCode).toBe(1);
++  });
++
++  it('reports NOT_LOGGED_IN from `ctx list` with exit 1', () => {
++    run(['ctx', 'list']);
++    expect(JSON.parse(lastStderr()).error.code).toBe('NOT_LOGGED_IN');
++    expect(process.exitCode).toBe(1);
++  });
++
++  it('rejects `ctx list --format bogus`', () => {
++    run(['ctx', 'list', '--format', 'bogus']);
++    expect(JSON.parse(lastStderr()).error.code).toBe('INVALID_FORMAT');
++    expect(process.exitCode).toBe(1);
++  });
++
++  it('emits the full auth state from `status` with a session on disk', () => {
++    withSession(makeSession());
++    run(['status']);
++    expect(JSON.parse(lastStdout())).toMatchObject({
++      loggedIn: true,
++      user: 'hackerwins',
++      workspaceName: "hackerwins's Workspace",
++      session: 'valid',
++    });
++    expect(process.exitCode).toBe(0);
++  });
++
++  it('emits the workspace rows from `ctx list` with a session on disk', () => {
++    withSession(makeSession());
++    run(['ctx', 'list']);
++    expect(JSON.parse(lastStdout())).toEqual([
++      {
++        id: 'e98ff707-1111-2222-3333-444444444444',
++        name: "hackerwins's Workspace",
++        active: true,
++      },
++    ]);
++    expect(process.exitCode).toBe(0);
++  });
++
++  it('renders `ctx list --format table` with an active column', () => {
++    withSession(makeSession());
++    run(['ctx', 'list', '--format', 'table']);
++    const lines = lastStdout().split('\n');
++    expect(lines[0]).toContain('active');
++    expect(lines[2]).toContain('true');
++  });
++
++  it('suppresses `status` output under --quiet', () => {
++    withSession(makeSession());
++    run(['status', '--quiet']);
++    expect(stdout).not.toHaveBeenCalled();
++    expect(process.exitCode).toBe(0);
++  });
++
++  // `schema` is the one other `output()` caller that renders a single
++  // object; it must reject a bad --format as JSON rather than let the
++  // throw escape to an uncaught exception (bin.ts has no top handler).
++  it('rejects `schema --format bogus` with a JSON error', () => {
++    run(['schema', '--format', 'bogus']);
++    expect(JSON.parse(lastStderr()).error.code).toBe('INVALID_FORMAT');
++    expect(process.exitCode).toBe(1);
++  });
++
++  it('renders nested schema payloads as JSON under --format table', () => {
++    run(['schema', 'ctx.list', '--format', 'table']);
++    const out = lastStdout();
++    expect(out).not.toContain('[object Object]');
++    expect(out).toContain('"active"');
++  });
++});
+diff --git a/packages/documentation/developers/cli.md b/packages/documentation/developers/cli.md
+index 34f4c460..ef09cae1 100644
+--- a/packages/documentation/developers/cli.md
++++ b/packages/documentation/developers/cli.md
+@@ -32,8 +32,12 @@ wafflebase login --server https://api.example.com
+ 
+ ### Check Status
+ 
++Prints the auth state as JSON — `loggedIn` tells a script or agent
++whether a login prompt is needed.
++
+ ```bash
+ wafflebase status
++wafflebase status --format table   # human-readable key/value
+ ```
+ 
+ ### Logout
+@@ -47,9 +51,12 @@ wafflebase logout
+ If you have access to multiple workspaces:
+ 
+ ```bash
+-# List workspaces (* = active)
++# List workspaces as [{ id, name, active }]
+ wafflebase ctx list
+ 
++# Human-readable table instead of JSON
++wafflebase ctx list --format table
++
+ # Switch active workspace
+ wafflebase ctx switch "Team Workspace"
+ wafflebase ctx switch e98ff707

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-864",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/view/editor.ts::`editorapi.togglelist` still does not fire the cursor-move callbacks, so the exact staleness this diff fixes remains reachable when a bullet is toggled on a heading block",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff's own task doc concedes toggleList does not call notifyStyleApplied, and the supplied text-style-options.ts (getBlockLabel ~lines 106–114) confirms a 'list-item' block maps to \"Normal text\", so a heading→list-item transition changes the correct label — refuting the task doc's \"unobservable because TextStyleGroup never offers list-item\" rationale, which conflates dropdown options with the label derived from the block's actual type. The one link I could not verify (no checkout; editor.ts:2871–2885 was in the omitted excerpt region) is whether toggleList on a heading actually converts the block to 'list-item', but the EditorAPI getBlockType signature (type + listKind/listLevel) and the specific citation make this highly plausible. If so, the exact #792 staleness remains reachable via the toolbar list buttons; impact is a stale label that self-heals on the next cursor move, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:ff0ff3c2481e2ff691cfb27ba743c0c85e22dd0e89e4a12179a431620abe9fde",
+  "class_id": null,
+  "class_members": null
+}

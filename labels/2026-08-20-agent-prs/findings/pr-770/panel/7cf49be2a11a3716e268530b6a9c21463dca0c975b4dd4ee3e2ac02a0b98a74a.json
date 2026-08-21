@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-770",
+  "arm": "panel",
+  "finding_key": "packages/frontend/scripts/verify-visual-browser.mjs::unrelated scope creep: a frontend visual-harness font-waiting rewrite is bundled into a cli error-envelope change",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:3"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The factual core is verified: the diff bundles a CLI error-envelope refactor (packages/cli/src/output/formatter.ts:76-133 and eight call sites plus tests) with an orthogonal frontend visual-harness change (verify-visual-browser.mjs: expanded VISUAL_FONT_FAMILIES, new VISUAL_FONT_WEIGHTS, a status!=='loading' catch-all poll, and waitForFontsReady moved after the section-ready wait in capturePass) that shares no module, test, or acceptance criterion with the CLI work. However, the bundled task doc explains the harness fix was needed because the visual lane failed on this CLI-only branch due to a pre-existing font race, so \"unrelated\" overstates it — it unblocked this PR's CI — and the baseline-invalidation risk is overstated since the change only strengthens waits to match the fonts-loaded state baselines already record. It is a legitimate but low-impact scope/design-fit concern, mitigated by thorough in-diff documentation.",
+  "notes": null,
+  "diff_sha256": "sha256:c8d92aec1ba53fee531a623b425919c02a8f52c6e84365c25deec98bcb5d3e3d",
+  "class_id": null,
+  "class_members": null
+}

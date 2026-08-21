@@ -1,0 +1,52 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "searchedFor": [
+        "grep applyTableCellStyle|applyCellStyle|setCellStyle across repo",
+        "read packages/frontend/src/app/docs/yorkie-doc-store.ts:2410-2438 and serializeCellStyle at :234",
+        "read packages/frontend/src/app/docs/docs-table-context-menu.tsx:215-249",
+        "grep normalizeStyleClears usages (only block-helpers + applyStyleInTree)"
+      ],
+      "summary": "Sibling \"Reset\" path for TABLE CELL background still passes `''` and is not normalized — the old color survives in the CRDT",
+      "evidence": "`packages/frontend/src/app/docs/docs-table-context-menu.tsx:230` calls `editor.applyTableCellStyle({ backgroundColor: \"\" })` (the cell-background \"Reset\" button), which reaches `YorkieDocStore.applyCellStyle` (`yorkie-doc-store.ts:2410`). There the patch is merged verbatim (`const merged = { ...cell.style, ...style }`, line 2418), serialized by `serializeCellStyle` which SKIPS falsy values (`if (s.backgroundColor) attrs.backgroundColor = ...`, line 239), and written with `tree.styleByPath(...)` only (line 2430) — there is no `removeStyleByPath` counterpart as the inline path now has. Net effect: the local cache gets `cell.style.backgroundColor = ''` (cell looks cleared locally) while the Tree node keeps the previous `backgroundColor` attribute, so a peer or a reload still shows the old cell fill. This is the same empty-string-means-clear contract the diff establishes for inline styles (`normalizeStyleClears`), left unapplied on the sibling cell path that the very same picker UX drives. Fix belongs in `applyCellStyle` (normalize `''` → removal via `removeStyleByPath`) or by routing cell styles through an equivalent normalizer.",
+      "lens": "blast-radius",
+      "round_commit": "3e0715e5b13acdc8a4dd9a4fc6531c458028742a"
+    },
+    {
+      "severity": "major",
+      "file": "docs/design/docs/docs-font-controls.md",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep normalizeStyleClears across repo",
+        "grep CLEAR_INLINE_STYLE across docs/design",
+        "grep 'Highlight|backgroundColor' across docs/design",
+        "read docs/design/docs/docs-font-controls.md 210-290",
+        "grep 'design doc|docs/design' in CONTRIBUTING.md"
+      ],
+      "summary": "New model-layer contract (`''` means \"clear this inline-style key\") is recorded only in a code comment and the task file, not in any design doc. `docs-font-controls.md` is the canonical doc for the color/clear-formatting surface and already documents the sibling convention (\"applyInlineStyle already removes attributes when their value is explicitly undefined\", lines 239-242); this change adds a second, exported semantic rule (`normalizeStyleClears`, exported from both `src/index.ts` and `src/node.ts`) without folding a sentence into that doc. CONTRIBUTING.md:58-60 asks for the existing doc to be updated for non-trivial/data-model changes. Also nothing in `packages/docs/src/store/store.ts`'s `applyStyle` contract (line 76) states that `''` is now interpreted as a clear, which is what a future third DocStore implementation would need to know.",
+      "evidence": "docs/design/docs/docs-font-controls.md:239-242 documents only the `undefined`-means-clear convention; grep for 'normalizeStyleClears' in docs/design returned nothing.",
+      "lens": "design-fit",
+      "round_commit": "3e0715e5b13acdc8a4dd9a4fc6531c458028742a"
+    },
+    {
+      "severity": "major",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "searchedFor": [],
+      "summary": "User/peer-controlled `color` and `backgroundColor` strings are interpolated unescaped into DOCX XML attributes, while the sibling `fontFamily` on the same element is explicitly escaped for exactly this reason",
+      "evidence": "`packages/docs/src/export/docx-style-map.ts:73` emits `<w:color w:val=\"${colorHex.replace('#','')}\"/>` and :77 `<w:shd ... w:fill=\"${bgHex.replace('#','')}\"/>`; `packages/docs/src/export/docx-exporter.ts:311` does the same for table-cell background. Only `#` is stripped — no `escapeXmlAttr`, even though the same file defines one at :25 with a comment stating font/style values \"originate from untrusted sources (PPTX/DOCX imports, user input in the font picker)\". Attack path: (a) victim imports a hostile .docx — `packages/docs/src/import/docx-style-map.ts:62` stores `style.color = '#' + val` with `val` taken verbatim from the attacker's `<w:color w:val=...>`, no format validation; or (b) a collaborator on a shared doc writes an arbitrary `color`/`backgroundColor` Yorkie tree attribute, which `packages/frontend/src/app/docs/yorkie-doc-store.ts:177-178` (`parseInlineStyle`) accepts as any string. When the victim then exports to DOCX, a value like `000\"/><w:rStyle w:val=\"x` (or containing `<`/`&`) escapes the attribute and injects arbitrary OOXML into the file the victim downloads/redistributes, at minimum corrupting it and at worst smuggling attacker-chosen run/document markup. This code is pre-existing and outside the diff, but the diff is the color write boundary and its own comment claims to fix what \"export paths\" see, so the color→export chain is squarely the change's subject matter.",
+      "lens": "security",
+      "round_commit": "3e0715e5b13acdc8a4dd9a4fc6531c458028742a"
+    },
+    {
+      "severity": "major",
+      "file": "packages/frontend/src/app/docs/docs-table-context-menu.tsx",
+      "searchedFor": [],
+      "summary": "Table-cell \"None\" still passes `backgroundColor: \"\"` and is NOT covered by the new normalization — in the Yorkie path the old color survives in the CRDT",
+      "evidence": "The fix normalizes `''` only for `InlineStyle` (`normalizeStyleClears` is wired into `applyInlineStyle` and `applyStyleInTree`). The cell-style picker at docs-table-context-menu.tsx:230 calls `editor.applyTableCellStyle({ backgroundColor: \"\" })`, which flows through `Doc.applyCellStyle` → `YorkieDocStore.applyCellStyle` (yorkie-doc-store.ts:2410). There `merged = {...cell.style, backgroundColor: ''}` and `serializeCellStyle` (line 239: `if (s.backgroundColor) attrs.backgroundColor = ...`) drops the falsy value, so `tree.styleByPath(..., attrs)` — a merge-only op with no `removeStyleByPath` counterpart — leaves the previous `backgroundColor` attribute on the cell node. The local cache is then set to `''` (line 2434), so the cell looks cleared locally while peers and any reload still read the old fill: cache/CRDT divergence and a silently lost user action. This is exactly the #793 class of bug the change set out to fix, left in place on one of the call sites the accompanying lessons note counts (docs/tasks/active/20260817-docs-highlight-none-clear-lessons.md:13).",
+      "lens": "correctness",
+      "round_commit": "3e0715e5b13acdc8a4dd9a4fc6531c458028742a"
+    }
+  ]
+}

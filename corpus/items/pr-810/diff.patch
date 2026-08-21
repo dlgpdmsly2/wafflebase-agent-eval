@@ -1,0 +1,408 @@
+diff --git a/docs/tasks/active/20260812-docs-font-color-reset-lessons.md b/docs/tasks/active/20260812-docs-font-color-reset-lessons.md
+new file mode 100644
+index 00000000..347ce40b
+--- /dev/null
++++ b/docs/tasks/active/20260812-docs-font-color-reset-lessons.md
+@@ -0,0 +1,22 @@
++# Lessons — Docs font color reset (#728)
++
++## `ctx.fillStyle = ''` fails silently
++
++Assigning an invalid CSS color to `fillStyle` / `strokeStyle` is not an error
++and does not reset to black — the canvas keeps the previous value. A cleared
++style that leaks an empty string therefore does not render "uncolored", it
++renders in whatever color the previous paint pass happened to set. In
++`paintLayout` that is the selection fill, which made the bug look like the
++text had adopted the selection color.
++
++Takeaway: for canvas color values, `??` is not a safe fallback operator —
++`||` is, because every legal color in this codebase is truthy (hex strings
++start with `#`, `StoredColor` role/srgb forms are objects).
++
++## "Clear a style" means removing the key, not writing an empty value
++
++`YorkieDocStore` already distinguishes the two: `serializeInlineStyle` drops
++`undefined` keys and `removedInlineStyleAttrs` turns an explicitly-`undefined`
++key into a `removeStyleByPath` call. An empty string bypasses that machinery
++entirely and is stored as a real attribute. Toolbar "Reset" controls should
++pass `undefined`, never `""`.
+diff --git a/docs/tasks/active/20260812-docs-font-color-reset-todo.md b/docs/tasks/active/20260812-docs-font-color-reset-todo.md
+new file mode 100644
+index 00000000..31c569b5
+--- /dev/null
++++ b/docs/tasks/active/20260812-docs-font-color-reset-todo.md
+@@ -0,0 +1,52 @@
++# Docs: resetting the font color paints the selection color (#728)
++
++## Problem
++
++In the docs editor, selecting text and clicking **Reset** in the text-color
++picker leaves the text painted in the selection highlight color instead of
++clearing the color.
++
++Root cause — two layers:
++
++1. The toolbar reset writes an **empty string** (`applyStyle({ color: "" })`)
++   instead of clearing the key. `""` is a legal `string`, so
++   `serializeInlineStyle` stores `color: ""` on the Yorkie Tree node and
++   `defaultColorResolver` passes it through verbatim.
++2. `paintRun` falls back with `??`, so `""` survives and
++   `ctx.fillStyle = ""` is an **invalid** assignment — the Canvas spec says
++   invalid color strings are ignored, so `fillStyle` keeps whatever the
++   previous paint pass set. The selection rects are filled right before the
++   run pass, so the text renders in `theme.selectionColor`.
++
++## Plan
++
++- [x] Toolbar reset clears the key: `applyStyle({ color: undefined })` /
++      `{ backgroundColor: undefined }`. The Yorkie store already turns an
++      explicitly-`undefined` key into `removeStyleByPath`
++      (`removedInlineStyleAttrs`), so the attribute really leaves the CRDT.
++      - [x] `components/text-formatting/text-format-group.tsx` (shared docs +
++            slides toolbar)
++      - [x] `app/docs/docs-formatting-toolbar.tsx` (slim/mobile toolbar)
++- [x] Renderer treats a falsy resolved color as unset, so documents already
++      saved with `color: ""` (and slides decks, which paint through the same
++      docs `paintRun`) render with the theme default instead of a stale
++      `fillStyle`:
++      - [x] `paintRun` text color
++      - [x] `renderListMarker` marker color
++      - [x] `resolveColorAtPosition` (caret color tracks the run color)
++- [x] Tests
++      - [x] docs: `paint-layout.test.ts` — a run with `color: ''` paints the
++            theme default, never the previously set `fillStyle`
++      - [x] frontend: reset calls `applyStyle` with `color: undefined`
++
++## Acceptance criteria (from the issue)
++
++- Type text, select it, reset the text color → the text is uncolored
++  (default ink), not the selection color.
++
++## Non-goals
++
++- No change to the color palette, picker UI, or the highlight-color rendering
++  path (highlight already short-circuits on a falsy value).
++- No migration pass over existing documents — the renderer guard makes
++  already-stored `""` values render correctly, and the next reset removes them.
+diff --git a/packages/docs/src/model/color.ts b/packages/docs/src/model/color.ts
+index 211bdeba..e6f299be 100644
+--- a/packages/docs/src/model/color.ts
++++ b/packages/docs/src/model/color.ts
+@@ -52,7 +52,8 @@ export function wrapLegacyColor(c: string | StoredColor): StoredColor {
+  * "cursor at the seam between two inlines belongs to the leading
+  * inline" rule used by `getStyleAtCursor` / `getSelectionStyle`), runs
+  * its `style.color` through `colorResolver`, and falls back when the
+- * inline has no color or the resolver returns `undefined`.
++ * inline has no color or the resolver returns nothing usable (`undefined`,
++ * or the empty string a legacy "reset color" left behind — see issue #728).
+  *
+  * The caret painter consumes this so the cursor tracks the text color
+  * it would assume on the next keystroke — important in slides on dark
+@@ -71,10 +72,10 @@ export function resolveColorAtPosition(
+   for (const inline of block.inlines) {
+     const inlineEnd = pos + inline.text.length;
+     if (offset <= inlineEnd) {
+-      return colorResolver(inline.style.color) ?? fallback;
++      return colorResolver(inline.style.color) || fallback;
+     }
+     pos = inlineEnd;
+   }
+   const last = block.inlines[block.inlines.length - 1];
+-  return colorResolver(last.style.color) ?? fallback;
++  return colorResolver(last.style.color) || fallback;
+ }
+diff --git a/packages/docs/src/view/paint-layout.ts b/packages/docs/src/view/paint-layout.ts
+index 28c3fb0b..b0fccd73 100644
+--- a/packages/docs/src/view/paint-layout.ts
++++ b/packages/docs/src/view/paint-layout.ts
+@@ -382,7 +382,11 @@ export function renderRun(
+     : style.fontSize;
+ 
+   // Link defaults: blue text + underline (user-set values take precedence)
+-  const resolvedColor = resolveColor(style.color);
++  // `|| undefined` (not `??`) because a cleared color can reach here as an
++  // empty string — no legal color value is falsy, and `ctx.fillStyle = ''`
++  // is an invalid assignment the canvas IGNORES, leaving the run painted in
++  // whatever the previous pass set (the selection fill). See issue #728.
++  const resolvedColor = resolveColor(style.color) || undefined;
+   let textColor = resolvedColor ?? theme.defaultColor;
+   let showUnderline = style.underline ?? false;
+   if (style.href) {
+@@ -541,7 +545,8 @@ export function renderListMarker(
+   // `StoredColor` has no falsy legal value (hex strings start with '#',
+   // role / srgb shapes are objects), so `??` and `!== undefined` produce
+   // identical results here — keep `??` for stylistic uniformity with the
+-  // axes above.
++  // axes above. The resolved value below is guarded with `||` instead,
++  // because a cleared color can still be stored as '' (issue #728).
+   const colorSource = m?.color ?? firstInline?.color;
+   const fontSizePx = ptToPx(fontSize);
+   // Marker font stays the marker's own size, but the baseline uses the
+@@ -550,6 +555,6 @@ export function renderListMarker(
+     lineBaselineY(lineY, lineHeight, lineMaxFontSizePx ?? fontSizePx),
+   );
+   ctx.font = buildFont(fontSize, fontFamily, false, false);
+-  ctx.fillStyle = resolveColor(colorSource) ?? theme.defaultColor;
++  ctx.fillStyle = resolveColor(colorSource) || theme.defaultColor;
+   ctx.fillText(markerText, markerX, baselineY);
+ }
+diff --git a/packages/docs/test/view/paint-layout.test.ts b/packages/docs/test/view/paint-layout.test.ts
+index e4eb4445..946b756a 100644
+--- a/packages/docs/test/view/paint-layout.test.ts
++++ b/packages/docs/test/view/paint-layout.test.ts
+@@ -2,7 +2,7 @@
+ import { describe, expect, it } from 'vitest';
+ import { renderRun } from '../../src/view/paint-layout';
+ import { computeLayout } from '../../src/view/layout';
+-import type { LayoutLine } from '../../src/view/layout';
++import type { LayoutLine, LayoutRun } from '../../src/view/layout';
+ import { createBlock } from '../../src/model/types';
+ import { ptToPx, Theme } from '../../src/view/theme';
+ import { stubMeasurer } from './_stub-measurer';
+@@ -146,6 +146,67 @@ describe('renderRun composing underline', () => {
+   });
+ });
+ 
++/**
++ * Records the `fillStyle` in effect at each `fillText` call. Assignments
++ * are stored verbatim (a real canvas ignores invalid colors and keeps the
++ * previous value — the very failure mode issue #728 exposed), so the test
++ * pre-loads a marker color and asserts the run overwrote it.
++ */
++function makeFillStyleCtx(preset: string): {
++  ctx: CanvasRenderingContext2D;
++  fills: string[];
++} {
++  const fills: string[] = [];
++  const noop = () => {};
++  let fillStyle = preset;
++  const ctx = {
++    font: '',
++    get fillStyle() { return fillStyle; },
++    set fillStyle(v: string) { fillStyle = v; },
++    strokeStyle: '',
++    lineWidth: 1,
++    textBaseline: 'alphabetic' as CanvasTextBaseline,
++    fillText() {
++      fills.push(fillStyle);
++    },
++    save: noop,
++    restore: noop,
++    beginPath: noop,
++    moveTo: noop,
++    lineTo: noop,
++    stroke: noop,
++    setLineDash: noop,
++    fillRect: noop,
++  } as unknown as CanvasRenderingContext2D;
++  return { ctx, fills };
++}
++
++function runWithColor(color: string | undefined): { run: LayoutRun; line: LayoutLine } {
++  const block = createBlock('paragraph');
++  block.inlines = [{ text: 'Hello', style: { fontSize: 11, color } }];
++  const { layout } = computeLayout([block], stubMeasurer(), 600);
++  const line = layout.blocks[0].lines[0];
++  return { run: line.runs[0], line };
++}
++
++describe('renderRun cleared text color (issue #728)', () => {
++  it('paints an empty-string color with the theme default, not the previous fillStyle', () => {
++    const { run, line } = runWithColor('');
++    // The selection layer fills its rects right before the run pass, so
++    // this is the color a leaked empty string used to inherit.
++    const { ctx, fills } = makeFillStyleCtx(Theme.selectionColor);
++    renderRun(ctx, run, 0, 0, line.height, line.maxFontSizePx, {});
++    expect(fills[0]).toBe(Theme.defaultColor);
++  });
++
++  it('still honours an explicit color', () => {
++    const { run, line } = runWithColor('#ff0000');
++    const { ctx, fills } = makeFillStyleCtx(Theme.selectionColor);
++    renderRun(ctx, run, 0, 0, line.height, line.maxFontSizePx, {});
++    expect(fills[0]).toBe('#ff0000');
++  });
++});
++
+ describe('renderRun shared baseline', () => {
+   it('places different-size runs on one common baseline', () => {
+     const line = singleLine([
+diff --git a/packages/frontend/src/app/docs/docs-formatting-toolbar.tsx b/packages/frontend/src/app/docs/docs-formatting-toolbar.tsx
+index 399d8728..699f21e3 100644
+--- a/packages/frontend/src/app/docs/docs-formatting-toolbar.tsx
++++ b/packages/frontend/src/app/docs/docs-formatting-toolbar.tsx
+@@ -399,12 +399,15 @@ export function DocsFormattingToolbar({ editor, editContext = 'body' }: DocsForm
+       const current = editor.getSelectionStyle();
+       editor.applyStyle({ underline: !current.underline });
+     };
+-    const handleTextColor = (color: string) => {
++    // `undefined` — not `""` — clears the color: the store turns an
++    // explicitly-undefined key into an attribute removal, while an empty
++    // string would be stored as a real (invalid) color. See issue #728.
++    const handleTextColor = (color: string | undefined) => {
+       editor?.applyStyle({ color });
+       slimTextColorMenu.markSwatchClicked();
+       setSlimTextColorOpen(false);
+     };
+-    const handleHighlightColor = (backgroundColor: string) => {
++    const handleHighlightColor = (backgroundColor: string | undefined) => {
+       editor?.applyStyle({ backgroundColor });
+       slimHighlightMenu.markSwatchClicked();
+       setSlimHighlightOpen(false);
+@@ -484,7 +487,7 @@ export function DocsFormattingToolbar({ editor, editContext = 'body' }: DocsForm
+             className="w-auto p-2"
+             onCloseAutoFocus={slimTextColorMenu.onCloseAutoFocus}
+           >
+-            <ColorPickerGrid colors={TEXT_COLORS} onSelect={handleTextColor} onReset={() => handleTextColor("")} />
++            <ColorPickerGrid colors={TEXT_COLORS} onSelect={handleTextColor} onReset={() => handleTextColor(undefined)} />
+           </PopoverContent>
+         </Popover>
+ 
+@@ -506,7 +509,7 @@ export function DocsFormattingToolbar({ editor, editContext = 'body' }: DocsForm
+             className="w-auto p-2"
+             onCloseAutoFocus={slimHighlightMenu.onCloseAutoFocus}
+           >
+-            <ColorPickerGrid colors={BG_COLORS} onSelect={handleHighlightColor} onReset={() => handleHighlightColor("")} noneLabel="None" />
++            <ColorPickerGrid colors={BG_COLORS} onSelect={handleHighlightColor} onReset={() => handleHighlightColor(undefined)} noneLabel="None" />
+           </PopoverContent>
+         </Popover>
+ 
+diff --git a/packages/frontend/src/components/text-formatting/text-format-group.tsx b/packages/frontend/src/components/text-formatting/text-format-group.tsx
+index 14c7181b..506149ca 100644
+--- a/packages/frontend/src/components/text-formatting/text-format-group.tsx
++++ b/packages/frontend/src/components/text-formatting/text-format-group.tsx
+@@ -121,8 +121,11 @@ export function TextFormatGroup({
+   // from wherever the user actually clicked next.
+   const textColorMenu = useMenuCloseHandlers(() => editor?.focus());
+ 
++  // `undefined` — not `""` — clears the color: the store turns an
++  // explicitly-undefined key into an attribute removal, while an empty
++  // string would be stored as a real (invalid) color. See issue #728.
+   const handleTextColor = useCallback(
+-    (color: string) => {
++    (color: string | undefined) => {
+       if (!editor) return;
+       editor.applyStyle({ color });
+       textColorMenu.markSwatchClicked();
+@@ -246,7 +249,7 @@ export function TextFormatGroup({
+             colors={TEXT_COLORS}
+             colorKind="text color"
+             onSelect={handleTextColor}
+-            onReset={() => handleTextColor("")}
++            onReset={() => handleTextColor(undefined)}
+           />
+         </PopoverContent>
+       </Popover>
+@@ -307,7 +310,7 @@ function HighlightSwatch({
+   const [open, setOpen] = useState(false);
+   const menu = useMenuCloseHandlers(() => editor?.focus());
+   const handleColor = useCallback(
+-    (backgroundColor: string) => {
++    (backgroundColor: string | undefined) => {
+       if (!editor) return;
+       editor.applyStyle({ backgroundColor });
+       menu.markSwatchClicked();
+@@ -341,7 +344,7 @@ function HighlightSwatch({
+           colors={BG_COLORS}
+           colorKind="highlight color"
+           onSelect={handleColor}
+-          onReset={() => handleColor("")}
++          onReset={() => handleColor(undefined)}
+           noneLabel="None"
+         />
+       </PopoverContent>
+diff --git a/packages/frontend/tests/components/text-formatting/color-reset.test.ts b/packages/frontend/tests/components/text-formatting/color-reset.test.ts
+new file mode 100644
+index 00000000..27bae910
+--- /dev/null
++++ b/packages/frontend/tests/components/text-formatting/color-reset.test.ts
+@@ -0,0 +1,89 @@
++// @vitest-environment jsdom
++/**
++ * Regression test for issue #728 — "Reset" in the text-color picker used to
++ * apply `{ color: "" }`. An empty string is a legal `string`, so it was
++ * stored as a real attribute and painted as an invalid canvas color (which
++ * leaves the previous fill in place — the selection highlight). Clearing a
++ * style means passing `undefined`, which the store turns into an attribute
++ * removal.
++ *
++ * JSX is avoided (matching the package's `tests/**\/*.test.ts` runner) by
++ * building elements with `React.createElement`.
++ */
++import { describe, test, expect, vi, afterEach } from "vitest";
++import { createElement as h, act, type ReactElement } from "react";
++import { createRoot, type Root } from "react-dom/client";
++
++import { TooltipProvider } from "../../../src/components/ui/tooltip.tsx";
++import { TextFormatGroup } from "../../../src/components/text-formatting/index.ts";
++import type { TextFormattingEditor } from "../../../src/components/text-formatting/types.ts";
++
++(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
++  true;
++
++function makeEditor(): TextFormattingEditor {
++  return {
++    focus: vi.fn(),
++    getSelectionStyle: vi.fn(() => ({})),
++    applyStyle: vi.fn(),
++    applyBlockStyle: vi.fn(),
++    getBlockType: vi.fn(() => ({ type: "paragraph" as const })),
++    setBlockType: vi.fn(),
++    toggleList: vi.fn(),
++    indent: vi.fn(),
++    outdent: vi.fn(),
++    requestLink: vi.fn(),
++  };
++}
++
++let root: Root | null = null;
++let host: HTMLDivElement | null = null;
++
++function render(ui: ReactElement): HTMLElement {
++  host = document.createElement("div");
++  document.body.appendChild(host);
++  root = createRoot(host);
++  act(() => {
++    root!.render(h(TooltipProvider, null, ui));
++  });
++  return host;
++}
++
++afterEach(() => {
++  if (root) act(() => root!.unmount());
++  root = null;
++  host?.remove();
++  host = null;
++});
++
++function clickEl(el: Element): void {
++  act(() => {
++    el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
++  });
++}
++
++/** Open the popover behind `triggerLabel` and click its none/reset control. */
++function clickResetIn(triggerLabel: string, editor: TextFormattingEditor): void {
++  render(h(TextFormatGroup, { editor }));
++  const trigger = document.querySelector(`[aria-label="${triggerLabel}"]`)!;
++  expect(trigger).not.toBeNull();
++  clickEl(trigger);
++  // The palette renders into a portal, so query the whole document.
++  const reset = document.querySelector("[data-none-control]")!;
++  expect(reset).not.toBeNull();
++  clickEl(reset);
++}
++
++describe("TextFormatGroup color reset (issue #728)", () => {
++  test("Text color reset clears the key instead of writing an empty string", () => {
++    const editor = makeEditor();
++    clickResetIn("Text color", editor);
++    expect(editor.applyStyle).toHaveBeenCalledWith({ color: undefined });
++  });
++
++  test("Highlight color reset clears the key instead of writing an empty string", () => {
++    const editor = makeEditor();
++    clickResetIn("Highlight color", editor);
++    expect(editor.applyStyle).toHaveBeenCalledWith({ backgroundColor: undefined });
++  });
++});

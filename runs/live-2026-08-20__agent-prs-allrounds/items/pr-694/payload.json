@@ -1,0 +1,80 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "file": "packages/cli/test/output.test.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'quiet' across packages/cli (src + test)",
+        "read packages/cli/test/output.test.ts in full",
+        "read packages/cli/test/namespaces.test.ts",
+        "glob packages/cli/test/** for a command/e2e-level suite",
+        "grep 'createProgram|parseAsync' in packages/cli/test"
+      ],
+      "summary": "The `output` \"regression guard for #660\" cannot fail on the regression it claims to guard",
+      "evidence": "packages/cli/test/output.test.ts:157-164 comments itself as \"Regression guard for #660\" and asserts `output({a:1},'json')` prints the body. But the actual regression this PR fixes lives at the ~30 call sites that used to pass `opts.quiet` (e.g. packages/cli/src/commands/docs.ts:83, cells.ts:26). After the signature change, `output` unconditionally prints regardless of quiet, so the assertion holds trivially and would ALSO have held on the old code (which was called with quiet=false in this test's shape). If someone reintroduced suppression at a call site (`if (!opts.quiet) output(...)`) or re-added a defaulted `quiet` param, this test still passes. Nothing in packages/cli/test parses `--quiet` through a command action and asserts the body is still written to stdout — namespaces.test.ts:11 shows the createProgram()-based harness exists to do exactly that but only inspects option metadata. The comment's fallback claim (\"a caller that tries to pass one fails to compile\") is a type-level assertion never exercised by any test (no expectTypeError / ts-expect-error case).",
+      "lens": "test-adequacy",
+      "round_commit": "40190878c39b0011efb6ab91d664e1cf489dfff8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/test/output.test.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "read packages/cli/test/output.test.ts",
+        "grep 'outputError' across packages/cli/test",
+        "grep 'quiet' across packages/cli/test",
+        "glob packages/cli/test/**"
+      ],
+      "summary": "Deleted quiet test for `outputError` replaced by an unrelated case; the new \"errors print even under quiet\" contract is untested",
+      "evidence": "The diff removes `it('honors quiet by exiting 1 without emitting stderr')` and substitutes `it('stringifies non-Error throwables')` (packages/cli/test/output.test.ts:137-141), which exercises the pre-existing `String(error)` branch, not the changed behavior. The new documented contract in packages/cli/src/output/formatter.ts:44-51 — that the error envelope survives `--quiet` — has no test at any level: every remaining outputError test calls it directly with no quiet notion, and no command-level test runs a failing command with `--quiet` to assert stderr is non-empty and exitCode is 1. Net effect: a behavior change (quiet no longer silences errors) shipped with strictly less coverage of quiet than before.",
+      "lens": "test-adequacy",
+      "round_commit": "40190878c39b0011efb6ab91d664e1cf489dfff8"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/bin.ts",
+      "searchedFor": [],
+      "summary": "Production entrypoint uses `program.parse()` (sync) with async action handlers, so the behavior the new `--quiet` guard asserts via `parseAsync` is not what ships",
+      "evidence": "`bin.ts:27` calls `program.parse()`, but every registered action is `async function (...)` (e.g. `docs.ts:70`, `cells.ts:16`). Commander only awaits action promises in `parseAsync`; with `parse()` the returned promise is dropped. The new regression guard (`test/output.test.ts:240`) drives `parseAsync`, so it proves the body/error-envelope behavior only for a path the binary never takes. Any action rejection becomes an unhandled rejection (raw Node stack, no `{error:{code,message}}` envelope, exit code not the one `outputError` set), and nothing keeps the process alive until the async action completes. `parseAsync().catch(outputError)` would make the guard faithful.",
+      "lens": "correctness",
+      "round_commit": "7a906da57e4a4fd96fa448ca0f14533e2d5d8038"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/commands/cells.ts",
+      "searchedFor": [
+        "grep 'JSON.parse' in packages/cli/src/commands",
+        "read cells.ts, sheets-import.ts, docs.ts action bodies for code outside try"
+      ],
+      "summary": "`sheets cells batch` parses JSON outside its try/catch, so malformed input escapes the error-envelope path entirely",
+      "evidence": "`cells.ts:110-120` runs `JSON.parse(dataStr)` and the stdin read/`JSON.parse` before the `try` that starts at line 132. A bad `--data '{'` (or a stdin read error) throws inside the async action, bypassing `outputError`, so no `{error:{code:'ERROR',message:...}}` reaches stderr and `process.exitCode = 1` is never set. Combined with `bin.ts:27`'s `program.parse()` (no `parseAsync`, no `.catch`), it surfaces as an unhandled-rejection trace — exactly the invariant the delta's new test ('prints the error envelope on stderr and exits 1') claims to protect, on a command the guard does not cover.",
+      "lens": "correctness",
+      "round_commit": "7a906da57e4a4fd96fa448ca0f14533e2d5d8038"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/test/output.test.ts",
+      "searchedFor": [],
+      "summary": "`bin entrypoint` tests assert on source text, not behavior; one assertion is vacuous",
+      "evidence": "The `bin entrypoint` describe (test/output.test.ts:303-318) `readFileSync`s src/bin.ts and string-matches it. `expect(source).toContain('outputError')` is satisfied by the import on bin.ts:13 (and by the word inside the comment on bin.ts:33) regardless of whether the catch handler calls it — it passes even if the catch body were `{}`. `expect(source).toMatch(/\\.catch\\(/)` matches any `.catch(` anywhere in the file, on any promise. Likewise `toContain('program.parseAsync(')` / `not.toMatch(/program\\.parse\\s*\\(/)` pass for aliased calls (`const p = program; p.parse()`) or a `parseAsync(...)` whose promise is never awaited/handled. The claimed behavior — a rejection escaping an action handler is turned into the `{ error: { code, message } }` envelope with exit 1 — is never executed, so these two tests are presented as coverage of bin.ts but cannot fail if that behavior breaks.",
+      "lens": "test-adequacy",
+      "round_commit": "c110f93eac118b3f0eea12ec4d4ce7ea23228263"
+    },
+    {
+      "severity": "major",
+      "file": "packages/cli/src/bin.ts",
+      "claimType": "absence",
+      "searchedFor": [
+        "grep 'quiet' in packages/cli/test",
+        "glob packages/cli/test/**",
+        "read test/output.test.ts in full",
+        "grep for parseAsync/spawn in test dir via output.test.ts inspection"
+      ],
+      "summary": "No behavioral test for the new `parseAsync().catch(outputError)` entrypoint path",
+      "evidence": "bin.ts:35-37 is the new behavior (unhandled action rejection → error envelope + exitCode 1). The only test touching it is the source-string describe at test/output.test.ts:303. I searched packages/cli/test for any import or execution of bin.ts (grep for 'bin', 'parseAsync', 'spawn', 'execFile' across packages/cli/test) and found only the readFileSync source check; no test registers a command whose action rejects outside its own try/catch and asserts the envelope/exit code. A test could register a throwing action on a program and await `parseAsync().catch(outputError)`-equivalent wiring, or exercise a real command whose failure path escapes the handler (e.g. getConfig/getClient throwing before the try).",
+      "lens": "test-adequacy",
+      "round_commit": "c110f93eac118b3f0eea12ec4d4ce7ea23228263"
+    }
+  ]
+}

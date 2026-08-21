@@ -1,0 +1,903 @@
+diff --git a/docs/design/sheets/sheet-style.md b/docs/design/sheets/sheet-style.md
+index 5b7d038e..7f26b043 100644
+--- a/docs/design/sheets/sheet-style.md
++++ b/docs/design/sheets/sheet-style.md
+@@ -76,6 +76,33 @@ Behavior depends on selection type:
+ - **Cell selection**: append a `rangeStyles` patch and only touch existing
+   cell-level styles that conflict with the patch (to avoid redundant writes).
+ 
++### `unsetRangeStyleValues(style)`
++
++The reverse of `setRangeStyle`: it restores the *absence* of a value instead of
++writing one. Keys are removed from the layers the current selection owns —
++`sheetStyle` for an `all` selection, `colStyles` for a `column` selection,
++`rowStyles` for a `row` selection, any `rangeStyles` patch whose range is
++contained in the selection, and `cell.s` of cells inside it. Patches and cells
++left with no keys at all are dropped.
++
++The values in the patch are part of the request: a key is removed only where it
++holds the given value. That is what keeps an unset from flattening formatting it
++does not own — a currency cell inside a sheet-wide "one less decimal" refuses the
++operation instead of being stripped to plain.
++
++It returns `false` and writes **nothing** when a layer the selection does not own
++sets one of the keys, or when a layer inside the selection disagrees about the
++value. There is no "explicitly none" token in the stored model, so an inherited
++value cannot be masked — the caller has to fall back to writing an explicit
++value, which is also the only way to reach a value that differs from what is
++inherited. Cells are scanned before anything is written, so a refusal leaves the
++selection untouched.
++
++Removing the last key from a column/row/sheet layer stores `{}` rather than
++deleting the entry — the `Store` interface has no delete for those layers — so
++`getStyle` can return `{}` where it used to return `undefined`. Every consumer
++reads keys off it optionally, so an empty style resolves exactly like no style.
++
+ ### `toggleRangeStyle(prop)`
+ 
+ - Computes from active cell effective style, then applies via `setRangeStyle`.
+@@ -182,6 +209,39 @@ neighbor cells is bounded by explicit custom borders.
+ Existing style keys are preserved; inferred format keys are updated only when
+ inference positively detects a matching type.
+ 
++### Increase / decrease decimal places
++
++`Sheet.changeDecimals(delta)` steps `dp` for the selection and is reversible:
++equal numbers of increases and decreases leave the selection exactly as they
++found it, including leaving no `dp`/`nf` on a cell that had none.
++
++`getActiveDecimalState()` reports three things about the active cell — the `dp`
++to step from, `valueDp` (the precision the raw value already shows: `2` for
++`12.34`, `0` for `12` or an empty cell) and `explicitDp` (whether any layer
++stores `dp`). When the step lands on `valueDp` and `dp` is stored,
++`changeDecimals` calls `unsetRangeStyleValues` instead of writing an equivalent
++explicit style; otherwise it writes `dp` (plus `nf: 'number'` when the format is
++plain, as before). `nf: 'number'` renders 2 decimals with no `dp`, so it is
++removed together with the `dp` rather than left behind.
++
++Consequences worth knowing:
++
++- `dp` is **not** in `DefaultStyleValues`, so `dp: 2` is stored rather than
++  pruned. Pruning it would make "no stored `dp`" and "`dp: 2`" the same state,
++  and `explicitDp` — the signal that a stored `dp` is the buttons' own to remove
++  — would be wrong.
++- Nothing records *who* wrote `nf: 'number'`. A cell the user gave a number
++  format can therefore lose it when its `dp` is stepped back down to the value's
++  own precision; Google Sheets keeps a format there. The unset only fires where
++  the whole selection agrees on `dp` and `nf`, so it cannot reach *another*
++  cell's format — but it does drop grouping separators with the format, so a
++  value of `1234.5` goes from `1,234.5` to `1234.5`. For a genuine round trip
++  that is the point: the cell renders as it did before the first click.
++- The step is read from the active cell, as it always was. When the active cell
++  has no stored `dp` and nothing left to give, Decrease is a no-op rather than
++  writing `dp: 0` — writing it is exactly the residue this rule exists to avoid.
++  A selection whose *other* cells still have decimals is then also left alone.
++
+ ## UI Integration
+ 
+ - Keyboard shortcuts: `Cmd/Ctrl+B`, `Cmd/Ctrl+I`, `Cmd/Ctrl+U`,
+diff --git a/docs/tasks/active/20260818-sheets-decimal-round-trip-lessons.md b/docs/tasks/active/20260818-sheets-decimal-round-trip-lessons.md
+new file mode 100644
+index 00000000..1c5c5289
+--- /dev/null
++++ b/docs/tasks/active/20260818-sheets-decimal-round-trip-lessons.md
+@@ -0,0 +1,46 @@
++# Decimal round trip — Lessons
++
++Running log of non-obvious findings while implementing
++`20260818-sheets-decimal-round-trip-todo.md` (issue #845).
++
++## Context
++
++- Design: `docs/design/sheets/sheet-style.md` (write semantics, patch lifecycle)
++- Residue family: #749 (`italic: false`), #793 (`backgroundColor: ''`)
++
++## Lessons
++
++- **`pruneRedundantDefaultStyleKeys` already erases some residue, but only at
++  the key's *default* value.** `DefaultStyleValues` in
++  `packages/sheets/src/model/worksheet/style-mutation.ts` carries `dp: 2`, so
++  writing `dp: 2` self-erases while `dp: 0` — the value the reported bug leaves
++  behind — is stored. That is why #749/#793 needed no new machinery and this one
++  does: the residue here is not a default value, it is an *inferred* one.
++- **`nf: 'number'` with no `dp` renders 2 decimals** (`formatValue`,
++  `packages/sheets/src/model/worksheet/format.ts:107`). So removing `dp` while
++  leaving `nf: 'number'` is not a no-op on screen — `12` would start rendering
++  as `12.00`. Any unset that restores an unstyled cell has to drop both keys
++  together.
++- **The stored style model has no "explicitly none" token**, so an unset can
++  only remove keys from layers the selection fully owns; an inherited
++  column/row/sheet value cannot be masked. `unsetRangeStyleKeys` therefore
++  reports failure instead of writing a partial result, and the caller keeps the
++  old explicit-write path for that case — which stays correct, because when an
++  upstream layer does set `dp`, an explicit value is the only way to reach the
++  target precision.
++- **An unset that ignores values destroys formatting it does not own.** The first
++  cut removed `dp`/`nf` from every owned layer *and every cell* in the selection,
++  keyed only off the active cell. Select-All plus one Decrease click then wiped
++  currency and percent formats sheet-wide, leaving orphan `{cu: 'USD'}` — worse
++  than the bug being fixed, and something `setRangeStyle` never did because its
++  column/row/sheet branches never touch cells at all. Rule: an unset has to name
++  the value it expects and refuse when a layer inside the selection disagrees,
++  which is why the API is `unsetRangeStyleValues(style)` and not
++  `unsetRangeStyleKeys(keys)`. Found by an adversarial review pass, not by the
++  round-trip tests, which all used uniformly styled selections.
++- **Who wrote `nf` is unknowable.** Increase/decrease set `nf: 'number'`
++  whenever the format is plain/absent, and nothing distinguishes that from a
++  user-chosen number format later on. The rule adopted here (drop `nf` only when
++  `dp` is being dropped *and* the target equals the value's own precision) keeps
++  rendering identical at the moment of the click; the cost is documented in the
++  todo's "Known deviation".
+diff --git a/docs/tasks/active/20260818-sheets-decimal-round-trip-todo.md b/docs/tasks/active/20260818-sheets-decimal-round-trip-todo.md
+new file mode 100644
+index 00000000..d8a9973e
+--- /dev/null
++++ b/docs/tasks/active/20260818-sheets-decimal-round-trip-todo.md
+@@ -0,0 +1,92 @@
++# Decimal round trip: make increase/decrease reversible (#845)
++
++Increase decimal places followed by Decrease decimal places must leave a cell
++exactly as it started — including leaving no `dp`/`nf` behind on a cell that had
++none.
++
++## The problem
++
++Both handlers write an explicit `dp` and neither can express "unset"
++(`packages/sheets/src/view/spreadsheet.ts:534` / `:549`). The starting `dp` is
++*inferred* from the value string when nothing is stored
++(`Sheet.getActiveDecimalState`, `packages/sheets/src/model/worksheet/sheet.ts:4157`),
++and that inferred number is never written back — so "no explicit `dp`" and
++"`dp` equal to the inferred one" are the same state on the way in and different
++states on the way out.
++
++On an empty cell the residue is `{ dp: 0, nf: 'number' }`, which pins the cell to
++zero decimals: typing `12.5` afterwards renders `13`. `Math.max(0, dp - 1)`
++clamps at `0` instead of returning to unset, so no sequence of the two buttons
++gets the cell back to unstyled. `nf: 'number'` is equally one-way: set on the
++way in, never removed.
++
++Same residue family as #749 (`italic: false`) and #793 (`backgroundColor: ''`),
++but unlike those it changes what the user sees.
++
++## The change
++
++**One rule, applied in both directions**: compute the target decimal count, and
++if the target is what the cell would render at with *no* explicit `dp`, restore
++inheritance instead of writing an equivalent explicit style.
++
++1. **`Sheet.getActiveDecimalState`** also returns `valueDp` (the precision the
++   raw value already shows: `2` for `12.34`, `0` for `12` or an empty cell) and
++   `explicitDp` (whether any style layer sets `dp`). Today the inferred value is
++   returned as `dp` and the caller cannot tell it apart from a stored one.
++
++2. **`Sheet.unsetRangeStyleValues(style)`** — new: removes style keys from the
++   layers the current selection *owns*, restoring inheritance.
++   - owned = `sheetStyle` for an `all` selection, `colStyles` for a `column`
++     selection, `rowStyles` for a `row` selection, any `rangeStyles` patch whose
++     range is contained in the selection, and `cell.s` of cells inside it.
++   - a key is removed only where it holds the value the caller names, so an
++     unset can never flatten formatting it does not own.
++   - returns `false` **without writing anything** when a layer outside the
++     selection still sets one of the keys, or when a layer inside it disagrees
++     about the value — the stored model has no "explicitly none" token, so unset
++     is genuinely unrepresentable there and the caller must fall back to an
++     explicit value. Cells are scanned before the first write.
++
++3. **`Sheet.changeDecimals(delta)`** holds the rule (the model, not the view, so
++   it is testable against `MemStore`); `Spreadsheet.increaseDecimals` /
++   `decreaseDecimals` become render-and-notify wrappers:
++   - `target = dp + delta`, clamped at `0`; nothing stored and no room left →
++     no-op, so an untouched cell gains no zero-decimal format.
++   - `target === valueDp` and `explicitDp` → try to unset (`{dp, nf}` when
++     `nf === 'number'`, since `nf: number` with no `dp` renders 2 decimals and
++     would change what is on screen; otherwise `{dp}`).
++   - otherwise the existing explicit write.
++
++Walking the reported case: empty cell → Increase writes `{dp: 1, nf: 'number'}`
++→ Decrease targets `0`, which equals `valueDp`, so both keys are removed and the
++cell is unstyled again. The `12.5` row of the issue's table ends the same way.
++The reverse order works too: Decrease → `{dp: 0, nf: 'number'}` → Increase
++targets `1 === valueDp` → unstyled.
++
++## Tasks
++
++- [x] `getActiveDecimalState` returns `valueDp` + `explicitDp`
++- [x] `Sheet.unsetRangeStyleValues(style)` with the ownership + conflict rules
++- [x] `changeDecimals` in `Sheet`, both view handlers routed through it
++- [x] Unit tests: empty / integer / `12.5` round trips, N×increase + N×decrease,
++      decrease-then-increase, a user `nf: 'number'` cell keeps its format when
++      the target is not `valueDp`, unset falls back to an explicit write when a
++      column style sets `dp`, and a currency/percent cell inside the selection
++      refuses the unset instead of being stripped
++- [x] `docs/design/sheets/sheet-style.md`: unset semantics + the decimal rule
++
++## Known deviations
++
++- `nf` cannot be attributed: a `nf: 'number'` cell whose `dp` a user steps all
++  the way down to the value's own precision loses the number format along with
++  the `dp`, because nothing stored says who wrote it. Google Sheets keeps a
++  format there. Deviating this way is what makes the reported bug fixable at all;
++  the value-scoped unset keeps it from ever reaching *another* cell's format, but
++  it does take grouping separators with it (`1,234.5` → `1234.5`), which for a
++  real round trip is the correct restoration.
++- Decrease is a no-op when the active cell has no stored `dp` and no room to step
++  down, which also leaves alone a selection whose other cells still have
++  decimals. Writing `dp: 0` there is the residue the fix exists to remove.
++- Emptying a column/row/sheet layer stores `{}`, since the `Store` interface has
++  no delete for those layers, so `getStyle` can return `{}` where it returned
++  `undefined`. Every consumer reads keys optionally, so it resolves the same.
+diff --git a/packages/sheets/src/model/worksheet/format.ts b/packages/sheets/src/model/worksheet/format.ts
+index ae0982ca..1179e74d 100644
+--- a/packages/sheets/src/model/worksheet/format.ts
++++ b/packages/sheets/src/model/worksheet/format.ts
+@@ -85,6 +85,18 @@ function safeFormatDate(value: string, _locale: string): string {
+   return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+ }
+ 
++/**
++ * `decimalsInValue` returns how many decimal places a stored value string shows
++ * on its own: `2` for `12.34`, `0` for `12`, an empty cell, or text.
++ */
++export function decimalsInValue(value?: string): number {
++  if (!value) {
++    return 0;
++  }
++  const dotIndex = value.indexOf('.');
++  return dotIndex >= 0 ? value.length - dotIndex - 1 : 0;
++}
++
+ /**
+  * `formatValue` converts a raw value to a display string based on the number format.
+  * Returns the original value for non-numeric inputs or 'plain'/undefined format.
+diff --git a/packages/sheets/src/model/worksheet/range-styles.ts b/packages/sheets/src/model/worksheet/range-styles.ts
+index 3294de42..ade7e7dc 100644
+--- a/packages/sheets/src/model/worksheet/range-styles.ts
++++ b/packages/sheets/src/model/worksheet/range-styles.ts
+@@ -56,6 +56,25 @@ export function mergeStylePatch(
+   return next as CellStyle;
+ }
+ 
++/**
++ * Removes the given keys from a style. Returns undefined when the style carries
++ * none of them, so callers can skip a redundant write; an empty style means
++ * every key it had was removed.
++ */
++export function omitStyleKeys(
++  style: CellStyle,
++  keys: Array<keyof CellStyle>,
++): CellStyle | undefined {
++  if (!keys.some((key) => style[key] !== undefined)) {
++    return undefined;
++  }
++  const next: CellStyle = { ...style };
++  for (const key of keys) {
++    delete next[key];
++  }
++  return next;
++}
++
+ /**
+  * Creates a deep copy of a range-style patch with normalized coordinates.
+  */
+diff --git a/packages/sheets/src/model/worksheet/sheet.ts b/packages/sheets/src/model/worksheet/sheet.ts
+index b5f737d8..99d8cc53 100644
+--- a/packages/sheets/src/model/worksheet/sheet.ts
++++ b/packages/sheets/src/model/worksheet/sheet.ts
+@@ -59,7 +59,7 @@ import {
+   isSpreadsheetHtml,
+ } from './grids';
+ import { DimensionIndex } from './dimensions';
+-import { formatValue } from './format';
++import { decimalsInValue, formatValue } from './format';
+ import { cellFromInput } from './input';
+ import {
+   cloneConditionalFormatRule,
+@@ -84,6 +84,7 @@ import {
+   moveRangeStylePatches,
+   normalizeRangeStylePatch,
+   normalizeStylePatch,
++  omitStyleKeys,
+   pruneShadowedRangeStylePatches,
+   resolveRangeStyleAt,
+   shiftRangeStylePatches,
+@@ -118,8 +119,10 @@ import {
+   rangeAnchorToRange,
+ } from '../workbook/anchor-conversion';
+ import {
++  containsRange,
+   hasCellContent,
+   isEmptyCell,
++  rangesIntersect,
+   compactCell,
+   tryMergeRangeStylePatches,
+   sameRangeStylePatchList,
+@@ -4153,27 +4156,233 @@ export class Sheet {
+    * of the active cell. When the cell has plain format and no explicit dp,
+    * the decimal places are inferred from the stored value string so that
+    * the first increase/decrease starts from the visible precision.
+-   */
+-  async getActiveDecimalState(): Promise<{ dp: number; nf?: NumberFormat }> {
++   *
++   * `valueDp` is the precision the raw value already shows on its own, and
++   * `explicitDp` tells whether any style layer stores `dp`. Together they let a
++   * caller tell "no explicit dp" apart from "dp equal to the inferred one",
++   * which is what makes increase/decrease reversible.
++   */
++  async getActiveDecimalState(): Promise<{
++    dp: number;
++    nf?: NumberFormat;
++    valueDp: number;
++    explicitDp: boolean;
++  }> {
+     const style = await this.getStyle(this.activeCell);
++    const cell = await this.store.get(
++      this.normalizeRefToAnchor(this.activeCell),
++    );
++    const valueDp = decimalsInValue(cell?.v);
++
+     // If dp is explicitly set in the style, use it.
+     if (style?.dp !== undefined) {
+-      return { dp: style.dp, nf: style?.nf };
++      return { dp: style.dp, nf: style?.nf, valueDp, explicitDp: true };
+     }
+     // For plain format (or no format), infer dp from the stored value.
+     if (!style?.nf || style.nf === 'plain') {
+-      const cell = await this.store.get(
+-        this.normalizeRefToAnchor(this.activeCell),
+-      );
+-      if (cell?.v) {
+-        const dotIndex = cell.v.indexOf('.');
+-        if (dotIndex >= 0) {
+-          return { dp: cell.v.length - dotIndex - 1, nf: style?.nf };
++      return { dp: valueDp, nf: style?.nf, valueDp, explicitDp: false };
++    }
++    return { dp: 2, nf: style?.nf, valueDp, explicitDp: false };
++  }
++
++  /**
++   * `changeDecimals` moves the decimal places of the current selection by one
++   * step. When the step lands back on the precision the value already shows on
++   * its own, inheritance is restored instead of storing an equivalent explicit
++   * style — so equal numbers of increases and decreases leave the selection
++   * exactly as they found it.
++   */
++  async changeDecimals(delta: number): Promise<void> {
++    const { dp, nf, valueDp, explicitDp } = await this.getActiveDecimalState();
++    if (dp + delta < 0 && !explicitDp) {
++      // Nothing is stored to step down from, so the cell stays untouched rather
++      // than acquiring a zero-decimal format it never asked for.
++      return;
++    }
++    const target = Math.max(0, dp + delta);
++
++    const inheritable = !nf || nf === 'plain' || nf === 'number';
++    if (explicitDp && target === valueDp && inheritable) {
++      // `nf: 'number'` renders 2 decimals when no `dp` is stored, so the number
++      // format has to go with the `dp` for the cell to keep looking the same.
++      const values: Partial<CellStyle> =
++        nf === 'number' ? { dp, nf } : { dp };
++      if (await this.unsetRangeStyleValues(values)) {
++        return;
++      }
++    }
++
++    const patch: Partial<CellStyle> = { dp: target };
++    if (!nf || nf === 'plain') {
++      patch.nf = 'number';
++    }
++    await this.setRangeStyle(patch);
++  }
++
++  /**
++   * `unsetRangeStyleValues` removes the given key/value pairs from the style
++   * layers the current selection owns, restoring inheritance for the selected
++   * cells. It is the reverse of `setRangeStyle`: where that writes an explicit
++   * value, this restores the absence of one.
++   *
++   * Values are part of the request, not decoration. A key is only removed where
++   * it holds the given value, and anything else within the selection — a cell
++   * with its own currency format, a patch at a different `dp` — refuses the
++   * whole operation rather than being flattened into it.
++   *
++   * Returns false, having written nothing, when the selection does not own a
++   * layer that sets one of the keys or when a layer inside it disagrees about
++   * the value. The stored model has no "explicitly none" token, so an inherited
++   * value cannot be masked and the caller has to write an explicit value.
++   */
++  async unsetRangeStyleValues(style: Partial<CellStyle>): Promise<boolean> {
++    const entries = Object.entries(style) as Array<
++      [keyof CellStyle, CellStyle[keyof CellStyle]]
++    >;
++    if (entries.length === 0) {
++      return false;
++    }
++    const keys = entries.map(([key]) => key);
++
++    const targets = this.ranges.length > 0
++      ? this.ranges
++      : [this.getRangeOrActiveCell()];
++
++    const ownsSheet = this.selectionType === 'all';
++    const ownsCols = ownsSheet || this.selectionType === 'column';
++    const ownsRows = ownsSheet || this.selectionType === 'row';
++    const owned = (range: Range) =>
++      targets.some((target) => containsRange(target, range));
++
++    for (const [key, value] of entries) {
++      const sheetValue = this.sheetStyle?.[key];
++      if (sheetValue !== undefined && (!ownsSheet || sheetValue !== value)) {
++        return false;
++      }
++      for (const [col, colStyle] of this.colStyles) {
++        const colValue = colStyle[key];
++        if (colValue === undefined) continue;
++        if (!targets.some((t) => col >= t[0].c && col <= t[1].c)) continue;
++        if (!ownsCols || colValue !== value) {
++          return false;
++        }
++      }
++      for (const [row, rowStyle] of this.rowStyles) {
++        const rowValue = rowStyle[key];
++        if (rowValue === undefined) continue;
++        if (!targets.some((t) => row >= t[0].r && row <= t[1].r)) continue;
++        if (!ownsRows || rowValue !== value) {
++          return false;
++        }
++      }
++      for (const patch of this.rangeStyles) {
++        const patchValue = patch.style[key];
++        if (patchValue === undefined) continue;
++        if (!targets.some((t) => rangesIntersect(t, patch.range))) continue;
++        if (!owned(patch.range) || patchValue !== value) {
++          return false;
++        }
++      }
++    }
++
++    // Cells are scanned before anything is written, so a single disagreeing cell
++    // still leaves the whole selection untouched.
++    const cellEdits: Array<{ anchor: Ref; cell: Cell; style: CellStyle }> = [];
++    const visited = new Set<Sref>();
++    for (const range of targets) {
++      const grid = await this.store.getGrid(range);
++      for (const [sref] of grid) {
++        const anchor = this.normalizeRefToAnchor(parseRef(sref));
++        const anchorSref = toSref(anchor);
++        if (visited.has(anchorSref)) {
++          continue;
++        }
++        visited.add(anchorSref);
++
++        const existing = await this.store.get(anchor);
++        if (!existing?.s) {
++          continue;
++        }
++        for (const [key, value] of entries) {
++          const cellValue = existing.s[key];
++          if (cellValue !== undefined && cellValue !== value) {
++            return false;
++          }
++        }
++        const next = omitStyleKeys(existing.s, keys);
++        if (next) {
++          cellEdits.push({ anchor, cell: existing, style: next });
+         }
+       }
+-      return { dp: 0, nf: style?.nf };
+     }
+-    return { dp: 2, nf: style?.nf };
++
++    this.store.beginBatch();
++    try {
++      if (ownsSheet && this.sheetStyle) {
++        const next = omitStyleKeys(this.sheetStyle, keys);
++        if (next) {
++          this.sheetStyle = next;
++          await this.store.setSheetStyle(next);
++        }
++      }
++      if (ownsCols) {
++        for (const [col, colStyle] of this.colStyles) {
++          if (!targets.some((t) => col >= t[0].c && col <= t[1].c)) {
++            continue;
++          }
++          const next = omitStyleKeys(colStyle, keys);
++          if (next) {
++            this.colStyles.set(col, next);
++            await this.store.setColumnStyle(col, next);
++          }
++        }
++      }
++      if (ownsRows) {
++        for (const [row, rowStyle] of this.rowStyles) {
++          if (!targets.some((t) => row >= t[0].r && row <= t[1].r)) {
++            continue;
++          }
++          const next = omitStyleKeys(rowStyle, keys);
++          if (next) {
++            this.rowStyles.set(row, next);
++            await this.store.setRowStyle(row, next);
++          }
++        }
++      }
++
++      let patchesChanged = false;
++      const nextPatches: RangeStylePatch[] = [];
++      for (const patch of this.rangeStyles) {
++        const next = owned(patch.range)
++          ? omitStyleKeys(patch.style, keys)
++          : undefined;
++        if (!next) {
++          nextPatches.push(patch);
++          continue;
++        }
++        patchesChanged = true;
++        if (Object.keys(next).length > 0) {
++          nextPatches.push({ range: patch.range, style: next });
++        }
++      }
++      if (patchesChanged) {
++        this.rangeStyles = nextPatches;
++        await this.store.setRangeStyles(this.rangeStyles);
++      }
++
++      for (const { anchor, cell, style: nextStyle } of cellEdits) {
++        const nextCell = compactCell(cell, nextStyle);
++        if (isEmptyCell(nextCell)) {
++          await this.store.delete(anchor);
++        } else {
++          await this.store.set(anchor, nextCell);
++        }
++      }
++    } finally {
++      this.store.endBatch();
++    }
++
++    return true;
+   }
+ 
+   /**
+diff --git a/packages/sheets/src/model/worksheet/style-mutation.ts b/packages/sheets/src/model/worksheet/style-mutation.ts
+index c8404546..b9629a01 100644
+--- a/packages/sheets/src/model/worksheet/style-mutation.ts
++++ b/packages/sheets/src/model/worksheet/style-mutation.ts
+@@ -10,6 +10,11 @@ import type { RangeStylePatch } from './range-styles';
+ 
+ /**
+  * Default style values used to determine if a key is redundant.
++ *
++ * `dp` is deliberately absent even though `formatValue` renders 2 decimals
++ * without it: pruning `dp: 2` would make "no stored dp" and "dp: 2" the same
++ * state, and increase/decrease decimal places rely on telling them apart to
++ * know whether a stored `dp` is theirs to remove.
+  */
+ const DefaultStyleValues: Partial<CellStyle> = {
+   b: false,
+@@ -24,7 +29,6 @@ const DefaultStyleValues: Partial<CellStyle> = {
+   bg: '',
+   va: 'top',
+   nf: 'plain',
+-  dp: 2,
+ };
+ 
+ /**
+diff --git a/packages/sheets/src/view/spreadsheet.ts b/packages/sheets/src/view/spreadsheet.ts
+index b045845e..c31656ff 100644
+--- a/packages/sheets/src/view/spreadsheet.ts
++++ b/packages/sheets/src/view/spreadsheet.ts
+@@ -533,12 +533,7 @@ export class Spreadsheet {
+    */
+   public async increaseDecimals() {
+     if (!this.sheet || this._readOnly) return;
+-    const { dp, nf } = await this.sheet.getActiveDecimalState();
+-    const patch: Partial<CellStyle> = { dp: dp + 1 };
+-    if (!nf || nf === 'plain') {
+-      patch.nf = 'number';
+-    }
+-    await this.sheet.setRangeStyle(patch);
++    await this.sheet.changeDecimals(1);
+     this.worksheet.render();
+     this.notifySelectionChange();
+   }
+@@ -548,12 +543,7 @@ export class Spreadsheet {
+    */
+   public async decreaseDecimals() {
+     if (!this.sheet || this._readOnly) return;
+-    const { dp, nf } = await this.sheet.getActiveDecimalState();
+-    const patch: Partial<CellStyle> = { dp: Math.max(0, dp - 1) };
+-    if (!nf || nf === 'plain') {
+-      patch.nf = 'number';
+-    }
+-    await this.sheet.setRangeStyle(patch);
++    await this.sheet.changeDecimals(-1);
+     this.worksheet.render();
+     this.notifySelectionChange();
+   }
+diff --git a/packages/sheets/test/sheet/decimals.test.ts b/packages/sheets/test/sheet/decimals.test.ts
+new file mode 100644
+index 00000000..b101225d
+--- /dev/null
++++ b/packages/sheets/test/sheet/decimals.test.ts
+@@ -0,0 +1,282 @@
++import { describe, it, expect } from 'vitest';
++import { MemStore } from '../../src/store/memory';
++import { Sheet } from '../../src/model/worksheet/sheet';
++import { formatValue } from '../../src/model/worksheet/format';
++
++describe('Sheet.Decimals', () => {
++  it('should leave an empty cell unstyled after increase then decrease', async () => {
++    const sheet = new Sheet(new MemStore());
++    sheet.selectStart({ r: 1, c: 1 });
++
++    await sheet.changeDecimals(1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toEqual({
++      dp: 1,
++      nf: 'number',
++    });
++
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toBeUndefined();
++
++    // The residue used to pin the cell to zero decimals.
++    await sheet.setData({ r: 1, c: 1 }, '12.5');
++    expect(await sheet.toDisplayString({ r: 1, c: 1 })).toBe('12.5');
++  });
++
++  it('should leave an integer cell unstyled after increase then decrease', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 1, c: 1 }, '12');
++    sheet.selectStart({ r: 1, c: 1 });
++
++    await sheet.changeDecimals(1);
++    expect(await sheet.toDisplayString({ r: 1, c: 1 })).toBe(
++      formatValue('12', 'number', 1),
++    );
++
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toBeUndefined();
++
++    await sheet.setData({ r: 1, c: 1 }, '12.5');
++    expect(await sheet.toDisplayString({ r: 1, c: 1 })).toBe('12.5');
++  });
++
++  it('should return a decimal cell to its own precision', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 1, c: 1 }, '12.5');
++    sheet.selectStart({ r: 1, c: 1 });
++
++    await sheet.changeDecimals(1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toEqual({
++      dp: 2,
++      nf: 'number',
++    });
++
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toBeUndefined();
++
++    await sheet.setData({ r: 1, c: 1 }, '12.567');
++    expect(await sheet.toDisplayString({ r: 1, c: 1 })).toBe('12.567');
++  });
++
++  it('should round trip with equal counts of increase and decrease', async () => {
++    const sheet = new Sheet(new MemStore());
++    sheet.selectStart({ r: 1, c: 1 });
++
++    for (let i = 0; i < 3; i++) {
++      await sheet.changeDecimals(1);
++    }
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toEqual({
++      dp: 3,
++      nf: 'number',
++    });
++
++    for (let i = 0; i < 3; i++) {
++      await sheet.changeDecimals(-1);
++    }
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toBeUndefined();
++  });
++
++  it('should round trip in the decrease-then-increase order', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 1, c: 1 }, '1234.5');
++    sheet.selectStart({ r: 1, c: 1 });
++
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toEqual({
++      dp: 0,
++      nf: 'number',
++    });
++
++    await sheet.changeDecimals(1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toBeUndefined();
++    expect(await sheet.toDisplayString({ r: 1, c: 1 })).toBe('1234.5');
++  });
++
++  it('should not write a style when there are no decimals to drop', async () => {
++    const store = new MemStore();
++    const sheet = new Sheet(store);
++    sheet.selectStart({ r: 1, c: 1 });
++
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toBeUndefined();
++    expect(await store.getRangeStyles()).toEqual([]);
++  });
++
++  it('should keep stepping a selection whose active cell is already at zero', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 1, c: 1 }, '12.5');
++    await sheet.setStyle({ r: 1, c: 1 }, { dp: 0, nf: 'number' });
++    await sheet.setData({ r: 1, c: 2 }, '12.567');
++    await sheet.setStyle({ r: 1, c: 2 }, { dp: 3, nf: 'number' });
++    sheet.selectStart({ r: 1, c: 1 });
++    sheet.selectEnd({ r: 1, c: 2 });
++
++    // A1 cannot go below zero, but the rest of the selection still follows it.
++    await sheet.changeDecimals(-1);
++    expect((await sheet.getStyle({ r: 1, c: 1 }))?.dp).toBe(0);
++    expect((await sheet.getStyle({ r: 1, c: 2 }))?.dp).toBe(0);
++  });
++
++  it('should clear the range patch for a multi-cell selection', async () => {
++    const store = new MemStore();
++    const sheet = new Sheet(store);
++    sheet.selectStart({ r: 1, c: 1 });
++    sheet.selectEnd({ r: 2, c: 2 });
++
++    await sheet.changeDecimals(1);
++    expect(await sheet.getStyle({ r: 2, c: 2 })).toEqual({
++      dp: 1,
++      nf: 'number',
++    });
++
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 2, c: 2 })).toBeUndefined();
++    expect(await store.getRangeStyles()).toEqual([]);
++  });
++
++  it('should drop cell-level decimal keys and the empty cell with them', async () => {
++    const store = new MemStore();
++    const sheet = new Sheet(store);
++    await sheet.setStyle({ r: 1, c: 1 }, { dp: 1, nf: 'number' });
++    sheet.selectStart({ r: 1, c: 1 });
++
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toBeUndefined();
++    expect(await store.get({ r: 1, c: 1 })).toBeUndefined();
++  });
++
++  it('should keep other cell style keys while dropping the decimal keys', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setStyle({ r: 1, c: 1 }, { b: true, dp: 1, nf: 'number' });
++    sheet.selectStart({ r: 1, c: 1 });
++
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toEqual({ b: true });
++  });
++
++  it('should keep a number format the user chose', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 1, c: 1 }, '12');
++    sheet.selectStart({ r: 1, c: 1 });
++    await sheet.setRangeStyle({ nf: 'number' });
++
++    // The format renders 2 decimals on its own, so increase/decrease around it
++    // leaves the format alone.
++    await sheet.changeDecimals(1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toEqual({
++      dp: 3,
++      nf: 'number',
++    });
++
++    await sheet.changeDecimals(-1);
++    expect((await sheet.getStyle({ r: 1, c: 1 }))?.nf).toBe('number');
++    expect(await sheet.toDisplayString({ r: 1, c: 1 })).toBe(
++      formatValue('12', 'number', 2),
++    );
++  });
++
++  it('should not strip a format another cell in the selection carries', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 1, c: 2 }, '5');
++    await sheet.setStyle({ r: 1, c: 2 }, { nf: 'currency', cu: 'USD' });
++
++    sheet.selectStart({ r: 1, c: 1 });
++    await sheet.changeDecimals(1);
++
++    // B1 disagrees about `nf`, so the unset is refused for the whole selection
++    // and the currency format survives.
++    sheet.selectStart({ r: 1, c: 1 });
++    sheet.selectEnd({ r: 1, c: 2 });
++    await sheet.changeDecimals(-1);
++    const style = await sheet.getStyle({ r: 1, c: 2 });
++    expect(style?.nf).toBe('currency');
++    expect(style?.cu).toBe('USD');
++  });
++
++  it('should not strip a format a sheet-wide step would reach', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 3, c: 3 }, '0.25');
++    await sheet.setStyle({ r: 3, c: 3 }, { nf: 'percent' });
++
++    sheet.selectAllCells();
++    await sheet.changeDecimals(1);
++    await sheet.changeDecimals(-1);
++
++    expect((await sheet.getStyle({ r: 3, c: 3 }))?.nf).toBe('percent');
++  });
++
++  it('should not strip decimals another cell in the selection set deeper', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 1, c: 2 }, '1.23456');
++    await sheet.setStyle({ r: 1, c: 2 }, { dp: 5, nf: 'number' });
++
++    sheet.selectStart({ r: 1, c: 1 });
++    await sheet.changeDecimals(1);
++
++    // B1 sits at a different `dp`, so the selection takes the explicit write
++    // rather than unsetting B1's own decimals along with A1's.
++    sheet.selectStart({ r: 1, c: 1 });
++    sheet.selectEnd({ r: 1, c: 2 });
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 2 })).toEqual({
++      dp: 0,
++      nf: 'number',
++    });
++  });
++
++  it('should write an explicit value when a column style sets decimals', async () => {
++    const store = new MemStore();
++    const sheet = new Sheet(store);
++    sheet.selectColumn(1);
++    await sheet.setRangeStyle({ dp: 1, nf: 'number' });
++
++    // A1 cannot unset what column 1 inherits down, so it stores dp: 0 instead.
++    sheet.selectStart({ r: 1, c: 1 });
++    await sheet.changeDecimals(-1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toEqual({
++      dp: 0,
++      nf: 'number',
++    });
++    expect(await sheet.getStyle({ r: 5, c: 1 })).toEqual({
++      dp: 1,
++      nf: 'number',
++    });
++  });
++
++  it('should round trip a column selection', async () => {
++    const store = new MemStore();
++    const sheet = new Sheet(store);
++    sheet.selectColumn(1);
++
++    await sheet.changeDecimals(1);
++    expect(await sheet.getStyle({ r: 1, c: 1 })).toEqual({
++      dp: 1,
++      nf: 'number',
++    });
++
++    await sheet.changeDecimals(-1);
++    const style = await sheet.getStyle({ r: 1, c: 1 });
++    expect(style?.dp).toBeUndefined();
++    expect(style?.nf).toBeUndefined();
++  });
++
++  it('should report the value precision and whether dp is stored', async () => {
++    const sheet = new Sheet(new MemStore());
++    await sheet.setData({ r: 1, c: 1 }, '12.34');
++    sheet.selectStart({ r: 1, c: 1 });
++
++    expect(await sheet.getActiveDecimalState()).toEqual({
++      dp: 2,
++      nf: undefined,
++      valueDp: 2,
++      explicitDp: false,
++    });
++
++    await sheet.setRangeStyle({ dp: 4, nf: 'number' });
++    expect(await sheet.getActiveDecimalState()).toEqual({
++      dp: 4,
++      nf: 'number',
++      valueDp: 2,
++      explicitDp: true,
++    });
++  });
++});

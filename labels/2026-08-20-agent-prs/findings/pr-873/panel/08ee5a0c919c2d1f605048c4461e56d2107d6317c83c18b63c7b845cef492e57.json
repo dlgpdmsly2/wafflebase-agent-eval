@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-873",
+  "arm": "panel",
+  "finding_key": "packages/sheets/src/model/worksheet/sheet.ts::increase/decrease decimals silently deletes a user-chosen `nf: 'number'` format (and its thousands grouping) whenever the stepped dp happens to equal the value's own precision",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified the path in the diff: changeDecimals (sheet.ts ~4190-4225) unsets {dp, nf} when nf==='number', explicitDp, not clamped, target===valueDp, and selectionRendersAt(target). For A1='1234.5' with user-set {nf:'number', dp:0}, an Increase click yields target=1===valueDp=1, so unsetRangeStyleValues({dp:0, nf:'number'}) strips both keys and the display loses grouping (1,235 → 1234.5). The code cannot attribute nf, which the PR's own docs concede as a \"Known deviation\"; the existing test only covers target≠valueDp, so the path is untested. The behavior is real as claimed, though it is a documented, deliberate trade-off with narrow scope, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:729cb83a1f576206c1d4f1b92b0ef2d1f83d5ccf7edd801a5e998cc6b538d1a1",
+  "class_id": null,
+  "class_members": null
+}

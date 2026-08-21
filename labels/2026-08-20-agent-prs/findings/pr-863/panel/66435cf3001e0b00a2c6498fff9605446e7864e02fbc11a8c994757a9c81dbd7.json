@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-863",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/client/url.ts::new empty-segment rejection in `seg()` fires on the *unconfigured workspace* path that `resolveconfig` deliberately produces, breaking every command — including offline `--dry-run` previews",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied sources: resolveConfig (packages/cli/src/config/config.ts) returns workspace: '' on every fallback path, and apiV1Base (packages/cli/src/client/url.ts) unconditionally calls seg(config.workspace), which throws on the empty string; printDryRun (dry-run.ts:19) routes through the same builder, so unconfigured --dry-run previews that formerly printed and exited 0 now error with \"Invalid identifier \\\"\\\"\". The mechanism and both cited consequences are real; the claim only overstates impact slightly since live commands with an empty workspace already failed (server 404), just with a different error. Severity is minor: it only affects unconfigured setups, but the dry-run regression and the unhelpful error message are genuine.",
+  "notes": null,
+  "diff_sha256": "sha256:df7df1cb9fa73491652fc28a0de4f814fc89d49b33d6a7c8429400bb8287bd62",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-862",
+  "arm": "panel",
+  "finding_key": "packages/docs/src/model/document.ts::only `togglelist` exits through `unlistedblocktype`; the other two list-exit gestures still hardcode `'paragraph'`, so the same user intent gives two different results",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:1"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/docs/src/model/document.ts: deleteBackward (empty list-item branch) and splitBlock (empty list-item branch) both call setBlockType(id, 'paragraph') unchanged, and setBlockType for 'paragraph' deletes headingLevel in both stores per the diff. So these list-exit gestures drop the retained heading level while toggleList restores it — the inconsistency is real and not covered by the todo's non-goal, which concerns the new block created by a mid-text split. Impact is limited to empty list items (no visible text lost), so this is a consistency/design gap rather than serious data loss.",
+  "notes": null,
+  "diff_sha256": "sha256:38089d0e3481456bf46377ddd5a3eb74189cea39b5f3366ee11f4f510e9fa79c",
+  "class_id": null,
+  "class_members": null
+}

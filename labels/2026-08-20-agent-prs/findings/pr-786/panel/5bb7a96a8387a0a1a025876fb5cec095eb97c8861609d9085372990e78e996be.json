@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-786",
+  "arm": "panel",
+  "finding_key": "docs/tasks/active/20260812-cli-login-loopback-binding-todo.md::two independently-tracked issues are landed in one change, against the task plan's own instruction to keep them apart",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The diff really does carry both work streams at once: docs/tasks/active/20260812-cli-login-loopback-binding-todo.md:17-22 says the loopback/PKCE work is being redone \"as its own change\" after a first attempt \"shipped inside the #661 error-envelope branch and was reverted\", yet the same diff adds docs/tasks/active/20260811-cli-error-envelope-command-todo.md plus the full `errorEnvelope`/`backendErrorEnvelope`/`commandPath` refactor across ~25 CLI files (formatter.ts, cli.ts, api-keys/cells/docs/notes/slides/tabs/files, docs//notes//slides/import.ts, files/upload.ts, files/download.ts, schema.ts, ctx.ts) alongside the backend guard/store/controller and login.ts nonce+PKCE changes. The two are functionally independent — the only overlap is that login.ts's new `failFromBackend` uses `backendErrorEnvelope`, an #661-scope conversion, not something PKCE requires. One nuance the claim overstates: the doc attributes the earlier revert to the work being *half-done* (no PKCE, no guard tests, hard nonce requirement), not to bundling per se, so \"the plan's own instruction to keep them apart\" is an inference rather than a literal instruction; still, \"done as its own change\" is contradicted by the diff. Impact is on reviewability/revertability of a security-sensitive change rather than on behavior, so I rate it minor.",
+  "notes": null,
+  "diff_sha256": "sha256:7b58c0db7d8f28eba15dac4fcf45bb63645d57cb8765a0493ee900d9bf7acafe",
+  "class_id": null,
+  "class_members": null
+}

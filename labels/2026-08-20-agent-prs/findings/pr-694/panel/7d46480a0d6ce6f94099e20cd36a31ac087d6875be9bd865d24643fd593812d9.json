@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-20-agent-prs",
+  "item_id": "pr-694",
+  "arm": "panel",
+  "finding_key": "packages/cli/test/output.test.ts::`bin entrypoint` tests assert on source text, not behavior; one assertion is vacuous",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-fable-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:2"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files. packages/cli/src/bin.ts:13 imports outputError and the comment above the parse call also contains the word, so `expect(source).toContain('outputError')` in the `bin entrypoint` describe (test/output.test.ts, end of file) passes even if the catch body were empty — the assertion is vacuous. The other assertions (`toMatch(/\\.catch\\(/)`, `toContain('program.parseAsync(')`, `not.toMatch(/program\\.parse\\s*\\(/)`) are pure source-text matches that can be satisfied while the actual rejection-to-envelope behavior is broken (e.g. aliased calls or a removed handler on a different promise), and no test actually drives a rejection through the entrypoint. The claim is accurate; impact is limited to misleading test coverage, since bin.ts itself is currently correct.",
+  "notes": null,
+  "diff_sha256": "sha256:17a8a38ddf5b90135f87378e52ec353f2336716fd15daba5afcf87321a39f2d4",
+  "class_id": null,
+  "class_members": null
+}

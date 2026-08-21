@@ -1,0 +1,323 @@
+diff --git a/docs/tasks/active/20260817-docs-highlight-none-clear-lessons.md b/docs/tasks/active/20260817-docs-highlight-none-clear-lessons.md
+new file mode 100644
+index 00000000..4c9684bf
+--- /dev/null
++++ b/docs/tasks/active/20260817-docs-highlight-none-clear-lessons.md
+@@ -0,0 +1,27 @@
++# Lessons — Docs: Highlight "None" must clear `backgroundColor`
++
++Issue: #793
++
++## What the bug really was
++
++Not a rendering bug: the highlight *stops painting* because `""` is falsy, so the
++defect is invisible in the editor and only shows in the stored document. Two
++values meant "no highlight" (`undefined` and `""`) and only one of them compared
++equal to "unset", so `normalizeInlines` could never merge the run back.
++
++## Why the fix went in the docs package, not the toolbar
++
++The issue points at `onReset={() => handleColor("")}`, but four docs picker call
++sites pass `""` and each one is a place the bug can come back. The write path is
++the single point where a stored run is produced, so defining `""` as a clear
++there fixes every surface at once — and, because the Yorkie path then routes the
++key through `removeStyleByPath`, it also removes the attribute from documents
++that already stored `""` the next time the user hits **None**.
++
++## Convention worth remembering
++
++"Clear an inline style key" in `@wafflebase/docs` means *the key present with the
++value `undefined`* — not absent, and not falsy. Absent means "don't touch this
++key"; `undefined` is what `removedInlineStyleAttrs` looks for to emit a Yorkie
++`removeStyleByPath`. Anything that assigns a falsy placeholder (`""`, and per
++#749 `false`) leaves a dead value behind.
+diff --git a/docs/tasks/active/20260817-docs-highlight-none-clear-todo.md b/docs/tasks/active/20260817-docs-highlight-none-clear-todo.md
+new file mode 100644
+index 00000000..be5ff8e1
+--- /dev/null
++++ b/docs/tasks/active/20260817-docs-highlight-none-clear-todo.md
+@@ -0,0 +1,50 @@
++# Docs: Highlight "None" must clear `backgroundColor`, not store `""`
++
++Issue: #793
++
++## Problem
++
++The docs colour pickers' **None** / **Reset** entries call
++`editor.applyStyle({ backgroundColor: "" })`. The inline-style write path merges
++the incoming style over the existing one, so the run ends up carrying
++`backgroundColor: ""` — a dead value that
++
++- never re-merges with its neighbours (`inlineStylesEqual` compares colours with
++  `storedColorsEqual`, and `'' !== undefined`), so the run split is permanent, and
++- reads as "there is a highlight" to anything that treats a *present*
++  `backgroundColor` as one (export paths included).
++
++The package already has a convention for "clear": pass the key explicitly set to
++`undefined` (`CLEAR_INLINE_STYLE`, `removeLink` → `{ href: undefined }`), which
++both the memory merge and the Yorkie `removeStyleByPath` path already honour.
++`""` simply never joined that convention.
++
++## Approach
++
++Define `""` as a clear at the inline-style write boundary in `@wafflebase/docs`,
++rather than patching each picker call site. Four docs surfaces pass `""` today
++(`text-format-group.tsx` ×2, `docs-formatting-toolbar.tsx` ×2) and a fifth would
++reintroduce the bug; normalizing once also heals runs that already store `""`
++the next time the user clears them.
++
++- [ ] `packages/docs/src/model/types.ts` — add `normalizeStyleClears(style)`
++      mapping `color`/`backgroundColor` of `''` to an explicit `undefined`
++      (key kept, so the Yorkie remove path sees it).
++- [ ] `packages/docs/src/store/block-helpers.ts` — run the incoming style through
++      it in `applyInlineStyle` (memory store + Yorkie cache path).
++- [ ] `packages/frontend/src/app/docs/yorkie-doc-store.ts` — same in
++      `applyStyleInTree`, so the CRDT attribute is removed rather than set to `""`.
++- [ ] Tests: block-helpers unit test replaying the issue's repro (highlight on,
++      then None → back to one run, no `backgroundColor` key); `types` unit test
++      for the helper.
++
++## Non-goals
++
++- #749 (`false` stored for a toggled-off boolean style) — same shape, separate fix.
++- Sheets / table-cell background reset (`applyTableCellStyle`) — different model.
++- Healing already-stored `""` on document load (no migration pass).
++
++## Verification
++
++- `pnpm --filter @wafflebase/docs test` (targeted files)
++- CI: `verify:self` lanes on the PR.
+diff --git a/packages/docs/src/index.ts b/packages/docs/src/index.ts
+index 2dbafe89..2b2bb17f 100644
+--- a/packages/docs/src/index.ts
++++ b/packages/docs/src/index.ts
+@@ -40,6 +40,7 @@ export {
+   getBlockText,
+   getBlockTextLength,
+   inlineStylesEqual,
++  normalizeStyleClears,
+   resolvePageSetup,
+   getEffectiveDimensions,
+   normalizeBlockStyle,
+diff --git a/packages/docs/src/model/types.ts b/packages/docs/src/model/types.ts
+index 3bf66931..b933db04 100644
+--- a/packages/docs/src/model/types.ts
++++ b/packages/docs/src/model/types.ts
+@@ -256,6 +256,35 @@ export const CLEAR_INLINE_STYLE: Partial<InlineStyle> = {
+   href: undefined,
+ };
+ 
++/**
++ * Color keys whose "None" / "Reset" picker entry passes an empty string.
++ * See `normalizeStyleClears`.
++ */
++const CLEARABLE_COLOR_KEYS = ['color', 'backgroundColor'] as const;
++
++/**
++ * Normalize an inline-style patch so an empty-string color means "clear this
++ * key", the same way `CLEAR_INLINE_STYLE` and `removeLink` express it: the key
++ * present with the value `undefined` (absent would mean "leave it alone").
++ *
++ * The color pickers' "None" / "Reset" entries pass `''` rather than dropping
++ * the key. Merged verbatim, that stores a dead `backgroundColor: ''` on the run:
++ * it stops painting (`''` is falsy) but never compares equal to an unset color,
++ * so `normalizeInlines` can never merge the run back into its neighbours, and
++ * anything treating a present `backgroundColor` as "there is a highlight" —
++ * export paths included — still sees one (issue #793).
++ */
++export function normalizeStyleClears(style: Partial<InlineStyle>): Partial<InlineStyle> {
++  let normalized: Partial<InlineStyle> | null = null;
++  for (const key of CLEARABLE_COLOR_KEYS) {
++    if (style[key] === '') {
++      normalized ??= { ...style };
++      normalized[key] = undefined;
++    }
++  }
++  return normalized ?? style;
++}
++
+ let counter = 0;
+ 
+ /**
+diff --git a/packages/docs/src/node.ts b/packages/docs/src/node.ts
+index 1a788ca9..eb7eeb5f 100644
+--- a/packages/docs/src/node.ts
++++ b/packages/docs/src/node.ts
+@@ -70,6 +70,7 @@ export {
+   getBlockText,
+   getBlockTextLength,
+   inlineStylesEqual,
++  normalizeStyleClears,
+   resolvePageSetup,
+   getEffectiveDimensions,
+   normalizeBlockStyle,
+diff --git a/packages/docs/src/store/block-helpers.ts b/packages/docs/src/store/block-helpers.ts
+index 2a172eb4..096a2417 100644
+--- a/packages/docs/src/store/block-helpers.ts
++++ b/packages/docs/src/store/block-helpers.ts
+@@ -1,6 +1,6 @@
+ // packages/docs/src/store/block-helpers.ts
+ import type { Block, Inline, InlineStyle, BlockType } from '../model/types.js';
+-import { inlineStylesEqual, generateBlockId } from '../model/types.js';
++import { inlineStylesEqual, generateBlockId, normalizeStyleClears } from '../model/types.js';
+ 
+ export interface InlinePosition {
+   inlineIndex: number;
+@@ -313,8 +313,10 @@ export function applyInlineStyle(
+   to: number,
+   style: Partial<InlineStyle>,
+ ): Block {
++  // `''` from a color picker's "None" / "Reset" means clear, not "store an
++  // empty color" — normalize before merging so the key is dropped instead.
++  const resolvedStyle: Partial<InlineStyle> = { ...normalizeStyleClears(style) };
+   // Enforce mutual exclusion: superscript and subscript cannot coexist
+-  const resolvedStyle: Partial<InlineStyle> = { ...style };
+   if (resolvedStyle.superscript) {
+     resolvedStyle.subscript = undefined;
+   } else if (resolvedStyle.subscript) {
+diff --git a/packages/docs/test/model/types.test.ts b/packages/docs/test/model/types.test.ts
+index 4fd90f4b..4b7530c3 100644
+--- a/packages/docs/test/model/types.test.ts
++++ b/packages/docs/test/model/types.test.ts
+@@ -14,6 +14,7 @@ import {
+   createTableBlock,
+   findImageAtOffset,
+   clampImageToWidth,
++  normalizeStyleClears,
+ } from '../../src/model/types.js';
+ 
+ describe('BlockStyle', () => {
+@@ -111,6 +112,30 @@ describe('createBlock', () => {
+   });
+ });
+ 
++describe('normalizeStyleClears', () => {
++  it('turns an empty-string color into an explicit undefined key', () => {
++    const result = normalizeStyleClears({ backgroundColor: '' });
++    expect('backgroundColor' in result).toBe(true);
++    expect(result.backgroundColor).toBeUndefined();
++  });
++
++  it('turns an empty-string text color into an explicit undefined key', () => {
++    const result = normalizeStyleClears({ color: '', bold: true });
++    expect(result.color).toBeUndefined();
++    expect(result.bold).toBe(true);
++  });
++
++  it('leaves real colors and unrelated keys untouched', () => {
++    const style: Partial<InlineStyle> = { color: '#123456', href: '', fontSize: 12 };
++    expect(normalizeStyleClears(style)).toBe(style);
++  });
++
++  it('leaves an absent color key absent — absent means "do not touch"', () => {
++    const result = normalizeStyleClears({ backgroundColor: '' });
++    expect('color' in result).toBe(false);
++  });
++});
++
+ describe('inlineStylesEqual', () => {
+   it('should detect superscript difference', () => {
+     expect(inlineStylesEqual({ superscript: true }, {})).toBe(false);
+diff --git a/packages/docs/test/store/block-helpers.test.ts b/packages/docs/test/store/block-helpers.test.ts
+index 7ea092e1..39030f5a 100644
+--- a/packages/docs/test/store/block-helpers.test.ts
++++ b/packages/docs/test/store/block-helpers.test.ts
+@@ -226,6 +226,35 @@ describe('applyInlineStyle', () => {
+     expect(result.inlines).toHaveLength(1);
+     expect(result.inlines[0]).toEqual({ text: 'ABCDEF', style: { bold: true } });
+   });
++
++  // Issue #793: the highlight picker's "None" passes `''`. Stored verbatim it
++  // is a dead value — invisible, but the run can never re-merge.
++  it('clears backgroundColor when the highlight picker passes an empty string', () => {
++    const block = makeBlock({ text: 'abcdef' });
++    const on = applyInlineStyle(block, 2, 4, { backgroundColor: '#FFF176' });
++    expect(on.inlines).toHaveLength(3);
++
++    const off = applyInlineStyle(on, 2, 4, { backgroundColor: '' });
++    expect(off.inlines).toHaveLength(1);
++    expect(off.inlines[0].text).toBe('abcdef');
++    expect('backgroundColor' in off.inlines[0].style).toBe(false);
++  });
++
++  it('clears color when the text-color picker resets to an empty string', () => {
++    const block = makeBlock({ text: 'abcdef' });
++    const on = applyInlineStyle(block, 2, 4, { color: '#FF0000' });
++    const off = applyInlineStyle(on, 2, 4, { color: '' });
++    expect(off.inlines).toHaveLength(1);
++    expect('color' in off.inlines[0].style).toBe(false);
++  });
++
++  it('clearing one color leaves the other styles on the run', () => {
++    const block = makeBlock({ text: 'abcdef' });
++    const on = applyInlineStyle(block, 2, 4, { backgroundColor: '#FFF176', bold: true });
++    const off = applyInlineStyle(on, 2, 4, { backgroundColor: '' });
++    expect(off.inlines).toHaveLength(3);
++    expect(off.inlines[1]).toEqual({ text: 'cd', style: { bold: true } });
++  });
+ });
+ 
+ describe('applySplitBlock', () => {
+diff --git a/packages/frontend/src/app/docs/yorkie-doc-store.ts b/packages/frontend/src/app/docs/yorkie-doc-store.ts
+index 53c7b3e8..67dcdc98 100644
+--- a/packages/frontend/src/app/docs/yorkie-doc-store.ts
++++ b/packages/frontend/src/app/docs/yorkie-doc-store.ts
+@@ -37,6 +37,7 @@ import {
+   applyMergeBlocks,
+   blockStyleId,
+   materializeBlockSpacing,
++  normalizeStyleClears,
+ } from '@wafflebase/docs';
+ import type { YorkieDocsRoot } from '@/types/docs-document';
+ import type { DocsPresence } from '@/types/users';
+@@ -1872,8 +1873,11 @@ export class YorkieDocStore implements DocStore {
+     // styleByPath only merges, so keys explicitly cleared to `undefined`
+     // (e.g. removeLink → { href: undefined }) must also be removed via
+     // removeStyleByPath; otherwise the old attribute survives on the node.
+-    const styleAttrs = serializeInlineStyle(style as InlineStyle);
+-    const removeAttrs = removedInlineStyleAttrs(style);
++    // `normalizeStyleClears` routes a color picker's "None" (`''`) into that
++    // same removal path instead of writing an empty attribute (#793).
++    const clearedStyle = normalizeStyleClears(style);
++    const styleAttrs = serializeInlineStyle(clearedStyle as InlineStyle);
++    const removeAttrs = removedInlineStyleAttrs(clearedStyle);
+     for (let i = startIdx; i < endIdx; i++) {
+       const existingAttrs = inlines[i].attributes ?? {};
+       tree.styleByPath([...blockPath, i], { ...existingAttrs, ...styleAttrs });
+diff --git a/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts b/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
+index b59c7c2f..f2e824e0 100644
+--- a/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
++++ b/packages/frontend/tests/app/docs/yorkie-doc-store.test.ts
+@@ -666,6 +666,32 @@ describe('YorkieDocStore', () => {
+       // Non-cleared key survives.
+       expect(cleared.style.italic).toBe(true);
+     });
++
++    // Issue #793: the highlight picker's "None" passes `''`, not `undefined`.
++    // Written verbatim it leaves a dead `backgroundColor=""` attribute on the
++    // Tree node — invisible, but a peer / reload still sees a highlight there
++    // and the run can never re-merge with its neighbours.
++    it('clears backgroundColor from the Tree when applyStyle gets an empty string', () => {
++      const block = makeBlock('Hello');
++      store.setDocument({ blocks: [block] });
++      store.applyStyle(block.id, 0, 5, { backgroundColor: '#FFF176' });
++      expect(reread(block).inlines[0].style.backgroundColor).toBe('#FFF176');
++
++      store.applyStyle(block.id, 0, 5, { backgroundColor: '' });
++      const inline = reread(block).inlines[0];
++      expect('backgroundColor' in inline.style).toBe(false);
++    });
++
++    it('keeps other styles when a highlight is cleared with an empty string', () => {
++      const block = makeBlock('Hello');
++      store.setDocument({ blocks: [block] });
++      store.applyStyle(block.id, 0, 5, { bold: true, color: '#ff0000', backgroundColor: '#FFF176' });
++      store.applyStyle(block.id, 0, 5, { backgroundColor: '' });
++      const inline = reread(block).inlines[0];
++      expect('backgroundColor' in inline.style).toBe(false);
++      expect(inline.style.bold).toBe(true);
++      expect(inline.style.color).toBe('#ff0000');
++    });
+   });
+ 
+   describe('caching', () => {
