@@ -23,8 +23,11 @@ runs/<run_id>/          IMMUTABLE once written
 scores/                 metrics — RE-SCOREABLE, never written under runs/
   per-run/<run_id>/<scorer_id>.json
   by-config/<config_hash>__<corpus_version>/<scorer_id>.json
-reports/<comparison_id>.md   static A-vs-B comparisons
+reports/<comparison_id>.md   static A-vs-B comparisons, lane-rendered
 labels/<corpus_version>/<item_id>.json   Track B (validity) — reserved
+probes/<date>-<slug>/    one paid question, its answer, and the evidence
+  README.md              the conclusion — renders on GitHub when the folder is opened
+  raw/                   the evidence: per-verdict journals + frozen inputs
 ```
 
 ## Invariants
@@ -36,6 +39,15 @@ labels/<corpus_version>/<item_id>.json   Track B (validity) — reserved
   composition. `(config_hash, corpus_version)` is the comparability key — same
   pair across `run_id`s = replicates (the substrate for cross-run reliability).
 - **Transcripts are gzip-compressed** and trimmed (git-bloat guard).
+- **A probe is a question somebody paid to answer, filed so nobody pays again.** Every probe names
+  its price and its verdict count. If it cost nothing it is a script, and it stays in the kit.
+- **`raw/` is immutable; the conclusion is not.** Nobody outside holds the only copy, so revising a
+  reading does not create two documents with one name — and a reading here has already needed
+  revision. **A superseded conclusion says so at the top and names what superseded it.**
+- **Every probe README must answer: is this a claim about the instrument, or about an arm?** If about
+  an arm, **it must say why it is not in `reports/`** — which is lane-rendered and keyed by
+  `comparison_id`. This is what stops `probes/` becoming a shadow report directory that routes around
+  the scoring lane. It is a sentence each probe owes, not a wall between two folders.
 
 ## Field-level contract
 

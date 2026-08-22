@@ -1,0 +1,624 @@
+{
+ "generated_by": "freeze-work-lists.mjs",
+ "arm": "cross-replicate",
+ "rubric": "same-root-cause",
+ "rubric_sha256": "e76af1eff946d8e3a5a2a73abd42957178199de49dc2ee5b54e12acc18de5ea3",
+ "corpus_version": "2026-08-10-pilot-reviewed",
+ "shards": 4,
+ "n": 150,
+ "per_shard": {
+  "0": 38,
+  "1": 38,
+  "2": 37,
+  "3": 37
+ },
+ "assignment": "keys sorted lexically, shard = index % shards — stable per pair, disjoint, balanced to within one",
+ "provenance": {
+  "source": "the cross-run `maybe` population, seeded stratified sample — the SAME 150 the strict pass judged",
+  "population": 5565,
+  "seed": "cross-run-probe",
+  "rule": "stratified by score band x same-lens/cross-lens; per-cell allocation proportional to the cell's share of the 5565 cross-run maybe pairs, with a floor of 4 per non-empty cell and the excess trimmed from the largest cells; within a cell, ordered by sha256(\"cross-run-probe|<pair_key>\") and the first k taken. Bands are half-open [lo, hi) except the top which is closed at 1.00."
+ },
+ "keys": [
+  {
+   "pair_key": "001ca923a962",
+   "shard": 0
+  },
+  {
+   "pair_key": "001ca9508c56",
+   "shard": 1
+  },
+  {
+   "pair_key": "001ca9a856ee",
+   "shard": 2
+  },
+  {
+   "pair_key": "002848b985c2",
+   "shard": 3
+  },
+  {
+   "pair_key": "0082cd6912e5",
+   "shard": 0
+  },
+  {
+   "pair_key": "00cfb2516f95",
+   "shard": 1
+  },
+  {
+   "pair_key": "0125f89ca4a0",
+   "shard": 2
+  },
+  {
+   "pair_key": "01657321c97d",
+   "shard": 3
+  },
+  {
+   "pair_key": "01eaadd8c56c",
+   "shard": 0
+  },
+  {
+   "pair_key": "020306551fa4",
+   "shard": 1
+  },
+  {
+   "pair_key": "020719876aad",
+   "shard": 2
+  },
+  {
+   "pair_key": "020719d2e184",
+   "shard": 3
+  },
+  {
+   "pair_key": "02a30267c43f",
+   "shard": 0
+  },
+  {
+   "pair_key": "02a302d94968",
+   "shard": 1
+  },
+  {
+   "pair_key": "02f433e6c02b",
+   "shard": 2
+  },
+  {
+   "pair_key": "0312c29c3e59",
+   "shard": 3
+  },
+  {
+   "pair_key": "0485d5391687",
+   "shard": 0
+  },
+  {
+   "pair_key": "052b3af5f5b2",
+   "shard": 1
+  },
+  {
+   "pair_key": "06138a7a9d57",
+   "shard": 2
+  },
+  {
+   "pair_key": "06138aa0db62",
+   "shard": 3
+  },
+  {
+   "pair_key": "06f63b3b8371",
+   "shard": 0
+  },
+  {
+   "pair_key": "071271b664d5",
+   "shard": 1
+  },
+  {
+   "pair_key": "089ff6993285",
+   "shard": 2
+  },
+  {
+   "pair_key": "0bc7e4d6fbef",
+   "shard": 3
+  },
+  {
+   "pair_key": "0e5e3f4333a2",
+   "shard": 0
+  },
+  {
+   "pair_key": "0e5f96dc1b57",
+   "shard": 1
+  },
+  {
+   "pair_key": "0fcbc7d9eb5d",
+   "shard": 2
+  },
+  {
+   "pair_key": "149ff289afda",
+   "shard": 3
+  },
+  {
+   "pair_key": "149ff2c29137",
+   "shard": 0
+  },
+  {
+   "pair_key": "15a860a856ee",
+   "shard": 1
+  },
+  {
+   "pair_key": "166e27a623b5",
+   "shard": 2
+  },
+  {
+   "pair_key": "16e7214a6868",
+   "shard": 3
+  },
+  {
+   "pair_key": "1a7c776a5ac0",
+   "shard": 0
+  },
+  {
+   "pair_key": "1ba6a0627573",
+   "shard": 1
+  },
+  {
+   "pair_key": "1ce01391fee6",
+   "shard": 2
+  },
+  {
+   "pair_key": "1ee4ef40c53d",
+   "shard": 3
+  },
+  {
+   "pair_key": "1ee4ef9cac19",
+   "shard": 0
+  },
+  {
+   "pair_key": "1fa36b717824",
+   "shard": 1
+  },
+  {
+   "pair_key": "21053aca1a3f",
+   "shard": 2
+  },
+  {
+   "pair_key": "21c97d564e3f",
+   "shard": 3
+  },
+  {
+   "pair_key": "21c97da4defb",
+   "shard": 0
+  },
+  {
+   "pair_key": "23a9622dace1",
+   "shard": 1
+  },
+  {
+   "pair_key": "23a962b8e8e8",
+   "shard": 2
+  },
+  {
+   "pair_key": "23a962b94e7c",
+   "shard": 3
+  },
+  {
+   "pair_key": "25a9ca28ad87",
+   "shard": 0
+  },
+  {
+   "pair_key": "25a9caaa2cd1",
+   "shard": 1
+  },
+  {
+   "pair_key": "25a9cad2e184",
+   "shard": 2
+  },
+  {
+   "pair_key": "27fc7cf7eb22",
+   "shard": 3
+  },
+  {
+   "pair_key": "28fbd5c70378",
+   "shard": 0
+  },
+  {
+   "pair_key": "2a29fb508c56",
+   "shard": 1
+  },
+  {
+   "pair_key": "2eda0d3c0181",
+   "shard": 2
+  },
+  {
+   "pair_key": "2fda537a9d57",
+   "shard": 3
+  },
+  {
+   "pair_key": "32026fb2900d",
+   "shard": 0
+  },
+  {
+   "pair_key": "323cb4885e51",
+   "shard": 1
+  },
+  {
+   "pair_key": "323cb4e7c18d",
+   "shard": 2
+  },
+  {
+   "pair_key": "33761fb70ddc",
+   "shard": 3
+  },
+  {
+   "pair_key": "33ac637fd357",
+   "shard": 0
+  },
+  {
+   "pair_key": "33ac63f5f5b2",
+   "shard": 1
+  },
+  {
+   "pair_key": "33cf984ed15d",
+   "shard": 2
+  },
+  {
+   "pair_key": "34ad8ea368c1",
+   "shard": 3
+  },
+  {
+   "pair_key": "365f876912e5",
+   "shard": 0
+  },
+  {
+   "pair_key": "365f87a4defb",
+   "shard": 1
+  },
+  {
+   "pair_key": "36aa84631009",
+   "shard": 2
+  },
+  {
+   "pair_key": "384455e9117d",
+   "shard": 3
+  },
+  {
+   "pair_key": "39168754f94d",
+   "shard": 0
+  },
+  {
+   "pair_key": "39168790099d",
+   "shard": 1
+  },
+  {
+   "pair_key": "3a33cffe0098",
+   "shard": 2
+  },
+  {
+   "pair_key": "3b8371717824",
+   "shard": 3
+  },
+  {
+   "pair_key": "3b8371efeb7a",
+   "shard": 0
+  },
+  {
+   "pair_key": "3ce2bd516db6",
+   "shard": 1
+  },
+  {
+   "pair_key": "3ce2bd7ec643",
+   "shard": 2
+  },
+  {
+   "pair_key": "3e7f8dd79dcf",
+   "shard": 3
+  },
+  {
+   "pair_key": "419d54f09be5",
+   "shard": 0
+  },
+  {
+   "pair_key": "421634bd556a",
+   "shard": 1
+  },
+  {
+   "pair_key": "421634ef75f1",
+   "shard": 2
+  },
+  {
+   "pair_key": "47750591fee6",
+   "shard": 3
+  },
+  {
+   "pair_key": "4811594a6868",
+   "shard": 0
+  },
+  {
+   "pair_key": "481159572fff",
+   "shard": 1
+  },
+  {
+   "pair_key": "4936aead18eb",
+   "shard": 2
+  },
+  {
+   "pair_key": "4936aeebc663",
+   "shard": 3
+  },
+  {
+   "pair_key": "4a68686912e5",
+   "shard": 0
+  },
+  {
+   "pair_key": "4ba00df12f70",
+   "shard": 1
+  },
+  {
+   "pair_key": "4e10ceec3d5f",
+   "shard": 2
+  },
+  {
+   "pair_key": "4ed15db6c7c5",
+   "shard": 3
+  },
+  {
+   "pair_key": "507e54e5a381",
+   "shard": 0
+  },
+  {
+   "pair_key": "508c566679d2",
+   "shard": 1
+  },
+  {
+   "pair_key": "5141ac76b1ce",
+   "shard": 2
+  },
+  {
+   "pair_key": "516db6a623b5",
+   "shard": 3
+  },
+  {
+   "pair_key": "55e3ffd94968",
+   "shard": 0
+  },
+  {
+   "pair_key": "572fffc24742",
+   "shard": 1
+  },
+  {
+   "pair_key": "572fffeafe0b",
+   "shard": 2
+  },
+  {
+   "pair_key": "5862cc91fee6",
+   "shard": 3
+  },
+  {
+   "pair_key": "5893a790bd32",
+   "shard": 0
+  },
+  {
+   "pair_key": "5893a79acaf1",
+   "shard": 1
+  },
+  {
+   "pair_key": "594d40ca6d51",
+   "shard": 2
+  },
+  {
+   "pair_key": "5e64a5dc7fe4",
+   "shard": 3
+  },
+  {
+   "pair_key": "61633fdd57c4",
+   "shard": 0
+  },
+  {
+   "pair_key": "6310096d0832",
+   "shard": 1
+  },
+  {
+   "pair_key": "66ece2ad18eb",
+   "shard": 2
+  },
+  {
+   "pair_key": "66ece2fc0091",
+   "shard": 3
+  },
+  {
+   "pair_key": "677c7ca485da",
+   "shard": 0
+  },
+  {
+   "pair_key": "6904637fd357",
+   "shard": 1
+  },
+  {
+   "pair_key": "6b7471ed80a7",
+   "shard": 2
+  },
+  {
+   "pair_key": "6e2035c8a1c2",
+   "shard": 3
+  },
+  {
+   "pair_key": "709752bdb961",
+   "shard": 0
+  },
+  {
+   "pair_key": "7453c391bbe0",
+   "shard": 1
+  },
+  {
+   "pair_key": "7453c3aec184",
+   "shard": 2
+  },
+  {
+   "pair_key": "74ff37b58328",
+   "shard": 3
+  },
+  {
+   "pair_key": "74ff37c70378",
+   "shard": 0
+  },
+  {
+   "pair_key": "769132f7eb22",
+   "shard": 1
+  },
+  {
+   "pair_key": "7eb27eef75f1",
+   "shard": 2
+  },
+  {
+   "pair_key": "7ec643a001f6",
+   "shard": 3
+  },
+  {
+   "pair_key": "7ec643c018dc",
+   "shard": 0
+  },
+  {
+   "pair_key": "7fc55df29dda",
+   "shard": 1
+  },
+  {
+   "pair_key": "810514ed80a7",
+   "shard": 2
+  },
+  {
+   "pair_key": "820fc6db1fe7",
+   "shard": 3
+  },
+  {
+   "pair_key": "883a2b8a6158",
+   "shard": 0
+  },
+  {
+   "pair_key": "883a2baec184",
+   "shard": 1
+  },
+  {
+   "pair_key": "885e51aa2cd1",
+   "shard": 2
+  },
+  {
+   "pair_key": "8ad2aebd556a",
+   "shard": 3
+  },
+  {
+   "pair_key": "8fdc0aeab3b6",
+   "shard": 0
+  },
+  {
+   "pair_key": "95f4a3ae6636",
+   "shard": 1
+  },
+  {
+   "pair_key": "9a6371de9d1e",
+   "shard": 2
+  },
+  {
+   "pair_key": "9a6371e5a381",
+   "shard": 3
+  },
+  {
+   "pair_key": "9ba7daf0893c",
+   "shard": 0
+  },
+  {
+   "pair_key": "9f993aa4defb",
+   "shard": 1
+  },
+  {
+   "pair_key": "a003a5c259fe",
+   "shard": 2
+  },
+  {
+   "pair_key": "a46d93b664d5",
+   "shard": 3
+  },
+  {
+   "pair_key": "a46d93ed80a7",
+   "shard": 0
+  },
+  {
+   "pair_key": "a811f3c8a1c2",
+   "shard": 1
+  },
+  {
+   "pair_key": "a856eecc8762",
+   "shard": 2
+  },
+  {
+   "pair_key": "a96ab3f12f70",
+   "shard": 3
+  },
+  {
+   "pair_key": "aae35dbdb422",
+   "shard": 0
+  },
+  {
+   "pair_key": "aae35dfd192d",
+   "shard": 1
+  },
+  {
+   "pair_key": "b07ef0f09705",
+   "shard": 2
+  },
+  {
+   "pair_key": "b21868d393b4",
+   "shard": 3
+  },
+  {
+   "pair_key": "b2b237cec559",
+   "shard": 0
+  },
+  {
+   "pair_key": "bc69eee7c18d",
+   "shard": 1
+  },
+  {
+   "pair_key": "bd556adb1fe7",
+   "shard": 2
+  },
+  {
+   "pair_key": "bdb961c03cdc",
+   "shard": 3
+  },
+  {
+   "pair_key": "c05b22efeb7a",
+   "shard": 0
+  },
+  {
+   "pair_key": "c5bc5edc1b57",
+   "shard": 1
+  },
+  {
+   "pair_key": "ca6d51d2e184",
+   "shard": 2
+  },
+  {
+   "pair_key": "ca6d51ddd34f",
+   "shard": 3
+  },
+  {
+   "pair_key": "cf0f24ebc663",
+   "shard": 0
+  },
+  {
+   "pair_key": "d6fbefe7a857",
+   "shard": 1
+  },
+  {
+   "pair_key": "d94968e9117d",
+   "shard": 2
+  },
+  {
+   "pair_key": "d94968f7eb22",
+   "shard": 3
+  },
+  {
+   "pair_key": "e5a381f83c4f",
+   "shard": 0
+  },
+  {
+   "pair_key": "f4828ffb3083",
+   "shard": 1
+  }
+ ]
+}
