@@ -1,0 +1,2133 @@
+{
+  "generator": "uniform-instrument.mjs",
+  "what_this_is": "one adjudicator (claude-opus-5) across all 100 findings, at the pass-2 evidence condition, with the mixed-instrument figures beside it",
+  "model_calls": 0,
+  "canonical": "paired-measurement run A; run B is the noise floor and is NOT merged",
+  "labels_written": 0,
+  "provenance": {
+    "already-opus": 16,
+    "paired-run-A": 40,
+    "uniform-pass": 41
+  },
+  "journals": {
+    "runA": {
+      "files": [
+        "paired-adjudication-runA-shard0of2.jsonl",
+        "paired-adjudication-runA-shard1of2.jsonl"
+      ],
+      "rows": 40,
+      "errors": 0,
+      "bad": 0,
+      "spend": 13.8784503,
+      "missing": []
+    },
+    "runU": {
+      "files": [
+        "paired-adjudication-runU-shard0of4.jsonl",
+        "paired-adjudication-runU-shard1of4.jsonl",
+        "paired-adjudication-runU-shard2of4.jsonl",
+        "paired-adjudication-runU-shard3of4.jsonl"
+      ],
+      "rows": 41,
+      "errors": 6,
+      "bad": 0,
+      "spend": 14.621780800000002,
+      "missing": []
+    },
+    "runB": {
+      "files": [
+        "paired-adjudication-runB-shard0of2.jsonl",
+        "paired-adjudication-runB-shard1of2.jsonl"
+      ],
+      "rows": 40,
+      "errors": 0,
+      "bad": 0,
+      "spend": 5.266598899999998,
+      "missing": []
+    }
+  },
+  "unresolved": [
+    {
+      "item_id": "pr-899",
+      "finding_key": "docs/design/slides/slides-keyboard-shortcuts.md::canonical design doc not updated for the new `data-text-edit-keepalive` exemption. the doc's \"it deliberately does nothing when\" list (lines 147-160) is the spec for this hook and is now incomplete; worse, its last bullet asserts text-edit controls are handled purely by the deferred activeelement re-read (\"which is what makes text-edit controls … no-ops\"), which the delta contradicts by adding an explicit keepalive special case in `toolbar-focus-release.ts:76`. contributing expects the behaviour change to be folded into the canonical subsystem doc.",
+      "fable": "minor"
+    },
+    {
+      "item_id": "pr-864",
+      "finding_key": "packages/docs/src/view/editor.ts::`editorapi.togglelist` still does not fire the cursor-move callbacks, so the exact staleness this diff fixes remains reachable when a bullet is toggled on a heading block",
+      "fable": "minor"
+    },
+    {
+      "item_id": "pr-873",
+      "finding_key": "packages/sheets/src/model/worksheet/sheet.ts::new clamp makes decrease at zero destructive when `dp` is stored, breaking the issue's \"equal increases and decreases leave the selection exactly as they found it\" rule",
+      "fable": "minor"
+    }
+  ],
+  "figures": {
+    "mixed_instrument_all_100": {
+      "n": 100,
+      "precision": 0.96,
+      "precision_ci95": [
+        0.902,
+        0.984
+      ],
+      "blocking_precision": 0.21,
+      "blocking_precision_ci95": [
+        0.142,
+        0.3
+      ],
+      "real": 96,
+      "blocking_real": 21,
+      "severity": {
+        "minor": 76,
+        "major": 23,
+        "nit": 1
+      }
+    },
+    "uniform_opus_all_100": {
+      "n": 97,
+      "precision": 0.969,
+      "precision_ci95": [
+        0.913,
+        0.989
+      ],
+      "blocking_precision": 0.124,
+      "blocking_precision_ci95": [
+        0.072,
+        0.204
+      ],
+      "real": 94,
+      "blocking_real": 12,
+      "severity": {
+        "minor": 75,
+        "nit": 8,
+        "major": 14
+      }
+    },
+    "paired_subset": {
+      "n": 81,
+      "fable": {
+        "n": 81,
+        "precision": 0.951,
+        "precision_ci95": [
+          0.88,
+          0.981
+        ],
+        "blocking_precision": 0.235,
+        "blocking_precision_ci95": [
+          0.156,
+          0.338
+        ],
+        "real": 77,
+        "blocking_real": 19,
+        "severity": {
+          "minor": 60,
+          "major": 21
+        }
+      },
+      "opus": {
+        "n": 81,
+        "precision": 0.963,
+        "precision_ci95": [
+          0.897,
+          0.987
+        ],
+        "blocking_precision": 0.123,
+        "blocking_precision_ci95": [
+          0.068,
+          0.213
+        ],
+        "real": 78,
+        "blocking_real": 10,
+        "severity": {
+          "minor": 62,
+          "nit": 7,
+          "major": 12
+        }
+      }
+    },
+    "direction_on_paired_subset": {
+      "demoted": 11,
+      "promoted": 2,
+      "from_blocking": 21,
+      "from_non_blocking": 60,
+      "demotion_rate": 0.524,
+      "promotion_rate": 0.033
+    }
+  },
+  "findings": [
+    {
+      "item_id": "pr-695",
+      "pr": 695,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "docs/design/cli.md",
+      "line": 722,
+      "round_commit": "6d0b9229f8d4ea9bef952afb8f4def6add67c08b",
+      "review_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-770",
+      "pr": 770,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "docs/design/cli.md",
+      "line": 1039,
+      "round_commit": "7a3e4843addc8d328526fa931d0e386fb829d203",
+      "review_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-876",
+      "pr": 876,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "docs/design/docs/docs-font-controls.md",
+      "line": null,
+      "round_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4",
+      "review_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4",
+      "opus": {
+        "is_real": true,
+        "severity": "nit",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "docs/design/docs/docs-tables.md",
+      "line": null,
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "nit",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-809",
+      "pr": 809,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "docs/design/frontend.md",
+      "line": null,
+      "round_commit": "f1a6416d428f58e69b2925725d8672c5240d366b",
+      "review_commit": "3fce337f938d316e075ecadeed3d2a8313cb9c3f",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-873",
+      "pr": 873,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "docs/design/sheets/sheet-style.md",
+      "line": 262,
+      "round_commit": "753ec19250741263c30845c490748ef1d22b80ab",
+      "review_commit": "c4594958de4eb78a08197821117893e314078900",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "docs/design/slides/slides-pptx-export.md",
+      "line": null,
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "docs/tasks/active/20260812-cli-login-loopback-binding-todo.md",
+      "line": 17,
+      "round_commit": "3847f49a1905f4a4604db5d5014203d40607bbc8",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "docs/tasks/active/20260812-docs-font-color-reset-todo.md",
+      "line": null,
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-873",
+      "pr": 873,
+      "pr_state": "draft",
+      "lens": "docs",
+      "file": "docs/tasks/active/20260818-sheets-decimal-round-trip-lessons.md",
+      "line": null,
+      "round_commit": "cf23856af185d51eb0c8037274adf2a9ab046a69",
+      "review_commit": "c4594958de4eb78a08197821117893e314078900",
+      "opus": {
+        "is_real": true,
+        "severity": "nit",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-737",
+      "pr": 737,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "packages/backend/src/analytics/analytics-warehouse.service.ts",
+      "line": null,
+      "round_commit": "4d46871ac229ebed160b51f126b3f8953d7b49c1",
+      "review_commit": "b40dad7c37e4ae89f957280bf3f78027117c255b",
+      "opus": {
+        "is_real": true,
+        "severity": "nit",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "line": null,
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "line": null,
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "blast-radius",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "line": 437,
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "line": null,
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "security",
+      "file": "packages/backend/src/api/v1/docs-content.controller.ts",
+      "line": null,
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/backend/src/auth/auth.controller.ts",
+      "line": 190,
+      "round_commit": "b820c4086d1849267181d95c9f3f40510150d082",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/backend/src/auth/auth.controller.ts",
+      "line": 152,
+      "round_commit": "b419887a3ec457364ddcc51b823e0cc138b06ab0",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/backend/src/auth/auth.controller.ts",
+      "line": 126,
+      "round_commit": "3847f49a1905f4a4604db5d5014203d40607bbc8",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-695",
+      "pr": 695,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "packages/backend/src/auth/cli-login-confirm.middleware.ts",
+      "line": null,
+      "round_commit": "4e0fb74be4cb7d1d729939203ec89bbb3afac5e7",
+      "review_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-695",
+      "pr": 695,
+      "pr_state": "merged",
+      "lens": "security",
+      "file": "packages/backend/src/auth/github-auth.guard.ts",
+      "line": 29,
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6",
+      "review_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/backend/src/auth/github.strategy.ts",
+      "line": 57,
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/backend/src/auth/github.strategy.ts",
+      "line": null,
+      "round_commit": "bd223299740c9529b4b21643500245946e123152",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-695",
+      "pr": 695,
+      "pr_state": "merged",
+      "lens": "security",
+      "file": "packages/backend/src/auth/oauth-state.ts",
+      "line": 57,
+      "round_commit": "4e0fb74be4cb7d1d729939203ec89bbb3afac5e7",
+      "review_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/backend/src/logging/log-safe-url.ts",
+      "line": 22,
+      "round_commit": "b820c4086d1849267181d95c9f3f40510150d082",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-734",
+      "pr": 734,
+      "pr_state": "merged",
+      "lens": "security",
+      "file": "packages/backend/src/workspace/workspace.service.ts",
+      "line": null,
+      "round_commit": "92b9be9bffcb5681b6ab29a9604c1ba398b6df32",
+      "review_commit": "92b9be9bffcb5681b6ab29a9604c1ba398b6df32",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/backend/src/yorkie/docs-tree.ts",
+      "line": 316,
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-694",
+      "pr": 694,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/cli/src/bin.ts",
+      "line": 27,
+      "round_commit": "7a906da57e4a4fd96fa448ca0f14533e2d5d8038",
+      "review_commit": "40190878c39b0011efb6ab91d664e1cf489dfff8",
+      "opus": {
+        "is_real": false,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": false,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-770",
+      "pr": 770,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/cli/src/client/http-client.ts",
+      "line": 365,
+      "round_commit": "7a3e4843addc8d328526fa931d0e386fb829d203",
+      "review_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "packages/cli/src/client/url.ts",
+      "line": null,
+      "round_commit": "d71fc7afe512916774a1b690d585141ea5d1387d",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "blast-radius",
+      "file": "packages/cli/src/client/url.ts",
+      "line": null,
+      "round_commit": "d71fc7afe512916774a1b690d585141ea5d1387d",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-695",
+      "pr": 695,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "line": 20,
+      "round_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "review_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "packages/cli/src/commands/api-keys.ts",
+      "line": null,
+      "round_commit": "f9d8f354f1caaedd7032bbe8da6fc3d3c359c8f9",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "nit",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-694",
+      "pr": 694,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/cli/src/commands/cells.ts",
+      "line": 110,
+      "round_commit": "7a906da57e4a4fd96fa448ca0f14533e2d5d8038",
+      "review_commit": "40190878c39b0011efb6ab91d664e1cf489dfff8",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/cli/src/commands/docs.ts",
+      "line": 195,
+      "round_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 272,
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 84,
+      "round_commit": "3847f49a1905f4a4604db5d5014203d40607bbc8",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 168,
+      "round_commit": "a7645d2ddd231e5b218898eec74713b5f2971f24",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": false,
+        "severity": "major",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": false,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "blast-radius",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 206,
+      "round_commit": "b419887a3ec457364ddcc51b823e0cc138b06ab0",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "blast-radius",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 203,
+      "round_commit": "f424b0d9c9c9a65ab04554896b64678146dd2095",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 66,
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-695",
+      "pr": 695,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": null,
+      "round_commit": "4a7f707c050d9bdedf823a75c0425105236a68f6",
+      "review_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 373,
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 71,
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 199,
+      "round_commit": "b820c4086d1849267181d95c9f3f40510150d082",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 168,
+      "round_commit": "d71fc7afe512916774a1b690d585141ea5d1387d",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 71,
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 71,
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/cli/src/commands/login.ts",
+      "line": 78,
+      "round_commit": "90e3464d40b45c395d2e145ea02c4c37182b39e8",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "blast-radius",
+      "file": "packages/cli/src/commands/slides.ts",
+      "line": 40,
+      "round_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-770",
+      "pr": 770,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/cli/src/docs/image-fetcher.ts",
+      "line": 84,
+      "round_commit": "02b9dd488b7095b29cd1ddc826f75fdf394075a4",
+      "review_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-770",
+      "pr": 770,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/cli/src/docs/image-fetcher.ts",
+      "line": 243,
+      "round_commit": "02b9dd488b7095b29cd1ddc826f75fdf394075a4",
+      "review_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-770",
+      "pr": 770,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/cli/src/docs/image-fetcher.ts",
+      "line": null,
+      "round_commit": "f13d70f8d39a8940a0d9dba534e43010bdd21b3b",
+      "review_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/cli/src/output/formatter.ts",
+      "line": 101,
+      "round_commit": "b419887a3ec457364ddcc51b823e0cc138b06ab0",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "packages/cli/src/output/formatter.ts",
+      "line": null,
+      "round_commit": "bd223299740c9529b4b21643500245946e123152",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "nit",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-695",
+      "pr": 695,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "packages/cli/src/schema/registry.ts",
+      "line": 556,
+      "round_commit": "b4511d12183b4f7f96f869ccea495074e6a459bd",
+      "review_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-786",
+      "pr": 786,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/cli/test/login-callback.test.ts",
+      "line": null,
+      "round_commit": "b419887a3ec457364ddcc51b823e0cc138b06ab0",
+      "review_commit": "262d23d2ae4b56527ef67747ddf1be675bac6e52",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-863",
+      "pr": 863,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/cli/test/login-callback.test.ts",
+      "line": null,
+      "round_commit": "f12f62d09e64636c1e5a4c6d83bd4b150f914cfe",
+      "review_commit": "6701de04e40d1e9ceff5f65b6088c76bc7ba6727",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-694",
+      "pr": 694,
+      "pr_state": "merged",
+      "lens": "test-adequacy",
+      "file": "packages/cli/test/output.test.ts",
+      "line": 303,
+      "round_commit": "c110f93eac118b3f0eea12ec4d4ce7ea23228263",
+      "review_commit": "40190878c39b0011efb6ab91d664e1cf489dfff8",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "line": null,
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "test-adequacy",
+      "file": "packages/docs/src/export/docx-style-map.ts",
+      "line": null,
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-770",
+      "pr": 770,
+      "pr_state": "draft",
+      "lens": "blast-radius",
+      "file": "packages/docs/src/export/pdf-image-painter.ts",
+      "line": 57,
+      "round_commit": "02b9dd488b7095b29cd1ddc826f75fdf394075a4",
+      "review_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": false,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/docs/src/model/color.ts",
+      "line": null,
+      "round_commit": "eb773207645ad1596d1e1a97da5cabf9ac8259be",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "security",
+      "file": "packages/docs/src/model/color.ts",
+      "line": 59,
+      "round_commit": "d218d7fe7b47cd5236c57daf3a66d3da62e5b09d",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-862",
+      "pr": 862,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/docs/src/model/document.ts",
+      "line": null,
+      "round_commit": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5",
+      "review_commit": "6e588728321eeec883b2e58554f63875f7f54838",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-862",
+      "pr": 862,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "packages/docs/src/model/document.ts",
+      "line": 297,
+      "round_commit": "6e588728321eeec883b2e58554f63875f7f54838",
+      "review_commit": "6e588728321eeec883b2e58554f63875f7f54838",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-862",
+      "pr": 862,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/docs/src/model/types.ts",
+      "line": null,
+      "round_commit": "b082e94f35ee88229863fac797711aa4adbc26ef",
+      "review_commit": "6e588728321eeec883b2e58554f63875f7f54838",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-862",
+      "pr": 862,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/docs/src/store/block-helpers.ts",
+      "line": 260,
+      "round_commit": "d31bae670b2b56179659c72f412374488c1feace",
+      "review_commit": "6e588728321eeec883b2e58554f63875f7f54838",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-862",
+      "pr": 862,
+      "pr_state": "draft",
+      "lens": "security",
+      "file": "packages/docs/src/view/clipboard.ts",
+      "line": 40,
+      "round_commit": "1535d43766f5bd85afd9a0f0e6addfc65fb867e5",
+      "review_commit": "6e588728321eeec883b2e58554f63875f7f54838",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-757",
+      "pr": 757,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "packages/docs/src/view/text-box-editor.ts",
+      "line": null,
+      "round_commit": "675c5bfed334cc810e3d51b4f39083bc27f97660",
+      "review_commit": "cd773b7df094ab9e1ab6aa807b2b8fba68e52437",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-862",
+      "pr": 862,
+      "pr_state": "draft",
+      "lens": "blast-radius",
+      "file": "packages/docs/src/view/text-editor.ts",
+      "line": 3575,
+      "round_commit": "eb05935cf978355b2cd661e30a839dd4139c496b",
+      "review_commit": "6e588728321eeec883b2e58554f63875f7f54838",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "low"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "low"
+      }
+    },
+    {
+      "item_id": "pr-876",
+      "pr": 876,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/docs/test/model/document.test.ts",
+      "line": 345,
+      "round_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4",
+      "review_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4",
+      "opus": {
+        "is_real": true,
+        "severity": "nit",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-770",
+      "pr": 770,
+      "pr_state": "draft",
+      "lens": "blast-radius",
+      "file": "packages/frontend/scripts/verify-visual-browser.mjs",
+      "line": 384,
+      "round_commit": "e6831785c5c70d3e7b90992dd33cc674ec8bb7b6",
+      "review_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-770",
+      "pr": 770,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "packages/frontend/scripts/verify-visual-browser.mjs",
+      "line": null,
+      "round_commit": "e6831785c5c70d3e7b90992dd33cc674ec8bb7b6",
+      "review_commit": "ad554f880f183fbefe1dad5e37b444f0702e71ae",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-737",
+      "pr": 737,
+      "pr_state": "merged",
+      "lens": "test-adequacy",
+      "file": "packages/frontend/src/app/analytics/document-analytics.tsx",
+      "line": null,
+      "round_commit": "b40dad7c37e4ae89f957280bf3f78027117c255b",
+      "review_commit": "b40dad7c37e4ae89f957280bf3f78027117c255b",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-899",
+      "pr": 899,
+      "pr_state": "draft",
+      "lens": "design-fit",
+      "file": "packages/frontend/src/app/board/is-editable-target.ts",
+      "line": null,
+      "round_commit": "4d9a1d276a23b5255cbb85852b52e698f0504894",
+      "review_commit": "0051ae44621994465f1cf34d8aa3b9c743943325",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-867",
+      "pr": 867,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/frontend/src/app/docs/docs-table-context-menu.tsx",
+      "line": 230,
+      "round_commit": "3e0715e5b13acdc8a4dd9a4fc6531c458028742a",
+      "review_commit": "3e0715e5b13acdc8a4dd9a4fc6531c458028742a",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "low"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "design-fit",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "line": 206,
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "blast-radius",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "line": 206,
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "blast-radius",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "line": 224,
+      "round_commit": "b31b4f7edc15aa8676ea537bee49462ffa066648",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-876",
+      "pr": 876,
+      "pr_state": "draft",
+      "lens": "blast-radius",
+      "file": "packages/frontend/src/app/docs/yorkie-doc-store.ts",
+      "line": 144,
+      "round_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4",
+      "review_commit": "16e1c4ab05eae90dfa5adfb5762982d220a5e1c4",
+      "opus": {
+        "is_real": false,
+        "severity": "major",
+        "confidence": "low"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": false,
+        "severity": "major",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-809",
+      "pr": 809,
+      "pr_state": "merged",
+      "lens": "test-adequacy",
+      "file": "packages/frontend/src/app/documents/document-list.tsx",
+      "line": 240,
+      "round_commit": "8d84b94adcb204157634a895f33e3166dfd78a59",
+      "review_commit": "3fce337f938d316e075ecadeed3d2a8313cb9c3f",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-695",
+      "pr": 695,
+      "pr_state": "merged",
+      "lens": "test-adequacy",
+      "file": "packages/frontend/src/components/login-form.tsx",
+      "line": null,
+      "round_commit": "4e0fb74be4cb7d1d729939203ec89bbb3afac5e7",
+      "review_commit": "3a6f5859fe0ea4218e1b18c264ca0660bb9c4ab9",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "already-opus",
+      "fable": null
+    },
+    {
+      "item_id": "pr-809",
+      "pr": 809,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/frontend/src/components/theme-provider.tsx",
+      "line": null,
+      "round_commit": "8d84b94adcb204157634a895f33e3166dfd78a59",
+      "review_commit": "3fce337f938d316e075ecadeed3d2a8313cb9c3f",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-809",
+      "pr": 809,
+      "pr_state": "merged",
+      "lens": "blast-radius",
+      "file": "packages/frontend/src/components/theme-provider.tsx",
+      "line": 41,
+      "round_commit": "1ce04b838dcd89418ed85fcebc5b5e30ef810702",
+      "review_commit": "3fce337f938d316e075ecadeed3d2a8313cb9c3f",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-899",
+      "pr": 899,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/frontend/src/components/toolbar-focus-release.ts",
+      "line": null,
+      "round_commit": "0051ae44621994465f1cf34d8aa3b9c743943325",
+      "review_commit": "0051ae44621994465f1cf34d8aa3b9c743943325",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-809",
+      "pr": 809,
+      "pr_state": "merged",
+      "lens": "correctness",
+      "file": "packages/frontend/src/lib/date-format-preference.ts",
+      "line": null,
+      "round_commit": "3fce337f938d316e075ecadeed3d2a8313cb9c3f",
+      "review_commit": "3fce337f938d316e075ecadeed3d2a8313cb9c3f",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "test-adequacy",
+      "file": "packages/frontend/tests/components/text-formatting/color-reset.test.ts",
+      "line": null,
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-873",
+      "pr": 873,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "line": 4219,
+      "round_commit": "cf23856af185d51eb0c8037274adf2a9ab046a69",
+      "review_commit": "c4594958de4eb78a08197821117893e314078900",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-873",
+      "pr": 873,
+      "pr_state": "draft",
+      "lens": "correctness",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "line": 1978,
+      "round_commit": "649324ab3bee55abdb1a15155a4692940bb19c5f",
+      "review_commit": "c4594958de4eb78a08197821117893e314078900",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-873",
+      "pr": 873,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/sheets/src/model/worksheet/style-mutation.ts",
+      "line": null,
+      "round_commit": "cf23856af185d51eb0c8037274adf2a9ab046a69",
+      "review_commit": "c4594958de4eb78a08197821117893e314078900",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    },
+    {
+      "item_id": "pr-873",
+      "pr": 873,
+      "pr_state": "draft",
+      "lens": "test-adequacy",
+      "file": "packages/sheets/test/sheet/decimals.test.ts",
+      "line": null,
+      "round_commit": "649324ab3bee55abdb1a15155a4692940bb19c5f",
+      "review_commit": "c4594958de4eb78a08197821117893e314078900",
+      "opus": {
+        "is_real": true,
+        "severity": "nit",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "blast-radius",
+      "file": "packages/slides/src/export/pdf.ts",
+      "line": 227,
+      "round_commit": "b8a98dddf3786ce34e5b035f21ff0be05f4bedaf",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "security",
+      "file": "packages/slides/src/export/pptx/color.ts",
+      "line": null,
+      "round_commit": "84b3fed08f7ba15c8da732a77814366b7f2632a5",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "blast-radius",
+      "file": "packages/slides/src/export/pptx/shape.ts",
+      "line": 122,
+      "round_commit": "82b297659605b67a2395ccb87a070b7cf52739f2",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "security",
+      "file": "packages/slides/src/export/pptx/shape.ts",
+      "line": 94,
+      "round_commit": "649e2ddf8ae38c72a6db97720e193bec851393a7",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "paired-run-A",
+      "fable": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high"
+      }
+    },
+    {
+      "item_id": "pr-810",
+      "pr": 810,
+      "pr_state": "merged",
+      "lens": "test-adequacy",
+      "file": "packages/slides/src/export/pptx/theme.ts",
+      "line": null,
+      "round_commit": "f55f0919d8ea0f3bf4293008a2f3f7d7b34384d8",
+      "review_commit": "541b7ff395a9b320495370712b2427bbe174bf58",
+      "opus": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      },
+      "opus_source": "uniform-pass",
+      "fable": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium"
+      }
+    }
+  ]
+}
