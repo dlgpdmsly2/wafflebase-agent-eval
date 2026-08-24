@@ -1,0 +1,6321 @@
+{
+  "schema_version": 1,
+  "scorer_id": "segmentation-v1",
+  "scope": "cross-run",
+  "population": "reported",
+  "gate_state": "on",
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "reviewer": {
+    "config_hash": "sha256:1c7853debf4edf92646d2299b0c924cb48cca89d6bb68b81648c57508a762f01",
+    "panel_sha": "46da673dd46dd5576626ee6d1b4e2e40728345e0"
+  },
+  "min_n": 5,
+  "min_n_source": "spec §4.1 default",
+  "segment_grammar": "metric=<metric id>/<axis id>=<bucket>/arm=<arm>",
+  "diff_size_scale": "scopeSize (S ≤50 · M ≤300 · L >300 changed lines) — metrics.mjs, and the value the corpus manifest froze into meta.scope",
+  "interval_method": "wilson-score, z=1.959963984540054 (95%)",
+  "axes": [
+    {
+      "id": "severity",
+      "unit": "finding",
+      "arms": [
+        "panel",
+        "coderabbit"
+      ],
+      "status": "computed",
+      "reason": null,
+      "scale": null,
+      "source": "the finding record's own `severity`, after the arm boundary translated CodeRabbit's `trivial` to `nit`",
+      "note": "CodeRabbit's largest tier is `trivial`, which is not on our scale; `adapters/coderabbit.mjs` translates it and this axis reads the translated value. Re-translating here would apply the translation twice"
+    },
+    {
+      "id": "file_class",
+      "unit": "finding",
+      "arms": [
+        "panel",
+        "coderabbit"
+      ],
+      "status": "computed",
+      "reason": null,
+      "scale": null,
+      "source": "`classifyFile` (`review-panel.mjs`) over the record's cited path",
+      "note": "FIVE classes, which is what `FILE_CLASSES` holds. §4's six (frontend/backend/docs/config/tests/harness) never existed in the code it cited"
+    },
+    {
+      "id": "diff_size:scopeSize",
+      "unit": "item",
+      "arms": [
+        "panel",
+        "coderabbit"
+      ],
+      "status": "computed",
+      "reason": null,
+      "scale": "scopeSize (S ≤50 · M ≤300 · L >300 changed lines) — metrics.mjs, and the value the corpus manifest froze into meta.scope",
+      "source": "`scopeSize(meta.additions, meta.deletions)`, cross-checked against the `meta.scope` the manifest froze beside them",
+      "note": "the OTHER scale §4 names — five buckets, XS…XL — is implemented nowhere in scripts/, so it is not offered here rather than being invented"
+    },
+    {
+      "id": "provenance",
+      "unit": "item",
+      "arms": [
+        "panel",
+        "coderabbit"
+      ],
+      "status": "computed",
+      "reason": null,
+      "scale": null,
+      "source": "`meta.provenance`, written by `classifyProvenance` at extraction",
+      "note": "measured: only 3 autonomous pull requests exist in the 106-PR candidate pool, so a difference along this axis cannot be ATTRIBUTED to authorship even where n clears the threshold. The cells are reported; the attribution is not available"
+    },
+    {
+      "id": "novelty",
+      "unit": "finding",
+      "arms": [
+        "panel"
+      ],
+      "status": "computed",
+      "reason": null,
+      "scale": null,
+      "source": "the origin the replay's own novelty gate FROZE onto the record (`panel.novelty.origin`)",
+      "note": "read off the record, never recomputed: `noveltyOf` is async and reads git, so a scorer calling it would answer a question about today's tree instead of the reviewed one. CodeRabbit records have no counterpart, so this axis is one-armed"
+    },
+    {
+      "id": "coderabbit_category",
+      "unit": "finding",
+      "arms": [
+        "coderabbit"
+      ],
+      "status": "computed",
+      "reason": null,
+      "scale": null,
+      "source": "`coderabbit.category` — CodeRabbit's own CHILL vocabulary, verbatim",
+      "note": "THEIR taxonomy, not ours, and it is discovered from the data rather than declared because we do not own it. Never a defect-type axis: it is a pre-run proxy for one, and conflating the two would report their routing as our ground truth"
+    },
+    {
+      "id": "window",
+      "unit": "finding",
+      "arms": [
+        "coderabbit"
+      ],
+      "status": "computed",
+      "reason": null,
+      "scale": null,
+      "source": "`coderabbit.window` — which snapshot of the pull request the finding is about",
+      "note": "not an insight axis but a comparability one, and it is here because `assertComparableWindow` names this scorer as the remedy: a finding about code our arm never reviewed may be SEGMENTED but never pooled. Our arm has no window field, so it is one-armed by construction rather than by choice"
+    },
+    {
+      "id": "defect_type",
+      "unit": "finding",
+      "arms": [],
+      "status": "not-computed",
+      "reason": "defect type is assigned at adjudication and no adjudicated labels exist, so there is nothing to cut by. Pre-filling it from a lens id would report our own routing as a property of the defect",
+      "scale": null,
+      "source": null,
+      "note": null
+    }
+  ],
+  "metrics": [
+    {
+      "id": "nit_ratio",
+      "kind": "proportion",
+      "currency": "finding",
+      "spec": "§3.1 — share of findings that are `nit` or `minor`"
+    },
+    {
+      "id": "localization_rate",
+      "kind": "proportion",
+      "currency": "finding",
+      "spec": "§3.1 — share of findings citing a file and line that resolves against the frozen diff"
+    },
+    {
+      "id": "in_diff_rate",
+      "kind": "proportion",
+      "currency": "finding",
+      "spec": "§3.1 — scope discipline: share of findings anchored inside a changed region"
+    },
+    {
+      "id": "findings_per_pr",
+      "kind": "median-over-items",
+      "currency": "item",
+      "spec": "§3.1 — findings per pull request"
+    },
+    {
+      "id": "findings_per_100_lines",
+      "kind": "median-over-items",
+      "currency": "item",
+      "spec": "§3.1 — findings per 100 diff lines, which is severely size-confounded and must be read per size bucket rather than pooled"
+    }
+  ],
+  "pairs_not_computed": [
+    {
+      "metric": "nit_ratio",
+      "axis": "severity",
+      "reason": "the nit ratio is a function of severity, so `severity=nit` reports 1.000 and `severity=major` reports 0.000 by construction"
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "severity",
+      "reason": "findings_per_pr is counted in PRs and severity cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "severity",
+      "reason": "findings_per_100_lines is counted in PRs with a known diff size and severity cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "file_class",
+      "reason": "findings_per_pr is counted in PRs and file_class cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "file_class",
+      "reason": "findings_per_100_lines is counted in PRs with a known diff size and file_class cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "novelty",
+      "reason": "the novelty annotation is stamped ONLY on critical/major findings (`annotateFindings` returns non-blockers untouched), so every annotated bucket has a nit ratio of 0 and `not-annotated` has 1 — measured 0.000 · 0.000 · 1.000 on the pilot. The novelty axis is severity-confounded by construction, which is a fact about the annotation and not about the code's age"
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "novelty",
+      "reason": "findings_per_pr is counted in PRs and novelty cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "novelty",
+      "reason": "findings_per_100_lines is counted in PRs with a known diff size and novelty cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "coderabbit_category",
+      "reason": "findings_per_pr is counted in PRs and coderabbit_category cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "coderabbit_category",
+      "reason": "findings_per_100_lines is counted in PRs with a known diff size and coderabbit_category cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "window",
+      "reason": "findings_per_pr is counted in PRs and window cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "window",
+      "reason": "findings_per_100_lines is counted in PRs with a known diff size and window cuts findings, so every bucket would share one denominator — that is a numerator filter, not a segment (§4.1)"
+    }
+  ],
+  "census": [
+    {
+      "axis": "severity",
+      "arm": "panel",
+      "status": "computed",
+      "buckets_declared": [
+        "critical",
+        "major",
+        "minor",
+        "nit"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "critical": 4,
+        "major": 100,
+        "minor": 258,
+        "nit": 66
+      },
+      "observed_unit": "findings",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "severity",
+      "arm": "coderabbit",
+      "status": "computed",
+      "buckets_declared": [
+        "critical",
+        "major",
+        "minor",
+        "nit"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "major": 3,
+        "minor": 13,
+        "nit": 14
+      },
+      "observed_unit": "findings",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "file_class",
+      "arm": "panel",
+      "status": "computed",
+      "buckets_declared": [
+        "code",
+        "code-adjacent",
+        "policy",
+        "design-spec",
+        "prose"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "code": 316,
+        "code-adjacent": 31,
+        "design-spec": 19,
+        "no-file": 2,
+        "policy": 30,
+        "prose": 30
+      },
+      "observed_unit": "findings",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "file_class",
+      "arm": "coderabbit",
+      "status": "computed",
+      "buckets_declared": [
+        "code",
+        "code-adjacent",
+        "policy",
+        "design-spec",
+        "prose"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "code": 12,
+        "code-adjacent": 2,
+        "design-spec": 3,
+        "policy": 1,
+        "prose": 12
+      },
+      "observed_unit": "findings",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "diff_size:scopeSize",
+      "arm": "panel",
+      "status": "computed",
+      "buckets_declared": [
+        "S",
+        "M",
+        "L"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "L": 4,
+        "M": 2,
+        "S": 1
+      },
+      "observed_unit": "items",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "diff_size:scopeSize",
+      "arm": "coderabbit",
+      "status": "computed",
+      "buckets_declared": [
+        "S",
+        "M",
+        "L"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "L": 4,
+        "M": 2,
+        "S": 1
+      },
+      "observed_unit": "items",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "provenance",
+      "arm": "panel",
+      "status": "computed",
+      "buckets_declared": [
+        "human",
+        "local-cli-agent",
+        "autonomous"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "autonomous": 2,
+        "human": 4,
+        "local-cli-agent": 1
+      },
+      "observed_unit": "items",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "provenance",
+      "arm": "coderabbit",
+      "status": "computed",
+      "buckets_declared": [
+        "human",
+        "local-cli-agent",
+        "autonomous"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "autonomous": 2,
+        "human": 4,
+        "local-cli-agent": 1
+      },
+      "observed_unit": "items",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "novelty",
+      "arm": "panel",
+      "status": "computed",
+      "buckets_declared": [
+        "introduced",
+        "relocated",
+        "pre-existing",
+        "unknown",
+        "not-annotated"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "introduced": 62,
+        "not-annotated": 324,
+        "pre-existing": 37,
+        "relocated": 5
+      },
+      "observed_unit": "findings",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "novelty",
+      "arm": "coderabbit",
+      "status": "not-applicable",
+      "reason": "novelty has no counterpart in the coderabbit arm — the origin the replay's own novelty gate FROZE onto the record (`panel.novelty.origin`)"
+    },
+    {
+      "axis": "coderabbit_category",
+      "arm": "panel",
+      "status": "not-applicable",
+      "reason": "coderabbit_category has no counterpart in the panel arm — `coderabbit.category` — CodeRabbit's own CHILL vocabulary, verbatim"
+    },
+    {
+      "axis": "coderabbit_category",
+      "arm": "coderabbit",
+      "status": "computed",
+      "buckets_declared": [],
+      "buckets_from": "data",
+      "buckets_observed": {
+        "data integrity & integration": 4,
+        "functional correctness": 7,
+        "maintainability & code quality": 16,
+        "performance & scalability": 1,
+        "security & privacy": 1,
+        "stability & availability": 1
+      },
+      "observed_unit": "findings",
+      "buckets_discovered": [
+        "data integrity & integration",
+        "functional correctness",
+        "maintainability & code quality",
+        "performance & scalability",
+        "security & privacy",
+        "stability & availability"
+      ],
+      "buckets_outside_vocabulary": []
+    },
+    {
+      "axis": "window",
+      "arm": "panel",
+      "status": "not-applicable",
+      "reason": "window has no counterpart in the panel arm — `coderabbit.window` — which snapshot of the pull request the finding is about"
+    },
+    {
+      "axis": "window",
+      "arm": "coderabbit",
+      "status": "computed",
+      "buckets_declared": [
+        "in-window",
+        "after-window",
+        "unplaceable",
+        "no-window"
+      ],
+      "buckets_from": "vocabulary",
+      "buckets_observed": {
+        "in-window": 30
+      },
+      "observed_unit": "findings",
+      "buckets_discovered": [],
+      "buckets_outside_vocabulary": []
+    }
+  ],
+  "grid": {
+    "cells": 149,
+    "reported": 76,
+    "suppressed": 73,
+    "suppressed_share": 0.4899328859060403
+  },
+  "comparisons": [
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 4
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 4
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 2
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 2
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 1
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 2
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 2
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "human",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 4
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 4
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 1
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 4
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 4
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 2
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 2
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 1
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 2
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 2
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "human",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 4
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 4
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 1
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 85,
+          "value": 0.788235294117647
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 24,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 45,
+          "value": 0.7111111111111111
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 5,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 0.3333333333333333
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "code",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 109,
+          "value": 0.7706422018348624
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 12,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 10,
+          "value": 0.9
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 2
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 5,
+          "value": 0.4
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 3
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 12,
+          "value": 0.3333333333333333
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 0.7777777777777778
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 12,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 34,
+          "value": 0.9705882352941176
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 11,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "human",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 99,
+          "value": 0.6666666666666666
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 18,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 0.3333333333333333
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "critical",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 0
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 0
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "major",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 36,
+          "value": 0.6944444444444444
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 3
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "minor",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 89,
+          "value": 0.7078651685393258
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 13,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "nit",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 30,
+          "value": 0.8333333333333334
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 14,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 85,
+          "value": 0.8
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 24,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 47,
+          "value": 0.8085106382978723
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 5,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 1
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "code",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 109,
+          "value": 0.8165137614678899
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 12,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 10,
+          "value": 0.9
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 2
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 5,
+          "value": 0.4
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 3
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 12,
+          "value": 1
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 0.7777777777777778
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 12,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 34,
+          "value": 0.9705882352941176
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 11,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "human",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 89,
+          "value": 0.7191011235955056
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 18,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 1
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "critical",
+      "arms": {
+        "panel": {
+          "reported": false,
+          "n": 0
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 0
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "major",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 32,
+          "value": 0.78125
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 3
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "minor",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 89,
+          "value": 0.7865168539325843
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 13,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "nit",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 17,
+          "value": 0.8823529411764706
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 14,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 85,
+          "value": 0.7411764705882353
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 24,
+          "value": 0.9166666666666666
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 47,
+          "value": 0.8297872340425532
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 5,
+          "value": 0.8
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 0.5555555555555556
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "code",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 98,
+          "value": 0.7551020408163265
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 12,
+          "value": 0.9166666666666666
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 8,
+          "value": 0.875
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 2
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 7,
+          "value": 0.7142857142857143
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 3
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 0.5555555555555556
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 0.8888888888888888
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 12,
+          "value": 0.8333333333333334
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 34,
+          "value": 0.7647058823529411
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 11,
+          "value": 1
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "human",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 99,
+          "value": 0.7575757575757576
+        },
+        "coderabbit": {
+          "reported": true,
+          "n": 18,
+          "value": 0.8333333333333334
+        }
+      },
+      "comparable": true
+    },
+    {
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arms": {
+        "panel": {
+          "reported": true,
+          "n": 9,
+          "value": 0.5555555555555556
+        },
+        "coderabbit": {
+          "reported": false,
+          "n": 1
+        }
+      },
+      "comparable": false
+    }
+  ],
+  "completeness": {
+    "verdict": "complete",
+    "reasons": [],
+    "corpus_item_count": 7
+  },
+  "cells": [
+    {
+      "segment": "metric=localization_rate/severity=critical/arm=panel",
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "critical",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 3
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "at least one replicate found none here (per replicate: 0, 3, 1) — a zero measured once is not a structural zero"
+    },
+    {
+      "segment": "metric=in_diff_rate/severity=critical/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "critical",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 3
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "at least one replicate found none here (per replicate: 0, 3, 1) — a zero measured once is not a structural zero"
+    },
+    {
+      "segment": "metric=localization_rate/severity=major/arm=panel",
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "major",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 36
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 32
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 32
+        }
+      ],
+      "suppressed": false,
+      "n": 32,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 32,
+      "value": 0.78125,
+      "k": 25,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7777777777777778
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.78125
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.875
+        }
+      ],
+      "interval": {
+        "low": 0.6124500635075647,
+        "high": 0.8897616374739581,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/severity=major/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "major",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 36
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 32
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 32
+        }
+      ],
+      "suppressed": false,
+      "n": 36,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 32,
+      "value": 0.6944444444444444,
+      "k": 25,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.6944444444444444
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.65625
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.78125
+        }
+      ],
+      "interval": {
+        "low": 0.5314372714948966,
+        "high": 0.8199554840517008,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/severity=minor/arm=panel",
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "minor",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 89
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 93
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 76
+        }
+      ],
+      "suppressed": false,
+      "n": 89,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 76,
+      "value": 0.7865168539325843,
+      "k": 70,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7865168539325843
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8387096774193549
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7631578947368421
+        }
+      ],
+      "interval": {
+        "low": 0.690471517751574,
+        "high": 0.8588520349782139,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/severity=minor/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "minor",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 89
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 93
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 76
+        }
+      ],
+      "suppressed": false,
+      "n": 89,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 76,
+      "value": 0.7078651685393258,
+      "k": 63,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7078651685393258
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7311827956989247
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.6842105263157895
+        }
+      ],
+      "interval": {
+        "low": 0.6063649411588934,
+        "high": 0.7921639108215408,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/severity=nit/arm=panel",
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "nit",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 17
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 19
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 30
+        }
+      ],
+      "suppressed": false,
+      "n": 17,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 17,
+      "value": 0.8823529411764706,
+      "k": 15,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.8823529411764706
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8947368421052632
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8666666666666667
+        }
+      ],
+      "interval": {
+        "low": 0.6566364940511413,
+        "high": 0.9671202262362073,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/severity=nit/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "nit",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 17
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 19
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 30
+        }
+      ],
+      "suppressed": false,
+      "n": 30,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 17,
+      "value": 0.8333333333333334,
+      "k": 25,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.8235294117647058
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8947368421052632
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8333333333333334
+        }
+      ],
+      "interval": {
+        "low": 0.6643564949358398,
+        "high": 0.9266345762815145,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/severity=critical/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "critical",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=in_diff_rate/severity=critical/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "critical",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=localization_rate/severity=major/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "major",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 3
+        }
+      ],
+      "suppressed": true,
+      "n": 3,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/severity=major/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "major",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 3
+        }
+      ],
+      "suppressed": true,
+      "n": 3,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/severity=minor/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "minor",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 13
+        }
+      ],
+      "suppressed": false,
+      "n": 13,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 13,
+      "value": 1,
+      "k": 13,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7719046276458016,
+        "high": 0.9999999999999999,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/severity=minor/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "minor",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 13
+        }
+      ],
+      "suppressed": false,
+      "n": 13,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 13,
+      "value": 1,
+      "k": 13,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7719046276458016,
+        "high": 0.9999999999999999,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/severity=nit/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "severity",
+      "bucket": "nit",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 14
+        }
+      ],
+      "suppressed": false,
+      "n": 14,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 14,
+      "value": 1,
+      "k": 14,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7846891972623643,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/severity=nit/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "severity",
+      "bucket": "nit",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 14
+        }
+      ],
+      "suppressed": false,
+      "n": 14,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 14,
+      "value": 1,
+      "k": 14,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7846891972623643,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=code/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "code",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 109
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 109
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 98
+        }
+      ],
+      "suppressed": false,
+      "n": 98,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 98,
+      "value": 0.7551020408163265,
+      "k": 74,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7339449541284404
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7706422018348624
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7551020408163265
+        }
+      ],
+      "interval": {
+        "low": 0.661408890322578,
+        "high": 0.8295502983908501,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/file_class=code/arm=panel",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "code",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 109
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 109
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 98
+        }
+      ],
+      "suppressed": false,
+      "n": 109,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 98,
+      "value": 0.8165137614678899,
+      "k": 89,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.8165137614678899
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8256880733944955
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8061224489795918
+        }
+      ],
+      "interval": {
+        "low": 0.7335141271930767,
+        "high": 0.877963256395534,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=code/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "code",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 109
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 109
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 98
+        }
+      ],
+      "suppressed": false,
+      "n": 109,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 98,
+      "value": 0.7706422018348624,
+      "k": 84,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7706422018348624
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7706422018348624
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7551020408163265
+        }
+      ],
+      "interval": {
+        "low": 0.6833129325107635,
+        "high": 0.8395445404128313,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=code-adjacent/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 8
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 10
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 13
+        }
+      ],
+      "suppressed": false,
+      "n": 8,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 8,
+      "value": 0.875,
+      "k": 7,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.875
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.9
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8461538461538461
+        }
+      ],
+      "interval": {
+        "low": 0.5291118177871464,
+        "high": 0.9775825085499433,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/file_class=code-adjacent/arm=panel",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 8
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 10
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 13
+        }
+      ],
+      "suppressed": false,
+      "n": 10,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 8,
+      "value": 0.9,
+      "k": 9,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.875
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.9
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.9230769230769231
+        }
+      ],
+      "interval": {
+        "low": 0.5958499732047615,
+        "high": 0.9821237869049271,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=code-adjacent/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 8
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 10
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 13
+        }
+      ],
+      "suppressed": false,
+      "n": 10,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 8,
+      "value": 0.9,
+      "k": 9,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.875
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.9
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.9230769230769231
+        }
+      ],
+      "interval": {
+        "low": 0.5958499732047615,
+        "high": 0.9821237869049271,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=policy/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 12
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 0.5555555555555556,
+      "k": 5,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.5555555555555556
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.5
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.5555555555555556
+        }
+      ],
+      "interval": {
+        "low": 0.2666512934954931,
+        "high": 0.8112214789023354,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/file_class=policy/arm=panel",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 12
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 12,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 1,
+      "k": 12,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7575059933447592,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=policy/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 12
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 12,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 0.3333333333333333,
+      "k": 4,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.3333333333333333
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.3333333333333333
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.4444444444444444
+        }
+      ],
+      "interval": {
+        "low": 0.13812009109121315,
+        "high": 0.6093779111272004,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=design-spec/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 7
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 7
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 5
+        }
+      ],
+      "suppressed": false,
+      "n": 7,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 5,
+      "value": 0.7142857142857143,
+      "k": 5,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7142857142857143
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7142857142857143
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8
+        }
+      ],
+      "interval": {
+        "low": 0.35893445183261935,
+        "high": 0.9177810759959433,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/file_class=design-spec/arm=panel",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 7
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 7
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 5
+        }
+      ],
+      "suppressed": false,
+      "n": 5,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 5,
+      "value": 0.4,
+      "k": 2,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.2857142857142857
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.42857142857142855
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.4
+        }
+      ],
+      "interval": {
+        "low": 0.11762077423264783,
+        "high": 0.769275718723987,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=design-spec/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 7
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 7
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 5
+        }
+      ],
+      "suppressed": false,
+      "n": 5,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 5,
+      "value": 0.4,
+      "k": 2,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.2857142857142857
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.42857142857142855
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.4
+        }
+      ],
+      "interval": {
+        "low": 0.11762077423264783,
+        "high": 0.769275718723987,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=prose/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 8
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 13
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 8,
+      "value": 0.8888888888888888,
+      "k": 8,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8888888888888888
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8461538461538461
+        }
+      ],
+      "interval": {
+        "low": 0.565000294423344,
+        "high": 0.980109112361455,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/file_class=prose/arm=panel",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 8
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 13
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 8,
+      "value": 0.7777777777777778,
+      "k": 7,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.75
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7777777777777778
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8461538461538461
+        }
+      ],
+      "interval": {
+        "low": 0.4525889691069889,
+        "high": 0.9367748928821533,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=prose/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 8
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 13
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 8,
+      "value": 0.7777777777777778,
+      "k": 7,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.75
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7777777777777778
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8461538461538461
+        }
+      ],
+      "interval": {
+        "low": 0.4525889691069889,
+        "high": 0.9367748928821533,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=no-file/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "no-file",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "at least one replicate found none here (per replicate: 1, 0, 1) — a zero measured once is not a structural zero"
+    },
+    {
+      "segment": "metric=localization_rate/file_class=no-file/arm=panel",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "no-file",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "at least one replicate found none here (per replicate: 1, 0, 1) — a zero measured once is not a structural zero"
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=no-file/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "no-file",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "at least one replicate found none here (per replicate: 1, 0, 1) — a zero measured once is not a structural zero"
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=code/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "code",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 12
+        }
+      ],
+      "suppressed": false,
+      "n": 12,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 12,
+      "value": 0.9166666666666666,
+      "k": 11,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 0.9166666666666666
+        }
+      ],
+      "interval": {
+        "low": 0.646120088858883,
+        "high": 0.9851349055950829,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/file_class=code/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "code",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 12
+        }
+      ],
+      "suppressed": false,
+      "n": 12,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 12,
+      "value": 1,
+      "k": 12,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7575059933447592,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=code/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "code",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 12
+        }
+      ],
+      "suppressed": false,
+      "n": 12,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 12,
+      "value": 1,
+      "k": 12,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7575059933447592,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=code-adjacent/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/file_class=code-adjacent/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=code-adjacent/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "code-adjacent",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=policy/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/file_class=policy/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=policy/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "policy",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=design-spec/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 3
+        }
+      ],
+      "suppressed": true,
+      "n": 3,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/file_class=design-spec/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 3
+        }
+      ],
+      "suppressed": true,
+      "n": 3,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=design-spec/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "design-spec",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 3
+        }
+      ],
+      "suppressed": true,
+      "n": 3,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/file_class=prose/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 12
+        }
+      ],
+      "suppressed": false,
+      "n": 12,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 12,
+      "value": 0.8333333333333334,
+      "k": 10,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 0.8333333333333334
+        }
+      ],
+      "interval": {
+        "low": 0.5519691377470267,
+        "high": 0.9530348578161462,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/file_class=prose/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 12
+        }
+      ],
+      "suppressed": false,
+      "n": 12,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 12,
+      "value": 1,
+      "k": 12,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7575059933447592,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/file_class=prose/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "file_class",
+      "bucket": "prose",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 12
+        }
+      ],
+      "suppressed": false,
+      "n": 12,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 12,
+      "value": 1,
+      "k": 12,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7575059933447592,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/diff_size:scopeSize=S/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 13
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 0.5555555555555556,
+      "k": 5,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.5555555555555556
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.46153846153846156
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.5555555555555556
+        }
+      ],
+      "interval": {
+        "low": 0.2666512934954931,
+        "high": 0.8112214789023354,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/diff_size:scopeSize=S/arm=panel",
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 13
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 1,
+      "k": 9,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.9230769230769231
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7008549515804559,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/diff_size:scopeSize=S/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 13
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 0.3333333333333333,
+      "k": 3,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.3333333333333333
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.3076923076923077
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.4444444444444444
+        }
+      ],
+      "interval": {
+        "low": 0.1205838183869109,
+        "high": 0.6457978644196036,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/diff_size:scopeSize=S/arm=panel",
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/diff_size:scopeSize=S/arm=panel",
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/diff_size:scopeSize=M/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 47
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 38
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 45
+        }
+      ],
+      "suppressed": false,
+      "n": 47,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 38,
+      "value": 0.8297872340425532,
+      "k": 39,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.8297872340425532
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8157894736842105
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8444444444444444
+        }
+      ],
+      "interval": {
+        "low": 0.6986022402737562,
+        "high": 0.9111363612350973,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/diff_size:scopeSize=M/arm=panel",
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 47
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 38
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 45
+        }
+      ],
+      "suppressed": false,
+      "n": 47,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 38,
+      "value": 0.8085106382978723,
+      "k": 38,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.8085106382978723
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8421052631578947
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8
+        }
+      ],
+      "interval": {
+        "low": 0.6745599542033822,
+        "high": 0.8958406730145774,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/diff_size:scopeSize=M/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 47
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 38
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 45
+        }
+      ],
+      "suppressed": false,
+      "n": 45,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 38,
+      "value": 0.7111111111111111,
+      "k": 32,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.723404255319149
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7105263157894737
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7111111111111111
+        }
+      ],
+      "interval": {
+        "low": 0.5663145942523843,
+        "high": 0.8226991751715075,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/diff_size:scopeSize=M/arm=panel",
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 2
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 2
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/diff_size:scopeSize=M/arm=panel",
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 2
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 2
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/diff_size:scopeSize=L/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 86
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 96
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 85
+        }
+      ],
+      "suppressed": false,
+      "n": 85,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 85,
+      "value": 0.7411764705882353,
+      "k": 63,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7209302325581395
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.78125
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7411764705882353
+        }
+      ],
+      "interval": {
+        "low": 0.639077247708533,
+        "high": 0.8224190012752776,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/diff_size:scopeSize=L/arm=panel",
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 86
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 96
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 85
+        }
+      ],
+      "suppressed": false,
+      "n": 85,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 85,
+      "value": 0.8,
+      "k": 68,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7674418604651163
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8020833333333334
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.8
+        }
+      ],
+      "interval": {
+        "low": 0.7028462911516961,
+        "high": 0.8712100185598731,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/diff_size:scopeSize=L/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 86
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 96
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 85
+        }
+      ],
+      "suppressed": false,
+      "n": 85,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 85,
+      "value": 0.788235294117647,
+      "k": 67,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7558139534883721
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7916666666666666
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.788235294117647
+        }
+      ],
+      "interval": {
+        "low": 0.689906657554083,
+        "high": 0.8616376400119344,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/diff_size:scopeSize=L/arm=panel",
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 4
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 4
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/diff_size:scopeSize=L/arm=panel",
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 4
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 4
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/diff_size:scopeSize=S/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/diff_size:scopeSize=S/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/diff_size:scopeSize=S/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_pr/diff_size:scopeSize=S/arm=coderabbit",
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/diff_size:scopeSize=S/arm=coderabbit",
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "S",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/diff_size:scopeSize=M/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 5
+        }
+      ],
+      "suppressed": false,
+      "n": 5,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 5,
+      "value": 0.8,
+      "k": 4,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 0.8
+        }
+      ],
+      "interval": {
+        "low": 0.3755346297625253,
+        "high": 0.9637758913675698,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/diff_size:scopeSize=M/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 5
+        }
+      ],
+      "suppressed": false,
+      "n": 5,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 5,
+      "value": 1,
+      "k": 5,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.5655175352168251,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/diff_size:scopeSize=M/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 5
+        }
+      ],
+      "suppressed": false,
+      "n": 5,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 5,
+      "value": 1,
+      "k": 5,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.5655175352168251,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/diff_size:scopeSize=M/arm=coderabbit",
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/diff_size:scopeSize=M/arm=coderabbit",
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "M",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/diff_size:scopeSize=L/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 24
+        }
+      ],
+      "suppressed": false,
+      "n": 24,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 24,
+      "value": 0.9166666666666666,
+      "k": 22,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 0.9166666666666666
+        }
+      ],
+      "interval": {
+        "low": 0.7415119780678932,
+        "high": 0.9768411847029566,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/diff_size:scopeSize=L/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 24
+        }
+      ],
+      "suppressed": false,
+      "n": 24,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 24,
+      "value": 1,
+      "k": 24,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8620237953250198,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/diff_size:scopeSize=L/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 24
+        }
+      ],
+      "suppressed": false,
+      "n": 24,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 24,
+      "value": 1,
+      "k": 24,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8620237953250198,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/diff_size:scopeSize=L/arm=coderabbit",
+      "metric": "findings_per_pr",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/diff_size:scopeSize=L/arm=coderabbit",
+      "metric": "findings_per_100_lines",
+      "axis": "diff_size:scopeSize",
+      "bucket": "L",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/provenance=human/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 99
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 89
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 94
+        }
+      ],
+      "suppressed": false,
+      "n": 99,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 89,
+      "value": 0.7575757575757576,
+      "k": 75,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7575757575757576
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7528089887640449
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7872340425531915
+        }
+      ],
+      "interval": {
+        "low": 0.6645718449402054,
+        "high": 0.8313371064187927,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/provenance=human/arm=panel",
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 99
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 89
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 94
+        }
+      ],
+      "suppressed": false,
+      "n": 89,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 89,
+      "value": 0.7191011235955056,
+      "k": 64,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7171717171717171
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7191011235955056
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7446808510638298
+        }
+      ],
+      "interval": {
+        "low": 0.6181658471673626,
+        "high": 0.8019051049201222,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/provenance=human/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 99
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 89
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 94
+        }
+      ],
+      "suppressed": false,
+      "n": 99,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 89,
+      "value": 0.6666666666666666,
+      "k": 66,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.6666666666666666
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.6629213483146067
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7021276595744681
+        }
+      ],
+      "interval": {
+        "low": 0.5691204267519376,
+        "high": 0.7517618358921199,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/provenance=human/arm=panel",
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 4
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 4
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/provenance=human/arm=panel",
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 4
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 4
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/provenance=local-cli-agent/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 13
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 0.5555555555555556,
+      "k": 5,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.5555555555555556
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.46153846153846156
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.5555555555555556
+        }
+      ],
+      "interval": {
+        "low": 0.2666512934954931,
+        "high": 0.8112214789023354,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/provenance=local-cli-agent/arm=panel",
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 13
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 1,
+      "k": 9,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.9230769230769231
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7008549515804559,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/provenance=local-cli-agent/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 9
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 13
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 9
+        }
+      ],
+      "suppressed": false,
+      "n": 9,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 9,
+      "value": 0.3333333333333333,
+      "k": 3,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.3333333333333333
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.3076923076923077
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.4444444444444444
+        }
+      ],
+      "interval": {
+        "low": 0.1205838183869109,
+        "high": 0.6457978644196036,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/provenance=local-cli-agent/arm=panel",
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/provenance=local-cli-agent/arm=panel",
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/provenance=autonomous/arm=panel",
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings with a stated severity; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 34
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 45
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 36
+        }
+      ],
+      "suppressed": false,
+      "n": 34,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 34,
+      "value": 0.7647058823529411,
+      "k": 26,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7647058823529411
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8666666666666667
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.75
+        }
+      ],
+      "interval": {
+        "low": 0.6000386207746361,
+        "high": 0.8756301446736042,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/provenance=autonomous/arm=panel",
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 34
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 45
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 36
+        }
+      ],
+      "suppressed": false,
+      "n": 34,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 34,
+      "value": 0.9705882352941176,
+      "k": 33,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.9705882352941176
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.9444444444444444
+        }
+      ],
+      "interval": {
+        "low": 0.8508442670731406,
+        "high": 0.9947890937237309,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/provenance=autonomous/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 34
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 45
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 36
+        }
+      ],
+      "suppressed": false,
+      "n": 34,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 34,
+      "value": 0.9705882352941176,
+      "k": 33,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.9705882352941176
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.9777777777777777
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.9166666666666666
+        }
+      ],
+      "interval": {
+        "low": 0.8508442670731406,
+        "high": 0.9947890937237309,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/provenance=autonomous/arm=panel",
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 2
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 2
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/provenance=autonomous/arm=panel",
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 2
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 2
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/provenance=human/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 18
+        }
+      ],
+      "suppressed": false,
+      "n": 18,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 18,
+      "value": 0.8333333333333334,
+      "k": 15,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 0.8333333333333334
+        }
+      ],
+      "interval": {
+        "low": 0.6077796189608429,
+        "high": 0.9416342319413855,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/provenance=human/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 18
+        }
+      ],
+      "suppressed": false,
+      "n": 18,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 18,
+      "value": 1,
+      "k": 18,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8241207763533425,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/provenance=human/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 18
+        }
+      ],
+      "suppressed": false,
+      "n": 18,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 18,
+      "value": 1,
+      "k": 18,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8241207763533425,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/provenance=human/arm=coderabbit",
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/provenance=human/arm=coderabbit",
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "human",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/provenance=local-cli-agent/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/provenance=local-cli-agent/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/provenance=local-cli-agent/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_pr/provenance=local-cli-agent/arm=coderabbit",
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/provenance=local-cli-agent/arm=coderabbit",
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "local-cli-agent",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/provenance=autonomous/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 11
+        }
+      ],
+      "suppressed": false,
+      "n": 11,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 11,
+      "value": 1,
+      "k": 11,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7411670330319684,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/provenance=autonomous/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 11
+        }
+      ],
+      "suppressed": false,
+      "n": 11,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 11,
+      "value": 1,
+      "k": 11,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7411670330319684,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/provenance=autonomous/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 11
+        }
+      ],
+      "suppressed": false,
+      "n": 11,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 11,
+      "value": 1,
+      "k": 11,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.7411670330319684,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=findings_per_pr/provenance=autonomous/arm=coderabbit",
+      "metric": "findings_per_pr",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=findings_per_100_lines/provenance=autonomous/arm=coderabbit",
+      "metric": "findings_per_100_lines",
+      "axis": "provenance",
+      "bucket": "autonomous",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "PRs with a known diff size, value is the median over PRs; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 2
+        }
+      ],
+      "suppressed": true,
+      "n": 2,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/novelty=introduced/arm=panel",
+      "metric": "localization_rate",
+      "axis": "novelty",
+      "bucket": "introduced",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 22
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 20
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 20
+        }
+      ],
+      "suppressed": false,
+      "n": 20,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 20,
+      "value": 1,
+      "k": 20,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8388748419471806,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/novelty=introduced/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "novelty",
+      "bucket": "introduced",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 22
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 20
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 20
+        }
+      ],
+      "suppressed": false,
+      "n": 20,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 20,
+      "value": 1,
+      "k": 20,
+      "value_from_replicate": "pilot-01__k2",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8388748419471806,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/novelty=relocated/arm=panel",
+      "metric": "localization_rate",
+      "axis": "novelty",
+      "bucket": "relocated",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 3
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/novelty=relocated/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "novelty",
+      "bucket": "relocated",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 1
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 3
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/novelty=pre-existing/arm=panel",
+      "metric": "localization_rate",
+      "axis": "novelty",
+      "bucket": "pre-existing",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 13
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 14
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 10
+        }
+      ],
+      "suppressed": false,
+      "n": 13,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 10,
+      "value": 0.38461538461538464,
+      "k": 5,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.38461538461538464
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.35714285714285715
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.6
+        }
+      ],
+      "interval": {
+        "low": 0.17709707797762572,
+        "high": 0.6447710848733431,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/novelty=pre-existing/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "novelty",
+      "bucket": "pre-existing",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 13
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 14
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 10
+        }
+      ],
+      "suppressed": false,
+      "n": 13,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 10,
+      "value": 0.15384615384615385,
+      "k": 2,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.15384615384615385
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.07142857142857142
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.3
+        }
+      ],
+      "interval": {
+        "low": 0.043258178358081184,
+        "high": 0.4223463101948254,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/novelty=unknown/arm=panel",
+      "metric": "localization_rate",
+      "axis": "novelty",
+      "bucket": "unknown",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=in_diff_rate/novelty=unknown/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "novelty",
+      "bucket": "unknown",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 0
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=localization_rate/novelty=not-annotated/arm=panel",
+      "metric": "localization_rate",
+      "axis": "novelty",
+      "bucket": "not-annotated",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 106
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 112
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 106
+        }
+      ],
+      "suppressed": false,
+      "n": 106,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 106,
+      "value": 0.8018867924528302,
+      "k": 85,
+      "value_from_replicate": "pilot-01__k1",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.8018867924528302
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.8482142857142857
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7924528301886793
+        }
+      ],
+      "interval": {
+        "low": 0.7160468923505877,
+        "high": 0.8666110647371271,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/novelty=not-annotated/arm=panel",
+      "metric": "in_diff_rate",
+      "axis": "novelty",
+      "bucket": "not-annotated",
+      "arm": "panel",
+      "min_n": 5,
+      "unit": "findings; median of 3 replicates",
+      "n_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "n": 106
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "n": 112
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "n": 106
+        }
+      ],
+      "suppressed": false,
+      "n": 106,
+      "n_basis": "median replicate — the same leg the value and k come from",
+      "thinnest_replicate_n": 106,
+      "value": 0.7264150943396226,
+      "k": 77,
+      "value_from_replicate": "pilot-01__k3",
+      "values_by_replicate": [
+        {
+          "run_id": "pilot-01__k1",
+          "value": 0.7264150943396226
+        },
+        {
+          "run_id": "pilot-01__k2",
+          "value": 0.7589285714285714
+        },
+        {
+          "run_id": "pilot-01__k3",
+          "value": 0.7264150943396226
+        }
+      ],
+      "interval": {
+        "low": 0.6347527565057559,
+        "high": 0.8022407113100302,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/coderabbit_category=data integrity & integration/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "coderabbit_category",
+      "bucket": "data integrity & integration",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/coderabbit_category=data integrity & integration/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "coderabbit_category",
+      "bucket": "data integrity & integration",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/coderabbit_category=data integrity & integration/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "coderabbit_category",
+      "bucket": "data integrity & integration",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 4
+        }
+      ],
+      "suppressed": true,
+      "n": 4,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/coderabbit_category=functional correctness/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "coderabbit_category",
+      "bucket": "functional correctness",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 7
+        }
+      ],
+      "suppressed": false,
+      "n": 7,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 7,
+      "value": 0.8571428571428571,
+      "k": 6,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 0.8571428571428571
+        }
+      ],
+      "interval": {
+        "low": 0.4868721707256811,
+        "high": 0.9743203756552565,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/coderabbit_category=functional correctness/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "coderabbit_category",
+      "bucket": "functional correctness",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 7
+        }
+      ],
+      "suppressed": false,
+      "n": 7,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 7,
+      "value": 1,
+      "k": 7,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.6456695649333126,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/coderabbit_category=functional correctness/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "coderabbit_category",
+      "bucket": "functional correctness",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 7
+        }
+      ],
+      "suppressed": false,
+      "n": 7,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 7,
+      "value": 1,
+      "k": 7,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.6456695649333126,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/coderabbit_category=maintainability & code quality/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "coderabbit_category",
+      "bucket": "maintainability & code quality",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 16
+        }
+      ],
+      "suppressed": false,
+      "n": 16,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 16,
+      "value": 0.875,
+      "k": 14,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 0.875
+        }
+      ],
+      "interval": {
+        "low": 0.639771727342413,
+        "high": 0.9650225122567595,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/coderabbit_category=maintainability & code quality/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "coderabbit_category",
+      "bucket": "maintainability & code quality",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 16
+        }
+      ],
+      "suppressed": false,
+      "n": 16,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 16,
+      "value": 1,
+      "k": 16,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8063923194655637,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/coderabbit_category=maintainability & code quality/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "coderabbit_category",
+      "bucket": "maintainability & code quality",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 16
+        }
+      ],
+      "suppressed": false,
+      "n": 16,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 16,
+      "value": 1,
+      "k": 16,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8063923194655637,
+        "high": 1,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/coderabbit_category=performance & scalability/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "coderabbit_category",
+      "bucket": "performance & scalability",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/coderabbit_category=performance & scalability/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "coderabbit_category",
+      "bucket": "performance & scalability",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/coderabbit_category=performance & scalability/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "coderabbit_category",
+      "bucket": "performance & scalability",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/coderabbit_category=security & privacy/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "coderabbit_category",
+      "bucket": "security & privacy",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/coderabbit_category=security & privacy/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "coderabbit_category",
+      "bucket": "security & privacy",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/coderabbit_category=security & privacy/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "coderabbit_category",
+      "bucket": "security & privacy",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/coderabbit_category=stability & availability/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "coderabbit_category",
+      "bucket": "stability & availability",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=localization_rate/coderabbit_category=stability & availability/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "coderabbit_category",
+      "bucket": "stability & availability",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=in_diff_rate/coderabbit_category=stability & availability/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "coderabbit_category",
+      "bucket": "stability & availability",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 1
+        }
+      ],
+      "suppressed": true,
+      "n": 1,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "denominator below min_n"
+    },
+    {
+      "segment": "metric=nit_ratio/window=in-window/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "window",
+      "bucket": "in-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 30
+        }
+      ],
+      "suppressed": false,
+      "n": 30,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 30,
+      "value": 0.9,
+      "k": 27,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 0.9
+        }
+      ],
+      "interval": {
+        "low": 0.7437891742081593,
+        "high": 0.9654001112526658,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=localization_rate/window=in-window/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "window",
+      "bucket": "in-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 30
+        }
+      ],
+      "suppressed": false,
+      "n": 30,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 30,
+      "value": 1,
+      "k": 30,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8864866068260312,
+        "high": 0.9999999999999999,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=in_diff_rate/window=in-window/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "window",
+      "bucket": "in-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 30
+        }
+      ],
+      "suppressed": false,
+      "n": 30,
+      "n_basis": "the single observation",
+      "thinnest_replicate_n": 30,
+      "value": 1,
+      "k": 30,
+      "value_from_replicate": null,
+      "values_by_replicate": [
+        {
+          "run_id": null,
+          "value": 1
+        }
+      ],
+      "interval": {
+        "low": 0.8864866068260312,
+        "high": 0.9999999999999999,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=nit_ratio/window=after-window/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "window",
+      "bucket": "after-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=localization_rate/window=after-window/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "window",
+      "bucket": "after-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=in_diff_rate/window=after-window/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "window",
+      "bucket": "after-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=nit_ratio/window=unplaceable/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "window",
+      "bucket": "unplaceable",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=localization_rate/window=unplaceable/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "window",
+      "bucket": "unplaceable",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=in_diff_rate/window=unplaceable/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "window",
+      "bucket": "unplaceable",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=nit_ratio/window=no-window/arm=coderabbit",
+      "metric": "nit_ratio",
+      "axis": "window",
+      "bucket": "no-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings with a stated severity; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=localization_rate/window=no-window/arm=coderabbit",
+      "metric": "localization_rate",
+      "axis": "window",
+      "bucket": "no-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    },
+    {
+      "segment": "metric=in_diff_rate/window=no-window/arm=coderabbit",
+      "metric": "in_diff_rate",
+      "axis": "window",
+      "bucket": "no-window",
+      "arm": "coderabbit",
+      "min_n": 5,
+      "unit": "findings; single observation",
+      "n_by_replicate": [
+        {
+          "run_id": null,
+          "n": 0
+        }
+      ],
+      "suppressed": true,
+      "n": 0,
+      "n_basis": "thinnest replicate — the denominator that failed the threshold",
+      "suppression_basis": "no observation fell in this bucket, in any replicate"
+    }
+  ],
+  "panel_digest": "not-recorded",
+  "panel_digest_source": "envelopes"
+}
