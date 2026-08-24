@@ -1,0 +1,1321 @@
+{
+  "adapter": "reviewer",
+  "panel": [
+    {
+      "id": "docs",
+      "title": "Docs",
+      "blocking": true,
+      "applicable": false,
+      "conclusion": "skipped",
+      "valid": true
+    },
+    {
+      "id": "correctness",
+      "title": "Correctness",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": true
+    },
+    {
+      "id": "test-adequacy",
+      "title": "Test-adequacy",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": true
+    },
+    {
+      "id": "design-fit",
+      "title": "Design-fit",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": true
+    },
+    {
+      "id": "blast-radius",
+      "title": "Blast-radius",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": true
+    }
+  ],
+  "lensStats": [
+    {
+      "id": "correctness",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 6,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 2,
+        "medium": 5,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 1,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 6,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 1,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "test-adequacy",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 3,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 4,
+        "medium": 0,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 1,
+        "refuted": 1,
+        "refutedHighConfidence": 1,
+        "dropped": 1,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 3,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "security",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 1,
+        "major": 2,
+        "minor": 2,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 3,
+        "medium": 2,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 3,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 1,
+        "major": 2,
+        "minor": 2,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 3,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "design-fit",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 2,
+        "minor": 4,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 1,
+        "medium": 4,
+        "low": 1,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 2,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 1,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 4,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 1,
+        "backlog": 1,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "blast-radius",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 2,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 2,
+        "medium": 1,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 1,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 2,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 1,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    }
+  ],
+  "findings": [
+    {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 21,
+      "summary": "Date/time ARRAY oids are not in RAW_TEXT_OIDS, so array columns are still parsed into JS Date and shifted by the Node runtime timezone",
+      "evidence": "RAW_TEXT_OIDS only contains the scalar oids DATE (1082), TIMESTAMP (1114), TIMESTAMPTZ (1184). The array oids (_date 1182, _timestamp 1115, _timestamptz 1185) fall through to getDefaultParser, whose pg-types array parser converts each element with the same Date parser the comment says is wrong ('shifts by the Node runtime timezone'). toCell() then JSON.stringifies the Date[] into ISO strings, so a `TIMESTAMP[]` column renders shifted by the backend server's local offset — exactly the bug this change claims to fix, just for array columns. The new e2e type table covers no array types, so nothing catches it.",
+      "lane": "blocking",
+      "novelty": {
+        "origin": "introduced",
+        "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+        "contentSha": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 34,
+      "summary": "Identity parser is returned regardless of wire format; for binary results it would return a Buffer instead of a Date",
+      "evidence": "`datasourceTypeParser = (oid, format) => RAW_TEXT_OIDS.has(oid) ? (value: string) => value : getDefaultParser(oid, format)` ignores `format` in the raw-text branch. If a query ever runs with `binary: true` (or pg requests binary for these fields), the value handed to the parser is a Buffer, and the identity parser returns the raw Buffer, which toCell() then renders as `{\"type\":\"Buffer\",...}`. Not reachable on today's call path (no binary queries), but the guard is format-blind.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/backend/test/database.e2e-spec.ts",
+      "line": 309,
+      "summary": "Duplicate leftover test: 'queries real tables with rows' now exists twice, both creating/truncating/dropping the same _test_products table",
+      "evidence": "The diff adds `it('queries real tables with rows', ...)` at line 114 while the original copy remains at line 309 (asserting `expect(tablesResult.rows).toEqual([{ table_name: '_test_products' }])`). Both create, TRUNCATE and DROP the shared table `_test_products`; they are ordering-coupled and would collide if the suite is ever run with more than one worker over this file. This looks like an unresolved merge/edit artifact rather than intent.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/sheets/src/store/readonly.ts",
+      "line": 32,
+      "summary": "Exported toCell() converts null/undefined to the literal strings 'null'/'undefined'",
+      "evidence": "`toCell(null)` falls through to `String(val)` → 'null' (and 'undefined' for undefined). ReadOnlyStore.loadQueryResults guards with `if (val === null || val === undefined) continue;` before calling, but toCell is now a public export (packages/sheets/src/index.ts:197) and is already called unguarded in packages/backend/test/database.e2e-spec.ts:301 (`toCell(rows[0].val)`), so any future caller gets 'null' text in a cell rather than an empty cell. The nullish guard lives at the call site, not in the helper.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/backend/test/database.e2e-spec.ts",
+      "line": 244,
+      "summary": "MONEY assertion is locale-dependent and will fail on a server with non-en_US lc_monetary",
+      "evidence": "`[b.MONEY, 'MONEY', \"'$1,234.56'\", '$1,234.56']` — Postgres formats the `money` output type using the server's `lc_monetary` setting (thousands separator, decimal separator and currency symbol all vary). Unlike the other rows in the table, this expectation is not determined by the SET TimeZone/DateStyle the service now issues, so the integration lane's result depends on the Postgres container's locale.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/sheets/src/store/readonly.ts",
+      "line": 34,
+      "summary": "Buffer (bytea) values are rendered as the JSON serialization of the Buffer internals",
+      "evidence": "`typeof val === 'object' && val !== null` catches Node Buffers, so a bytea column becomes the cell text `{\"type\":\"Buffer\",\"data\":[222,173,190,239]}` (asserted in database.e2e-spec.ts:219). That is the accidental JSON.stringify shape of a Buffer, not a meaningful cell value; hex (`\\xdeadbeef`) or a truncated placeholder is what a user would expect.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "absence",
+      "file": "packages/sheets/src/store/readonly.ts",
+      "line": 32,
+      "summary": "No sheets-package unit test covers the new toCell() helper; its only coverage is the backend Postgres integration lane",
+      "evidence": "toCell is defined and exported in packages/sheets but has no vitest coverage there — its behaviour (Date→ISO, object→JSON, null→'null') is only exercised from packages/backend/test/database.e2e-spec.ts, which requires a live Postgres. If that lane is skipped (describeDb guards on DATABASE_URL), regressions in toCell go entirely undetected.",
+      "searchedFor": [
+        "Glob packages/sheets/**/*readonly*",
+        "Grep 'toCell' across the repo",
+        "read packages/sheets/test/view/worksheet-readonly-editing.test.ts filename listing",
+        "Grep 'loadQueryResults' across the repo"
+      ],
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/backend/test/database.e2e-spec.ts",
+      "line": 114,
+      "summary": "Duplicate test named 'queries real tables with rows' added; an identical-named, stricter copy already exists at line 309",
+      "evidence": "`it('queries real tables with rows', ...)` now appears twice in the same describe block (lines 114 and 309), both creating/truncating/dropping the same `_test_products` table. The new copy asserts via `toCell(...)` with all-string expectations; the pre-existing copy asserts the raw typed rows (`{ id: 1, name: 'Widget', price: '9.99' }`). Duplicate names make failures ambiguous and the two tests race on the same global table name/lifecycle (the second one recreates and drops the table the first also drops), which is fragile rather than added coverage.",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "absence",
+      "file": "packages/sheets/src/store/readonly.ts",
+      "line": 31,
+      "summary": "New exported `toCell` in packages/sheets has no test in the sheets vitest suite; its Date→ISO branch is exercised nowhere",
+      "evidence": "`toCell` is new public API in packages/sheets (also re-exported from src/index.ts) and changes ReadOnlyStore rendering from `String(val)` (objects → '[object Object]') to JSON. Grep for `toCell|ReadOnlyStore|loadQueryResults` across packages matches only source files (view/overlay.ts, view/gridcanvas.ts, store/readonly.ts, index.ts), frontend/datasource-view.tsx and the backend e2e spec — no *.test.ts / *.spec.ts in packages/sheets covers it. The only coverage is the backend e2e (`database.e2e-spec.ts`), which is gated behind `RUN_DB_INTEGRATION_TESTS === 'true'` (test/helpers/integration-helpers.ts:10-12) and calls `toCell` directly, never through `ReadOnlyStore.loadQueryResults`. Additionally, after the parser change dates come back as strings, so no case anywhere hits the `val instanceof Date` branch, and no case covers `null`/`undefined`.",
+      "searchedFor": [
+        "grep 'toCell|ReadOnlyStore|loadQueryResults' across packages",
+        "glob packages/sheets/**/*.test.ts / *.spec.ts via grep results",
+        "read packages/backend/test/helpers/integration-helpers.ts for describeDb gating"
+      ],
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "absence",
+      "file": "packages/backend/src/datasource/datasource.service.spec.ts",
+      "line": 121,
+      "summary": "Unit spec mocks out `createClient`, so nothing asserts the new `types: { getTypeParser: datasourceTypeParser }` client option is wired up",
+      "evidence": "Both executeQuery unit tests do `jest.spyOn(service, 'createClient').mockReturnValue(client)` (lines 120-122, 161-163), and the mock client ignores constructor options entirely, so the new `types` option added in datasource.service.ts:204 cannot be observed. The updated assertions only cover the three SET statements. The parser wiring is only verified in the DB-gated e2e; a unit assertion on the options object passed to `new Client(...)` (or a direct test of `datasourceTypeParser` for DATE/TIMESTAMP/TIMESTAMPTZ vs a fallthrough OID) is absent.",
+      "searchedFor": [
+        "read packages/backend/src/datasource/datasource.service.spec.ts in full",
+        "grep for getTypeParser/datasourceTypeParser in backend tests"
+      ],
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "critical",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/sql-validator.ts",
+      "line": 29,
+      "summary": "SELECT-only guard is bypassable: the validator inspects a comment-stripped copy while executeQuery concatenates and runs the ORIGINAL query text, allowing arbitrary multi-statement SQL (DELETE/DROP/SET) on the connected datasource",
+      "evidence": "`validateSelectQuery` strips `--[^\\n]*` (sql-validator.ts:29) before doing the first-token, forbidden-keyword and semicolon checks, but `DataSourceService.executeQuery` interpolates the raw `dto.query` into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001` (datasource.service.ts:148) and sends it through pg's simple-query protocol (no parameter values ⇒ multiple statements are executed). Postgres does NOT treat `--` inside a string literal as a comment, so the two views of the query diverge. Attack: an authenticated workspace member POSTs to /datasources/:id/query with `SELECT 'x--' ) AS a; DROP TABLE users; --'`. The validator's regex matches the `--` inside the literal and truncates the string to `SELECT 'x` — first token SELECT ✓, no forbidden keyword ✓, one statement ✓ ⇒ valid. Postgres then executes `SELECT * FROM (SELECT 'x--' ) AS a`, then `DROP TABLE users`, then a trailing comment. The same trick hides INSERT/UPDATE/DELETE/GRANT and `SET statement_timeout = 0`, defeating both the read-only intent and the timeout/row-limit controls that the diff extends. The diff does not introduce the validator, but it modifies exactly this execution path (adding SETs at lines 143-145) and the guard reads as covered while it is not.",
+      "searchedFor": [],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "pre-existing",
+        "addedBy": "b86ce63ed74aff2d6fa833eb9f988c49c72026d2",
+        "contentSha": null,
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "security"
+    },
+    {
+      "severity": "major",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 202,
+      "summary": "TLS certificate verification is disabled for all datasource connections (`rejectUnauthorized: false`), so enabling SSL gives no MITM protection for the decrypted DB credentials",
+      "evidence": "createClient — the object literal the diff edits to add `types` at line 204 — sets `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (line 202). Any network attacker between the backend and the user's Postgres host can present a self-signed cert, terminate the TLS session, and capture the plaintext credentials produced by `decrypt(ds.password)` (line 201) plus every row of query data. Users who tick `sslEnabled` reasonably believe the channel is authenticated; it is only encrypted to whoever answers. No hostname/CA verification option is exposed anywhere in the DTO (datasource.dto.ts) to opt back in.",
+      "searchedFor": [],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "pre-existing",
+        "addedBy": "b86ce63ed74aff2d6fa833eb9f988c49c72026d2",
+        "contentSha": null,
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "security"
+    },
+    {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 121,
+      "summary": "SSRF / internal network probing: user-supplied host+port are connected to unvalidated, and testConnection returns the raw connection error to the caller as an oracle",
+      "evidence": "createClient (lines 196-205) uses attacker-chosen `ds.host`/`ds.port` with no allow/deny-list (no RFC1918, link-local 169.254.169.254, or localhost filtering anywhere in datasource.dto.ts or the service). `testConnection` (line 121) returns `{ success:false, error: (error as Error).message }` straight to the HTTP client, and `executeQuery` rethrows `pgError.message` (line 169). Distinct messages for ECONNREFUSED vs. timeout vs. 'password authentication failed' vs. protocol mismatch let any authenticated user map internal hosts/ports from the backend's network position (cloud metadata endpoints, internal admin ports) at 10s per probe (connectionTimeoutMillis, line 203). Confidence medium because reachability depends on deployment topology, but nothing in code constrains the destination.",
+      "searchedFor": [],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "pre-existing",
+        "addedBy": "b86ce63ed74aff2d6fa833eb9f988c49c72026d2",
+        "contentSha": null,
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "security"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 169,
+      "summary": "Raw Postgres error text is forwarded verbatim to API clients, leaking remote schema/host/internal details",
+      "evidence": "`throw new BadRequestException(pgError.message || 'Query execution failed')` (line 169) and the `error` field of testConnection (line 121) return unfiltered driver/server messages. Postgres errors routinely include table and column names, search_path, file paths, roles, and resolved host/IP in connection failures. Combined with the SSRF vector above this is the probing oracle; on its own it is schema disclosure to any workspace member.",
+      "searchedFor": [],
+      "lens": "security"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 44,
+      "summary": "create() and update() return the full DataSource row, including the stored encryption payload, while findOne/findAllByWorkspace deliberately mask it",
+      "evidence": "`create` (line 44) and `update` (line 95) return the Prisma record unmodified, so the controller responses at datasource.controller.ts:43/67 and :104 include `password` as the `iv:authTag:ciphertext` blob — the very field that findOne (line 77) and findAllByWorkspace (line 68) go out of their way to replace with '********'. The value is AES-256-GCM ciphertext so it is not directly usable, but handing out the ciphertext plus IV/tag to every client (and into logs/caches) is unnecessary sensitive-data exposure and an inconsistent masking policy that will hide a real leak if the encryption scheme ever changes.",
+      "searchedFor": [],
+      "lens": "security"
+    },
+    {
+      "severity": "major",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/backend/test/database.e2e-spec.ts",
+      "line": 114,
+      "summary": "New e2e test duplicates the pre-existing 'queries real tables with rows' test instead of updating it",
+      "evidence": "The diff adds `it('queries real tables with rows', ...)` at line 114, but an almost identical test with the same name, same `_test_products` table, same inserts and same cleanup already exists at line 309 (visible in the diff's trailing context and confirmed in the worktree). The old copy still asserts the pre-change shape (`expect(dataResult.rows).toEqual([{ id: 1, name: 'Widget', price: '9.99' }, ...])`, line 370) while the new copy asserts via `toCell`. This is copy-paste duplication rather than reuse/update: two same-named tests racing on one shared table name, and the intended behavioural update was applied to a clone instead of the canonical test.",
+      "lane": "backlog",
+      "novelty": {
+        "origin": "relocated",
+        "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+        "contentSha": "a567f670ba77ea638ace312bee4f74eb8f424456",
+        "alsoAt": "e17ce9fe575c28562630382757ff5352bde50dd4:packages/backend/test/database.e2e-spec.ts:112"
+      },
+      "verification": "confirmed-high",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "absence",
+      "file": "docs/design/sheets/datasource.md",
+      "line": 156,
+      "summary": "Query-result contract change (session TimeZone/DateStyle + raw-text date type parsers) is not recorded in the canonical datasource design doc",
+      "evidence": "docs/design/sheets/datasource.md is the canonical subsystem doc; its 'Query Execution' section (lines 156-162) enumerates exactly the session/execution behaviour this diff changes (statement timeout, wrapping, limits, response shape) and 'Current Limitations' #9 (line 205) plus 'Medium-term: Column type awareness' (line 221) describe the value-typing behaviour being altered. The diff changes the wire contract for `/datasources/:id/query` (DATE/TIMESTAMP/TIMESTAMPTZ now returned as raw Postgres text normalised to UTC/ISO instead of JS `Date`), which is an observable API/data-shape change affecting every client (frontend grid, REST API, CLI), yet no design doc under docs/design/ is added or updated in the diff.",
+      "searchedFor": [
+        "Glob docs/design/**/*.md",
+        "Read docs/design/sheets/datasource.md (full)",
+        "Grep -i 'datasource|query' docs/design/rest-api.md",
+        "Grep 'getTypeParser|types.builtins' across **/*.ts"
+      ],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "pre-existing",
+        "addedBy": "3842e540ea6afb7799113aa4cd7fc9e1c0cb85b1",
+        "contentSha": null,
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 143,
+      "summary": "Normalisation is applied at the connection/session layer, changing the API contract for all consumers, when the reported symptom is a display concern handled in `toCell`",
+      "evidence": "`SET TimeZone = 'UTC'` / `SET DateStyle = 'ISO, MDY'` plus a global `types.getTypeParser` override change what the datasource REST endpoint returns for every client, not just the sheet grid. The same diff also adds `toCell` in packages/sheets/src/store/readonly.ts, which already owns value→cell stringification (including a `Date → toISOString()` branch that these parser overrides make dead for DATE/TIMESTAMP/TIMESTAMPTZ). Fixing timezone shifting in one layer would have been sufficient; doing it in both leaves two competing normalisation points.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/sheets/src/store/readonly.ts",
+      "line": 34,
+      "summary": "`toCell` locks in raw JSON dumps of internal JS shapes as cell values (Buffer/interval/circle), which reads as an unintended product decision",
+      "evidence": "`toCell` JSON-stringifies any object, and the new e2e table asserts this as the expected user-visible cell content: BYTEA → `{\"type\":\"Buffer\",\"data\":[222,173,190,239]}`, INTERVAL → `{\"years\":1,\"months\":2,\"days\":3}`, CIRCLE → `{\"x\":1,\"y\":2,\"radius\":3}` (packages/backend/test/database.e2e-spec.ts ~lines 220-260). Encoding node-pg internal object shapes into spreadsheet cells conflicts with the doc's stated behaviour that values are displayed as strings, and freezes it via assertions.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/backend/test/database.e2e-spec.ts",
+      "line": 214,
+      "summary": "Exhaustive ~40-type OID/cell-value matrix test is scope well beyond the three-OID behaviour change",
+      "evidence": "The change only alters parsing for DATE, TIMESTAMP and TIMESTAMPTZ, but the diff adds a full pg built-in type matrix (with a long commented-out catalogue of unusable internal types) that DDL-creates and drops a table per type in the shared integration database. This pins the current pg-types default parsers for dozens of types unrelated to the fix, coupling the suite to an upstream library's formatting choices.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "low",
+      "claimType": "presence",
+      "file": "packages/sheets/src/index.ts",
+      "line": 197,
+      "summary": "`toCell` is promoted to the public `@wafflebase/sheets` API surface only so a backend test can import it",
+      "evidence": "`toCell` is newly exported from packages/sheets/src/index.ts, and its only consumer outside `ReadOnlyStore` is packages/backend/test/database.e2e-spec.ts (line 8). Widening an engine package's public API for a test-only consumer in another package is a questionable placement; there is no shared `core` package in this repo (packages/README.md lists sheets/docs/slides/frontend/backend/cli/documentation), so if backend genuinely needs this serialisation it arguably belongs next to the datasource module.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 20,
+      "summary": "Raw-text OID guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`",
+      "evidence": "`RAW_TEXT_OIDS` only contains the scalar `DATE`/`TIMESTAMP`/`TIMESTAMPTZ` OIDs (packages/backend/src/datasource/datasource.service.ts:20-24). pg-types registers separate parsers for the array OIDs (1182 `_date`, 1115 `_timestamp`, 1185 `_timestamptz`) and for range OIDs (3908 `tsrange`, 3910 `tstzrange`); those still hit `getDefaultParser` and produce JS `Date` objects built from the Node runtime timezone. Those values then flow to `ReadOnlyStore.loadQueryResults` -> `toCell` (packages/sheets/src/store/readonly.ts:73), which JSON.stringifies them, re-introducing exactly the shifted/altered rendering the change set out to remove. The new e2e type matrix (packages/backend/test/database.e2e-spec.ts:203-260) deliberately covers only scalar types, so nothing catches it. Fix belongs on the new code (extend RAW_TEXT_OIDS or override by format).",
+      "searchedFor": [],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "introduced",
+        "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+        "contentSha": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/backend/test/database.e2e-spec.ts",
+      "line": 309,
+      "summary": "Duplicate `it('queries real tables with rows')` left in place — the pre-existing copy was not replaced by the new one",
+      "evidence": "packages/backend/test/database.e2e-spec.ts:309 declares a second test with the identical name as the one added at line ~112, against the same `_test_products` table (create/truncate/drop). Both run (jest allows duplicate names), doubling runtime and asserting overlapping behaviour in two different styles (line 358/370 keep the old deep-equal on raw row objects; the new one asserts via `toCell`). Looks like the new block was inserted rather than replacing the old one.",
+      "searchedFor": [],
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "absence",
+      "file": "docs/design/sheets/datasource.md",
+      "line": 156,
+      "summary": "Design doc for the datasource module still describes the old query-execution and cell-conversion contract",
+      "evidence": "docs/design/sheets/datasource.md:156-162 lists the per-query session setup as only 'Statement timeout: 30 seconds' and says nothing about the new `SET TimeZone = 'UTC'` / `SET DateStyle = 'ISO, MDY'` or the raw-text date parsing; :164-173 describes `loadQueryResults` without the new `toCell` conversion rules (Date -> ISO, object -> JSON) that are now part of the sheets public API (packages/sheets/src/index.ts:197). This is a nested design doc, so the top-level docs link checker does not cover it.",
+      "searchedFor": [
+        "grep 'ReadOnlyStore|loadQueryResults' across docs/",
+        "grep 'statement_timeout|DateStyle|TimeZone' across repo",
+        "read docs/design/sheets/datasource.md:155-193"
+      ],
+      "lens": "blast-radius"
+    }
+  ],
+  "stageDetail": {
+    "correctness": {
+      "lensDiff": "diff --git a/packages/backend/src/datasource/datasource.service.spec.ts b/packages/backend/src/datasource/datasource.service.spec.ts\nindex e36cc3a8a..d984d59fa 100644\n--- a/packages/backend/src/datasource/datasource.service.spec.ts\n+++ b/packages/backend/src/datasource/datasource.service.spec.ts\n@@ -126,14 +126,10 @@ describe('DataSourceService', () => {\n     });\n \n     expect(client.connect).toHaveBeenCalledTimes(1);\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      1,\n-      \"SET statement_timeout = '30000'\",\n-    );\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      2,\n-      'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001',\n-    );\n+    expect(client.query).toHaveBeenNthCalledWith(1, \"SET statement_timeout = '30000'\");\n+    expect(client.query).toHaveBeenNthCalledWith(2, \"SET TimeZone = 'UTC'\");\n+    expect(client.query).toHaveBeenNthCalledWith(3, \"SET DateStyle = 'ISO, MDY'\");\n+    expect(client.query).toHaveBeenNthCalledWith(4, 'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001');\n     expect(client.end).toHaveBeenCalledTimes(1);\n \n     expect(result.columns).toEqual([{ name: 'id', dataTypeID: 23 }]);\ndiff --git a/packages/backend/src/datasource/datasource.service.ts b/packages/backend/src/datasource/datasource.service.ts\nindex c415f42bd..2e190c597 100644\n--- a/packages/backend/src/datasource/datasource.service.ts\n+++ b/packages/backend/src/datasource/datasource.service.ts\n@@ -3,7 +3,7 @@ import {\n   NotFoundException,\n   BadRequestException,\n } from '@nestjs/common';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n import { PrismaService } from 'src/database/prisma.service';\n import { encrypt, decrypt } from './crypto.util';\n import { validateSelectQuery } from './sql-validator';\n@@ -16,6 +16,26 @@ import {\n const QUERY_TIMEOUT_MS = 30_000;\n const MAX_ROWS = 10_000;\n \n+// Keep date/time types as raw Postgres text instead of JS `Date`, which the\n+// default parser shifts by the Node runtime timezone. (TIME/TIMETZ are strings.)\n+const RAW_TEXT_OIDS = new Set([\n+  types.builtins.DATE,\n+  types.builtins.TIMESTAMP,\n+  types.builtins.TIMESTAMPTZ,\n+]);\n+\n+// pg-types types getTypeParser's return as `any`; pin it to avoid leaking `any`.\n+type ValueParser = (value: string) => unknown;\n+const getDefaultParser = types.getTypeParser as (\n+  oid: Parameters<typeof types.getTypeParser>[0],\n+  format?: Parameters<typeof types.getTypeParser>[1],\n+) => ValueParser;\n+\n+const datasourceTypeParser: typeof types.getTypeParser = (oid, format) =>\n+  RAW_TEXT_OIDS.has(oid)\n+    ? (value: string) => value\n+    : getDefaultParser(oid, format);\n+\n @Injectable()\n export class DataSourceService {\n   constructor(private prisma: PrismaService) {}\n@@ -120,9 +140,9 @@ export class DataSourceService {\n       await client.connect();\n \n       // Set statement timeout\n-      await client.query(\n-        `SET statement_timeout = '${QUERY_TIMEOUT_MS}'`,\n-      );\n+      await client.query(`SET statement_timeout = '${QUERY_TIMEOUT_MS}'`);\n+      await client.query(`SET TimeZone = 'UTC'`);\n+      await client.query(`SET DateStyle = 'ISO, MDY'`);\n \n       // Wrap with LIMIT to enforce max rows\n       const wrappedQuery = `SELECT * FROM (${dto.query}) AS _q LIMIT ${MAX_ROWS + 1}`;\n@@ -181,6 +201,7 @@ export class DataSourceService {\n       password: decrypt(ds.password),\n       ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false,\n       connectionTimeoutMillis: 10_000,\n+      types: { getTypeParser: datasourceTypeParser },\n     });\n   }\n }\ndiff --git a/packages/backend/test/database.e2e-spec.ts b/packages/backend/test/database.e2e-spec.ts\nindex 1c0f36ce2..267056a51 100644\n--- a/packages/backend/test/database.e2e-spec.ts\n+++ b/packages/backend/test/database.e2e-spec.ts\n@@ -4,7 +4,8 @@ import {\n   GoneException,\n } from '@nestjs/common';\n import { Test, TestingModule } from '@nestjs/testing';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n+import { toCell } from '@wafflebase/sheets';\n import { PrismaService } from 'src/database/prisma.service';\n import { DataSourceService } from 'src/datasource/datasource.service';\n import { ShareLinkService } from 'src/share-link/share-link.service';\n@@ -74,13 +75,14 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n-        query: 'SELECT 1::int4 AS n',\n-      });\n-      expect(queryResult.columns.map((column) => column.name)).toEqual(['n']);\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n-      expect(queryResult.rowCount).toBe(1);\n-      expect(queryResult.truncated).toBe(false);\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT 1::int4 AS n',\n+        });\n+      expect(rowCount).toBe(1);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['n']);\n+      expect(String(rows[0].n)).toBe('1');\n     });\n \n     it('enforces ownership for executeQuery and testConnection', async () => {\n@@ -103,10 +105,205 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n+      const { rows } = await datasourceService.executeQuery(ds.id, {\n         query: 'SELECT 1::int4 AS n',\n       });\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n+      expect(String(rows[0].n)).toBe('1');\n+    });\n+\n+    it('queries real tables with rows', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      // Create a test table and insert data using a raw pg client\n+      // (DataSourceService only allows SELECT)\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+      try {\n+        await rawClient.query(`\n+          CREATE TABLE IF NOT EXISTS _test_products (\n+            id SERIAL PRIMARY KEY,\n+            name TEXT NOT NULL,\n+            price NUMERIC(10, 2) NOT NULL\n+          )\n+        `);\n+        await rawClient.query(`TRUNCATE _test_products RESTART IDENTITY`);\n+        await rawClient.query(`\n+          INSERT INTO _test_products (name, price) VALUES\n+            ('Widget', 9.99),\n+            ('Gadget', 24.50),\n+            ('Doohickey', 3.75)\n+        `);\n+      } finally {\n+        await rawClient.end();\n+      }\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'table-test',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // List tables via information_schema\n+      const tablesResult = await datasourceService.executeQuery(ds.id, {\n+        query: `SELECT table_name FROM information_schema.tables\n+                WHERE table_schema = 'public' AND table_name = '_test_products'`,\n+      });\n+      expect(String(tablesResult.rows[0].table_name)).toBe('_test_products');\n+\n+      // Query table data — verify as sheet cell values (all strings via String())\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT id, name, price FROM _test_products ORDER BY id',\n+        });\n+      expect(rowCount).toBe(3);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['id', 'name', 'price']);\n+\n+      const sheetRows = rows.map((row) =>\n+        columns.map((c) => toCell(row[c.name])),\n+      );\n+      expect(sheetRows).toEqual([\n+        ['1', 'Widget', '9.99'],\n+        ['2', 'Gadget', '24.50'],\n+        ['3', 'Doohickey', '3.75'],\n+      ]);\n+\n+      // Cleanup\n+      const cleanupClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await cleanupClient.connect();\n+      try {\n+        await cleanupClient.query('DROP TABLE IF EXISTS _test_products');\n+      } finally {\n+        await cleanupClient.end();\n+      }\n+    });\n+\n+    it('check correct cell values for all pg built-in types', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'all-types',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // Each entry: [expectedOid, sqlColumnType, insertLiteral, expectedCellValue]\n+      // Listed in pg-types TypeId enum order (by OID).\n+      const b = types.builtins;\n+      const typeMap: [number, string, string, string][] = [\n+        [b.BOOL,        'BOOLEAN',         'true',                                'true'],\n+        [b.BYTEA,       'BYTEA',           \"E'\\\\\\\\xDEADBEEF'\",                   '{\"type\":\"Buffer\",\"data\":[222,173,190,239]}'],\n+        [b.CHAR,        '\"char\"',          \"'A'\",                                 'A'],\n+        [b.INT8,        'INT8',            '9223372036854775807',                 '9223372036854775807'],\n+        [b.INT2,        'INT2',            '32767',                               '32767'],\n+        [b.INT4,        'INT4',            '2147483647',                          '2147483647'],\n+        [b.REGPROC,     'REGPROC',         \"'now'\",                               'now'],\n+        [b.TEXT,        'TEXT',            \"'hello world'\",                       'hello world'],\n+        [b.OID,         'OID',             '1',                                   '1'],\n+        [b.TID,         'TID',             \"'(0,1)'\",                             '(0,1)'],\n+        [b.XID,         'XID',             \"'1'\",                                 '1'],\n+        [b.CID,         'CID',             \"'0'\",                                 '0'],\n+        [b.JSON,        'JSON',            \"'{\\\"key\\\":\\\"value\\\"}'\",               '{\"key\":\"value\"}'],\n+        [b.XML,         'XML',             \"'<root>test</root>'\",                 '<root>test</root>'],\n+        // [b.PG_NODE_TREE] — internal parser tree type, cannot be used as column type\n+        // [b.SMGR]        — internal storage manager type, cannot be used as column type\n+        [b.PATH,        'PATH',            \"'((0,0),(1,1),(2,0))'\",               '((0,0),(1,1),(2,0))'],\n+        [b.POLYGON,     'POLYGON',         \"'((0,0),(1,1),(1,0))'\",               '((0,0),(1,1),(1,0))'],\n+        [b.CIDR,        'CIDR',            \"'192.168.0.0/16'\",                    '192.168.0.0/16'],\n+        [b.FLOAT4,      'FLOAT4',          '3.14',                                '3.14'],\n+        [b.FLOAT8,      'FLOAT8',          '2.718281828',                          '2.718281828'],\n+        // [b.ABSTIME]     — removed in PostgreSQL 12\n+        // [b.RELTIME]     — removed in PostgreSQL 12\n+        // [b.TINTERVAL]   — removed in PostgreSQL 12\n+        [b.CIRCLE,      'CIRCLE',          \"'<(1,2),3>'\",                          '{\"x\":1,\"y\":2,\"radius\":3}'],\n+        [b.MACADDR8,    'MACADDR8',        \"'08:00:2b:01:02:03:04:05'\",           '08:00:2b:01:02:03:04:05'],\n+        [b.MONEY,       'MONEY',           \"'$1,234.56'\",                          '$1,234.56'],\n+        [b.MACADDR,     'MACADDR',         \"'08:00:2b:01:02:03'\",                 '08:00:2b:01:02:03'],\n+        [b.INET,        'INET',            \"'192.168.1.0/24'\",                    '192.168.1.0/24'],\n+        // [b.ACLITEM]     — internal access control type, cannot be used as column type\n+        [b.BPCHAR,      'CHAR(10)',        \"'padded'\",                            'padded    '],\n+        [b.VARCHAR,     'VARCHAR(100)',    \"'variable'\",                          'variable'],\n+        [b.DATE,        'DATE',            \"'2025-06-15'\",                         '2025-06-15'],\n+        [b.TIME,        'TIME',            \"'14:30:00'\",                           '14:30:00'],\n+        [b.TIMESTAMP,   'TIMESTAMP',       \"'2025-06-15 14:30:00'\",               '2025-06-15 14:30:00'],\n+        [b.TIMESTAMPTZ, 'TIMESTAMPTZ',     \"'2025-06-15 14:30:00+09'\",            '2025-06-15 05:30:00+00'],\n+        [b.INTERVAL,    'INTERVAL',        \"'1 year 2 months 3 days'\",            '{\"years\":1,\"months\":2,\"days\":3}'],\n+        [b.TIMETZ,      'TIMETZ',          \"'14:30:00+09'\",                        '14:30:00+09'],\n+        [b.BIT,         'BIT(8)',          \"B'10101010'\",                          '10101010'],\n+        [b.VARBIT,      'VARBIT(8)',       \"B'1010'\",                              '1010'],\n+        [b.NUMERIC,     'NUMERIC(20,4)',   '12345678901234.5678',                  '12345678901234.5678'],\n+        // [b.REFCURSOR]      — cursor reference, only valid inside transactions/functions\n+        // [b.REGPROCEDURE]   — system catalog reference type (function with arg types)\n+        // [b.REGOPER]        — system catalog reference type (operator name)\n+        // [b.REGOPERATOR]    — system catalog reference type (operator with arg types)\n+        // [b.REGCLASS]       — system catalog reference type (relation name)\n+        // [b.REGTYPE]        — system catalog reference type (type name)\n+        [b.UUID,        'UUID',            \"'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'\", 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],\n+        // [b.TXID_SNAPSHOT]  — deprecated, renamed to pg_snapshot in PostgreSQL 13\n+        [b.PG_LSN,      'PG_LSN',          \"'0/1A2B3C4'\",                          '0/1A2B3C4'],\n+        // [b.PG_NDISTINCT]   — internal statistics type, cannot be used as column type\n+        // [b.PG_DEPENDENCIES] — internal statistics type, cannot be used as column type\n+        [b.TSVECTOR,    'TSVECTOR',        \"'fat cat sat'\",                        \"'cat' 'fat' 'sat'\"],\n+        [b.TSQUERY,     'TSQUERY',         \"'fat & cat'\",                          \"'fat' & 'cat'\"],\n+        // [b.GTSVECTOR]      — internal GiST type, cannot be used as column type\n+        [b.REGCONFIG,   'REGCONFIG',       \"'english'\",                            'english'],\n+        [b.REGDICTIONARY, 'REGDICTIONARY', \"'simple'\",                             'simple'],\n+        [b.JSONB,       'JSONB',           \"'{\\\"nested\\\":[1,2,3]}'\",               '{\"nested\":[1,2,3]}'],\n+        // [b.REGNAMESPACE]   — system catalog reference type (namespace name)\n+        // [b.REGROLE]        — system catalog reference type (role name)\n+      ];\n+\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+\n+      const table = '_test_type_check';\n+      try {\n+        for (const [expectedOid, sqlType, insertLiteral, expectedCell] of typeMap) {\n+          await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+          await rawClient.query(`CREATE TABLE ${table} (val ${sqlType})`);\n+          await rawClient.query(`INSERT INTO ${table} (val) VALUES (${insertLiteral})`);\n+\n+          const { columns, rows } = await datasourceService.executeQuery(ds.id, {\n+            query: `SELECT val FROM ${table}`,\n+          });\n+\n+          expect(columns[0].dataTypeID).toBe(expectedOid);\n+          expect(toCell(rows[0].val)).toBe(expectedCell);\n+        }\n+      } finally {\n+        await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+        await rawClient.end();\n+      }\n     });\n \n     it('queries real tables with rows', async () => {\ndiff --git a/packages/sheets/src/index.ts b/packages/sheets/src/index.ts\nindex 76d3beb89..704787efe 100644\n--- a/packages/sheets/src/index.ts\n+++ b/packages/sheets/src/index.ts\n@@ -104,7 +104,7 @@ import { type Store } from './store/store';\n import { MemStore } from './store/memory';\n import { CellIndex } from './store/cell-index';\n import { findEdgeWithIndex } from './store/find-edge';\n-import { ReadOnlyStore } from './store/readonly';\n+import { ReadOnlyStore, toCell } from './store/readonly';\n import {\n   initialize,\n   Spreadsheet,\n@@ -194,6 +194,7 @@ export {\n   MemStore,\n   CellIndex,\n   ReadOnlyStore,\n+  toCell,\n   findEdgeWithIndex,\n   DimensionIndex,\n   toColumnLabel,\ndiff --git a/packages/sheets/src/store/readonly.ts b/packages/sheets/src/store/readonly.ts\nindex 5044c6b8a..047ac004e 100644\n--- a/packages/sheets/src/store/readonly.ts\n+++ b/packages/sheets/src/store/readonly.ts\n@@ -25,6 +25,16 @@ import { CellIndex } from './cell-index';\n import { findEdgeWithIndex } from './find-edge';\n import { Store } from './store';\n \n+/**\n+ * Converts a raw query result value to a string suitable for a sheet cell.\n+ * Date → ISO string, object → JSON, everything else → String().\n+ */\n+export function toCell(val: unknown): string {\n+  if (val instanceof Date) return val.toISOString();\n+  if (typeof val === 'object' && val !== null) return JSON.stringify(val);\n+  return String(val);\n+}\n+\n /**\n  * `ReadOnlyStore` is a Store implementation for displaying query results.\n  * All write operations are no-ops. Data is loaded via `loadQueryResults`.\n@@ -60,7 +70,7 @@ export class ReadOnlyStore implements Store {\n         const val = row[columns[c].name];\n         if (val === null || val === undefined) continue;\n         const sref = toSref({ r: r + 2, c: c + 1 });\n-        this.grid.set(sref, { v: String(val) });\n+        this.grid.set(sref, { v: toCell(val) });\n       }\n     }\n \n",
+      "lensDiffSha256": "bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+      "lensDiffBytes": 18251,
+      "lensFiles": [
+        "packages/backend/src/datasource/datasource.service.spec.ts",
+        "packages/backend/src/datasource/datasource.service.ts",
+        "packages/backend/test/database.e2e-spec.ts",
+        "packages/sheets/src/index.ts",
+        "packages/sheets/src/store/readonly.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 21,
+            "summary": "Date/time ARRAY oids are not in RAW_TEXT_OIDS, so array columns are still parsed into JS Date and shifted by the Node runtime timezone",
+            "evidence": "RAW_TEXT_OIDS only contains the scalar oids DATE (1082), TIMESTAMP (1114), TIMESTAMPTZ (1184). The array oids (_date 1182, _timestamp 1115, _timestamptz 1185) fall through to getDefaultParser, whose pg-types array parser converts each element with the same Date parser the comment says is wrong ('shifts by the Node runtime timezone'). toCell() then JSON.stringifies the Date[] into ISO strings, so a `TIMESTAMP[]` column renders shifted by the backend server's local offset — exactly the bug this change claims to fix, just for array columns. The new e2e type table covers no array types, so nothing catches it."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 34,
+            "summary": "Identity parser is returned regardless of wire format; for binary results it would return a Buffer instead of a Date",
+            "evidence": "`datasourceTypeParser = (oid, format) => RAW_TEXT_OIDS.has(oid) ? (value: string) => value : getDefaultParser(oid, format)` ignores `format` in the raw-text branch. If a query ever runs with `binary: true` (or pg requests binary for these fields), the value handed to the parser is a Buffer, and the identity parser returns the raw Buffer, which toCell() then renders as `{\"type\":\"Buffer\",...}`. Not reachable on today's call path (no binary queries), but the guard is format-blind."
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 309,
+            "summary": "Duplicate leftover test: 'queries real tables with rows' now exists twice, both creating/truncating/dropping the same _test_products table",
+            "evidence": "The diff adds `it('queries real tables with rows', ...)` at line 114 while the original copy remains at line 309 (asserting `expect(tablesResult.rows).toEqual([{ table_name: '_test_products' }])`). Both create, TRUNCATE and DROP the shared table `_test_products`; they are ordering-coupled and would collide if the suite is ever run with more than one worker over this file. This looks like an unresolved merge/edit artifact rather than intent."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/store/readonly.ts",
+            "line": 32,
+            "summary": "Exported toCell() converts null/undefined to the literal strings 'null'/'undefined'",
+            "evidence": "`toCell(null)` falls through to `String(val)` → 'null' (and 'undefined' for undefined). ReadOnlyStore.loadQueryResults guards with `if (val === null || val === undefined) continue;` before calling, but toCell is now a public export (packages/sheets/src/index.ts:197) and is already called unguarded in packages/backend/test/database.e2e-spec.ts:301 (`toCell(rows[0].val)`), so any future caller gets 'null' text in a cell rather than an empty cell. The nullish guard lives at the call site, not in the helper."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 244,
+            "summary": "MONEY assertion is locale-dependent and will fail on a server with non-en_US lc_monetary",
+            "evidence": "`[b.MONEY, 'MONEY', \"'$1,234.56'\", '$1,234.56']` — Postgres formats the `money` output type using the server's `lc_monetary` setting (thousands separator, decimal separator and currency symbol all vary). Unlike the other rows in the table, this expectation is not determined by the SET TimeZone/DateStyle the service now issues, so the integration lane's result depends on the Postgres container's locale."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/store/readonly.ts",
+            "line": 34,
+            "summary": "Buffer (bytea) values are rendered as the JSON serialization of the Buffer internals",
+            "evidence": "`typeof val === 'object' && val !== null` catches Node Buffers, so a bytea column becomes the cell text `{\"type\":\"Buffer\",\"data\":[222,173,190,239]}` (asserted in database.e2e-spec.ts:219). That is the accidental JSON.stringify shape of a Buffer, not a meaningful cell value; hex (`\\xdeadbeef`) or a truncated placeholder is what a user would expect."
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "packages/sheets/src/store/readonly.ts",
+            "line": 32,
+            "summary": "No sheets-package unit test covers the new toCell() helper; its only coverage is the backend Postgres integration lane",
+            "evidence": "toCell is defined and exported in packages/sheets but has no vitest coverage there — its behaviour (Date→ISO, object→JSON, null→'null') is only exercised from packages/backend/test/database.e2e-spec.ts, which requires a live Postgres. If that lane is skipped (describeDb guards on DATABASE_URL), regressions in toCell go entirely undetected.",
+            "searchedFor": [
+              "Glob packages/sheets/**/*readonly*",
+              "Grep 'toCell' across the repo",
+              "read packages/sheets/test/view/worksheet-readonly-editing.test.ts filename listing",
+              "Grep 'loadQueryResults' across the repo"
+            ]
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 21,
+            "summary": "Date/time ARRAY oids are not in RAW_TEXT_OIDS, so array columns are still parsed into JS Date and shifted by the Node runtime timezone",
+            "evidence": "RAW_TEXT_OIDS only contains the scalar oids DATE (1082), TIMESTAMP (1114), TIMESTAMPTZ (1184). The array oids (_date 1182, _timestamp 1115, _timestamptz 1185) fall through to getDefaultParser, whose pg-types array parser converts each element with the same Date parser the comment says is wrong ('shifts by the Node runtime timezone'). toCell() then JSON.stringifies the Date[] into ISO strings, so a `TIMESTAMP[]` column renders shifted by the backend server's local offset — exactly the bug this change claims to fix, just for array columns. The new e2e type table covers no array types, so nothing catches it.",
+            "lane": "blocking",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+              "contentSha": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "Verified directly in the repo. datasource.service.ts:21-25 defines RAW_TEXT_OIDS with only the scalar oids types.builtins.DATE/TIMESTAMP/TIMESTAMPTZ; pg's `builtins` enum contains no array oids, so _date (1182), _timestamp (1115) and _timestamptz (1185) are absent. datasource.service.ts:34-37 sends any oid not in that set to getDefaultParser, i.e. pg-types' parseDateArray, which converts each element with the same parseDate the comment at lines 19-20 says shifts by the Node runtime timezone; that element parser is internal to pg-types and is not re-dispatched through the client's getTypeParser, so the scalar override cannot cover it. packages/sheets/src/store/readonly.ts:32-36 confirms toCell JSON.stringifies non-Date objects, and JSON.stringify on a Date[] emits UTC ISO via Date.toJSON, so a TIMESTAMP[] renders shifted by the backend host offset while scalar TIMESTAMP renders raw text. No guard neutralizes this: datasource.service.ts:144 sets TimeZone only on the Postgres session, and grepping for TZ=/ENV TZ/process.env.TZ across backend sources, Dockerfiles, compose and env files found no forcing of the Node runtime timezone. The path is reachable because executeQuery (datasource.service.ts:127-174) runs arbitrary user SELECTs gated only by statement-kind validation. The e2e type table at packages/backend/test/database.e2e-spec.ts:230-278 contains only scalar types, so nothing catches it. Real inconsistent-output logic bug in the correctness lane.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/backend/src/datasource/datasource.service.ts:19-25",
+              "packages/backend/src/datasource/datasource.service.ts:34-37",
+              "packages/backend/src/datasource/datasource.service.ts:144",
+              "packages/backend/src/datasource/datasource.service.ts:204",
+              "packages/backend/src/datasource/datasource.service.ts:127-174",
+              "packages/sheets/src/store/readonly.ts:32-36",
+              "packages/backend/test/database.e2e-spec.ts:250-255",
+              "packages/backend/test/database.e2e-spec.ts:230-278"
+            ]
+          },
+          "dropped": false
+        }
+      ]
+    },
+    "test-adequacy": {
+      "lensDiff": "diff --git a/packages/backend/src/datasource/datasource.service.spec.ts b/packages/backend/src/datasource/datasource.service.spec.ts\nindex e36cc3a8a..d984d59fa 100644\n--- a/packages/backend/src/datasource/datasource.service.spec.ts\n+++ b/packages/backend/src/datasource/datasource.service.spec.ts\n@@ -126,14 +126,10 @@ describe('DataSourceService', () => {\n     });\n \n     expect(client.connect).toHaveBeenCalledTimes(1);\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      1,\n-      \"SET statement_timeout = '30000'\",\n-    );\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      2,\n-      'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001',\n-    );\n+    expect(client.query).toHaveBeenNthCalledWith(1, \"SET statement_timeout = '30000'\");\n+    expect(client.query).toHaveBeenNthCalledWith(2, \"SET TimeZone = 'UTC'\");\n+    expect(client.query).toHaveBeenNthCalledWith(3, \"SET DateStyle = 'ISO, MDY'\");\n+    expect(client.query).toHaveBeenNthCalledWith(4, 'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001');\n     expect(client.end).toHaveBeenCalledTimes(1);\n \n     expect(result.columns).toEqual([{ name: 'id', dataTypeID: 23 }]);\ndiff --git a/packages/backend/src/datasource/datasource.service.ts b/packages/backend/src/datasource/datasource.service.ts\nindex c415f42bd..2e190c597 100644\n--- a/packages/backend/src/datasource/datasource.service.ts\n+++ b/packages/backend/src/datasource/datasource.service.ts\n@@ -3,7 +3,7 @@ import {\n   NotFoundException,\n   BadRequestException,\n } from '@nestjs/common';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n import { PrismaService } from 'src/database/prisma.service';\n import { encrypt, decrypt } from './crypto.util';\n import { validateSelectQuery } from './sql-validator';\n@@ -16,6 +16,26 @@ import {\n const QUERY_TIMEOUT_MS = 30_000;\n const MAX_ROWS = 10_000;\n \n+// Keep date/time types as raw Postgres text instead of JS `Date`, which the\n+// default parser shifts by the Node runtime timezone. (TIME/TIMETZ are strings.)\n+const RAW_TEXT_OIDS = new Set([\n+  types.builtins.DATE,\n+  types.builtins.TIMESTAMP,\n+  types.builtins.TIMESTAMPTZ,\n+]);\n+\n+// pg-types types getTypeParser's return as `any`; pin it to avoid leaking `any`.\n+type ValueParser = (value: string) => unknown;\n+const getDefaultParser = types.getTypeParser as (\n+  oid: Parameters<typeof types.getTypeParser>[0],\n+  format?: Parameters<typeof types.getTypeParser>[1],\n+) => ValueParser;\n+\n+const datasourceTypeParser: typeof types.getTypeParser = (oid, format) =>\n+  RAW_TEXT_OIDS.has(oid)\n+    ? (value: string) => value\n+    : getDefaultParser(oid, format);\n+\n @Injectable()\n export class DataSourceService {\n   constructor(private prisma: PrismaService) {}\n@@ -120,9 +140,9 @@ export class DataSourceService {\n       await client.connect();\n \n       // Set statement timeout\n-      await client.query(\n-        `SET statement_timeout = '${QUERY_TIMEOUT_MS}'`,\n-      );\n+      await client.query(`SET statement_timeout = '${QUERY_TIMEOUT_MS}'`);\n+      await client.query(`SET TimeZone = 'UTC'`);\n+      await client.query(`SET DateStyle = 'ISO, MDY'`);\n \n       // Wrap with LIMIT to enforce max rows\n       const wrappedQuery = `SELECT * FROM (${dto.query}) AS _q LIMIT ${MAX_ROWS + 1}`;\n@@ -181,6 +201,7 @@ export class DataSourceService {\n       password: decrypt(ds.password),\n       ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false,\n       connectionTimeoutMillis: 10_000,\n+      types: { getTypeParser: datasourceTypeParser },\n     });\n   }\n }\ndiff --git a/packages/backend/test/database.e2e-spec.ts b/packages/backend/test/database.e2e-spec.ts\nindex 1c0f36ce2..267056a51 100644\n--- a/packages/backend/test/database.e2e-spec.ts\n+++ b/packages/backend/test/database.e2e-spec.ts\n@@ -4,7 +4,8 @@ import {\n   GoneException,\n } from '@nestjs/common';\n import { Test, TestingModule } from '@nestjs/testing';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n+import { toCell } from '@wafflebase/sheets';\n import { PrismaService } from 'src/database/prisma.service';\n import { DataSourceService } from 'src/datasource/datasource.service';\n import { ShareLinkService } from 'src/share-link/share-link.service';\n@@ -74,13 +75,14 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n-        query: 'SELECT 1::int4 AS n',\n-      });\n-      expect(queryResult.columns.map((column) => column.name)).toEqual(['n']);\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n-      expect(queryResult.rowCount).toBe(1);\n-      expect(queryResult.truncated).toBe(false);\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT 1::int4 AS n',\n+        });\n+      expect(rowCount).toBe(1);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['n']);\n+      expect(String(rows[0].n)).toBe('1');\n     });\n \n     it('enforces ownership for executeQuery and testConnection', async () => {\n@@ -103,10 +105,205 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n+      const { rows } = await datasourceService.executeQuery(ds.id, {\n         query: 'SELECT 1::int4 AS n',\n       });\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n+      expect(String(rows[0].n)).toBe('1');\n+    });\n+\n+    it('queries real tables with rows', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      // Create a test table and insert data using a raw pg client\n+      // (DataSourceService only allows SELECT)\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+      try {\n+        await rawClient.query(`\n+          CREATE TABLE IF NOT EXISTS _test_products (\n+            id SERIAL PRIMARY KEY,\n+            name TEXT NOT NULL,\n+            price NUMERIC(10, 2) NOT NULL\n+          )\n+        `);\n+        await rawClient.query(`TRUNCATE _test_products RESTART IDENTITY`);\n+        await rawClient.query(`\n+          INSERT INTO _test_products (name, price) VALUES\n+            ('Widget', 9.99),\n+            ('Gadget', 24.50),\n+            ('Doohickey', 3.75)\n+        `);\n+      } finally {\n+        await rawClient.end();\n+      }\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'table-test',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // List tables via information_schema\n+      const tablesResult = await datasourceService.executeQuery(ds.id, {\n+        query: `SELECT table_name FROM information_schema.tables\n+                WHERE table_schema = 'public' AND table_name = '_test_products'`,\n+      });\n+      expect(String(tablesResult.rows[0].table_name)).toBe('_test_products');\n+\n+      // Query table data — verify as sheet cell values (all strings via String())\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT id, name, price FROM _test_products ORDER BY id',\n+        });\n+      expect(rowCount).toBe(3);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['id', 'name', 'price']);\n+\n+      const sheetRows = rows.map((row) =>\n+        columns.map((c) => toCell(row[c.name])),\n+      );\n+      expect(sheetRows).toEqual([\n+        ['1', 'Widget', '9.99'],\n+        ['2', 'Gadget', '24.50'],\n+        ['3', 'Doohickey', '3.75'],\n+      ]);\n+\n+      // Cleanup\n+      const cleanupClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await cleanupClient.connect();\n+      try {\n+        await cleanupClient.query('DROP TABLE IF EXISTS _test_products');\n+      } finally {\n+        await cleanupClient.end();\n+      }\n+    });\n+\n+    it('check correct cell values for all pg built-in types', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'all-types',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // Each entry: [expectedOid, sqlColumnType, insertLiteral, expectedCellValue]\n+      // Listed in pg-types TypeId enum order (by OID).\n+      const b = types.builtins;\n+      const typeMap: [number, string, string, string][] = [\n+        [b.BOOL,        'BOOLEAN',         'true',                                'true'],\n+        [b.BYTEA,       'BYTEA',           \"E'\\\\\\\\xDEADBEEF'\",                   '{\"type\":\"Buffer\",\"data\":[222,173,190,239]}'],\n+        [b.CHAR,        '\"char\"',          \"'A'\",                                 'A'],\n+        [b.INT8,        'INT8',            '9223372036854775807',                 '9223372036854775807'],\n+        [b.INT2,        'INT2',            '32767',                               '32767'],\n+        [b.INT4,        'INT4',            '2147483647',                          '2147483647'],\n+        [b.REGPROC,     'REGPROC',         \"'now'\",                               'now'],\n+        [b.TEXT,        'TEXT',            \"'hello world'\",                       'hello world'],\n+        [b.OID,         'OID',             '1',                                   '1'],\n+        [b.TID,         'TID',             \"'(0,1)'\",                             '(0,1)'],\n+        [b.XID,         'XID',             \"'1'\",                                 '1'],\n+        [b.CID,         'CID',             \"'0'\",                                 '0'],\n+        [b.JSON,        'JSON',            \"'{\\\"key\\\":\\\"value\\\"}'\",               '{\"key\":\"value\"}'],\n+        [b.XML,         'XML',             \"'<root>test</root>'\",                 '<root>test</root>'],\n+        // [b.PG_NODE_TREE] — internal parser tree type, cannot be used as column type\n+        // [b.SMGR]        — internal storage manager type, cannot be used as column type\n+        [b.PATH,        'PATH',            \"'((0,0),(1,1),(2,0))'\",               '((0,0),(1,1),(2,0))'],\n+        [b.POLYGON,     'POLYGON',         \"'((0,0),(1,1),(1,0))'\",               '((0,0),(1,1),(1,0))'],\n+        [b.CIDR,        'CIDR',            \"'192.168.0.0/16'\",                    '192.168.0.0/16'],\n+        [b.FLOAT4,      'FLOAT4',          '3.14',                                '3.14'],\n+        [b.FLOAT8,      'FLOAT8',          '2.718281828',                          '2.718281828'],\n+        // [b.ABSTIME]     — removed in PostgreSQL 12\n+        // [b.RELTIME]     — removed in PostgreSQL 12\n+        // [b.TINTERVAL]   — removed in PostgreSQL 12\n+        [b.CIRCLE,      'CIRCLE',          \"'<(1,2),3>'\",                          '{\"x\":1,\"y\":2,\"radius\":3}'],\n+        [b.MACADDR8,    'MACADDR8',        \"'08:00:2b:01:02:03:04:05'\",           '08:00:2b:01:02:03:04:05'],\n+        [b.MONEY,       'MONEY',           \"'$1,234.56'\",                          '$1,234.56'],\n+        [b.MACADDR,     'MACADDR',         \"'08:00:2b:01:02:03'\",                 '08:00:2b:01:02:03'],\n+        [b.INET,        'INET',            \"'192.168.1.0/24'\",                    '192.168.1.0/24'],\n+        // [b.ACLITEM]     — internal access control type, cannot be used as column type\n+        [b.BPCHAR,      'CHAR(10)',        \"'padded'\",                            'padded    '],\n+        [b.VARCHAR,     'VARCHAR(100)',    \"'variable'\",                          'variable'],\n+        [b.DATE,        'DATE',            \"'2025-06-15'\",                         '2025-06-15'],\n+        [b.TIME,        'TIME',            \"'14:30:00'\",                           '14:30:00'],\n+        [b.TIMESTAMP,   'TIMESTAMP',       \"'2025-06-15 14:30:00'\",               '2025-06-15 14:30:00'],\n+        [b.TIMESTAMPTZ, 'TIMESTAMPTZ',     \"'2025-06-15 14:30:00+09'\",            '2025-06-15 05:30:00+00'],\n+        [b.INTERVAL,    'INTERVAL',        \"'1 year 2 months 3 days'\",            '{\"years\":1,\"months\":2,\"days\":3}'],\n+        [b.TIMETZ,      'TIMETZ',          \"'14:30:00+09'\",                        '14:30:00+09'],\n+        [b.BIT,         'BIT(8)',          \"B'10101010'\",                          '10101010'],\n+        [b.VARBIT,      'VARBIT(8)',       \"B'1010'\",                              '1010'],\n+        [b.NUMERIC,     'NUMERIC(20,4)',   '12345678901234.5678',                  '12345678901234.5678'],\n+        // [b.REFCURSOR]      — cursor reference, only valid inside transactions/functions\n+        // [b.REGPROCEDURE]   — system catalog reference type (function with arg types)\n+        // [b.REGOPER]        — system catalog reference type (operator name)\n+        // [b.REGOPERATOR]    — system catalog reference type (operator with arg types)\n+        // [b.REGCLASS]       — system catalog reference type (relation name)\n+        // [b.REGTYPE]        — system catalog reference type (type name)\n+        [b.UUID,        'UUID',            \"'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'\", 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],\n+        // [b.TXID_SNAPSHOT]  — deprecated, renamed to pg_snapshot in PostgreSQL 13\n+        [b.PG_LSN,      'PG_LSN',          \"'0/1A2B3C4'\",                          '0/1A2B3C4'],\n+        // [b.PG_NDISTINCT]   — internal statistics type, cannot be used as column type\n+        // [b.PG_DEPENDENCIES] — internal statistics type, cannot be used as column type\n+        [b.TSVECTOR,    'TSVECTOR',        \"'fat cat sat'\",                        \"'cat' 'fat' 'sat'\"],\n+        [b.TSQUERY,     'TSQUERY',         \"'fat & cat'\",                          \"'fat' & 'cat'\"],\n+        // [b.GTSVECTOR]      — internal GiST type, cannot be used as column type\n+        [b.REGCONFIG,   'REGCONFIG',       \"'english'\",                            'english'],\n+        [b.REGDICTIONARY, 'REGDICTIONARY', \"'simple'\",                             'simple'],\n+        [b.JSONB,       'JSONB',           \"'{\\\"nested\\\":[1,2,3]}'\",               '{\"nested\":[1,2,3]}'],\n+        // [b.REGNAMESPACE]   — system catalog reference type (namespace name)\n+        // [b.REGROLE]        — system catalog reference type (role name)\n+      ];\n+\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+\n+      const table = '_test_type_check';\n+      try {\n+        for (const [expectedOid, sqlType, insertLiteral, expectedCell] of typeMap) {\n+          await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+          await rawClient.query(`CREATE TABLE ${table} (val ${sqlType})`);\n+          await rawClient.query(`INSERT INTO ${table} (val) VALUES (${insertLiteral})`);\n+\n+          const { columns, rows } = await datasourceService.executeQuery(ds.id, {\n+            query: `SELECT val FROM ${table}`,\n+          });\n+\n+          expect(columns[0].dataTypeID).toBe(expectedOid);\n+          expect(toCell(rows[0].val)).toBe(expectedCell);\n+        }\n+      } finally {\n+        await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+        await rawClient.end();\n+      }\n     });\n \n     it('queries real tables with rows', async () => {\ndiff --git a/packages/sheets/src/index.ts b/packages/sheets/src/index.ts\nindex 76d3beb89..704787efe 100644\n--- a/packages/sheets/src/index.ts\n+++ b/packages/sheets/src/index.ts\n@@ -104,7 +104,7 @@ import { type Store } from './store/store';\n import { MemStore } from './store/memory';\n import { CellIndex } from './store/cell-index';\n import { findEdgeWithIndex } from './store/find-edge';\n-import { ReadOnlyStore } from './store/readonly';\n+import { ReadOnlyStore, toCell } from './store/readonly';\n import {\n   initialize,\n   Spreadsheet,\n@@ -194,6 +194,7 @@ export {\n   MemStore,\n   CellIndex,\n   ReadOnlyStore,\n+  toCell,\n   findEdgeWithIndex,\n   DimensionIndex,\n   toColumnLabel,\ndiff --git a/packages/sheets/src/store/readonly.ts b/packages/sheets/src/store/readonly.ts\nindex 5044c6b8a..047ac004e 100644\n--- a/packages/sheets/src/store/readonly.ts\n+++ b/packages/sheets/src/store/readonly.ts\n@@ -25,6 +25,16 @@ import { CellIndex } from './cell-index';\n import { findEdgeWithIndex } from './find-edge';\n import { Store } from './store';\n \n+/**\n+ * Converts a raw query result value to a string suitable for a sheet cell.\n+ * Date → ISO string, object → JSON, everything else → String().\n+ */\n+export function toCell(val: unknown): string {\n+  if (val instanceof Date) return val.toISOString();\n+  if (typeof val === 'object' && val !== null) return JSON.stringify(val);\n+  return String(val);\n+}\n+\n /**\n  * `ReadOnlyStore` is a Store implementation for displaying query results.\n  * All write operations are no-ops. Data is loaded via `loadQueryResults`.\n@@ -60,7 +70,7 @@ export class ReadOnlyStore implements Store {\n         const val = row[columns[c].name];\n         if (val === null || val === undefined) continue;\n         const sref = toSref({ r: r + 2, c: c + 1 });\n-        this.grid.set(sref, { v: String(val) });\n+        this.grid.set(sref, { v: toCell(val) });\n       }\n     }\n \n",
+      "lensDiffSha256": "bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+      "lensDiffBytes": 18251,
+      "lensFiles": [
+        "packages/backend/src/datasource/datasource.service.spec.ts",
+        "packages/backend/src/datasource/datasource.service.ts",
+        "packages/backend/test/database.e2e-spec.ts",
+        "packages/sheets/src/index.ts",
+        "packages/sheets/src/store/readonly.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "major",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 85,
+            "summary": "Existing assertions were weakened to `String(rows[0].n)`, which passes regardless of whether the new global type parser corrupts non-date types",
+            "evidence": "The change replaced `expect(queryResult.rows).toEqual([{ n: 1 }])` with `expect(String(rows[0].n)).toBe('1')` (lines 85 and 111). `String(1)` and `String('1')` are both `'1'`, so this assertion holds whether int4 comes back as a number (correct) or as a raw string — exactly the regression class the new `datasourceTypeParser`/`RAW_TEXT_OIDS` override could introduce (e.g. if the OID set or fallback to `getDefaultParser` were wrong, all values would arrive as text and the test would still pass). Likewise line 358-equivalent in the new duplicate test uses `String(tablesResult.rows[0].table_name)` instead of the previous strict `toEqual`. The PR's whole point is changing value parsing, and it loosens the assertions that guard parsing."
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 114,
+            "summary": "Duplicate test named 'queries real tables with rows' added; an identical-named, stricter copy already exists at line 309",
+            "evidence": "`it('queries real tables with rows', ...)` now appears twice in the same describe block (lines 114 and 309), both creating/truncating/dropping the same `_test_products` table. The new copy asserts via `toCell(...)` with all-string expectations; the pre-existing copy asserts the raw typed rows (`{ id: 1, name: 'Widget', price: '9.99' }`). Duplicate names make failures ambiguous and the two tests race on the same global table name/lifecycle (the second one recreates and drops the table the first also drops), which is fragile rather than added coverage."
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "packages/sheets/src/store/readonly.ts",
+            "line": 31,
+            "summary": "New exported `toCell` in packages/sheets has no test in the sheets vitest suite; its Date→ISO branch is exercised nowhere",
+            "evidence": "`toCell` is new public API in packages/sheets (also re-exported from src/index.ts) and changes ReadOnlyStore rendering from `String(val)` (objects → '[object Object]') to JSON. Grep for `toCell|ReadOnlyStore|loadQueryResults` across packages matches only source files (view/overlay.ts, view/gridcanvas.ts, store/readonly.ts, index.ts), frontend/datasource-view.tsx and the backend e2e spec — no *.test.ts / *.spec.ts in packages/sheets covers it. The only coverage is the backend e2e (`database.e2e-spec.ts`), which is gated behind `RUN_DB_INTEGRATION_TESTS === 'true'` (test/helpers/integration-helpers.ts:10-12) and calls `toCell` directly, never through `ReadOnlyStore.loadQueryResults`. Additionally, after the parser change dates come back as strings, so no case anywhere hits the `val instanceof Date` branch, and no case covers `null`/`undefined`.",
+            "searchedFor": [
+              "grep 'toCell|ReadOnlyStore|loadQueryResults' across packages",
+              "glob packages/sheets/**/*.test.ts / *.spec.ts via grep results",
+              "read packages/backend/test/helpers/integration-helpers.ts for describeDb gating"
+            ]
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "packages/backend/src/datasource/datasource.service.spec.ts",
+            "line": 121,
+            "summary": "Unit spec mocks out `createClient`, so nothing asserts the new `types: { getTypeParser: datasourceTypeParser }` client option is wired up",
+            "evidence": "Both executeQuery unit tests do `jest.spyOn(service, 'createClient').mockReturnValue(client)` (lines 120-122, 161-163), and the mock client ignores constructor options entirely, so the new `types` option added in datasource.service.ts:204 cannot be observed. The updated assertions only cover the three SET statements. The parser wiring is only verified in the DB-gated e2e; a unit assertion on the options object passed to `new Client(...)` (or a direct test of `datasourceTypeParser` for DATE/TIMESTAMP/TIMESTAMPTZ vs a fallthrough OID) is absent.",
+            "searchedFor": [
+              "read packages/backend/src/datasource/datasource.service.spec.ts in full",
+              "grep for getTypeParser/datasourceTypeParser in backend tests"
+            ]
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 85,
+            "summary": "Existing assertions were weakened to `String(rows[0].n)`, which passes regardless of whether the new global type parser corrupts non-date types",
+            "evidence": "The change replaced `expect(queryResult.rows).toEqual([{ n: 1 }])` with `expect(String(rows[0].n)).toBe('1')` (lines 85 and 111). `String(1)` and `String('1')` are both `'1'`, so this assertion holds whether int4 comes back as a number (correct) or as a raw string — exactly the regression class the new `datasourceTypeParser`/`RAW_TEXT_OIDS` override could introduce (e.g. if the OID set or fallback to `getDefaultParser` were wrong, all values would arrive as text and the test would still pass). Likewise line 358-equivalent in the new duplicate test uses `String(tablesResult.rows[0].table_name)` instead of the previous strict `toEqual`. The PR's whole point is changing value parsing, and it loosens the assertions that guard parsing.",
+            "lane": "discarded",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+              "contentSha": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+              "alsoAt": null
+            }
+          },
+          "verdict": {
+            "verdict": "refuted",
+            "confidence": "high",
+            "reason": "The quoted `String(...)` loosenings do exist (database.e2e-spec.ts:85, :111, :163), but the regression class the finding says they stop guarding is covered by strict assertions elsewhere in the same gated suite. database.e2e-spec.ts:370-374 asserts `toEqual([{ id: 1, name: 'Widget', price: '9.99' }, ...])`, where `id` is a SERIAL/int4 asserted as the NUMBER 1 — a text-parsed int4 ('1') fails there. authenticated-http.e2e-spec.ts:203 asserts `toEqual([{ n: 1 }])` for `SELECT 1::int4 AS n` through the real controller+service+pg path. A broken `getDefaultParser` fallback would also break the per-OID table at database.e2e-spec.ts:199-307, whose expectations for CIRCLE (:242), INTERVAL (:254) and BYTEA (:219) require non-identity default parsers, and whose DATE/TIMESTAMP/TIMESTAMPTZ rows (:250, :252, :253) pin the actual new behavior (toCell emits `val.toISOString()` for Date per packages/sheets/src/store/readonly.ts:32-36, so a Date would fail). Both spec files are gated by the same `describeDb` flag (test/helpers/integration-helpers.ts:10-12), so the strict guards execute exactly when the loosened ones do. The loosening therefore leaves no behavior untested; at most it is a minor breadth point, not a blocking vacuous-coverage defect.",
+            "refutationGround": "already-guarded",
+            "groundedIn": [
+              "packages/backend/test/database.e2e-spec.ts:85",
+              "packages/backend/test/database.e2e-spec.ts:111",
+              "packages/backend/test/database.e2e-spec.ts:163",
+              "packages/backend/test/database.e2e-spec.ts:309",
+              "packages/backend/test/database.e2e-spec.ts:370-374",
+              "packages/backend/test/database.e2e-spec.ts:199-307",
+              "packages/backend/test/database.e2e-spec.ts:242",
+              "packages/backend/test/database.e2e-spec.ts:250-254",
+              "packages/backend/test/authenticated-http.e2e-spec.ts:197-205",
+              "packages/backend/test/helpers/integration-helpers.ts:10-12",
+              "packages/backend/src/datasource/datasource.service.ts:21-37",
+              "packages/backend/src/datasource/datasource.service.ts:204",
+              "packages/sheets/src/store/readonly.ts:32-36"
+            ]
+          },
+          "dropped": true
+        }
+      ]
+    },
+    "security": {
+      "lensDiff": "diff --git a/packages/backend/src/datasource/datasource.service.spec.ts b/packages/backend/src/datasource/datasource.service.spec.ts\nindex e36cc3a8a..d984d59fa 100644\n--- a/packages/backend/src/datasource/datasource.service.spec.ts\n+++ b/packages/backend/src/datasource/datasource.service.spec.ts\n@@ -126,14 +126,10 @@ describe('DataSourceService', () => {\n     });\n \n     expect(client.connect).toHaveBeenCalledTimes(1);\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      1,\n-      \"SET statement_timeout = '30000'\",\n-    );\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      2,\n-      'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001',\n-    );\n+    expect(client.query).toHaveBeenNthCalledWith(1, \"SET statement_timeout = '30000'\");\n+    expect(client.query).toHaveBeenNthCalledWith(2, \"SET TimeZone = 'UTC'\");\n+    expect(client.query).toHaveBeenNthCalledWith(3, \"SET DateStyle = 'ISO, MDY'\");\n+    expect(client.query).toHaveBeenNthCalledWith(4, 'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001');\n     expect(client.end).toHaveBeenCalledTimes(1);\n \n     expect(result.columns).toEqual([{ name: 'id', dataTypeID: 23 }]);\ndiff --git a/packages/backend/src/datasource/datasource.service.ts b/packages/backend/src/datasource/datasource.service.ts\nindex c415f42bd..2e190c597 100644\n--- a/packages/backend/src/datasource/datasource.service.ts\n+++ b/packages/backend/src/datasource/datasource.service.ts\n@@ -3,7 +3,7 @@ import {\n   NotFoundException,\n   BadRequestException,\n } from '@nestjs/common';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n import { PrismaService } from 'src/database/prisma.service';\n import { encrypt, decrypt } from './crypto.util';\n import { validateSelectQuery } from './sql-validator';\n@@ -16,6 +16,26 @@ import {\n const QUERY_TIMEOUT_MS = 30_000;\n const MAX_ROWS = 10_000;\n \n+// Keep date/time types as raw Postgres text instead of JS `Date`, which the\n+// default parser shifts by the Node runtime timezone. (TIME/TIMETZ are strings.)\n+const RAW_TEXT_OIDS = new Set([\n+  types.builtins.DATE,\n+  types.builtins.TIMESTAMP,\n+  types.builtins.TIMESTAMPTZ,\n+]);\n+\n+// pg-types types getTypeParser's return as `any`; pin it to avoid leaking `any`.\n+type ValueParser = (value: string) => unknown;\n+const getDefaultParser = types.getTypeParser as (\n+  oid: Parameters<typeof types.getTypeParser>[0],\n+  format?: Parameters<typeof types.getTypeParser>[1],\n+) => ValueParser;\n+\n+const datasourceTypeParser: typeof types.getTypeParser = (oid, format) =>\n+  RAW_TEXT_OIDS.has(oid)\n+    ? (value: string) => value\n+    : getDefaultParser(oid, format);\n+\n @Injectable()\n export class DataSourceService {\n   constructor(private prisma: PrismaService) {}\n@@ -120,9 +140,9 @@ export class DataSourceService {\n       await client.connect();\n \n       // Set statement timeout\n-      await client.query(\n-        `SET statement_timeout = '${QUERY_TIMEOUT_MS}'`,\n-      );\n+      await client.query(`SET statement_timeout = '${QUERY_TIMEOUT_MS}'`);\n+      await client.query(`SET TimeZone = 'UTC'`);\n+      await client.query(`SET DateStyle = 'ISO, MDY'`);\n \n       // Wrap with LIMIT to enforce max rows\n       const wrappedQuery = `SELECT * FROM (${dto.query}) AS _q LIMIT ${MAX_ROWS + 1}`;\n@@ -181,6 +201,7 @@ export class DataSourceService {\n       password: decrypt(ds.password),\n       ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false,\n       connectionTimeoutMillis: 10_000,\n+      types: { getTypeParser: datasourceTypeParser },\n     });\n   }\n }\ndiff --git a/packages/backend/test/database.e2e-spec.ts b/packages/backend/test/database.e2e-spec.ts\nindex 1c0f36ce2..267056a51 100644\n--- a/packages/backend/test/database.e2e-spec.ts\n+++ b/packages/backend/test/database.e2e-spec.ts\n@@ -4,7 +4,8 @@ import {\n   GoneException,\n } from '@nestjs/common';\n import { Test, TestingModule } from '@nestjs/testing';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n+import { toCell } from '@wafflebase/sheets';\n import { PrismaService } from 'src/database/prisma.service';\n import { DataSourceService } from 'src/datasource/datasource.service';\n import { ShareLinkService } from 'src/share-link/share-link.service';\n@@ -74,13 +75,14 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n-        query: 'SELECT 1::int4 AS n',\n-      });\n-      expect(queryResult.columns.map((column) => column.name)).toEqual(['n']);\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n-      expect(queryResult.rowCount).toBe(1);\n-      expect(queryResult.truncated).toBe(false);\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT 1::int4 AS n',\n+        });\n+      expect(rowCount).toBe(1);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['n']);\n+      expect(String(rows[0].n)).toBe('1');\n     });\n \n     it('enforces ownership for executeQuery and testConnection', async () => {\n@@ -103,10 +105,205 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n+      const { rows } = await datasourceService.executeQuery(ds.id, {\n         query: 'SELECT 1::int4 AS n',\n       });\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n+      expect(String(rows[0].n)).toBe('1');\n+    });\n+\n+    it('queries real tables with rows', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      // Create a test table and insert data using a raw pg client\n+      // (DataSourceService only allows SELECT)\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+      try {\n+        await rawClient.query(`\n+          CREATE TABLE IF NOT EXISTS _test_products (\n+            id SERIAL PRIMARY KEY,\n+            name TEXT NOT NULL,\n+            price NUMERIC(10, 2) NOT NULL\n+          )\n+        `);\n+        await rawClient.query(`TRUNCATE _test_products RESTART IDENTITY`);\n+        await rawClient.query(`\n+          INSERT INTO _test_products (name, price) VALUES\n+            ('Widget', 9.99),\n+            ('Gadget', 24.50),\n+            ('Doohickey', 3.75)\n+        `);\n+      } finally {\n+        await rawClient.end();\n+      }\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'table-test',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // List tables via information_schema\n+      const tablesResult = await datasourceService.executeQuery(ds.id, {\n+        query: `SELECT table_name FROM information_schema.tables\n+                WHERE table_schema = 'public' AND table_name = '_test_products'`,\n+      });\n+      expect(String(tablesResult.rows[0].table_name)).toBe('_test_products');\n+\n+      // Query table data — verify as sheet cell values (all strings via String())\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT id, name, price FROM _test_products ORDER BY id',\n+        });\n+      expect(rowCount).toBe(3);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['id', 'name', 'price']);\n+\n+      const sheetRows = rows.map((row) =>\n+        columns.map((c) => toCell(row[c.name])),\n+      );\n+      expect(sheetRows).toEqual([\n+        ['1', 'Widget', '9.99'],\n+        ['2', 'Gadget', '24.50'],\n+        ['3', 'Doohickey', '3.75'],\n+      ]);\n+\n+      // Cleanup\n+      const cleanupClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await cleanupClient.connect();\n+      try {\n+        await cleanupClient.query('DROP TABLE IF EXISTS _test_products');\n+      } finally {\n+        await cleanupClient.end();\n+      }\n+    });\n+\n+    it('check correct cell values for all pg built-in types', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'all-types',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // Each entry: [expectedOid, sqlColumnType, insertLiteral, expectedCellValue]\n+      // Listed in pg-types TypeId enum order (by OID).\n+      const b = types.builtins;\n+      const typeMap: [number, string, string, string][] = [\n+        [b.BOOL,        'BOOLEAN',         'true',                                'true'],\n+        [b.BYTEA,       'BYTEA',           \"E'\\\\\\\\xDEADBEEF'\",                   '{\"type\":\"Buffer\",\"data\":[222,173,190,239]}'],\n+        [b.CHAR,        '\"char\"',          \"'A'\",                                 'A'],\n+        [b.INT8,        'INT8',            '9223372036854775807',                 '9223372036854775807'],\n+        [b.INT2,        'INT2',            '32767',                               '32767'],\n+        [b.INT4,        'INT4',            '2147483647',                          '2147483647'],\n+        [b.REGPROC,     'REGPROC',         \"'now'\",                               'now'],\n+        [b.TEXT,        'TEXT',            \"'hello world'\",                       'hello world'],\n+        [b.OID,         'OID',             '1',                                   '1'],\n+        [b.TID,         'TID',             \"'(0,1)'\",                             '(0,1)'],\n+        [b.XID,         'XID',             \"'1'\",                                 '1'],\n+        [b.CID,         'CID',             \"'0'\",                                 '0'],\n+        [b.JSON,        'JSON',            \"'{\\\"key\\\":\\\"value\\\"}'\",               '{\"key\":\"value\"}'],\n+        [b.XML,         'XML',             \"'<root>test</root>'\",                 '<root>test</root>'],\n+        // [b.PG_NODE_TREE] — internal parser tree type, cannot be used as column type\n+        // [b.SMGR]        — internal storage manager type, cannot be used as column type\n+        [b.PATH,        'PATH',            \"'((0,0),(1,1),(2,0))'\",               '((0,0),(1,1),(2,0))'],\n+        [b.POLYGON,     'POLYGON',         \"'((0,0),(1,1),(1,0))'\",               '((0,0),(1,1),(1,0))'],\n+        [b.CIDR,        'CIDR',            \"'192.168.0.0/16'\",                    '192.168.0.0/16'],\n+        [b.FLOAT4,      'FLOAT4',          '3.14',                                '3.14'],\n+        [b.FLOAT8,      'FLOAT8',          '2.718281828',                          '2.718281828'],\n+        // [b.ABSTIME]     — removed in PostgreSQL 12\n+        // [b.RELTIME]     — removed in PostgreSQL 12\n+        // [b.TINTERVAL]   — removed in PostgreSQL 12\n+        [b.CIRCLE,      'CIRCLE',          \"'<(1,2),3>'\",                          '{\"x\":1,\"y\":2,\"radius\":3}'],\n+        [b.MACADDR8,    'MACADDR8',        \"'08:00:2b:01:02:03:04:05'\",           '08:00:2b:01:02:03:04:05'],\n+        [b.MONEY,       'MONEY',           \"'$1,234.56'\",                          '$1,234.56'],\n+        [b.MACADDR,     'MACADDR',         \"'08:00:2b:01:02:03'\",                 '08:00:2b:01:02:03'],\n+        [b.INET,        'INET',            \"'192.168.1.0/24'\",                    '192.168.1.0/24'],\n+        // [b.ACLITEM]     — internal access control type, cannot be used as column type\n+        [b.BPCHAR,      'CHAR(10)',        \"'padded'\",                            'padded    '],\n+        [b.VARCHAR,     'VARCHAR(100)',    \"'variable'\",                          'variable'],\n+        [b.DATE,        'DATE',            \"'2025-06-15'\",                         '2025-06-15'],\n+        [b.TIME,        'TIME',            \"'14:30:00'\",                           '14:30:00'],\n+        [b.TIMESTAMP,   'TIMESTAMP',       \"'2025-06-15 14:30:00'\",               '2025-06-15 14:30:00'],\n+        [b.TIMESTAMPTZ, 'TIMESTAMPTZ',     \"'2025-06-15 14:30:00+09'\",            '2025-06-15 05:30:00+00'],\n+        [b.INTERVAL,    'INTERVAL',        \"'1 year 2 months 3 days'\",            '{\"years\":1,\"months\":2,\"days\":3}'],\n+        [b.TIMETZ,      'TIMETZ',          \"'14:30:00+09'\",                        '14:30:00+09'],\n+        [b.BIT,         'BIT(8)',          \"B'10101010'\",                          '10101010'],\n+        [b.VARBIT,      'VARBIT(8)',       \"B'1010'\",                              '1010'],\n+        [b.NUMERIC,     'NUMERIC(20,4)',   '12345678901234.5678',                  '12345678901234.5678'],\n+        // [b.REFCURSOR]      — cursor reference, only valid inside transactions/functions\n+        // [b.REGPROCEDURE]   — system catalog reference type (function with arg types)\n+        // [b.REGOPER]        — system catalog reference type (operator name)\n+        // [b.REGOPERATOR]    — system catalog reference type (operator with arg types)\n+        // [b.REGCLASS]       — system catalog reference type (relation name)\n+        // [b.REGTYPE]        — system catalog reference type (type name)\n+        [b.UUID,        'UUID',            \"'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'\", 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],\n+        // [b.TXID_SNAPSHOT]  — deprecated, renamed to pg_snapshot in PostgreSQL 13\n+        [b.PG_LSN,      'PG_LSN',          \"'0/1A2B3C4'\",                          '0/1A2B3C4'],\n+        // [b.PG_NDISTINCT]   — internal statistics type, cannot be used as column type\n+        // [b.PG_DEPENDENCIES] — internal statistics type, cannot be used as column type\n+        [b.TSVECTOR,    'TSVECTOR',        \"'fat cat sat'\",                        \"'cat' 'fat' 'sat'\"],\n+        [b.TSQUERY,     'TSQUERY',         \"'fat & cat'\",                          \"'fat' & 'cat'\"],\n+        // [b.GTSVECTOR]      — internal GiST type, cannot be used as column type\n+        [b.REGCONFIG,   'REGCONFIG',       \"'english'\",                            'english'],\n+        [b.REGDICTIONARY, 'REGDICTIONARY', \"'simple'\",                             'simple'],\n+        [b.JSONB,       'JSONB',           \"'{\\\"nested\\\":[1,2,3]}'\",               '{\"nested\":[1,2,3]}'],\n+        // [b.REGNAMESPACE]   — system catalog reference type (namespace name)\n+        // [b.REGROLE]        — system catalog reference type (role name)\n+      ];\n+\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+\n+      const table = '_test_type_check';\n+      try {\n+        for (const [expectedOid, sqlType, insertLiteral, expectedCell] of typeMap) {\n+          await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+          await rawClient.query(`CREATE TABLE ${table} (val ${sqlType})`);\n+          await rawClient.query(`INSERT INTO ${table} (val) VALUES (${insertLiteral})`);\n+\n+          const { columns, rows } = await datasourceService.executeQuery(ds.id, {\n+            query: `SELECT val FROM ${table}`,\n+          });\n+\n+          expect(columns[0].dataTypeID).toBe(expectedOid);\n+          expect(toCell(rows[0].val)).toBe(expectedCell);\n+        }\n+      } finally {\n+        await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+        await rawClient.end();\n+      }\n     });\n \n     it('queries real tables with rows', async () => {\ndiff --git a/packages/sheets/src/index.ts b/packages/sheets/src/index.ts\nindex 76d3beb89..704787efe 100644\n--- a/packages/sheets/src/index.ts\n+++ b/packages/sheets/src/index.ts\n@@ -104,7 +104,7 @@ import { type Store } from './store/store';\n import { MemStore } from './store/memory';\n import { CellIndex } from './store/cell-index';\n import { findEdgeWithIndex } from './store/find-edge';\n-import { ReadOnlyStore } from './store/readonly';\n+import { ReadOnlyStore, toCell } from './store/readonly';\n import {\n   initialize,\n   Spreadsheet,\n@@ -194,6 +194,7 @@ export {\n   MemStore,\n   CellIndex,\n   ReadOnlyStore,\n+  toCell,\n   findEdgeWithIndex,\n   DimensionIndex,\n   toColumnLabel,\ndiff --git a/packages/sheets/src/store/readonly.ts b/packages/sheets/src/store/readonly.ts\nindex 5044c6b8a..047ac004e 100644\n--- a/packages/sheets/src/store/readonly.ts\n+++ b/packages/sheets/src/store/readonly.ts\n@@ -25,6 +25,16 @@ import { CellIndex } from './cell-index';\n import { findEdgeWithIndex } from './find-edge';\n import { Store } from './store';\n \n+/**\n+ * Converts a raw query result value to a string suitable for a sheet cell.\n+ * Date → ISO string, object → JSON, everything else → String().\n+ */\n+export function toCell(val: unknown): string {\n+  if (val instanceof Date) return val.toISOString();\n+  if (typeof val === 'object' && val !== null) return JSON.stringify(val);\n+  return String(val);\n+}\n+\n /**\n  * `ReadOnlyStore` is a Store implementation for displaying query results.\n  * All write operations are no-ops. Data is loaded via `loadQueryResults`.\n@@ -60,7 +70,7 @@ export class ReadOnlyStore implements Store {\n         const val = row[columns[c].name];\n         if (val === null || val === undefined) continue;\n         const sref = toSref({ r: r + 2, c: c + 1 });\n-        this.grid.set(sref, { v: String(val) });\n+        this.grid.set(sref, { v: toCell(val) });\n       }\n     }\n \n",
+      "lensDiffSha256": "bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+      "lensDiffBytes": 18251,
+      "lensFiles": [
+        "packages/backend/src/datasource/datasource.service.spec.ts",
+        "packages/backend/src/datasource/datasource.service.ts",
+        "packages/backend/test/database.e2e-spec.ts",
+        "packages/sheets/src/index.ts",
+        "packages/sheets/src/store/readonly.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "critical",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/sql-validator.ts",
+            "line": 29,
+            "summary": "SELECT-only guard is bypassable: the validator inspects a comment-stripped copy while executeQuery concatenates and runs the ORIGINAL query text, allowing arbitrary multi-statement SQL (DELETE/DROP/SET) on the connected datasource",
+            "evidence": "`validateSelectQuery` strips `--[^\\n]*` (sql-validator.ts:29) before doing the first-token, forbidden-keyword and semicolon checks, but `DataSourceService.executeQuery` interpolates the raw `dto.query` into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001` (datasource.service.ts:148) and sends it through pg's simple-query protocol (no parameter values ⇒ multiple statements are executed). Postgres does NOT treat `--` inside a string literal as a comment, so the two views of the query diverge. Attack: an authenticated workspace member POSTs to /datasources/:id/query with `SELECT 'x--' ) AS a; DROP TABLE users; --'`. The validator's regex matches the `--` inside the literal and truncates the string to `SELECT 'x` — first token SELECT ✓, no forbidden keyword ✓, one statement ✓ ⇒ valid. Postgres then executes `SELECT * FROM (SELECT 'x--' ) AS a`, then `DROP TABLE users`, then a trailing comment. The same trick hides INSERT/UPDATE/DELETE/GRANT and `SET statement_timeout = 0`, defeating both the read-only intent and the timeout/row-limit controls that the diff extends. The diff does not introduce the validator, but it modifies exactly this execution path (adding SETs at lines 143-145) and the guard reads as covered while it is not.",
+            "searchedFor": []
+          },
+          {
+            "severity": "major",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 202,
+            "summary": "TLS certificate verification is disabled for all datasource connections (`rejectUnauthorized: false`), so enabling SSL gives no MITM protection for the decrypted DB credentials",
+            "evidence": "createClient — the object literal the diff edits to add `types` at line 204 — sets `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (line 202). Any network attacker between the backend and the user's Postgres host can present a self-signed cert, terminate the TLS session, and capture the plaintext credentials produced by `decrypt(ds.password)` (line 201) plus every row of query data. Users who tick `sslEnabled` reasonably believe the channel is authenticated; it is only encrypted to whoever answers. No hostname/CA verification option is exposed anywhere in the DTO (datasource.dto.ts) to opt back in.",
+            "searchedFor": []
+          },
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 121,
+            "summary": "SSRF / internal network probing: user-supplied host+port are connected to unvalidated, and testConnection returns the raw connection error to the caller as an oracle",
+            "evidence": "createClient (lines 196-205) uses attacker-chosen `ds.host`/`ds.port` with no allow/deny-list (no RFC1918, link-local 169.254.169.254, or localhost filtering anywhere in datasource.dto.ts or the service). `testConnection` (line 121) returns `{ success:false, error: (error as Error).message }` straight to the HTTP client, and `executeQuery` rethrows `pgError.message` (line 169). Distinct messages for ECONNREFUSED vs. timeout vs. 'password authentication failed' vs. protocol mismatch let any authenticated user map internal hosts/ports from the backend's network position (cloud metadata endpoints, internal admin ports) at 10s per probe (connectionTimeoutMillis, line 203). Confidence medium because reachability depends on deployment topology, but nothing in code constrains the destination.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 169,
+            "summary": "Raw Postgres error text is forwarded verbatim to API clients, leaking remote schema/host/internal details",
+            "evidence": "`throw new BadRequestException(pgError.message || 'Query execution failed')` (line 169) and the `error` field of testConnection (line 121) return unfiltered driver/server messages. Postgres errors routinely include table and column names, search_path, file paths, roles, and resolved host/IP in connection failures. Combined with the SSRF vector above this is the probing oracle; on its own it is schema disclosure to any workspace member.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 44,
+            "summary": "create() and update() return the full DataSource row, including the stored encryption payload, while findOne/findAllByWorkspace deliberately mask it",
+            "evidence": "`create` (line 44) and `update` (line 95) return the Prisma record unmodified, so the controller responses at datasource.controller.ts:43/67 and :104 include `password` as the `iv:authTag:ciphertext` blob — the very field that findOne (line 77) and findAllByWorkspace (line 68) go out of their way to replace with '********'. The value is AES-256-GCM ciphertext so it is not directly usable, but handing out the ciphertext plus IV/tag to every client (and into logs/caches) is unnecessary sensitive-data exposure and an inconsistent masking policy that will hide a real leak if the encryption scheme ever changes.",
+            "searchedFor": []
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "critical",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/sql-validator.ts",
+            "line": 29,
+            "summary": "SELECT-only guard is bypassable: the validator inspects a comment-stripped copy while executeQuery concatenates and runs the ORIGINAL query text, allowing arbitrary multi-statement SQL (DELETE/DROP/SET) on the connected datasource",
+            "evidence": "`validateSelectQuery` strips `--[^\\n]*` (sql-validator.ts:29) before doing the first-token, forbidden-keyword and semicolon checks, but `DataSourceService.executeQuery` interpolates the raw `dto.query` into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001` (datasource.service.ts:148) and sends it through pg's simple-query protocol (no parameter values ⇒ multiple statements are executed). Postgres does NOT treat `--` inside a string literal as a comment, so the two views of the query diverge. Attack: an authenticated workspace member POSTs to /datasources/:id/query with `SELECT 'x--' ) AS a; DROP TABLE users; --'`. The validator's regex matches the `--` inside the literal and truncates the string to `SELECT 'x` — first token SELECT ✓, no forbidden keyword ✓, one statement ✓ ⇒ valid. Postgres then executes `SELECT * FROM (SELECT 'x--' ) AS a`, then `DROP TABLE users`, then a trailing comment. The same trick hides INSERT/UPDATE/DELETE/GRANT and `SET statement_timeout = 0`, defeating both the read-only intent and the timeout/row-limit controls that the diff extends. The diff does not introduce the validator, but it modifies exactly this execution path (adding SETs at lines 143-145) and the guard reads as covered while it is not.",
+            "searchedFor": [],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "pre-existing",
+              "addedBy": "b86ce63ed74aff2d6fa833eb9f988c49c72026d2",
+              "contentSha": null,
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "The code is exactly as described. validateSelectQuery builds a comment-stripped copy (sql-validator.ts:28-31) using a string-unaware regex `--[^\\n]*`, and performs the first-token (line 38), forbidden-keyword (lines 47-57) and multi-statement (lines 60-67) checks against that copy. DataSourceService.executeQuery then interpolates the ORIGINAL dto.query into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001` (datasource.service.ts:148) and executes it with `client.query(wrappedQuery)` (line 150) — no values array, so pg uses the simple query protocol, which executes multiple semicolon-separated statements. Postgres does not treat `--` inside a single-quoted literal as a comment, so `SELECT 'x--' ) AS a; DROP TABLE users; --'` passes validation (validator sees only `SELECT 'x`) but Postgres executes the SELECT, then DROP TABLE, then a comment that absorbs the wrapper suffix. The same trick smuggles INSERT/UPDATE/DELETE/GRANT and `SET statement_timeout = 0`, defeating the timeout/row-limit controls at lines 143-148. No compensating guard exists: the endpoint requires only JwtAuthGuard plus assertMember for any workspace member (datasource.controller.ts:133-145), ExecuteQueryDto only validates type/length (datasource.dto.ts:86-90), and createClient opens the connection with the stored credentials without any read-only session/role setting (datasource.service.ts:196-206). Injection via a bypassable guard, reachable by an authenticated low-privilege user — critical and in-lane.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/backend/src/datasource/sql-validator.ts:27-31",
+              "packages/backend/src/datasource/sql-validator.ts:37-44",
+              "packages/backend/src/datasource/sql-validator.ts:46-67",
+              "packages/backend/src/datasource/datasource.service.ts:127-131",
+              "packages/backend/src/datasource/datasource.service.ts:142-150",
+              "packages/backend/src/datasource/datasource.service.ts:196-206",
+              "packages/backend/src/datasource/datasource.controller.ts:133-145",
+              "packages/backend/src/datasource/datasource.dto.ts:86-90"
+            ]
+          },
+          "dropped": false
+        },
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 202,
+            "summary": "TLS certificate verification is disabled for all datasource connections (`rejectUnauthorized: false`), so enabling SSL gives no MITM protection for the decrypted DB credentials",
+            "evidence": "createClient — the object literal the diff edits to add `types` at line 204 — sets `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (line 202). Any network attacker between the backend and the user's Postgres host can present a self-signed cert, terminate the TLS session, and capture the plaintext credentials produced by `decrypt(ds.password)` (line 201) plus every row of query data. Users who tick `sslEnabled` reasonably believe the channel is authenticated; it is only encrypted to whoever answers. No hostname/CA verification option is exposed anywhere in the DTO (datasource.dto.ts) to opt back in.",
+            "searchedFor": [],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "pre-existing",
+              "addedBy": "b86ce63ed74aff2d6fa833eb9f988c49c72026d2",
+              "contentSha": null,
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "The claim is accurate as written. datasource.service.ts:202 sets `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` in `createClient`, the exact literal that also adds `types` at line 204, and line 201 passes `decrypt(ds.password)` over that connection. The client is reached from `testConnection` (line 115, connect at 117) and `executeQuery` (line 138, connect at 140), so the path is live. There is no way to opt back into verification: datasource.dto.ts exposes only `sslEnabled` (lines 39-41 and 81-83), and a repo-wide grep for `rejectUnauthorized|ca:|sslmode` returns only line 202 in backend source, so no caller or config restores CA/hostname checking. This is weakened TLS peer verification permitting an on-path attacker to present a self-signed certificate and capture decrypted datasource credentials and all returned rows, which falls in the Security lens's crypto/auth lane and is a real, non-hypothetical weakness rather than a style or correctness concern.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/backend/src/datasource/datasource.service.ts:196-206",
+              "packages/backend/src/datasource/datasource.service.ts:202",
+              "packages/backend/src/datasource/datasource.service.ts:201",
+              "packages/backend/src/datasource/datasource.service.ts:115-118",
+              "packages/backend/src/datasource/datasource.service.ts:138-140",
+              "packages/backend/src/datasource/datasource.dto.ts:39-41",
+              "packages/backend/src/datasource/datasource.dto.ts:81-83"
+            ]
+          },
+          "dropped": false
+        },
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 121,
+            "summary": "SSRF / internal network probing: user-supplied host+port are connected to unvalidated, and testConnection returns the raw connection error to the caller as an oracle",
+            "evidence": "createClient (lines 196-205) uses attacker-chosen `ds.host`/`ds.port` with no allow/deny-list (no RFC1918, link-local 169.254.169.254, or localhost filtering anywhere in datasource.dto.ts or the service). `testConnection` (line 121) returns `{ success:false, error: (error as Error).message }` straight to the HTTP client, and `executeQuery` rethrows `pgError.message` (line 169). Distinct messages for ECONNREFUSED vs. timeout vs. 'password authentication failed' vs. protocol mismatch let any authenticated user map internal hosts/ports from the backend's network position (cloud metadata endpoints, internal admin ports) at 10s per probe (connectionTimeoutMillis, line 203). Confidence medium because reachability depends on deployment topology, but nothing in code constrains the destination.",
+            "searchedFor": [],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "pre-existing",
+              "addedBy": "b86ce63ed74aff2d6fa833eb9f988c49c72026d2",
+              "contentSha": null,
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "Verified in-repo: createClient (datasource.service.ts:188-206) connects to fully user-controlled host/port with no allow/deny-list; datasource.dto.ts:17-25/56-64 validate only string length and port range, and no RFC1918/link-local/loopback filtering exists anywhere in the backend. testConnection returns the raw driver error message to the HTTP caller (datasource.service.ts:121) and executeQuery rethrows pgError.message (168-170), giving a distinguishable error oracle. The path is reachable by any authenticated workspace member: DataSourceController POST /datasources (60-68) and POST /datasources/:id/test (120-131) enforce only JwtAuthGuard plus assertMember on the workspace, which never constrains the connection destination. SSRF/internal-network probing is explicitly in the security lens; no refutation ground applies.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/backend/src/datasource/datasource.service.ts:188",
+              "packages/backend/src/datasource/datasource.service.ts:196",
+              "packages/backend/src/datasource/datasource.service.ts:203",
+              "packages/backend/src/datasource/datasource.service.ts:121",
+              "packages/backend/src/datasource/datasource.service.ts:168",
+              "packages/backend/src/datasource/datasource.dto.ts:17",
+              "packages/backend/src/datasource/datasource.dto.ts:56",
+              "packages/backend/src/datasource/datasource.controller.ts:60",
+              "packages/backend/src/datasource/datasource.controller.ts:120"
+            ]
+          },
+          "dropped": false
+        }
+      ]
+    },
+    "design-fit": {
+      "lensDiff": "diff --git a/packages/backend/src/datasource/datasource.service.spec.ts b/packages/backend/src/datasource/datasource.service.spec.ts\nindex e36cc3a8a..d984d59fa 100644\n--- a/packages/backend/src/datasource/datasource.service.spec.ts\n+++ b/packages/backend/src/datasource/datasource.service.spec.ts\n@@ -126,14 +126,10 @@ describe('DataSourceService', () => {\n     });\n \n     expect(client.connect).toHaveBeenCalledTimes(1);\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      1,\n-      \"SET statement_timeout = '30000'\",\n-    );\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      2,\n-      'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001',\n-    );\n+    expect(client.query).toHaveBeenNthCalledWith(1, \"SET statement_timeout = '30000'\");\n+    expect(client.query).toHaveBeenNthCalledWith(2, \"SET TimeZone = 'UTC'\");\n+    expect(client.query).toHaveBeenNthCalledWith(3, \"SET DateStyle = 'ISO, MDY'\");\n+    expect(client.query).toHaveBeenNthCalledWith(4, 'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001');\n     expect(client.end).toHaveBeenCalledTimes(1);\n \n     expect(result.columns).toEqual([{ name: 'id', dataTypeID: 23 }]);\ndiff --git a/packages/backend/src/datasource/datasource.service.ts b/packages/backend/src/datasource/datasource.service.ts\nindex c415f42bd..2e190c597 100644\n--- a/packages/backend/src/datasource/datasource.service.ts\n+++ b/packages/backend/src/datasource/datasource.service.ts\n@@ -3,7 +3,7 @@ import {\n   NotFoundException,\n   BadRequestException,\n } from '@nestjs/common';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n import { PrismaService } from 'src/database/prisma.service';\n import { encrypt, decrypt } from './crypto.util';\n import { validateSelectQuery } from './sql-validator';\n@@ -16,6 +16,26 @@ import {\n const QUERY_TIMEOUT_MS = 30_000;\n const MAX_ROWS = 10_000;\n \n+// Keep date/time types as raw Postgres text instead of JS `Date`, which the\n+// default parser shifts by the Node runtime timezone. (TIME/TIMETZ are strings.)\n+const RAW_TEXT_OIDS = new Set([\n+  types.builtins.DATE,\n+  types.builtins.TIMESTAMP,\n+  types.builtins.TIMESTAMPTZ,\n+]);\n+\n+// pg-types types getTypeParser's return as `any`; pin it to avoid leaking `any`.\n+type ValueParser = (value: string) => unknown;\n+const getDefaultParser = types.getTypeParser as (\n+  oid: Parameters<typeof types.getTypeParser>[0],\n+  format?: Parameters<typeof types.getTypeParser>[1],\n+) => ValueParser;\n+\n+const datasourceTypeParser: typeof types.getTypeParser = (oid, format) =>\n+  RAW_TEXT_OIDS.has(oid)\n+    ? (value: string) => value\n+    : getDefaultParser(oid, format);\n+\n @Injectable()\n export class DataSourceService {\n   constructor(private prisma: PrismaService) {}\n@@ -120,9 +140,9 @@ export class DataSourceService {\n       await client.connect();\n \n       // Set statement timeout\n-      await client.query(\n-        `SET statement_timeout = '${QUERY_TIMEOUT_MS}'`,\n-      );\n+      await client.query(`SET statement_timeout = '${QUERY_TIMEOUT_MS}'`);\n+      await client.query(`SET TimeZone = 'UTC'`);\n+      await client.query(`SET DateStyle = 'ISO, MDY'`);\n \n       // Wrap with LIMIT to enforce max rows\n       const wrappedQuery = `SELECT * FROM (${dto.query}) AS _q LIMIT ${MAX_ROWS + 1}`;\n@@ -181,6 +201,7 @@ export class DataSourceService {\n       password: decrypt(ds.password),\n       ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false,\n       connectionTimeoutMillis: 10_000,\n+      types: { getTypeParser: datasourceTypeParser },\n     });\n   }\n }\ndiff --git a/packages/backend/test/database.e2e-spec.ts b/packages/backend/test/database.e2e-spec.ts\nindex 1c0f36ce2..267056a51 100644\n--- a/packages/backend/test/database.e2e-spec.ts\n+++ b/packages/backend/test/database.e2e-spec.ts\n@@ -4,7 +4,8 @@ import {\n   GoneException,\n } from '@nestjs/common';\n import { Test, TestingModule } from '@nestjs/testing';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n+import { toCell } from '@wafflebase/sheets';\n import { PrismaService } from 'src/database/prisma.service';\n import { DataSourceService } from 'src/datasource/datasource.service';\n import { ShareLinkService } from 'src/share-link/share-link.service';\n@@ -74,13 +75,14 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n-        query: 'SELECT 1::int4 AS n',\n-      });\n-      expect(queryResult.columns.map((column) => column.name)).toEqual(['n']);\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n-      expect(queryResult.rowCount).toBe(1);\n-      expect(queryResult.truncated).toBe(false);\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT 1::int4 AS n',\n+        });\n+      expect(rowCount).toBe(1);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['n']);\n+      expect(String(rows[0].n)).toBe('1');\n     });\n \n     it('enforces ownership for executeQuery and testConnection', async () => {\n@@ -103,10 +105,205 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n+      const { rows } = await datasourceService.executeQuery(ds.id, {\n         query: 'SELECT 1::int4 AS n',\n       });\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n+      expect(String(rows[0].n)).toBe('1');\n+    });\n+\n+    it('queries real tables with rows', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      // Create a test table and insert data using a raw pg client\n+      // (DataSourceService only allows SELECT)\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+      try {\n+        await rawClient.query(`\n+          CREATE TABLE IF NOT EXISTS _test_products (\n+            id SERIAL PRIMARY KEY,\n+            name TEXT NOT NULL,\n+            price NUMERIC(10, 2) NOT NULL\n+          )\n+        `);\n+        await rawClient.query(`TRUNCATE _test_products RESTART IDENTITY`);\n+        await rawClient.query(`\n+          INSERT INTO _test_products (name, price) VALUES\n+            ('Widget', 9.99),\n+            ('Gadget', 24.50),\n+            ('Doohickey', 3.75)\n+        `);\n+      } finally {\n+        await rawClient.end();\n+      }\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'table-test',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // List tables via information_schema\n+      const tablesResult = await datasourceService.executeQuery(ds.id, {\n+        query: `SELECT table_name FROM information_schema.tables\n+                WHERE table_schema = 'public' AND table_name = '_test_products'`,\n+      });\n+      expect(String(tablesResult.rows[0].table_name)).toBe('_test_products');\n+\n+      // Query table data — verify as sheet cell values (all strings via String())\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT id, name, price FROM _test_products ORDER BY id',\n+        });\n+      expect(rowCount).toBe(3);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['id', 'name', 'price']);\n+\n+      const sheetRows = rows.map((row) =>\n+        columns.map((c) => toCell(row[c.name])),\n+      );\n+      expect(sheetRows).toEqual([\n+        ['1', 'Widget', '9.99'],\n+        ['2', 'Gadget', '24.50'],\n+        ['3', 'Doohickey', '3.75'],\n+      ]);\n+\n+      // Cleanup\n+      const cleanupClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await cleanupClient.connect();\n+      try {\n+        await cleanupClient.query('DROP TABLE IF EXISTS _test_products');\n+      } finally {\n+        await cleanupClient.end();\n+      }\n+    });\n+\n+    it('check correct cell values for all pg built-in types', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'all-types',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // Each entry: [expectedOid, sqlColumnType, insertLiteral, expectedCellValue]\n+      // Listed in pg-types TypeId enum order (by OID).\n+      const b = types.builtins;\n+      const typeMap: [number, string, string, string][] = [\n+        [b.BOOL,        'BOOLEAN',         'true',                                'true'],\n+        [b.BYTEA,       'BYTEA',           \"E'\\\\\\\\xDEADBEEF'\",                   '{\"type\":\"Buffer\",\"data\":[222,173,190,239]}'],\n+        [b.CHAR,        '\"char\"',          \"'A'\",                                 'A'],\n+        [b.INT8,        'INT8',            '9223372036854775807',                 '9223372036854775807'],\n+        [b.INT2,        'INT2',            '32767',                               '32767'],\n+        [b.INT4,        'INT4',            '2147483647',                          '2147483647'],\n+        [b.REGPROC,     'REGPROC',         \"'now'\",                               'now'],\n+        [b.TEXT,        'TEXT',            \"'hello world'\",                       'hello world'],\n+        [b.OID,         'OID',             '1',                                   '1'],\n+        [b.TID,         'TID',             \"'(0,1)'\",                             '(0,1)'],\n+        [b.XID,         'XID',             \"'1'\",                                 '1'],\n+        [b.CID,         'CID',             \"'0'\",                                 '0'],\n+        [b.JSON,        'JSON',            \"'{\\\"key\\\":\\\"value\\\"}'\",               '{\"key\":\"value\"}'],\n+        [b.XML,         'XML',             \"'<root>test</root>'\",                 '<root>test</root>'],\n+        // [b.PG_NODE_TREE] — internal parser tree type, cannot be used as column type\n+        // [b.SMGR]        — internal storage manager type, cannot be used as column type\n+        [b.PATH,        'PATH',            \"'((0,0),(1,1),(2,0))'\",               '((0,0),(1,1),(2,0))'],\n+        [b.POLYGON,     'POLYGON',         \"'((0,0),(1,1),(1,0))'\",               '((0,0),(1,1),(1,0))'],\n+        [b.CIDR,        'CIDR',            \"'192.168.0.0/16'\",                    '192.168.0.0/16'],\n+        [b.FLOAT4,      'FLOAT4',          '3.14',                                '3.14'],\n+        [b.FLOAT8,      'FLOAT8',          '2.718281828',                          '2.718281828'],\n+        // [b.ABSTIME]     — removed in PostgreSQL 12\n+        // [b.RELTIME]     — removed in PostgreSQL 12\n+        // [b.TINTERVAL]   — removed in PostgreSQL 12\n+        [b.CIRCLE,      'CIRCLE',          \"'<(1,2),3>'\",                          '{\"x\":1,\"y\":2,\"radius\":3}'],\n+        [b.MACADDR8,    'MACADDR8',        \"'08:00:2b:01:02:03:04:05'\",           '08:00:2b:01:02:03:04:05'],\n+        [b.MONEY,       'MONEY',           \"'$1,234.56'\",                          '$1,234.56'],\n+        [b.MACADDR,     'MACADDR',         \"'08:00:2b:01:02:03'\",                 '08:00:2b:01:02:03'],\n+        [b.INET,        'INET',            \"'192.168.1.0/24'\",                    '192.168.1.0/24'],\n+        // [b.ACLITEM]     — internal access control type, cannot be used as column type\n+        [b.BPCHAR,      'CHAR(10)',        \"'padded'\",                            'padded    '],\n+        [b.VARCHAR,     'VARCHAR(100)',    \"'variable'\",                          'variable'],\n+        [b.DATE,        'DATE',            \"'2025-06-15'\",                         '2025-06-15'],\n+        [b.TIME,        'TIME',            \"'14:30:00'\",                           '14:30:00'],\n+        [b.TIMESTAMP,   'TIMESTAMP',       \"'2025-06-15 14:30:00'\",               '2025-06-15 14:30:00'],\n+        [b.TIMESTAMPTZ, 'TIMESTAMPTZ',     \"'2025-06-15 14:30:00+09'\",            '2025-06-15 05:30:00+00'],\n+        [b.INTERVAL,    'INTERVAL',        \"'1 year 2 months 3 days'\",            '{\"years\":1,\"months\":2,\"days\":3}'],\n+        [b.TIMETZ,      'TIMETZ',          \"'14:30:00+09'\",                        '14:30:00+09'],\n+        [b.BIT,         'BIT(8)',          \"B'10101010'\",                          '10101010'],\n+        [b.VARBIT,      'VARBIT(8)',       \"B'1010'\",                              '1010'],\n+        [b.NUMERIC,     'NUMERIC(20,4)',   '12345678901234.5678',                  '12345678901234.5678'],\n+        // [b.REFCURSOR]      — cursor reference, only valid inside transactions/functions\n+        // [b.REGPROCEDURE]   — system catalog reference type (function with arg types)\n+        // [b.REGOPER]        — system catalog reference type (operator name)\n+        // [b.REGOPERATOR]    — system catalog reference type (operator with arg types)\n+        // [b.REGCLASS]       — system catalog reference type (relation name)\n+        // [b.REGTYPE]        — system catalog reference type (type name)\n+        [b.UUID,        'UUID',            \"'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'\", 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],\n+        // [b.TXID_SNAPSHOT]  — deprecated, renamed to pg_snapshot in PostgreSQL 13\n+        [b.PG_LSN,      'PG_LSN',          \"'0/1A2B3C4'\",                          '0/1A2B3C4'],\n+        // [b.PG_NDISTINCT]   — internal statistics type, cannot be used as column type\n+        // [b.PG_DEPENDENCIES] — internal statistics type, cannot be used as column type\n+        [b.TSVECTOR,    'TSVECTOR',        \"'fat cat sat'\",                        \"'cat' 'fat' 'sat'\"],\n+        [b.TSQUERY,     'TSQUERY',         \"'fat & cat'\",                          \"'fat' & 'cat'\"],\n+        // [b.GTSVECTOR]      — internal GiST type, cannot be used as column type\n+        [b.REGCONFIG,   'REGCONFIG',       \"'english'\",                            'english'],\n+        [b.REGDICTIONARY, 'REGDICTIONARY', \"'simple'\",                             'simple'],\n+        [b.JSONB,       'JSONB',           \"'{\\\"nested\\\":[1,2,3]}'\",               '{\"nested\":[1,2,3]}'],\n+        // [b.REGNAMESPACE]   — system catalog reference type (namespace name)\n+        // [b.REGROLE]        — system catalog reference type (role name)\n+      ];\n+\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+\n+      const table = '_test_type_check';\n+      try {\n+        for (const [expectedOid, sqlType, insertLiteral, expectedCell] of typeMap) {\n+          await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+          await rawClient.query(`CREATE TABLE ${table} (val ${sqlType})`);\n+          await rawClient.query(`INSERT INTO ${table} (val) VALUES (${insertLiteral})`);\n+\n+          const { columns, rows } = await datasourceService.executeQuery(ds.id, {\n+            query: `SELECT val FROM ${table}`,\n+          });\n+\n+          expect(columns[0].dataTypeID).toBe(expectedOid);\n+          expect(toCell(rows[0].val)).toBe(expectedCell);\n+        }\n+      } finally {\n+        await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+        await rawClient.end();\n+      }\n     });\n \n     it('queries real tables with rows', async () => {\ndiff --git a/packages/sheets/src/index.ts b/packages/sheets/src/index.ts\nindex 76d3beb89..704787efe 100644\n--- a/packages/sheets/src/index.ts\n+++ b/packages/sheets/src/index.ts\n@@ -104,7 +104,7 @@ import { type Store } from './store/store';\n import { MemStore } from './store/memory';\n import { CellIndex } from './store/cell-index';\n import { findEdgeWithIndex } from './store/find-edge';\n-import { ReadOnlyStore } from './store/readonly';\n+import { ReadOnlyStore, toCell } from './store/readonly';\n import {\n   initialize,\n   Spreadsheet,\n@@ -194,6 +194,7 @@ export {\n   MemStore,\n   CellIndex,\n   ReadOnlyStore,\n+  toCell,\n   findEdgeWithIndex,\n   DimensionIndex,\n   toColumnLabel,\ndiff --git a/packages/sheets/src/store/readonly.ts b/packages/sheets/src/store/readonly.ts\nindex 5044c6b8a..047ac004e 100644\n--- a/packages/sheets/src/store/readonly.ts\n+++ b/packages/sheets/src/store/readonly.ts\n@@ -25,6 +25,16 @@ import { CellIndex } from './cell-index';\n import { findEdgeWithIndex } from './find-edge';\n import { Store } from './store';\n \n+/**\n+ * Converts a raw query result value to a string suitable for a sheet cell.\n+ * Date → ISO string, object → JSON, everything else → String().\n+ */\n+export function toCell(val: unknown): string {\n+  if (val instanceof Date) return val.toISOString();\n+  if (typeof val === 'object' && val !== null) return JSON.stringify(val);\n+  return String(val);\n+}\n+\n /**\n  * `ReadOnlyStore` is a Store implementation for displaying query results.\n  * All write operations are no-ops. Data is loaded via `loadQueryResults`.\n@@ -60,7 +70,7 @@ export class ReadOnlyStore implements Store {\n         const val = row[columns[c].name];\n         if (val === null || val === undefined) continue;\n         const sref = toSref({ r: r + 2, c: c + 1 });\n-        this.grid.set(sref, { v: String(val) });\n+        this.grid.set(sref, { v: toCell(val) });\n       }\n     }\n \n",
+      "lensDiffSha256": "bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+      "lensDiffBytes": 18251,
+      "lensFiles": [
+        "packages/backend/src/datasource/datasource.service.spec.ts",
+        "packages/backend/src/datasource/datasource.service.ts",
+        "packages/backend/test/database.e2e-spec.ts",
+        "packages/sheets/src/index.ts",
+        "packages/sheets/src/store/readonly.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "major",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 114,
+            "summary": "New e2e test duplicates the pre-existing 'queries real tables with rows' test instead of updating it",
+            "evidence": "The diff adds `it('queries real tables with rows', ...)` at line 114, but an almost identical test with the same name, same `_test_products` table, same inserts and same cleanup already exists at line 309 (visible in the diff's trailing context and confirmed in the worktree). The old copy still asserts the pre-change shape (`expect(dataResult.rows).toEqual([{ id: 1, name: 'Widget', price: '9.99' }, ...])`, line 370) while the new copy asserts via `toCell`. This is copy-paste duplication rather than reuse/update: two same-named tests racing on one shared table name, and the intended behavioural update was applied to a clone instead of the canonical test."
+          },
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "docs/design/sheets/datasource.md",
+            "line": 156,
+            "summary": "Query-result contract change (session TimeZone/DateStyle + raw-text date type parsers) is not recorded in the canonical datasource design doc",
+            "evidence": "docs/design/sheets/datasource.md is the canonical subsystem doc; its 'Query Execution' section (lines 156-162) enumerates exactly the session/execution behaviour this diff changes (statement timeout, wrapping, limits, response shape) and 'Current Limitations' #9 (line 205) plus 'Medium-term: Column type awareness' (line 221) describe the value-typing behaviour being altered. The diff changes the wire contract for `/datasources/:id/query` (DATE/TIMESTAMP/TIMESTAMPTZ now returned as raw Postgres text normalised to UTC/ISO instead of JS `Date`), which is an observable API/data-shape change affecting every client (frontend grid, REST API, CLI), yet no design doc under docs/design/ is added or updated in the diff.",
+            "searchedFor": [
+              "Glob docs/design/**/*.md",
+              "Read docs/design/sheets/datasource.md (full)",
+              "Grep -i 'datasource|query' docs/design/rest-api.md",
+              "Grep 'getTypeParser|types.builtins' across **/*.ts"
+            ]
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 143,
+            "summary": "Normalisation is applied at the connection/session layer, changing the API contract for all consumers, when the reported symptom is a display concern handled in `toCell`",
+            "evidence": "`SET TimeZone = 'UTC'` / `SET DateStyle = 'ISO, MDY'` plus a global `types.getTypeParser` override change what the datasource REST endpoint returns for every client, not just the sheet grid. The same diff also adds `toCell` in packages/sheets/src/store/readonly.ts, which already owns value→cell stringification (including a `Date → toISOString()` branch that these parser overrides make dead for DATE/TIMESTAMP/TIMESTAMPTZ). Fixing timezone shifting in one layer would have been sufficient; doing it in both leaves two competing normalisation points."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/store/readonly.ts",
+            "line": 34,
+            "summary": "`toCell` locks in raw JSON dumps of internal JS shapes as cell values (Buffer/interval/circle), which reads as an unintended product decision",
+            "evidence": "`toCell` JSON-stringifies any object, and the new e2e table asserts this as the expected user-visible cell content: BYTEA → `{\"type\":\"Buffer\",\"data\":[222,173,190,239]}`, INTERVAL → `{\"years\":1,\"months\":2,\"days\":3}`, CIRCLE → `{\"x\":1,\"y\":2,\"radius\":3}` (packages/backend/test/database.e2e-spec.ts ~lines 220-260). Encoding node-pg internal object shapes into spreadsheet cells conflicts with the doc's stated behaviour that values are displayed as strings, and freezes it via assertions."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 214,
+            "summary": "Exhaustive ~40-type OID/cell-value matrix test is scope well beyond the three-OID behaviour change",
+            "evidence": "The change only alters parsing for DATE, TIMESTAMP and TIMESTAMPTZ, but the diff adds a full pg built-in type matrix (with a long commented-out catalogue of unusable internal types) that DDL-creates and drops a table per type in the shared integration database. This pins the current pg-types default parsers for dozens of types unrelated to the fix, coupling the suite to an upstream library's formatting choices."
+          },
+          {
+            "severity": "minor",
+            "confidence": "low",
+            "claimType": "presence",
+            "file": "packages/sheets/src/index.ts",
+            "line": 197,
+            "summary": "`toCell` is promoted to the public `@wafflebase/sheets` API surface only so a backend test can import it",
+            "evidence": "`toCell` is newly exported from packages/sheets/src/index.ts, and its only consumer outside `ReadOnlyStore` is packages/backend/test/database.e2e-spec.ts (line 8). Widening an engine package's public API for a test-only consumer in another package is a questionable placement; there is no shared `core` package in this repo (packages/README.md lists sheets/docs/slides/frontend/backend/cli/documentation), so if backend genuinely needs this serialisation it arguably belongs next to the datasource module."
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 114,
+            "summary": "New e2e test duplicates the pre-existing 'queries real tables with rows' test instead of updating it",
+            "evidence": "The diff adds `it('queries real tables with rows', ...)` at line 114, but an almost identical test with the same name, same `_test_products` table, same inserts and same cleanup already exists at line 309 (visible in the diff's trailing context and confirmed in the worktree). The old copy still asserts the pre-change shape (`expect(dataResult.rows).toEqual([{ id: 1, name: 'Widget', price: '9.99' }, ...])`, line 370) while the new copy asserts via `toCell`. This is copy-paste duplication rather than reuse/update: two same-named tests racing on one shared table name, and the intended behavioural update was applied to a clone instead of the canonical test.",
+            "lane": "backlog",
+            "novelty": {
+              "origin": "relocated",
+              "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+              "contentSha": "a567f670ba77ea638ace312bee4f74eb8f424456",
+              "alsoAt": "e17ce9fe575c28562630382757ff5352bde50dd4:packages/backend/test/database.e2e-spec.ts:112"
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "The duplication is present exactly as described. `packages/backend/test/database.e2e-spec.ts:114` and `:309` both define `it('queries real tables with rows', ...)` inside the same `describe('DataSourceService')` suite (opened at :52, closed before `describe('ShareLinkService')` at :416). Their bodies are near-identical: same `_test_products` CREATE TABLE (131-136 vs 326-330), same `TRUNCATE ... RESTART IDENTITY` (137 vs 332), same three INSERTs (138-143 vs 333-338), same datasource name 'table-test' (149 vs 344), same information_schema lookup, and same `DROP TABLE IF EXISTS _test_products` cleanup (193 vs 387). The new copy asserts the updated cell semantics via `toCell` (imported at :8, used 174-181), while the stale copy still asserts the pre-change row shape at 370-374 (`{ id: 1, name: 'Widget', price: '9.99' }`) and 358. So the behavioural update was applied to a clone rather than to the canonical test, leaving two same-named tests racing on one hard-coded shared table name. This is a duplication/reuse fit violation in the design-fit lane (change applied to a duplicate instead of updating the existing test), so it is major and blocking; no guard or caller makes it moot.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/backend/test/database.e2e-spec.ts:114",
+              "packages/backend/test/database.e2e-spec.ts:131-143",
+              "packages/backend/test/database.e2e-spec.ts:174-181",
+              "packages/backend/test/database.e2e-spec.ts:193",
+              "packages/backend/test/database.e2e-spec.ts:309",
+              "packages/backend/test/database.e2e-spec.ts:326-338",
+              "packages/backend/test/database.e2e-spec.ts:358",
+              "packages/backend/test/database.e2e-spec.ts:370-374",
+              "packages/backend/test/database.e2e-spec.ts:387",
+              "packages/backend/test/database.e2e-spec.ts:52",
+              "packages/backend/test/database.e2e-spec.ts:416",
+              "packages/backend/test/database.e2e-spec.ts:8"
+            ]
+          },
+          "dropped": false
+        },
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "docs/design/sheets/datasource.md",
+            "line": 156,
+            "summary": "Query-result contract change (session TimeZone/DateStyle + raw-text date type parsers) is not recorded in the canonical datasource design doc",
+            "evidence": "docs/design/sheets/datasource.md is the canonical subsystem doc; its 'Query Execution' section (lines 156-162) enumerates exactly the session/execution behaviour this diff changes (statement timeout, wrapping, limits, response shape) and 'Current Limitations' #9 (line 205) plus 'Medium-term: Column type awareness' (line 221) describe the value-typing behaviour being altered. The diff changes the wire contract for `/datasources/:id/query` (DATE/TIMESTAMP/TIMESTAMPTZ now returned as raw Postgres text normalised to UTC/ISO instead of JS `Date`), which is an observable API/data-shape change affecting every client (frontend grid, REST API, CLI), yet no design doc under docs/design/ is added or updated in the diff.",
+            "searchedFor": [
+              "Glob docs/design/**/*.md",
+              "Read docs/design/sheets/datasource.md (full)",
+              "Grep -i 'datasource|query' docs/design/rest-api.md",
+              "Grep 'getTypeParser|types.builtins' across **/*.ts"
+            ],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "pre-existing",
+              "addedBy": "3842e540ea6afb7799113aa4cd7fc9e1c0cb85b1",
+              "contentSha": null,
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "The absence is real. docs/design/sheets/datasource.md is the canonical subsystem doc, and its 'Query Execution' section (lines 156-162) enumerates the exact session/execution behaviour and response shape this change modifies, while 'Current Limitations' #9 (line 205) and 'Medium-term: Column type awareness' (line 221) still describe the pre-change value-typing story. The code change is genuine: datasource.service.ts:19-37 installs a custom pg type parser returning raw text for DATE/TIMESTAMP/TIMESTAMPTZ, and lines 143-145 add `SET TimeZone = 'UTC'` / `SET DateStyle = 'ISO, MDY'` per query session (asserted in datasource.service.spec.ts:130-131) — an observable change to the /datasources/:id/query wire values. I searched wide for a counterexample and found none: a case-insensitive grep of the whole docs/ tree for TimeZone|DateStyle|timestamptz|type parser|UTC|ISO 8601 produced only unrelated hits; the other design docs that mention datasources (docs/design/backend.md:171-176) still describe the endpoint only as timeout/row-limit plus `{columns, rows, rowCount, truncated, executionTime}` with no date-encoding note; docs/design/rest-api.md does not cover datasources; and docs/tasks/active/ + a glob for *datasource* task docs turned up nothing related. CONTRIBUTING.md:55-59 requires updating the existing area design doc for architecture/data-model changes, so the canonical doc is now stale rather than merely silent. Kind = design-doc discipline / stale canonical doc, which is major under this lens.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "docs/design/sheets/datasource.md:156-162",
+              "docs/design/sheets/datasource.md:205",
+              "docs/design/sheets/datasource.md:221",
+              "packages/backend/src/datasource/datasource.service.ts:19-37",
+              "packages/backend/src/datasource/datasource.service.ts:143-145",
+              "packages/backend/src/datasource/datasource.service.spec.ts:130-131",
+              "docs/design/backend.md:171-176",
+              "packages/frontend/src/types/datasource.ts:16-27",
+              "CONTRIBUTING.md:55-59"
+            ]
+          },
+          "dropped": false
+        }
+      ]
+    },
+    "blast-radius": {
+      "lensDiff": "diff --git a/packages/backend/src/datasource/datasource.service.spec.ts b/packages/backend/src/datasource/datasource.service.spec.ts\nindex e36cc3a8a..d984d59fa 100644\n--- a/packages/backend/src/datasource/datasource.service.spec.ts\n+++ b/packages/backend/src/datasource/datasource.service.spec.ts\n@@ -126,14 +126,10 @@ describe('DataSourceService', () => {\n     });\n \n     expect(client.connect).toHaveBeenCalledTimes(1);\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      1,\n-      \"SET statement_timeout = '30000'\",\n-    );\n-    expect(client.query).toHaveBeenNthCalledWith(\n-      2,\n-      'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001',\n-    );\n+    expect(client.query).toHaveBeenNthCalledWith(1, \"SET statement_timeout = '30000'\");\n+    expect(client.query).toHaveBeenNthCalledWith(2, \"SET TimeZone = 'UTC'\");\n+    expect(client.query).toHaveBeenNthCalledWith(3, \"SET DateStyle = 'ISO, MDY'\");\n+    expect(client.query).toHaveBeenNthCalledWith(4, 'SELECT * FROM (SELECT id FROM users) AS _q LIMIT 10001');\n     expect(client.end).toHaveBeenCalledTimes(1);\n \n     expect(result.columns).toEqual([{ name: 'id', dataTypeID: 23 }]);\ndiff --git a/packages/backend/src/datasource/datasource.service.ts b/packages/backend/src/datasource/datasource.service.ts\nindex c415f42bd..2e190c597 100644\n--- a/packages/backend/src/datasource/datasource.service.ts\n+++ b/packages/backend/src/datasource/datasource.service.ts\n@@ -3,7 +3,7 @@ import {\n   NotFoundException,\n   BadRequestException,\n } from '@nestjs/common';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n import { PrismaService } from 'src/database/prisma.service';\n import { encrypt, decrypt } from './crypto.util';\n import { validateSelectQuery } from './sql-validator';\n@@ -16,6 +16,26 @@ import {\n const QUERY_TIMEOUT_MS = 30_000;\n const MAX_ROWS = 10_000;\n \n+// Keep date/time types as raw Postgres text instead of JS `Date`, which the\n+// default parser shifts by the Node runtime timezone. (TIME/TIMETZ are strings.)\n+const RAW_TEXT_OIDS = new Set([\n+  types.builtins.DATE,\n+  types.builtins.TIMESTAMP,\n+  types.builtins.TIMESTAMPTZ,\n+]);\n+\n+// pg-types types getTypeParser's return as `any`; pin it to avoid leaking `any`.\n+type ValueParser = (value: string) => unknown;\n+const getDefaultParser = types.getTypeParser as (\n+  oid: Parameters<typeof types.getTypeParser>[0],\n+  format?: Parameters<typeof types.getTypeParser>[1],\n+) => ValueParser;\n+\n+const datasourceTypeParser: typeof types.getTypeParser = (oid, format) =>\n+  RAW_TEXT_OIDS.has(oid)\n+    ? (value: string) => value\n+    : getDefaultParser(oid, format);\n+\n @Injectable()\n export class DataSourceService {\n   constructor(private prisma: PrismaService) {}\n@@ -120,9 +140,9 @@ export class DataSourceService {\n       await client.connect();\n \n       // Set statement timeout\n-      await client.query(\n-        `SET statement_timeout = '${QUERY_TIMEOUT_MS}'`,\n-      );\n+      await client.query(`SET statement_timeout = '${QUERY_TIMEOUT_MS}'`);\n+      await client.query(`SET TimeZone = 'UTC'`);\n+      await client.query(`SET DateStyle = 'ISO, MDY'`);\n \n       // Wrap with LIMIT to enforce max rows\n       const wrappedQuery = `SELECT * FROM (${dto.query}) AS _q LIMIT ${MAX_ROWS + 1}`;\n@@ -181,6 +201,7 @@ export class DataSourceService {\n       password: decrypt(ds.password),\n       ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false,\n       connectionTimeoutMillis: 10_000,\n+      types: { getTypeParser: datasourceTypeParser },\n     });\n   }\n }\ndiff --git a/packages/backend/test/database.e2e-spec.ts b/packages/backend/test/database.e2e-spec.ts\nindex 1c0f36ce2..267056a51 100644\n--- a/packages/backend/test/database.e2e-spec.ts\n+++ b/packages/backend/test/database.e2e-spec.ts\n@@ -4,7 +4,8 @@ import {\n   GoneException,\n } from '@nestjs/common';\n import { Test, TestingModule } from '@nestjs/testing';\n-import { Client } from 'pg';\n+import { Client, types } from 'pg';\n+import { toCell } from '@wafflebase/sheets';\n import { PrismaService } from 'src/database/prisma.service';\n import { DataSourceService } from 'src/datasource/datasource.service';\n import { ShareLinkService } from 'src/share-link/share-link.service';\n@@ -74,13 +75,14 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n-        query: 'SELECT 1::int4 AS n',\n-      });\n-      expect(queryResult.columns.map((column) => column.name)).toEqual(['n']);\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n-      expect(queryResult.rowCount).toBe(1);\n-      expect(queryResult.truncated).toBe(false);\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT 1::int4 AS n',\n+        });\n+      expect(rowCount).toBe(1);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['n']);\n+      expect(String(rows[0].n)).toBe('1');\n     });\n \n     it('enforces ownership for executeQuery and testConnection', async () => {\n@@ -103,10 +105,205 @@ describeDb('Database-backed integration', () => {\n       const connectionResult = await datasourceService.testConnection(ds.id);\n       expect(connectionResult).toEqual({ success: true });\n \n-      const queryResult = await datasourceService.executeQuery(ds.id, {\n+      const { rows } = await datasourceService.executeQuery(ds.id, {\n         query: 'SELECT 1::int4 AS n',\n       });\n-      expect(queryResult.rows).toEqual([{ n: 1 }]);\n+      expect(String(rows[0].n)).toBe('1');\n+    });\n+\n+    it('queries real tables with rows', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      // Create a test table and insert data using a raw pg client\n+      // (DataSourceService only allows SELECT)\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+      try {\n+        await rawClient.query(`\n+          CREATE TABLE IF NOT EXISTS _test_products (\n+            id SERIAL PRIMARY KEY,\n+            name TEXT NOT NULL,\n+            price NUMERIC(10, 2) NOT NULL\n+          )\n+        `);\n+        await rawClient.query(`TRUNCATE _test_products RESTART IDENTITY`);\n+        await rawClient.query(`\n+          INSERT INTO _test_products (name, price) VALUES\n+            ('Widget', 9.99),\n+            ('Gadget', 24.50),\n+            ('Doohickey', 3.75)\n+        `);\n+      } finally {\n+        await rawClient.end();\n+      }\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'table-test',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // List tables via information_schema\n+      const tablesResult = await datasourceService.executeQuery(ds.id, {\n+        query: `SELECT table_name FROM information_schema.tables\n+                WHERE table_schema = 'public' AND table_name = '_test_products'`,\n+      });\n+      expect(String(tablesResult.rows[0].table_name)).toBe('_test_products');\n+\n+      // Query table data — verify as sheet cell values (all strings via String())\n+      const { columns, rows, rowCount, truncated } =\n+        await datasourceService.executeQuery(ds.id, {\n+          query: 'SELECT id, name, price FROM _test_products ORDER BY id',\n+        });\n+      expect(rowCount).toBe(3);\n+      expect(truncated).toBe(false);\n+      expect(columns.map((c) => c.name)).toEqual(['id', 'name', 'price']);\n+\n+      const sheetRows = rows.map((row) =>\n+        columns.map((c) => toCell(row[c.name])),\n+      );\n+      expect(sheetRows).toEqual([\n+        ['1', 'Widget', '9.99'],\n+        ['2', 'Gadget', '24.50'],\n+        ['3', 'Doohickey', '3.75'],\n+      ]);\n+\n+      // Cleanup\n+      const cleanupClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await cleanupClient.connect();\n+      try {\n+        await cleanupClient.query('DROP TABLE IF EXISTS _test_products');\n+      } finally {\n+        await cleanupClient.end();\n+      }\n+    });\n+\n+    it('check correct cell values for all pg built-in types', async () => {\n+      const owner = await createUser();\n+      const workspace = await createWorkspace(prisma, owner.id);\n+      const pgConfig = parseDatabaseUrl(process.env.DATABASE_URL!);\n+\n+      const ds = await datasourceService.create(owner.id, workspace.id, {\n+        name: 'all-types',\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        username: pgConfig.username,\n+        password: pgConfig.password,\n+        sslEnabled: false,\n+      });\n+\n+      // Each entry: [expectedOid, sqlColumnType, insertLiteral, expectedCellValue]\n+      // Listed in pg-types TypeId enum order (by OID).\n+      const b = types.builtins;\n+      const typeMap: [number, string, string, string][] = [\n+        [b.BOOL,        'BOOLEAN',         'true',                                'true'],\n+        [b.BYTEA,       'BYTEA',           \"E'\\\\\\\\xDEADBEEF'\",                   '{\"type\":\"Buffer\",\"data\":[222,173,190,239]}'],\n+        [b.CHAR,        '\"char\"',          \"'A'\",                                 'A'],\n+        [b.INT8,        'INT8',            '9223372036854775807',                 '9223372036854775807'],\n+        [b.INT2,        'INT2',            '32767',                               '32767'],\n+        [b.INT4,        'INT4',            '2147483647',                          '2147483647'],\n+        [b.REGPROC,     'REGPROC',         \"'now'\",                               'now'],\n+        [b.TEXT,        'TEXT',            \"'hello world'\",                       'hello world'],\n+        [b.OID,         'OID',             '1',                                   '1'],\n+        [b.TID,         'TID',             \"'(0,1)'\",                             '(0,1)'],\n+        [b.XID,         'XID',             \"'1'\",                                 '1'],\n+        [b.CID,         'CID',             \"'0'\",                                 '0'],\n+        [b.JSON,        'JSON',            \"'{\\\"key\\\":\\\"value\\\"}'\",               '{\"key\":\"value\"}'],\n+        [b.XML,         'XML',             \"'<root>test</root>'\",                 '<root>test</root>'],\n+        // [b.PG_NODE_TREE] — internal parser tree type, cannot be used as column type\n+        // [b.SMGR]        — internal storage manager type, cannot be used as column type\n+        [b.PATH,        'PATH',            \"'((0,0),(1,1),(2,0))'\",               '((0,0),(1,1),(2,0))'],\n+        [b.POLYGON,     'POLYGON',         \"'((0,0),(1,1),(1,0))'\",               '((0,0),(1,1),(1,0))'],\n+        [b.CIDR,        'CIDR',            \"'192.168.0.0/16'\",                    '192.168.0.0/16'],\n+        [b.FLOAT4,      'FLOAT4',          '3.14',                                '3.14'],\n+        [b.FLOAT8,      'FLOAT8',          '2.718281828',                          '2.718281828'],\n+        // [b.ABSTIME]     — removed in PostgreSQL 12\n+        // [b.RELTIME]     — removed in PostgreSQL 12\n+        // [b.TINTERVAL]   — removed in PostgreSQL 12\n+        [b.CIRCLE,      'CIRCLE',          \"'<(1,2),3>'\",                          '{\"x\":1,\"y\":2,\"radius\":3}'],\n+        [b.MACADDR8,    'MACADDR8',        \"'08:00:2b:01:02:03:04:05'\",           '08:00:2b:01:02:03:04:05'],\n+        [b.MONEY,       'MONEY',           \"'$1,234.56'\",                          '$1,234.56'],\n+        [b.MACADDR,     'MACADDR',         \"'08:00:2b:01:02:03'\",                 '08:00:2b:01:02:03'],\n+        [b.INET,        'INET',            \"'192.168.1.0/24'\",                    '192.168.1.0/24'],\n+        // [b.ACLITEM]     — internal access control type, cannot be used as column type\n+        [b.BPCHAR,      'CHAR(10)',        \"'padded'\",                            'padded    '],\n+        [b.VARCHAR,     'VARCHAR(100)',    \"'variable'\",                          'variable'],\n+        [b.DATE,        'DATE',            \"'2025-06-15'\",                         '2025-06-15'],\n+        [b.TIME,        'TIME',            \"'14:30:00'\",                           '14:30:00'],\n+        [b.TIMESTAMP,   'TIMESTAMP',       \"'2025-06-15 14:30:00'\",               '2025-06-15 14:30:00'],\n+        [b.TIMESTAMPTZ, 'TIMESTAMPTZ',     \"'2025-06-15 14:30:00+09'\",            '2025-06-15 05:30:00+00'],\n+        [b.INTERVAL,    'INTERVAL',        \"'1 year 2 months 3 days'\",            '{\"years\":1,\"months\":2,\"days\":3}'],\n+        [b.TIMETZ,      'TIMETZ',          \"'14:30:00+09'\",                        '14:30:00+09'],\n+        [b.BIT,         'BIT(8)',          \"B'10101010'\",                          '10101010'],\n+        [b.VARBIT,      'VARBIT(8)',       \"B'1010'\",                              '1010'],\n+        [b.NUMERIC,     'NUMERIC(20,4)',   '12345678901234.5678',                  '12345678901234.5678'],\n+        // [b.REFCURSOR]      — cursor reference, only valid inside transactions/functions\n+        // [b.REGPROCEDURE]   — system catalog reference type (function with arg types)\n+        // [b.REGOPER]        — system catalog reference type (operator name)\n+        // [b.REGOPERATOR]    — system catalog reference type (operator with arg types)\n+        // [b.REGCLASS]       — system catalog reference type (relation name)\n+        // [b.REGTYPE]        — system catalog reference type (type name)\n+        [b.UUID,        'UUID',            \"'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'\", 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],\n+        // [b.TXID_SNAPSHOT]  — deprecated, renamed to pg_snapshot in PostgreSQL 13\n+        [b.PG_LSN,      'PG_LSN',          \"'0/1A2B3C4'\",                          '0/1A2B3C4'],\n+        // [b.PG_NDISTINCT]   — internal statistics type, cannot be used as column type\n+        // [b.PG_DEPENDENCIES] — internal statistics type, cannot be used as column type\n+        [b.TSVECTOR,    'TSVECTOR',        \"'fat cat sat'\",                        \"'cat' 'fat' 'sat'\"],\n+        [b.TSQUERY,     'TSQUERY',         \"'fat & cat'\",                          \"'fat' & 'cat'\"],\n+        // [b.GTSVECTOR]      — internal GiST type, cannot be used as column type\n+        [b.REGCONFIG,   'REGCONFIG',       \"'english'\",                            'english'],\n+        [b.REGDICTIONARY, 'REGDICTIONARY', \"'simple'\",                             'simple'],\n+        [b.JSONB,       'JSONB',           \"'{\\\"nested\\\":[1,2,3]}'\",               '{\"nested\":[1,2,3]}'],\n+        // [b.REGNAMESPACE]   — system catalog reference type (namespace name)\n+        // [b.REGROLE]        — system catalog reference type (role name)\n+      ];\n+\n+      const rawClient = new Client({\n+        host: pgConfig.host,\n+        port: pgConfig.port,\n+        database: pgConfig.database,\n+        user: pgConfig.username,\n+        password: pgConfig.password,\n+      });\n+      await rawClient.connect();\n+\n+      const table = '_test_type_check';\n+      try {\n+        for (const [expectedOid, sqlType, insertLiteral, expectedCell] of typeMap) {\n+          await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+          await rawClient.query(`CREATE TABLE ${table} (val ${sqlType})`);\n+          await rawClient.query(`INSERT INTO ${table} (val) VALUES (${insertLiteral})`);\n+\n+          const { columns, rows } = await datasourceService.executeQuery(ds.id, {\n+            query: `SELECT val FROM ${table}`,\n+          });\n+\n+          expect(columns[0].dataTypeID).toBe(expectedOid);\n+          expect(toCell(rows[0].val)).toBe(expectedCell);\n+        }\n+      } finally {\n+        await rawClient.query(`DROP TABLE IF EXISTS ${table}`);\n+        await rawClient.end();\n+      }\n     });\n \n     it('queries real tables with rows', async () => {\ndiff --git a/packages/sheets/src/index.ts b/packages/sheets/src/index.ts\nindex 76d3beb89..704787efe 100644\n--- a/packages/sheets/src/index.ts\n+++ b/packages/sheets/src/index.ts\n@@ -104,7 +104,7 @@ import { type Store } from './store/store';\n import { MemStore } from './store/memory';\n import { CellIndex } from './store/cell-index';\n import { findEdgeWithIndex } from './store/find-edge';\n-import { ReadOnlyStore } from './store/readonly';\n+import { ReadOnlyStore, toCell } from './store/readonly';\n import {\n   initialize,\n   Spreadsheet,\n@@ -194,6 +194,7 @@ export {\n   MemStore,\n   CellIndex,\n   ReadOnlyStore,\n+  toCell,\n   findEdgeWithIndex,\n   DimensionIndex,\n   toColumnLabel,\ndiff --git a/packages/sheets/src/store/readonly.ts b/packages/sheets/src/store/readonly.ts\nindex 5044c6b8a..047ac004e 100644\n--- a/packages/sheets/src/store/readonly.ts\n+++ b/packages/sheets/src/store/readonly.ts\n@@ -25,6 +25,16 @@ import { CellIndex } from './cell-index';\n import { findEdgeWithIndex } from './find-edge';\n import { Store } from './store';\n \n+/**\n+ * Converts a raw query result value to a string suitable for a sheet cell.\n+ * Date → ISO string, object → JSON, everything else → String().\n+ */\n+export function toCell(val: unknown): string {\n+  if (val instanceof Date) return val.toISOString();\n+  if (typeof val === 'object' && val !== null) return JSON.stringify(val);\n+  return String(val);\n+}\n+\n /**\n  * `ReadOnlyStore` is a Store implementation for displaying query results.\n  * All write operations are no-ops. Data is loaded via `loadQueryResults`.\n@@ -60,7 +70,7 @@ export class ReadOnlyStore implements Store {\n         const val = row[columns[c].name];\n         if (val === null || val === undefined) continue;\n         const sref = toSref({ r: r + 2, c: c + 1 });\n-        this.grid.set(sref, { v: String(val) });\n+        this.grid.set(sref, { v: toCell(val) });\n       }\n     }\n \n",
+      "lensDiffSha256": "bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+      "lensDiffBytes": 18251,
+      "lensFiles": [
+        "packages/backend/src/datasource/datasource.service.spec.ts",
+        "packages/backend/src/datasource/datasource.service.ts",
+        "packages/backend/test/database.e2e-spec.ts",
+        "packages/sheets/src/index.ts",
+        "packages/sheets/src/store/readonly.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 20,
+            "summary": "Raw-text OID guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`",
+            "evidence": "`RAW_TEXT_OIDS` only contains the scalar `DATE`/`TIMESTAMP`/`TIMESTAMPTZ` OIDs (packages/backend/src/datasource/datasource.service.ts:20-24). pg-types registers separate parsers for the array OIDs (1182 `_date`, 1115 `_timestamp`, 1185 `_timestamptz`) and for range OIDs (3908 `tsrange`, 3910 `tstzrange`); those still hit `getDefaultParser` and produce JS `Date` objects built from the Node runtime timezone. Those values then flow to `ReadOnlyStore.loadQueryResults` -> `toCell` (packages/sheets/src/store/readonly.ts:73), which JSON.stringifies them, re-introducing exactly the shifted/altered rendering the change set out to remove. The new e2e type matrix (packages/backend/test/database.e2e-spec.ts:203-260) deliberately covers only scalar types, so nothing catches it. Fix belongs on the new code (extend RAW_TEXT_OIDS or override by format).",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/backend/test/database.e2e-spec.ts",
+            "line": 309,
+            "summary": "Duplicate `it('queries real tables with rows')` left in place — the pre-existing copy was not replaced by the new one",
+            "evidence": "packages/backend/test/database.e2e-spec.ts:309 declares a second test with the identical name as the one added at line ~112, against the same `_test_products` table (create/truncate/drop). Both run (jest allows duplicate names), doubling runtime and asserting overlapping behaviour in two different styles (line 358/370 keep the old deep-equal on raw row objects; the new one asserts via `toCell`). Looks like the new block was inserted rather than replacing the old one.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "docs/design/sheets/datasource.md",
+            "line": 156,
+            "summary": "Design doc for the datasource module still describes the old query-execution and cell-conversion contract",
+            "evidence": "docs/design/sheets/datasource.md:156-162 lists the per-query session setup as only 'Statement timeout: 30 seconds' and says nothing about the new `SET TimeZone = 'UTC'` / `SET DateStyle = 'ISO, MDY'` or the raw-text date parsing; :164-173 describes `loadQueryResults` without the new `toCell` conversion rules (Date -> ISO, object -> JSON) that are now part of the sheets public API (packages/sheets/src/index.ts:197). This is a nested design doc, so the top-level docs link checker does not cover it.",
+            "searchedFor": [
+              "grep 'ReadOnlyStore|loadQueryResults' across docs/",
+              "grep 'statement_timeout|DateStyle|TimeZone' across repo",
+              "read docs/design/sheets/datasource.md:155-193"
+            ]
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/backend/src/datasource/datasource.service.ts",
+            "line": 20,
+            "summary": "Raw-text OID guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`",
+            "evidence": "`RAW_TEXT_OIDS` only contains the scalar `DATE`/`TIMESTAMP`/`TIMESTAMPTZ` OIDs (packages/backend/src/datasource/datasource.service.ts:20-24). pg-types registers separate parsers for the array OIDs (1182 `_date`, 1115 `_timestamp`, 1185 `_timestamptz`) and for range OIDs (3908 `tsrange`, 3910 `tstzrange`); those still hit `getDefaultParser` and produce JS `Date` objects built from the Node runtime timezone. Those values then flow to `ReadOnlyStore.loadQueryResults` -> `toCell` (packages/sheets/src/store/readonly.ts:73), which JSON.stringifies them, re-introducing exactly the shifted/altered rendering the change set out to remove. The new e2e type matrix (packages/backend/test/database.e2e-spec.ts:203-260) deliberately covers only scalar types, so nothing catches it. Fix belongs on the new code (extend RAW_TEXT_OIDS or override by format).",
+            "searchedFor": [],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+              "contentSha": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "Verified independently. RAW_TEXT_OIDS (datasource.service.ts:21-25) lists only the scalar DATE/TIMESTAMP/TIMESTAMPTZ builtins; every other OID, including the _date/_timestamp/_timestamptz array OIDs and tsrange/tstzrange, falls through to getDefaultParser at datasource.service.ts:37 and still yields JS Date objects parsed in the Node runtime timezone (the server-side `SET TimeZone='UTC'` at line 144 does not affect Node-side parsing of timestamp-without-zone text). Those values reach the sheet via datasource-view.tsx:108 -> ReadOnlyStore.loadQueryResults -> toCell (readonly.ts:73). toCell (readonly.ts:32-36) only special-cases a top-level Date; an array of Dates takes the `typeof val === 'object'` branch and is JSON.stringify'd, rendering each element through Date.toJSON as a UTC-shifted ISO string — reintroducing exactly the shifted rendering the scalar override removes (e.g. a `date[]` of 2025-06-15 renders as 2025-06-14T15:00:00.000Z on a UTC+9 host, while scalar `date` now renders 2025-06-15). The e2e type matrix (database.e2e-spec.ts:217-278, date/time rows at 250-253) is entirely scalar builtins, so no test covers the gap. No compensating guard or normalisation exists elsewhere. Real, reachable, and an unconsidered inconsistency for the cross-package consumer in packages/sheets; not refutable.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/backend/src/datasource/datasource.service.ts:21-25",
+              "packages/backend/src/datasource/datasource.service.ts:34-37",
+              "packages/backend/src/datasource/datasource.service.ts:144",
+              "packages/backend/src/datasource/datasource.service.ts:204",
+              "packages/sheets/src/store/readonly.ts:32-36",
+              "packages/sheets/src/store/readonly.ts:73",
+              "packages/frontend/src/app/spreadsheet/datasource-view.tsx:108",
+              "packages/backend/test/database.e2e-spec.ts:217-278",
+              "packages/backend/test/database.e2e-spec.ts:250-253",
+              "packages/backend/test/database.e2e-spec.ts:300-301"
+            ]
+          },
+          "dropped": false
+        }
+      ]
+    }
+  },
+  "files": {
+    "panel.json": "present",
+    "review-lens-stats.json": "present",
+    "review-execution.json": "present",
+    "review-timing.json": "present"
+  },
+  "exit_code": 0,
+  "stderr_tail": ""
+}

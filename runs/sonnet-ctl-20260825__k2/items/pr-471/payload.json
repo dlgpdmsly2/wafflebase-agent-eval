@@ -1,0 +1,885 @@
+{
+  "adapter": "reviewer",
+  "panel": [
+    {
+      "id": "docs",
+      "title": "Docs",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "correctness",
+      "title": "Correctness",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "test-adequacy",
+      "title": "Test-adequacy",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "design-fit",
+      "title": "Design-fit",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "blast-radius",
+      "title": "Blast-radius",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": true
+    }
+  ],
+  "lensStats": [
+    {
+      "id": "docs",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0,
+        "nit": 1
+      },
+      "raisedConfidence": {
+        "high": 1,
+        "medium": 0,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0,
+        "nit": 1
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "correctness",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 0,
+        "minor": 2,
+        "nit": 1
+      },
+      "raisedConfidence": {
+        "high": 1,
+        "medium": 2,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 2,
+        "nit": 1
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "test-adequacy",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 0,
+        "minor": 2,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 2,
+        "medium": 0,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 2,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "design-fit",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 0,
+        "minor": 4,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 1,
+        "medium": 3,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 4,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "security",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 0,
+        "minor": 1,
+        "nit": 1
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 1,
+        "low": 1,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 1,
+        "nit": 1
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "blast-radius",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 3,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 1,
+        "medium": 3,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 1,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 2,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 1,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 1,
+        "collapsed": 1
+      }
+    }
+  ],
+  "findings": [
+    {
+      "severity": "nit",
+      "confidence": "high",
+      "summary": "Duplicate '## Review' heading left over from the template; the second one still has the unfilled placeholder text.",
+      "evidence": "The file has two '## Review' headings: one filled in with the actual review summary, and a second empty one at the end reading '(filled after implementation)' — leftover boilerplate that should have been removed.",
+      "claimType": "presence",
+      "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+      "line": 67,
+      "lens": "docs"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "line": 3842,
+      "summary": "Formula guard misses spill-ghost (and pivot) cells: toggleCheckboxAt still reports `true` while setData silently writes nothing",
+      "evidence": "The new guard only checks `cell?.f` (sheet.ts:3842). A spill ghost cell (`spillAnchor` set, produced by an array formula anchored elsewhere — types.ts:192) has no `f`, so the guard passes and `setData` is called; `setData` returns immediately at sheet.ts:1004 (`if (existing?.spillAnchor) return;`), and the same happens for a pivot sheet at sheet.ts:995 (`if (this.pivotDefinition) return;`). In both cases `toggleCheckboxAt` still returns `true`, so callers (worksheet.ts:4853 Space path, spreadsheet.ts:365) treat the toggle as having happened and re-render, and the Space path's `event.preventDefault()` swallows the key with no state change. No data is lost (setData no-ops), but the return value is a false positive and the stated invariant \"a formula-driven checkbox is read-only\" is enforced only for `f`, not for formula-derived ghost cells.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+      "line": 163,
+      "summary": "Case-folding is gated on both custom values being absent, so it is inert exactly for the import path it cites if the importer emits explicit canonical checked/unchecked values",
+      "evidence": "`if (rule.checkedValue === undefined && rule.uncheckedValue === undefined)` (data-validation.ts:163). A rule imported with `checkedValue: 'TRUE'` / `uncheckedValue: 'FALSE'` explicitly set (semantically identical to the default) skips the case-fold branch entirely, so an imported lowercase `\"true\"` cell still renders unchecked — the scenario the comment at lines 147-156 says the change fixes. Comparing the resolved `checkedValueOf`/`uncheckedValueOf` against the canonical constants instead of checking for `undefined` would cover it without reintroducing the `uncheckedValue: 'true'` inversion.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "nit",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+      "line": 166,
+      "summary": "Case-fold does not trim, so a non-normalized value with surrounding whitespace still renders unchecked",
+      "evidence": "`value.toUpperCase() === CHECKBOX_TRUE` (line 166) matches only exact case variants. Values that bypass `setData`/`inferInput` normalization (the cited REST/collab/import path) can also carry whitespace, e.g. `\" true \"`, which still renders unchecked and then toggles to `TRUE` — same class of gap the change is fixing, only partially closed. `isValidListValue` in the same file explicitly compares trimmed on both sides, so the file's own convention differs here.",
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "absence",
+      "summary": "Case-fold gating untested for the rule shape with a custom `checkedValue` but no `uncheckedValue`",
+      "evidence": "The new guard is `rule.checkedValue === undefined && rule.uncheckedValue === undefined` (data-validation.ts:163). Three shapes exist: both absent (tested, test at data-validation.test.ts:93), both present (tested at :107), uncheckedValue-only (tested at :118). The fourth — `checkedValue` set, `uncheckedValue` undefined — is never exercised, so a regression that gated on `uncheckedValue === undefined` alone (e.g. `checkedValue: 'true'` folding a typed 'TRUE' into checked) would pass the suite. This is exactly the class of bug the PR's own review notes ([0] in docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md:45) found in the mirror-image branch.",
+      "file": "packages/sheets/src/model/worksheet/data-validation.test.ts",
+      "line": 107,
+      "searchedFor": [
+        "read all of packages/sheets/src/model/worksheet/data-validation.test.ts",
+        "grep isCheckboxChecked across repo (only gridcanvas.ts:1042 and index.ts re-exports use it; no other test file)",
+        "packages/sheets/test/sheet/data-validation.test.ts"
+      ],
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "absence",
+      "summary": "Formula-cell no-op test never asserts the cell value, despite claiming \"writes no literal\"",
+      "evidence": "packages/sheets/test/sheet/data-validation.test.ts:66-69 comments \"keeps the formula, writes no literal\" but only asserts `cell?.f === '=1=1'`. Neither the pre-toggle value (comment claims '=1=1' → TRUE, never asserted) nor the post-toggle `cell?.v` is checked, so a variant that preserved `f` while stomping `v` to 'FALSE' would still pass. The guard's main failure mode (setData overwriting) is caught via `f`, so the core behavior is covered; the assertion set is just narrower than the test's own claim and than the plan item in docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md:34-35 (\"writes no `v`\").",
+      "file": "packages/sheets/test/sheet/data-validation.test.ts",
+      "line": 69,
+      "searchedFor": [
+        "packages/sheets/test/sheet/data-validation.test.ts full read",
+        "packages/sheets/src/model/worksheet/sheet.ts:3834-3848 toggleCheckboxAt"
+      ],
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "docs/design/sheets/data-validation.md",
+      "line": 252,
+      "summary": "Fixed item left inside the \"deliberate Phase-1 simplifications, each a small follow-up to close\" list. The bullet now documents completed behavior (formula guard + case-insensitivity) under a heading that promises open follow-ups, so a reader scanning the list for remaining work is misled. Better folded into the Phase-1 \"as shipped\" narrative rather than kept as a struck-through follow-up entry. Otherwise design-doc discipline is correct: the canonical subsystem doc was updated in place, no parallel doc was created.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "absence",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "line": 3842,
+      "summary": "Refusing to toggle a formula-backed checkbox is a silent no-op with no user feedback, unlike the sibling data-validation reject path, which surfaces an `onValidationError` callback/toast (documented in the same design doc, Phase-2 \"Interaction\" section). A user clicking a checkbox that sits over a formula gets no explanation. Google Sheets shows the box as non-interactive. Not required by the issue's acceptance list, so preference-level, but worth a follow-up note in the doc if deliberately deferred.",
+      "searchedFor": [
+        "grep toggleCheckbox|isCheckboxChecked across repo",
+        "read worksheet.ts:3385-3410 (click path) and 4843-4857 (Space path)",
+        "grep onValidationError usage in design doc"
+      ],
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+      "line": 163,
+      "summary": "Case-folding is gated on \"both custom values absent\" rather than on the semantic condition the doc states (\"the value being compared is the canonical boolean\"). The result is a rule where setting only a custom `checkedValue: 'Yes'` (uncheckedValue still default FALSE) silently disables lenient matching for the unrelated default unchecked side too. This matches the todo's stated scope and is defensible, but the coupling of two independent fields into one leniency switch is an abstraction smell; a `isDefaultBooleanCheckbox(rule)` helper (or per-side comparison) would express the intent more directly. Behavior-neutral preference, not a spec violation.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+      "line": 67,
+      "summary": "The task doc carries two `## Review` headings — one filled in at line 40 with the review outcome and a second empty placeholder at line 67 (\"(filled after implementation)\"). Duplicated section is leftover template noise; the file also still lives under docs/tasks/active/ although every acceptance box is checked and the design doc has been updated, suggesting it should be archived alongside its siblings in docs/tasks/archive/.",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "low",
+      "claimType": "presence",
+      "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+      "line": 166,
+      "summary": "Unbounded `value.toUpperCase()` on the per-repaint render path with attacker-supplied cell content",
+      "evidence": "`isCheckboxChecked` is called once per visible checkbox per repaint from `GridCanvas.renderCellCheckbox` (packages/sheets/src/view/gridcanvas.ts:1042) with the raw cell value `cell?.v`. The new fallback at data-validation.ts:166 short-circuits only the canonical 'TRUE'/'FALSE'; any other value falls through to `value.toUpperCase()`, which allocates a full copy of the string. Cell values are not length-capped anywhere in packages/sheets (grep for maxLength/MAX_CELL found no cap), and they can come from untrusted sources the diff itself names: xlsx import, REST API, external paste, and a Yorkie co-editor. A collaborator or a crafted import can place a multi-megabyte string in a cell covered by a checkbox rule; every viewer then allocates and case-folds that string on every animation-frame repaint (and for every such cell in view), causing render-thread CPU/GC pressure — a cheap client-side resource-exhaustion vector. Mitigation: bail out when `value.length !== 4/5` (or compare the 4 chars) before allocating. Impact is limited to a client already able to render the doc, hence minor; I did not measure an actual freeze, hence low confidence.",
+      "searchedFor": [],
+      "lens": "security"
+    },
+    {
+      "severity": "nit",
+      "confidence": "medium",
+      "claimType": "absence",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "line": 3842,
+      "summary": "No other write path bypasses the new formula read-only guard (verified, informational)",
+      "evidence": "I enumerated the call sites of the guarded operation: `Sheet.toggleCheckboxAt` is reached only from `Spreadsheet.toggleCheckboxAt` (view/spreadsheet.ts:363, which additionally gates on `_readOnly`), the click path (view/worksheet.ts:3405, gated on `!this.readOnly`) and the Space-key path (view/worksheet.ts:4853, gated on `!this.readOnly`, and it always `preventDefault()`s so it cannot fall through to the typed-character handler and clobber the formula that way). Grep for `CHECKBOX_TRUE|CHECKBOX_FALSE` across packages/**/src shows no other module writes a checkbox literal, so the new `cell?.f` guard has no alternate write path around it. Reported only as a negative result so the verifier can search elsewhere; not a defect.",
+      "searchedFor": [
+        "grep toggleCheckboxAt|isCheckboxChecked|toggleCheckboxValue repo-wide",
+        "grep CHECKBOX_TRUE|CHECKBOX_FALSE in packages/**/src/**/*.ts",
+        "read view/worksheet.ts click path 3380-3429 and key handler 4820-4879",
+        "read view/spreadsheet.ts 340-380"
+      ],
+      "lens": "security"
+    },
+    {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "line": 3842,
+      "summary": "New formula guard misses spill-ghost cells: `cell?.f` is only set on the spill anchor, so a checkbox over a spilled formula result still reports a successful toggle while `setData` silently discards the write",
+      "evidence": "The guard only tests `cell?.f` (sheet.ts:3842). Cells produced by a spilling formula carry `spillAnchor` and `v` but no `f`. `Sheet.setData` bails out for exactly those cells — `if (existing?.spillAnchor) return;` (packages/sheets/src/model/worksheet/sheet.ts:1004) — yet `toggleCheckboxAt` falls through and returns `true` (sheet.ts:3846-3847). Callers act on that: `packages/sheets/src/view/spreadsheet.ts:366` re-renders on `toggled === true`, and the Space handler at `packages/sheets/src/view/worksheet.ts:4853` re-renders too, so the UI reports a state change that never happened. The stated intent (\"the formula drives the state\") also leaves the spilled-formula case unprotected. Fix belongs on the new guard: also bail on `cell?.spillAnchor`.",
+      "searchedFor": [],
+      "mergedFrom": [
+        {
+          "severity": "minor",
+          "summary": "`toggleCheckboxAt` still returns `true` on a pivot sheet where `setData` is a no-op, so the new `false`-means-nothing-changed contract is inconsistent",
+          "evidence": "`Sheet.setData` opens with `if (this.pivotDefinition) return;` (packages/sheets/src/model/worksheet/sheet.ts:995). `toggleCheckboxAt` (sheet.ts:3846) awaits it and unconditionally returns `true`, so on a pivot sheet the view (`packages/sheets/src/view/spreadsheet.ts:366`) treats the no-op as a real toggle. The diff establishes `false` = \"nothing was written\"; this sibling no-op path was not updated to match."
+        }
+      ],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "introduced",
+        "addedBy": "42d17c8d81b9fa0bac6be942d06c3e1e455b1a94",
+        "contentSha": "42d17c8d81b9fa0bac6be942d06c3e1e455b1a94",
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/sheets/src/view/worksheet.ts",
+      "line": 3405,
+      "summary": "Mouse-click toggle path ignores the new `false` return, so clicking a formula-backed checkbox consumes the event and repaints for nothing",
+      "evidence": "packages/sheets/src/view/worksheet.ts:3402-3407 calls `e.preventDefault()`, awaits `toggleCheckboxAt(ref)` discarding the result, then `this.render(); return;` unconditionally. The Space path at worksheet.ts:4853 was written to branch on the return value; this one was not, so the newly-added read-only case produces a silently swallowed click with no feedback and an unnecessary repaint. Not data-losing, but the caller is now inconsistent with the changed contract.",
+      "searchedFor": [],
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "absence",
+      "file": "packages/sheets/src/view/worksheet.ts",
+      "line": 1720,
+      "summary": "Sibling data-validation controls (list popover, date picker) still overwrite formula cells — the \"validation control over a formula cell is read-only\" invariant is now enforced for checkbox only",
+      "evidence": "The list-option picker writes `await this.sheet.setData(ref, value);` (packages/sheets/src/view/worksheet.ts:1720) and the date picker writes `await this.sheet.setData(ref, iso);` (packages/sheets/src/view/worksheet.ts:1932), neither checking `cell?.f`. Both reach the same mutation the new checkbox guard protects against, for cells whose value is driven by a formula, so picking an option/date silently destroys the formula. Fix belongs on those two call sites (or on a shared model-level guard).",
+      "searchedFor": [
+        "grep isCheckboxChecked|toggleCheckboxValue|toggleCheckboxAt across repo",
+        "grep setData( in packages/sheets/src/view",
+        "grep 'checkbox' across packages/**/*.ts",
+        "grep toggleCheckbox|insertCheckbox in frontend/core/backend/cli"
+      ],
+      "lens": "blast-radius"
+    }
+  ],
+  "stageDetail": {
+    "docs": {
+      "lensDiff": "diff --git a/docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md b/docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md\nnew file mode 100644\nindex 000000000..e70dff3d5\n--- /dev/null\n+++ b/docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md\n@@ -0,0 +1,69 @@\n+# Checkbox data-validation bug fixes\n+\n+Follow-ups from the data-validation design doc (`docs/design/sheets/data-validation.md`,\n+Phase-1 \"Not yet guarded\" note). Two clear correctness bugs in the shipped\n+checkbox control, each self-contained.\n+\n+## Bugs\n+\n+1. **Formula cell is not read-only under a checkbox rule.**\n+   `Sheet.toggleCheckboxAt` (`sheet.ts:3834`) reads `cell?.v` and writes a\n+   literal `TRUE`/`FALSE` via `setData` without checking `cell.f`. Toggling a\n+   checkbox that sits over a formula cell **overwrites the formula**. Design\n+   intent: a formula-backed checkbox is read-only (the formula drives the\n+   state) — Google Sheets / Excel parity. Both the click path\n+   (`worksheet.ts:3405`) and the Space path (`worksheet.ts:4853`) route through\n+   `toggleCheckboxAt`, so one guard fixes both.\n+\n+2. **`isCheckboxChecked` is case-sensitive.**\n+   `isCheckboxChecked` (`data-validation.ts:149`) compares `value === 'TRUE'`\n+   exactly, so a cell holding `\"true\"` renders **unchecked**. `setData`\n+   normalizes typed input to `\"TRUE\"`, but values arriving via xlsx import /\n+   REST API / external paste can be lowercase and bypass normalization. The\n+   formula engine (`formula.ts:1054`) and input parser (`input.ts:242`) already\n+   treat `TRUE`/`FALSE` case-insensitively; the render/toggle path should match.\n+   Fix scope: **default boolean checkbox only** (no custom `checkedValue`) —\n+   a custom checked value stays an exact string match (GS parity).\n+\n+## Plan (TDD)\n+\n+- [x] Model test: `isCheckboxChecked` matches `\"true\"`/`\"True\"`/`\"TRUE\"` for a\n+      default rule; a custom-value rule stays exact-match.\n+- [x] Model fix: `isCheckboxChecked` case-insensitive for the fully-default\n+      boolean checkbox only; `toggleCheckboxValue` inherits the fix (delegates).\n+- [x] Sheet test: `toggleCheckboxAt` over a formula cell is a no-op — returns\n+      `false`, leaves `cell.f` intact, writes no `v`.\n+- [x] Sheet fix: guard `toggleCheckboxAt` on `cell?.f`.\n+- [x] `pnpm test` (sheets) green; `pnpm verify:fast` green (EXIT 0).\n+- [x] Update design doc Phase-1 \"Not yet guarded\" note (both now fixed).\n+\n+## Review\n+\n+High-effort workflow code review (`Workflow code-review`, 4 finders + verify)\n+surfaced two findings, both addressed:\n+\n+- **[0] correctness (PLAUSIBLE)** — case-fold branch was gated only on\n+  `checkedValue === undefined`, so a rule with a custom `uncheckedValue` that\n+  upper-cases to `\"TRUE\"` inverted state. Fixed: case-folding now requires\n+  *both* custom values absent; added a regression test.\n+- **[1] cleanup (CONFIRMED)** — `value.toUpperCase()` allocated per repaint,\n+  against the file's no-alloc convention. Fixed: canonical `TRUE`/`FALSE`\n+  short-circuit before the `toUpperCase` fallback.\n+\n+A refuted finding (\"silently depends on `CHECKBOX_TRUE` being uppercase\") was\n+dismissed by the verifier — `CHECKBOX_TRUE` is a module constant.\n+\n+Both bugs are model/Sheet-level; the click and Space view paths route through\n+`toggleCheckboxAt` and the render path through `isCheckboxChecked`, so no\n+view-layer change was needed. View-layer smoke deferred (Phase-1 precedent).\n+\n+## Out of scope (separate follow-ups)\n+\n+- Space range-uniform \"set all checked\" (parity feature, not a bug).\n+- Merged-cell glyph/hit-test mismatch.\n+- Eager `FALSE` materialization for `COUNTIF`.\n+- Custom checkbox values UI.\n+\n+## Review\n+\n+(filled after implementation)",
+      "lensDiffSha256": "f32da37c4fad3ec2cc42bd4a3585692ba149c53c7b4d3cf711088b10b0b279d9",
+      "lensDiffBytes": 3720,
+      "lensFiles": [
+        "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "nit",
+            "confidence": "high",
+            "summary": "Duplicate '## Review' heading left over from the template; the second one still has the unfilled placeholder text.",
+            "evidence": "The file has two '## Review' headings: one filled in with the actual review summary, and a second empty one at the end reading '(filled after implementation)' — leftover boilerplate that should have been removed.",
+            "claimType": "presence",
+            "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+            "line": 67
+          }
+        ]
+      ],
+      "verifications": []
+    },
+    "correctness": {
+      "lensDiff": "diff --git a/packages/sheets/src/model/worksheet/data-validation.test.ts b/packages/sheets/src/model/worksheet/data-validation.test.ts\nindex 3184b9c76..e149c9d40 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.test.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.test.ts\n@@ -90,6 +90,43 @@ describe('data-validation model', () => {\n     expect(toggleCheckboxValue(rule, undefined)).toBe(CHECKBOX_TRUE);\n   });\n \n+  it('matches default boolean checkbox values case-insensitively', () => {\n+    // A default checkbox has no custom checkedValue. Values arriving via xlsx\n+    // import / REST API / external paste can be lowercase and bypass setData\n+    // normalization; they must still render checked (formula engine + input\n+    // parser already treat TRUE/FALSE case-insensitively).\n+    const rule = checkboxRule('a');\n+    expect(isCheckboxChecked(rule, 'true')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'True')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'false')).toBe(false);\n+    // A lowercase checked value toggles to the canonical unchecked value.\n+    expect(toggleCheckboxValue(rule, 'true')).toBe(CHECKBOX_FALSE);\n+  });\n+\n+  it('matches a custom checked value exactly (case-sensitive)', () => {\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      checkedValue: 'Yes',\n+      uncheckedValue: 'No',\n+    };\n+    expect(isCheckboxChecked(rule, 'Yes')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'yes')).toBe(false);\n+    expect(isCheckboxChecked(rule, 'YES')).toBe(false);\n+  });\n+\n+  it('does not case-fold when only a custom uncheckedValue is set', () => {\n+    // Default checkedValue ('TRUE') but a custom uncheckedValue that upper-cases\n+    // to 'TRUE' must NOT be misread as checked — case-folding only applies to a\n+    // fully-default boolean checkbox (both custom values absent).\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      uncheckedValue: 'true',\n+    };\n+    expect(isCheckboxChecked(rule, 'true')).toBe(false); // the unchecked value\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true); // the checked value\n+  });\n+\n   it('normalizes a list rule: trims, drops empties, dedupes, defaults arrow', () => {\n     const normalized = normalizeDataValidationRule(\n       listRule('a', ['  Red ', 'Green', 'Red', '', '  ']),\ndiff --git a/packages/sheets/src/model/worksheet/data-validation.ts b/packages/sheets/src/model/worksheet/data-validation.ts\nindex 9003bfd7f..9587855bd 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.ts\n@@ -144,12 +144,27 @@ function uncheckedValueOf(rule: DataValidationRule): string {\n }\n \n /**\n- * `isCheckboxChecked` reports whether the cell value represents \"checked\".\n+ * `isCheckboxChecked` reports whether the cell value represents \"checked\". A\n+ * fully-default boolean checkbox (neither custom value set) matches TRUE/FALSE\n+ * case-insensitively — values arriving via xlsx import / REST API / external\n+ * paste can be lowercase and bypass `setData` normalization, and the formula\n+ * engine and input parser already treat TRUE/FALSE case-insensitively. As soon\n+ * as *either* custom value is set the rule is exact-match (Google Sheets\n+ * parity) — case-folding a custom `uncheckedValue` like `\"true\"` would\n+ * otherwise invert the state. The canonical `TRUE`/`FALSE` are compared without\n+ * allocating (this runs per visible checkbox per repaint); only a non-canonical\n+ * lowercase value hits the `toUpperCase` fallback.\n  */\n export function isCheckboxChecked(\n   rule: DataValidationRule,\n   value: string | undefined,\n ): boolean {\n+  if (value === undefined) return false;\n+  if (rule.checkedValue === undefined && rule.uncheckedValue === undefined) {\n+    if (value === CHECKBOX_TRUE) return true;\n+    if (value === CHECKBOX_FALSE) return false;\n+    return value.toUpperCase() === CHECKBOX_TRUE;\n+  }\n   return value === checkedValueOf(rule);\n }\n \ndiff --git a/packages/sheets/src/model/worksheet/sheet.ts b/packages/sheets/src/model/worksheet/sheet.ts\nindex 62501c8ed..cb14a05bf 100644\n--- a/packages/sheets/src/model/worksheet/sheet.ts\n+++ b/packages/sheets/src/model/worksheet/sheet.ts\n@@ -3837,6 +3837,11 @@ export class Sheet {\n       return false;\n     }\n     const cell = await this.getCell(ref);\n+    // A checkbox over a formula cell is read-only — the formula drives the\n+    // state (Google Sheets / Excel parity). Toggling must not overwrite it.\n+    if (cell?.f) {\n+      return false;\n+    }\n     const next = toggleCheckboxValue(rule, cell?.v);\n     await this.setData(ref, next);\n     return true;\ndiff --git a/packages/sheets/test/sheet/data-validation.test.ts b/packages/sheets/test/sheet/data-validation.test.ts\nindex 882dd4108..538dc97fe 100644\n--- a/packages/sheets/test/sheet/data-validation.test.ts\n+++ b/packages/sheets/test/sheet/data-validation.test.ts\n@@ -50,6 +50,25 @@ describe('Sheet data validation', () => {\n     expect(await sheet.toggleCheckboxAt({ r: 9, c: 9 })).toBe(false);\n   });\n \n+  it('does not toggle (or overwrite) a formula cell under a checkbox rule', async () => {\n+    const sheet = new Sheet(new MemStore());\n+    await sheet.insertCheckbox(\n+      [\n+        { r: 1, c: 1 },\n+        { r: 1, c: 1 },\n+      ],\n+      'dv-1',\n+    );\n+    // A formula drives the checkbox state; the control is read-only (GS parity).\n+    await sheet.setData({ r: 1, c: 1 }, '=1=1'); // → TRUE\n+    expect((await sheet.getCell({ r: 1, c: 1 }))?.f).toBe('=1=1');\n+\n+    // Toggle is a no-op: reports false, keeps the formula, writes no literal.\n+    expect(await sheet.toggleCheckboxAt({ r: 1, c: 1 })).toBe(false);\n+    const cell = await sheet.getCell({ r: 1, c: 1 });\n+    expect(cell?.f).toBe('=1=1');\n+  });\n+\n   it('removes checkbox rules intersecting a range but keeps cell values', async () => {\n     const sheet = new Sheet(new MemStore());\n     await sheet.insertCheckbox(\n",
+      "lensDiffSha256": "92243cb99b53f1a702a14f12ad131c5ed6767d8d9d97ea607fef4d7fdbe910d7",
+      "lensDiffBytes": 6035,
+      "lensFiles": [
+        "packages/sheets/src/model/worksheet/data-validation.test.ts",
+        "packages/sheets/src/model/worksheet/data-validation.ts",
+        "packages/sheets/src/model/worksheet/sheet.ts",
+        "packages/sheets/test/sheet/data-validation.test.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/sheets/src/model/worksheet/sheet.ts",
+            "line": 3842,
+            "summary": "Formula guard misses spill-ghost (and pivot) cells: toggleCheckboxAt still reports `true` while setData silently writes nothing",
+            "evidence": "The new guard only checks `cell?.f` (sheet.ts:3842). A spill ghost cell (`spillAnchor` set, produced by an array formula anchored elsewhere — types.ts:192) has no `f`, so the guard passes and `setData` is called; `setData` returns immediately at sheet.ts:1004 (`if (existing?.spillAnchor) return;`), and the same happens for a pivot sheet at sheet.ts:995 (`if (this.pivotDefinition) return;`). In both cases `toggleCheckboxAt` still returns `true`, so callers (worksheet.ts:4853 Space path, spreadsheet.ts:365) treat the toggle as having happened and re-render, and the Space path's `event.preventDefault()` swallows the key with no state change. No data is lost (setData no-ops), but the return value is a false positive and the stated invariant \"a formula-driven checkbox is read-only\" is enforced only for `f`, not for formula-derived ghost cells."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+            "line": 163,
+            "summary": "Case-folding is gated on both custom values being absent, so it is inert exactly for the import path it cites if the importer emits explicit canonical checked/unchecked values",
+            "evidence": "`if (rule.checkedValue === undefined && rule.uncheckedValue === undefined)` (data-validation.ts:163). A rule imported with `checkedValue: 'TRUE'` / `uncheckedValue: 'FALSE'` explicitly set (semantically identical to the default) skips the case-fold branch entirely, so an imported lowercase `\"true\"` cell still renders unchecked — the scenario the comment at lines 147-156 says the change fixes. Comparing the resolved `checkedValueOf`/`uncheckedValueOf` against the canonical constants instead of checking for `undefined` would cover it without reintroducing the `uncheckedValue: 'true'` inversion."
+          },
+          {
+            "severity": "nit",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+            "line": 166,
+            "summary": "Case-fold does not trim, so a non-normalized value with surrounding whitespace still renders unchecked",
+            "evidence": "`value.toUpperCase() === CHECKBOX_TRUE` (line 166) matches only exact case variants. Values that bypass `setData`/`inferInput` normalization (the cited REST/collab/import path) can also carry whitespace, e.g. `\" true \"`, which still renders unchecked and then toggles to `TRUE` — same class of gap the change is fixing, only partially closed. `isValidListValue` in the same file explicitly compares trimmed on both sides, so the file's own convention differs here."
+          }
+        ]
+      ],
+      "verifications": []
+    },
+    "test-adequacy": {
+      "lensDiff": "diff --git a/packages/sheets/src/model/worksheet/data-validation.test.ts b/packages/sheets/src/model/worksheet/data-validation.test.ts\nindex 3184b9c76..e149c9d40 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.test.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.test.ts\n@@ -90,6 +90,43 @@ describe('data-validation model', () => {\n     expect(toggleCheckboxValue(rule, undefined)).toBe(CHECKBOX_TRUE);\n   });\n \n+  it('matches default boolean checkbox values case-insensitively', () => {\n+    // A default checkbox has no custom checkedValue. Values arriving via xlsx\n+    // import / REST API / external paste can be lowercase and bypass setData\n+    // normalization; they must still render checked (formula engine + input\n+    // parser already treat TRUE/FALSE case-insensitively).\n+    const rule = checkboxRule('a');\n+    expect(isCheckboxChecked(rule, 'true')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'True')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'false')).toBe(false);\n+    // A lowercase checked value toggles to the canonical unchecked value.\n+    expect(toggleCheckboxValue(rule, 'true')).toBe(CHECKBOX_FALSE);\n+  });\n+\n+  it('matches a custom checked value exactly (case-sensitive)', () => {\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      checkedValue: 'Yes',\n+      uncheckedValue: 'No',\n+    };\n+    expect(isCheckboxChecked(rule, 'Yes')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'yes')).toBe(false);\n+    expect(isCheckboxChecked(rule, 'YES')).toBe(false);\n+  });\n+\n+  it('does not case-fold when only a custom uncheckedValue is set', () => {\n+    // Default checkedValue ('TRUE') but a custom uncheckedValue that upper-cases\n+    // to 'TRUE' must NOT be misread as checked — case-folding only applies to a\n+    // fully-default boolean checkbox (both custom values absent).\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      uncheckedValue: 'true',\n+    };\n+    expect(isCheckboxChecked(rule, 'true')).toBe(false); // the unchecked value\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true); // the checked value\n+  });\n+\n   it('normalizes a list rule: trims, drops empties, dedupes, defaults arrow', () => {\n     const normalized = normalizeDataValidationRule(\n       listRule('a', ['  Red ', 'Green', 'Red', '', '  ']),\ndiff --git a/packages/sheets/src/model/worksheet/data-validation.ts b/packages/sheets/src/model/worksheet/data-validation.ts\nindex 9003bfd7f..9587855bd 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.ts\n@@ -144,12 +144,27 @@ function uncheckedValueOf(rule: DataValidationRule): string {\n }\n \n /**\n- * `isCheckboxChecked` reports whether the cell value represents \"checked\".\n+ * `isCheckboxChecked` reports whether the cell value represents \"checked\". A\n+ * fully-default boolean checkbox (neither custom value set) matches TRUE/FALSE\n+ * case-insensitively — values arriving via xlsx import / REST API / external\n+ * paste can be lowercase and bypass `setData` normalization, and the formula\n+ * engine and input parser already treat TRUE/FALSE case-insensitively. As soon\n+ * as *either* custom value is set the rule is exact-match (Google Sheets\n+ * parity) — case-folding a custom `uncheckedValue` like `\"true\"` would\n+ * otherwise invert the state. The canonical `TRUE`/`FALSE` are compared without\n+ * allocating (this runs per visible checkbox per repaint); only a non-canonical\n+ * lowercase value hits the `toUpperCase` fallback.\n  */\n export function isCheckboxChecked(\n   rule: DataValidationRule,\n   value: string | undefined,\n ): boolean {\n+  if (value === undefined) return false;\n+  if (rule.checkedValue === undefined && rule.uncheckedValue === undefined) {\n+    if (value === CHECKBOX_TRUE) return true;\n+    if (value === CHECKBOX_FALSE) return false;\n+    return value.toUpperCase() === CHECKBOX_TRUE;\n+  }\n   return value === checkedValueOf(rule);\n }\n \ndiff --git a/packages/sheets/src/model/worksheet/sheet.ts b/packages/sheets/src/model/worksheet/sheet.ts\nindex 62501c8ed..cb14a05bf 100644\n--- a/packages/sheets/src/model/worksheet/sheet.ts\n+++ b/packages/sheets/src/model/worksheet/sheet.ts\n@@ -3837,6 +3837,11 @@ export class Sheet {\n       return false;\n     }\n     const cell = await this.getCell(ref);\n+    // A checkbox over a formula cell is read-only — the formula drives the\n+    // state (Google Sheets / Excel parity). Toggling must not overwrite it.\n+    if (cell?.f) {\n+      return false;\n+    }\n     const next = toggleCheckboxValue(rule, cell?.v);\n     await this.setData(ref, next);\n     return true;\ndiff --git a/packages/sheets/test/sheet/data-validation.test.ts b/packages/sheets/test/sheet/data-validation.test.ts\nindex 882dd4108..538dc97fe 100644\n--- a/packages/sheets/test/sheet/data-validation.test.ts\n+++ b/packages/sheets/test/sheet/data-validation.test.ts\n@@ -50,6 +50,25 @@ describe('Sheet data validation', () => {\n     expect(await sheet.toggleCheckboxAt({ r: 9, c: 9 })).toBe(false);\n   });\n \n+  it('does not toggle (or overwrite) a formula cell under a checkbox rule', async () => {\n+    const sheet = new Sheet(new MemStore());\n+    await sheet.insertCheckbox(\n+      [\n+        { r: 1, c: 1 },\n+        { r: 1, c: 1 },\n+      ],\n+      'dv-1',\n+    );\n+    // A formula drives the checkbox state; the control is read-only (GS parity).\n+    await sheet.setData({ r: 1, c: 1 }, '=1=1'); // → TRUE\n+    expect((await sheet.getCell({ r: 1, c: 1 }))?.f).toBe('=1=1');\n+\n+    // Toggle is a no-op: reports false, keeps the formula, writes no literal.\n+    expect(await sheet.toggleCheckboxAt({ r: 1, c: 1 })).toBe(false);\n+    const cell = await sheet.getCell({ r: 1, c: 1 });\n+    expect(cell?.f).toBe('=1=1');\n+  });\n+\n   it('removes checkbox rules intersecting a range but keeps cell values', async () => {\n     const sheet = new Sheet(new MemStore());\n     await sheet.insertCheckbox(\n",
+      "lensDiffSha256": "92243cb99b53f1a702a14f12ad131c5ed6767d8d9d97ea607fef4d7fdbe910d7",
+      "lensDiffBytes": 6035,
+      "lensFiles": [
+        "packages/sheets/src/model/worksheet/data-validation.test.ts",
+        "packages/sheets/src/model/worksheet/data-validation.ts",
+        "packages/sheets/src/model/worksheet/sheet.ts",
+        "packages/sheets/test/sheet/data-validation.test.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "absence",
+            "summary": "Case-fold gating untested for the rule shape with a custom `checkedValue` but no `uncheckedValue`",
+            "evidence": "The new guard is `rule.checkedValue === undefined && rule.uncheckedValue === undefined` (data-validation.ts:163). Three shapes exist: both absent (tested, test at data-validation.test.ts:93), both present (tested at :107), uncheckedValue-only (tested at :118). The fourth — `checkedValue` set, `uncheckedValue` undefined — is never exercised, so a regression that gated on `uncheckedValue === undefined` alone (e.g. `checkedValue: 'true'` folding a typed 'TRUE' into checked) would pass the suite. This is exactly the class of bug the PR's own review notes ([0] in docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md:45) found in the mirror-image branch.",
+            "file": "packages/sheets/src/model/worksheet/data-validation.test.ts",
+            "line": 107,
+            "searchedFor": [
+              "read all of packages/sheets/src/model/worksheet/data-validation.test.ts",
+              "grep isCheckboxChecked across repo (only gridcanvas.ts:1042 and index.ts re-exports use it; no other test file)",
+              "packages/sheets/test/sheet/data-validation.test.ts"
+            ]
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "absence",
+            "summary": "Formula-cell no-op test never asserts the cell value, despite claiming \"writes no literal\"",
+            "evidence": "packages/sheets/test/sheet/data-validation.test.ts:66-69 comments \"keeps the formula, writes no literal\" but only asserts `cell?.f === '=1=1'`. Neither the pre-toggle value (comment claims '=1=1' → TRUE, never asserted) nor the post-toggle `cell?.v` is checked, so a variant that preserved `f` while stomping `v` to 'FALSE' would still pass. The guard's main failure mode (setData overwriting) is caught via `f`, so the core behavior is covered; the assertion set is just narrower than the test's own claim and than the plan item in docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md:34-35 (\"writes no `v`\").",
+            "file": "packages/sheets/test/sheet/data-validation.test.ts",
+            "line": 69,
+            "searchedFor": [
+              "packages/sheets/test/sheet/data-validation.test.ts full read",
+              "packages/sheets/src/model/worksheet/sheet.ts:3834-3848 toggleCheckboxAt"
+            ]
+          }
+        ]
+      ],
+      "verifications": []
+    },
+    "design-fit": {
+      "lensDiff": "diff --git a/docs/design/sheets/data-validation.md b/docs/design/sheets/data-validation.md\nindex e37b728fb..c785d0397 100644\n--- a/docs/design/sheets/data-validation.md\n+++ b/docs/design/sheets/data-validation.md\n@@ -249,10 +249,15 @@ simplifications, each a small follow-up to close:\n   places that must stay in lockstep: the `Sheet` synced cache, `MemStore`, and the\n   Yorkie document helper (`yorkie-worksheet-structure.ts`). All three route through\n   the shared `shiftRuleRanges`/`moveRuleRanges` helper (`rule-ranges.ts`).\n-- **Not yet guarded** — toggling a checkbox over a formula cell overwrites the\n-  formula with a literal (design intent is formula-backed = read-only);\n-  `isCheckboxChecked` is case-sensitive (`\"true\"` renders unchecked). Both are\n-  small follow-ups.\n+- **Formula guard + case-insensitivity** (fixed as a follow-up) — `toggleCheckboxAt`\n+  now no-ops over a formula cell (returns `false`, leaves `cell.f` intact), so a\n+  formula-backed checkbox is read-only as intended; both the click and Space\n+  paths route through it. `isCheckboxChecked` matches the default boolean\n+  `TRUE`/`FALSE` case-insensitively (a lowercase `\"true\"` from xlsx import / REST\n+  API / external paste now renders checked), while a rule with *either* custom\n+  value (`checkedValue`/`uncheckedValue`) stays an exact string match (GS parity;\n+  case-folding a custom `uncheckedValue: \"true\"` would otherwise invert state).\n+  Canonical `TRUE`/`FALSE` compare without allocating on the per-repaint path.\n - **UI** — a single flat checkbox toolbar button (desktop + mobile menu) that\n   **toggles**: when the active cell is already a checkbox the button shows an\n   active/\"Remove checkbox\" state and clicking strips the checkbox rules\ndiff --git a/packages/sheets/src/model/worksheet/data-validation.test.ts b/packages/sheets/src/model/worksheet/data-validation.test.ts\nindex 3184b9c76..e149c9d40 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.test.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.test.ts\n@@ -90,6 +90,43 @@ describe('data-validation model', () => {\n     expect(toggleCheckboxValue(rule, undefined)).toBe(CHECKBOX_TRUE);\n   });\n \n+  it('matches default boolean checkbox values case-insensitively', () => {\n+    // A default checkbox has no custom checkedValue. Values arriving via xlsx\n+    // import / REST API / external paste can be lowercase and bypass setData\n+    // normalization; they must still render checked (formula engine + input\n+    // parser already treat TRUE/FALSE case-insensitively).\n+    const rule = checkboxRule('a');\n+    expect(isCheckboxChecked(rule, 'true')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'True')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'false')).toBe(false);\n+    // A lowercase checked value toggles to the canonical unchecked value.\n+    expect(toggleCheckboxValue(rule, 'true')).toBe(CHECKBOX_FALSE);\n+  });\n+\n+  it('matches a custom checked value exactly (case-sensitive)', () => {\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      checkedValue: 'Yes',\n+      uncheckedValue: 'No',\n+    };\n+    expect(isCheckboxChecked(rule, 'Yes')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'yes')).toBe(false);\n+    expect(isCheckboxChecked(rule, 'YES')).toBe(false);\n+  });\n+\n+  it('does not case-fold when only a custom uncheckedValue is set', () => {\n+    // Default checkedValue ('TRUE') but a custom uncheckedValue that upper-cases\n+    // to 'TRUE' must NOT be misread as checked — case-folding only applies to a\n+    // fully-default boolean checkbox (both custom values absent).\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      uncheckedValue: 'true',\n+    };\n+    expect(isCheckboxChecked(rule, 'true')).toBe(false); // the unchecked value\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true); // the checked value\n+  });\n+\n   it('normalizes a list rule: trims, drops empties, dedupes, defaults arrow', () => {\n     const normalized = normalizeDataValidationRule(\n       listRule('a', ['  Red ', 'Green', 'Red', '', '  ']),\ndiff --git a/packages/sheets/src/model/worksheet/data-validation.ts b/packages/sheets/src/model/worksheet/data-validation.ts\nindex 9003bfd7f..9587855bd 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.ts\n@@ -144,12 +144,27 @@ function uncheckedValueOf(rule: DataValidationRule): string {\n }\n \n /**\n- * `isCheckboxChecked` reports whether the cell value represents \"checked\".\n+ * `isCheckboxChecked` reports whether the cell value represents \"checked\". A\n+ * fully-default boolean checkbox (neither custom value set) matches TRUE/FALSE\n+ * case-insensitively — values arriving via xlsx import / REST API / external\n+ * paste can be lowercase and bypass `setData` normalization, and the formula\n+ * engine and input parser already treat TRUE/FALSE case-insensitively. As soon\n+ * as *either* custom value is set the rule is exact-match (Google Sheets\n+ * parity) — case-folding a custom `uncheckedValue` like `\"true\"` would\n+ * otherwise invert the state. The canonical `TRUE`/`FALSE` are compared without\n+ * allocating (this runs per visible checkbox per repaint); only a non-canonical\n+ * lowercase value hits the `toUpperCase` fallback.\n  */\n export function isCheckboxChecked(\n   rule: DataValidationRule,\n   value: string | undefined,\n ): boolean {\n+  if (value === undefined) return false;\n+  if (rule.checkedValue === undefined && rule.uncheckedValue === undefined) {\n+    if (value === CHECKBOX_TRUE) return true;\n+    if (value === CHECKBOX_FALSE) return false;\n+    return value.toUpperCase() === CHECKBOX_TRUE;\n+  }\n   return value === checkedValueOf(rule);\n }\n \ndiff --git a/packages/sheets/src/model/worksheet/sheet.ts b/packages/sheets/src/model/worksheet/sheet.ts\nindex 62501c8ed..cb14a05bf 100644\n--- a/packages/sheets/src/model/worksheet/sheet.ts\n+++ b/packages/sheets/src/model/worksheet/sheet.ts\n@@ -3837,6 +3837,11 @@ export class Sheet {\n       return false;\n     }\n     const cell = await this.getCell(ref);\n+    // A checkbox over a formula cell is read-only — the formula drives the\n+    // state (Google Sheets / Excel parity). Toggling must not overwrite it.\n+    if (cell?.f) {\n+      return false;\n+    }\n     const next = toggleCheckboxValue(rule, cell?.v);\n     await this.setData(ref, next);\n     return true;\ndiff --git a/packages/sheets/test/sheet/data-validation.test.ts b/packages/sheets/test/sheet/data-validation.test.ts\nindex 882dd4108..538dc97fe 100644\n--- a/packages/sheets/test/sheet/data-validation.test.ts\n+++ b/packages/sheets/test/sheet/data-validation.test.ts\n@@ -50,6 +50,25 @@ describe('Sheet data validation', () => {\n     expect(await sheet.toggleCheckboxAt({ r: 9, c: 9 })).toBe(false);\n   });\n \n+  it('does not toggle (or overwrite) a formula cell under a checkbox rule', async () => {\n+    const sheet = new Sheet(new MemStore());\n+    await sheet.insertCheckbox(\n+      [\n+        { r: 1, c: 1 },\n+        { r: 1, c: 1 },\n+      ],\n+      'dv-1',\n+    );\n+    // A formula drives the checkbox state; the control is read-only (GS parity).\n+    await sheet.setData({ r: 1, c: 1 }, '=1=1'); // → TRUE\n+    expect((await sheet.getCell({ r: 1, c: 1 }))?.f).toBe('=1=1');\n+\n+    // Toggle is a no-op: reports false, keeps the formula, writes no literal.\n+    expect(await sheet.toggleCheckboxAt({ r: 1, c: 1 })).toBe(false);\n+    const cell = await sheet.getCell({ r: 1, c: 1 });\n+    expect(cell?.f).toBe('=1=1');\n+  });\n+\n   it('removes checkbox rules intersecting a range but keeps cell values', async () => {\n     const sheet = new Sheet(new MemStore());\n     await sheet.insertCheckbox(\n",
+      "lensDiffSha256": "3eaa5b03d9452297442e52960e5c3cdeed58d20be98da7127cbcc21c569baf3e",
+      "lensDiffBytes": 7784,
+      "lensFiles": [
+        "docs/design/sheets/data-validation.md",
+        "packages/sheets/src/model/worksheet/data-validation.test.ts",
+        "packages/sheets/src/model/worksheet/data-validation.ts",
+        "packages/sheets/src/model/worksheet/sheet.ts",
+        "packages/sheets/test/sheet/data-validation.test.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "docs/design/sheets/data-validation.md",
+            "line": 252,
+            "summary": "Fixed item left inside the \"deliberate Phase-1 simplifications, each a small follow-up to close\" list. The bullet now documents completed behavior (formula guard + case-insensitivity) under a heading that promises open follow-ups, so a reader scanning the list for remaining work is misled. Better folded into the Phase-1 \"as shipped\" narrative rather than kept as a struck-through follow-up entry. Otherwise design-doc discipline is correct: the canonical subsystem doc was updated in place, no parallel doc was created."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "packages/sheets/src/model/worksheet/sheet.ts",
+            "line": 3842,
+            "summary": "Refusing to toggle a formula-backed checkbox is a silent no-op with no user feedback, unlike the sibling data-validation reject path, which surfaces an `onValidationError` callback/toast (documented in the same design doc, Phase-2 \"Interaction\" section). A user clicking a checkbox that sits over a formula gets no explanation. Google Sheets shows the box as non-interactive. Not required by the issue's acceptance list, so preference-level, but worth a follow-up note in the doc if deliberately deferred.",
+            "searchedFor": [
+              "grep toggleCheckbox|isCheckboxChecked across repo",
+              "read worksheet.ts:3385-3410 (click path) and 4843-4857 (Space path)",
+              "grep onValidationError usage in design doc"
+            ]
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+            "line": 163,
+            "summary": "Case-folding is gated on \"both custom values absent\" rather than on the semantic condition the doc states (\"the value being compared is the canonical boolean\"). The result is a rule where setting only a custom `checkedValue: 'Yes'` (uncheckedValue still default FALSE) silently disables lenient matching for the unrelated default unchecked side too. This matches the todo's stated scope and is defensible, but the coupling of two independent fields into one leniency switch is an abstraction smell; a `isDefaultBooleanCheckbox(rule)` helper (or per-side comparison) would express the intent more directly. Behavior-neutral preference, not a spec violation."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+            "line": 67,
+            "summary": "The task doc carries two `## Review` headings — one filled in at line 40 with the review outcome and a second empty placeholder at line 67 (\"(filled after implementation)\"). Duplicated section is leftover template noise; the file also still lives under docs/tasks/active/ although every acceptance box is checked and the design doc has been updated, suggesting it should be archived alongside its siblings in docs/tasks/archive/."
+          }
+        ]
+      ],
+      "verifications": []
+    },
+    "security": {
+      "lensDiff": "diff --git a/docs/design/sheets/data-validation.md b/docs/design/sheets/data-validation.md\nindex e37b728fb..c785d0397 100644\n--- a/docs/design/sheets/data-validation.md\n+++ b/docs/design/sheets/data-validation.md\n@@ -249,10 +249,15 @@ simplifications, each a small follow-up to close:\n   places that must stay in lockstep: the `Sheet` synced cache, `MemStore`, and the\n   Yorkie document helper (`yorkie-worksheet-structure.ts`). All three route through\n   the shared `shiftRuleRanges`/`moveRuleRanges` helper (`rule-ranges.ts`).\n-- **Not yet guarded** — toggling a checkbox over a formula cell overwrites the\n-  formula with a literal (design intent is formula-backed = read-only);\n-  `isCheckboxChecked` is case-sensitive (`\"true\"` renders unchecked). Both are\n-  small follow-ups.\n+- **Formula guard + case-insensitivity** (fixed as a follow-up) — `toggleCheckboxAt`\n+  now no-ops over a formula cell (returns `false`, leaves `cell.f` intact), so a\n+  formula-backed checkbox is read-only as intended; both the click and Space\n+  paths route through it. `isCheckboxChecked` matches the default boolean\n+  `TRUE`/`FALSE` case-insensitively (a lowercase `\"true\"` from xlsx import / REST\n+  API / external paste now renders checked), while a rule with *either* custom\n+  value (`checkedValue`/`uncheckedValue`) stays an exact string match (GS parity;\n+  case-folding a custom `uncheckedValue: \"true\"` would otherwise invert state).\n+  Canonical `TRUE`/`FALSE` compare without allocating on the per-repaint path.\n - **UI** — a single flat checkbox toolbar button (desktop + mobile menu) that\n   **toggles**: when the active cell is already a checkbox the button shows an\n   active/\"Remove checkbox\" state and clicking strips the checkbox rules\ndiff --git a/docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md b/docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md\nnew file mode 100644\nindex 000000000..e70dff3d5\n--- /dev/null\n+++ b/docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md\n@@ -0,0 +1,69 @@\n+# Checkbox data-validation bug fixes\n+\n+Follow-ups from the data-validation design doc (`docs/design/sheets/data-validation.md`,\n+Phase-1 \"Not yet guarded\" note). Two clear correctness bugs in the shipped\n+checkbox control, each self-contained.\n+\n+## Bugs\n+\n+1. **Formula cell is not read-only under a checkbox rule.**\n+   `Sheet.toggleCheckboxAt` (`sheet.ts:3834`) reads `cell?.v` and writes a\n+   literal `TRUE`/`FALSE` via `setData` without checking `cell.f`. Toggling a\n+   checkbox that sits over a formula cell **overwrites the formula**. Design\n+   intent: a formula-backed checkbox is read-only (the formula drives the\n+   state) — Google Sheets / Excel parity. Both the click path\n+   (`worksheet.ts:3405`) and the Space path (`worksheet.ts:4853`) route through\n+   `toggleCheckboxAt`, so one guard fixes both.\n+\n+2. **`isCheckboxChecked` is case-sensitive.**\n+   `isCheckboxChecked` (`data-validation.ts:149`) compares `value === 'TRUE'`\n+   exactly, so a cell holding `\"true\"` renders **unchecked**. `setData`\n+   normalizes typed input to `\"TRUE\"`, but values arriving via xlsx import /\n+   REST API / external paste can be lowercase and bypass normalization. The\n+   formula engine (`formula.ts:1054`) and input parser (`input.ts:242`) already\n+   treat `TRUE`/`FALSE` case-insensitively; the render/toggle path should match.\n+   Fix scope: **default boolean checkbox only** (no custom `checkedValue`) —\n+   a custom checked value stays an exact string match (GS parity).\n+\n+## Plan (TDD)\n+\n+- [x] Model test: `isCheckboxChecked` matches `\"true\"`/`\"True\"`/`\"TRUE\"` for a\n+      default rule; a custom-value rule stays exact-match.\n+- [x] Model fix: `isCheckboxChecked` case-insensitive for the fully-default\n+      boolean checkbox only; `toggleCheckboxValue` inherits the fix (delegates).\n+- [x] Sheet test: `toggleCheckboxAt` over a formula cell is a no-op — returns\n+      `false`, leaves `cell.f` intact, writes no `v`.\n+- [x] Sheet fix: guard `toggleCheckboxAt` on `cell?.f`.\n+- [x] `pnpm test` (sheets) green; `pnpm verify:fast` green (EXIT 0).\n+- [x] Update design doc Phase-1 \"Not yet guarded\" note (both now fixed).\n+\n+## Review\n+\n+High-effort workflow code review (`Workflow code-review`, 4 finders + verify)\n+surfaced two findings, both addressed:\n+\n+- **[0] correctness (PLAUSIBLE)** — case-fold branch was gated only on\n+  `checkedValue === undefined`, so a rule with a custom `uncheckedValue` that\n+  upper-cases to `\"TRUE\"` inverted state. Fixed: case-folding now requires\n+  *both* custom values absent; added a regression test.\n+- **[1] cleanup (CONFIRMED)** — `value.toUpperCase()` allocated per repaint,\n+  against the file's no-alloc convention. Fixed: canonical `TRUE`/`FALSE`\n+  short-circuit before the `toUpperCase` fallback.\n+\n+A refuted finding (\"silently depends on `CHECKBOX_TRUE` being uppercase\") was\n+dismissed by the verifier — `CHECKBOX_TRUE` is a module constant.\n+\n+Both bugs are model/Sheet-level; the click and Space view paths route through\n+`toggleCheckboxAt` and the render path through `isCheckboxChecked`, so no\n+view-layer change was needed. View-layer smoke deferred (Phase-1 precedent).\n+\n+## Out of scope (separate follow-ups)\n+\n+- Space range-uniform \"set all checked\" (parity feature, not a bug).\n+- Merged-cell glyph/hit-test mismatch.\n+- Eager `FALSE` materialization for `COUNTIF`.\n+- Custom checkbox values UI.\n+\n+## Review\n+\n+(filled after implementation)\ndiff --git a/packages/sheets/src/model/worksheet/data-validation.test.ts b/packages/sheets/src/model/worksheet/data-validation.test.ts\nindex 3184b9c76..e149c9d40 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.test.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.test.ts\n@@ -90,6 +90,43 @@ describe('data-validation model', () => {\n     expect(toggleCheckboxValue(rule, undefined)).toBe(CHECKBOX_TRUE);\n   });\n \n+  it('matches default boolean checkbox values case-insensitively', () => {\n+    // A default checkbox has no custom checkedValue. Values arriving via xlsx\n+    // import / REST API / external paste can be lowercase and bypass setData\n+    // normalization; they must still render checked (formula engine + input\n+    // parser already treat TRUE/FALSE case-insensitively).\n+    const rule = checkboxRule('a');\n+    expect(isCheckboxChecked(rule, 'true')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'True')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'false')).toBe(false);\n+    // A lowercase checked value toggles to the canonical unchecked value.\n+    expect(toggleCheckboxValue(rule, 'true')).toBe(CHECKBOX_FALSE);\n+  });\n+\n+  it('matches a custom checked value exactly (case-sensitive)', () => {\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      checkedValue: 'Yes',\n+      uncheckedValue: 'No',\n+    };\n+    expect(isCheckboxChecked(rule, 'Yes')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'yes')).toBe(false);\n+    expect(isCheckboxChecked(rule, 'YES')).toBe(false);\n+  });\n+\n+  it('does not case-fold when only a custom uncheckedValue is set', () => {\n+    // Default checkedValue ('TRUE') but a custom uncheckedValue that upper-cases\n+    // to 'TRUE' must NOT be misread as checked — case-folding only applies to a\n+    // fully-default boolean checkbox (both custom values absent).\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      uncheckedValue: 'true',\n+    };\n+    expect(isCheckboxChecked(rule, 'true')).toBe(false); // the unchecked value\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true); // the checked value\n+  });\n+\n   it('normalizes a list rule: trims, drops empties, dedupes, defaults arrow', () => {\n     const normalized = normalizeDataValidationRule(\n       listRule('a', ['  Red ', 'Green', 'Red', '', '  ']),\ndiff --git a/packages/sheets/src/model/worksheet/data-validation.ts b/packages/sheets/src/model/worksheet/data-validation.ts\nindex 9003bfd7f..9587855bd 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.ts\n@@ -144,12 +144,27 @@ function uncheckedValueOf(rule: DataValidationRule): string {\n }\n \n /**\n- * `isCheckboxChecked` reports whether the cell value represents \"checked\".\n+ * `isCheckboxChecked` reports whether the cell value represents \"checked\". A\n+ * fully-default boolean checkbox (neither custom value set) matches TRUE/FALSE\n+ * case-insensitively — values arriving via xlsx import / REST API / external\n+ * paste can be lowercase and bypass `setData` normalization, and the formula\n+ * engine and input parser already treat TRUE/FALSE case-insensitively. As soon\n+ * as *either* custom value is set the rule is exact-match (Google Sheets\n+ * parity) — case-folding a custom `uncheckedValue` like `\"true\"` would\n+ * otherwise invert the state. The canonical `TRUE`/`FALSE` are compared without\n+ * allocating (this runs per visible checkbox per repaint); only a non-canonical\n+ * lowercase value hits the `toUpperCase` fallback.\n  */\n export function isCheckboxChecked(\n   rule: DataValidationRule,\n   value: string | undefined,\n ): boolean {\n+  if (value === undefined) return false;\n+  if (rule.checkedValue === undefined && rule.uncheckedValue === undefined) {\n+    if (value === CHECKBOX_TRUE) return true;\n+    if (value === CHECKBOX_FALSE) return false;\n+    return value.toUpperCase() === CHECKBOX_TRUE;\n+  }\n   return value === checkedValueOf(rule);\n }\n \ndiff --git a/packages/sheets/src/model/worksheet/sheet.ts b/packages/sheets/src/model/worksheet/sheet.ts\nindex 62501c8ed..cb14a05bf 100644\n--- a/packages/sheets/src/model/worksheet/sheet.ts\n+++ b/packages/sheets/src/model/worksheet/sheet.ts\n@@ -3837,6 +3837,11 @@ export class Sheet {\n       return false;\n     }\n     const cell = await this.getCell(ref);\n+    // A checkbox over a formula cell is read-only — the formula drives the\n+    // state (Google Sheets / Excel parity). Toggling must not overwrite it.\n+    if (cell?.f) {\n+      return false;\n+    }\n     const next = toggleCheckboxValue(rule, cell?.v);\n     await this.setData(ref, next);\n     return true;\ndiff --git a/packages/sheets/test/sheet/data-validation.test.ts b/packages/sheets/test/sheet/data-validation.test.ts\nindex 882dd4108..538dc97fe 100644\n--- a/packages/sheets/test/sheet/data-validation.test.ts\n+++ b/packages/sheets/test/sheet/data-validation.test.ts\n@@ -50,6 +50,25 @@ describe('Sheet data validation', () => {\n     expect(await sheet.toggleCheckboxAt({ r: 9, c: 9 })).toBe(false);\n   });\n \n+  it('does not toggle (or overwrite) a formula cell under a checkbox rule', async () => {\n+    const sheet = new Sheet(new MemStore());\n+    await sheet.insertCheckbox(\n+      [\n+        { r: 1, c: 1 },\n+        { r: 1, c: 1 },\n+      ],\n+      'dv-1',\n+    );\n+    // A formula drives the checkbox state; the control is read-only (GS parity).\n+    await sheet.setData({ r: 1, c: 1 }, '=1=1'); // → TRUE\n+    expect((await sheet.getCell({ r: 1, c: 1 }))?.f).toBe('=1=1');\n+\n+    // Toggle is a no-op: reports false, keeps the formula, writes no literal.\n+    expect(await sheet.toggleCheckboxAt({ r: 1, c: 1 })).toBe(false);\n+    const cell = await sheet.getCell({ r: 1, c: 1 });\n+    expect(cell?.f).toBe('=1=1');\n+  });\n+\n   it('removes checkbox rules intersecting a range but keeps cell values', async () => {\n     const sheet = new Sheet(new MemStore());\n     await sheet.insertCheckbox(\n",
+      "lensDiffSha256": "6d875f999c40e43aefb3f3ce3987dcda2b565bfbfffec056aaf2152b16eacf1f",
+      "lensDiffBytes": 11505,
+      "lensFiles": [
+        "docs/design/sheets/data-validation.md",
+        "docs/tasks/active/20260712-checkbox-validation-bugfix-todo.md",
+        "packages/sheets/src/model/worksheet/data-validation.test.ts",
+        "packages/sheets/src/model/worksheet/data-validation.ts",
+        "packages/sheets/src/model/worksheet/sheet.ts",
+        "packages/sheets/test/sheet/data-validation.test.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "minor",
+            "confidence": "low",
+            "claimType": "presence",
+            "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+            "line": 166,
+            "summary": "Unbounded `value.toUpperCase()` on the per-repaint render path with attacker-supplied cell content",
+            "evidence": "`isCheckboxChecked` is called once per visible checkbox per repaint from `GridCanvas.renderCellCheckbox` (packages/sheets/src/view/gridcanvas.ts:1042) with the raw cell value `cell?.v`. The new fallback at data-validation.ts:166 short-circuits only the canonical 'TRUE'/'FALSE'; any other value falls through to `value.toUpperCase()`, which allocates a full copy of the string. Cell values are not length-capped anywhere in packages/sheets (grep for maxLength/MAX_CELL found no cap), and they can come from untrusted sources the diff itself names: xlsx import, REST API, external paste, and a Yorkie co-editor. A collaborator or a crafted import can place a multi-megabyte string in a cell covered by a checkbox rule; every viewer then allocates and case-folds that string on every animation-frame repaint (and for every such cell in view), causing render-thread CPU/GC pressure — a cheap client-side resource-exhaustion vector. Mitigation: bail out when `value.length !== 4/5` (or compare the 4 chars) before allocating. Impact is limited to a client already able to render the doc, hence minor; I did not measure an actual freeze, hence low confidence.",
+            "searchedFor": []
+          },
+          {
+            "severity": "nit",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "packages/sheets/src/model/worksheet/sheet.ts",
+            "line": 3842,
+            "summary": "No other write path bypasses the new formula read-only guard (verified, informational)",
+            "evidence": "I enumerated the call sites of the guarded operation: `Sheet.toggleCheckboxAt` is reached only from `Spreadsheet.toggleCheckboxAt` (view/spreadsheet.ts:363, which additionally gates on `_readOnly`), the click path (view/worksheet.ts:3405, gated on `!this.readOnly`) and the Space-key path (view/worksheet.ts:4853, gated on `!this.readOnly`, and it always `preventDefault()`s so it cannot fall through to the typed-character handler and clobber the formula that way). Grep for `CHECKBOX_TRUE|CHECKBOX_FALSE` across packages/**/src shows no other module writes a checkbox literal, so the new `cell?.f` guard has no alternate write path around it. Reported only as a negative result so the verifier can search elsewhere; not a defect.",
+            "searchedFor": [
+              "grep toggleCheckboxAt|isCheckboxChecked|toggleCheckboxValue repo-wide",
+              "grep CHECKBOX_TRUE|CHECKBOX_FALSE in packages/**/src/**/*.ts",
+              "read view/worksheet.ts click path 3380-3429 and key handler 4820-4879",
+              "read view/spreadsheet.ts 340-380"
+            ]
+          }
+        ]
+      ],
+      "verifications": []
+    },
+    "blast-radius": {
+      "lensDiff": "diff --git a/packages/sheets/src/model/worksheet/data-validation.test.ts b/packages/sheets/src/model/worksheet/data-validation.test.ts\nindex 3184b9c76..e149c9d40 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.test.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.test.ts\n@@ -90,6 +90,43 @@ describe('data-validation model', () => {\n     expect(toggleCheckboxValue(rule, undefined)).toBe(CHECKBOX_TRUE);\n   });\n \n+  it('matches default boolean checkbox values case-insensitively', () => {\n+    // A default checkbox has no custom checkedValue. Values arriving via xlsx\n+    // import / REST API / external paste can be lowercase and bypass setData\n+    // normalization; they must still render checked (formula engine + input\n+    // parser already treat TRUE/FALSE case-insensitively).\n+    const rule = checkboxRule('a');\n+    expect(isCheckboxChecked(rule, 'true')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'True')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'false')).toBe(false);\n+    // A lowercase checked value toggles to the canonical unchecked value.\n+    expect(toggleCheckboxValue(rule, 'true')).toBe(CHECKBOX_FALSE);\n+  });\n+\n+  it('matches a custom checked value exactly (case-sensitive)', () => {\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      checkedValue: 'Yes',\n+      uncheckedValue: 'No',\n+    };\n+    expect(isCheckboxChecked(rule, 'Yes')).toBe(true);\n+    expect(isCheckboxChecked(rule, 'yes')).toBe(false);\n+    expect(isCheckboxChecked(rule, 'YES')).toBe(false);\n+  });\n+\n+  it('does not case-fold when only a custom uncheckedValue is set', () => {\n+    // Default checkedValue ('TRUE') but a custom uncheckedValue that upper-cases\n+    // to 'TRUE' must NOT be misread as checked — case-folding only applies to a\n+    // fully-default boolean checkbox (both custom values absent).\n+    const rule: DataValidationRule = {\n+      ...checkboxRule('a'),\n+      uncheckedValue: 'true',\n+    };\n+    expect(isCheckboxChecked(rule, 'true')).toBe(false); // the unchecked value\n+    expect(isCheckboxChecked(rule, 'TRUE')).toBe(true); // the checked value\n+  });\n+\n   it('normalizes a list rule: trims, drops empties, dedupes, defaults arrow', () => {\n     const normalized = normalizeDataValidationRule(\n       listRule('a', ['  Red ', 'Green', 'Red', '', '  ']),\ndiff --git a/packages/sheets/src/model/worksheet/data-validation.ts b/packages/sheets/src/model/worksheet/data-validation.ts\nindex 9003bfd7f..9587855bd 100644\n--- a/packages/sheets/src/model/worksheet/data-validation.ts\n+++ b/packages/sheets/src/model/worksheet/data-validation.ts\n@@ -144,12 +144,27 @@ function uncheckedValueOf(rule: DataValidationRule): string {\n }\n \n /**\n- * `isCheckboxChecked` reports whether the cell value represents \"checked\".\n+ * `isCheckboxChecked` reports whether the cell value represents \"checked\". A\n+ * fully-default boolean checkbox (neither custom value set) matches TRUE/FALSE\n+ * case-insensitively — values arriving via xlsx import / REST API / external\n+ * paste can be lowercase and bypass `setData` normalization, and the formula\n+ * engine and input parser already treat TRUE/FALSE case-insensitively. As soon\n+ * as *either* custom value is set the rule is exact-match (Google Sheets\n+ * parity) — case-folding a custom `uncheckedValue` like `\"true\"` would\n+ * otherwise invert the state. The canonical `TRUE`/`FALSE` are compared without\n+ * allocating (this runs per visible checkbox per repaint); only a non-canonical\n+ * lowercase value hits the `toUpperCase` fallback.\n  */\n export function isCheckboxChecked(\n   rule: DataValidationRule,\n   value: string | undefined,\n ): boolean {\n+  if (value === undefined) return false;\n+  if (rule.checkedValue === undefined && rule.uncheckedValue === undefined) {\n+    if (value === CHECKBOX_TRUE) return true;\n+    if (value === CHECKBOX_FALSE) return false;\n+    return value.toUpperCase() === CHECKBOX_TRUE;\n+  }\n   return value === checkedValueOf(rule);\n }\n \ndiff --git a/packages/sheets/src/model/worksheet/sheet.ts b/packages/sheets/src/model/worksheet/sheet.ts\nindex 62501c8ed..cb14a05bf 100644\n--- a/packages/sheets/src/model/worksheet/sheet.ts\n+++ b/packages/sheets/src/model/worksheet/sheet.ts\n@@ -3837,6 +3837,11 @@ export class Sheet {\n       return false;\n     }\n     const cell = await this.getCell(ref);\n+    // A checkbox over a formula cell is read-only — the formula drives the\n+    // state (Google Sheets / Excel parity). Toggling must not overwrite it.\n+    if (cell?.f) {\n+      return false;\n+    }\n     const next = toggleCheckboxValue(rule, cell?.v);\n     await this.setData(ref, next);\n     return true;\ndiff --git a/packages/sheets/test/sheet/data-validation.test.ts b/packages/sheets/test/sheet/data-validation.test.ts\nindex 882dd4108..538dc97fe 100644\n--- a/packages/sheets/test/sheet/data-validation.test.ts\n+++ b/packages/sheets/test/sheet/data-validation.test.ts\n@@ -50,6 +50,25 @@ describe('Sheet data validation', () => {\n     expect(await sheet.toggleCheckboxAt({ r: 9, c: 9 })).toBe(false);\n   });\n \n+  it('does not toggle (or overwrite) a formula cell under a checkbox rule', async () => {\n+    const sheet = new Sheet(new MemStore());\n+    await sheet.insertCheckbox(\n+      [\n+        { r: 1, c: 1 },\n+        { r: 1, c: 1 },\n+      ],\n+      'dv-1',\n+    );\n+    // A formula drives the checkbox state; the control is read-only (GS parity).\n+    await sheet.setData({ r: 1, c: 1 }, '=1=1'); // → TRUE\n+    expect((await sheet.getCell({ r: 1, c: 1 }))?.f).toBe('=1=1');\n+\n+    // Toggle is a no-op: reports false, keeps the formula, writes no literal.\n+    expect(await sheet.toggleCheckboxAt({ r: 1, c: 1 })).toBe(false);\n+    const cell = await sheet.getCell({ r: 1, c: 1 });\n+    expect(cell?.f).toBe('=1=1');\n+  });\n+\n   it('removes checkbox rules intersecting a range but keeps cell values', async () => {\n     const sheet = new Sheet(new MemStore());\n     await sheet.insertCheckbox(\n",
+      "lensDiffSha256": "92243cb99b53f1a702a14f12ad131c5ed6767d8d9d97ea607fef4d7fdbe910d7",
+      "lensDiffBytes": 6035,
+      "lensFiles": [
+        "packages/sheets/src/model/worksheet/data-validation.test.ts",
+        "packages/sheets/src/model/worksheet/data-validation.ts",
+        "packages/sheets/src/model/worksheet/sheet.ts",
+        "packages/sheets/test/sheet/data-validation.test.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/model/worksheet/sheet.ts",
+            "line": 3842,
+            "summary": "New formula guard misses spill-ghost cells: `cell?.f` is only set on the spill anchor, so a checkbox over a spilled formula result still reports a successful toggle while `setData` silently discards the write",
+            "evidence": "The guard only tests `cell?.f` (sheet.ts:3842). Cells produced by a spilling formula carry `spillAnchor` and `v` but no `f`. `Sheet.setData` bails out for exactly those cells — `if (existing?.spillAnchor) return;` (packages/sheets/src/model/worksheet/sheet.ts:1004) — yet `toggleCheckboxAt` falls through and returns `true` (sheet.ts:3846-3847). Callers act on that: `packages/sheets/src/view/spreadsheet.ts:366` re-renders on `toggled === true`, and the Space handler at `packages/sheets/src/view/worksheet.ts:4853` re-renders too, so the UI reports a state change that never happened. The stated intent (\"the formula drives the state\") also leaves the spilled-formula case unprotected. Fix belongs on the new guard: also bail on `cell?.spillAnchor`.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/model/worksheet/sheet.ts",
+            "line": 3846,
+            "summary": "`toggleCheckboxAt` still returns `true` on a pivot sheet where `setData` is a no-op, so the new `false`-means-nothing-changed contract is inconsistent",
+            "evidence": "`Sheet.setData` opens with `if (this.pivotDefinition) return;` (packages/sheets/src/model/worksheet/sheet.ts:995). `toggleCheckboxAt` (sheet.ts:3846) awaits it and unconditionally returns `true`, so on a pivot sheet the view (`packages/sheets/src/view/spreadsheet.ts:366`) treats the no-op as a real toggle. The diff establishes `false` = \"nothing was written\"; this sibling no-op path was not updated to match.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/sheets/src/view/worksheet.ts",
+            "line": 3405,
+            "summary": "Mouse-click toggle path ignores the new `false` return, so clicking a formula-backed checkbox consumes the event and repaints for nothing",
+            "evidence": "packages/sheets/src/view/worksheet.ts:3402-3407 calls `e.preventDefault()`, awaits `toggleCheckboxAt(ref)` discarding the result, then `this.render(); return;` unconditionally. The Space path at worksheet.ts:4853 was written to branch on the return value; this one was not, so the newly-added read-only case produces a silently swallowed click with no feedback and an unnecessary repaint. Not data-losing, but the caller is now inconsistent with the changed contract.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "packages/sheets/src/view/worksheet.ts",
+            "line": 1720,
+            "summary": "Sibling data-validation controls (list popover, date picker) still overwrite formula cells — the \"validation control over a formula cell is read-only\" invariant is now enforced for checkbox only",
+            "evidence": "The list-option picker writes `await this.sheet.setData(ref, value);` (packages/sheets/src/view/worksheet.ts:1720) and the date picker writes `await this.sheet.setData(ref, iso);` (packages/sheets/src/view/worksheet.ts:1932), neither checking `cell?.f`. Both reach the same mutation the new checkbox guard protects against, for cells whose value is driven by a formula, so picking an option/date silently destroys the formula. Fix belongs on those two call sites (or on a shared model-level guard).",
+            "searchedFor": [
+              "grep isCheckboxChecked|toggleCheckboxValue|toggleCheckboxAt across repo",
+              "grep setData( in packages/sheets/src/view",
+              "grep 'checkbox' across packages/**/*.ts",
+              "grep toggleCheckbox|insertCheckbox in frontend/core/backend/cli"
+            ]
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/sheets/src/model/worksheet/sheet.ts",
+            "line": 3842,
+            "summary": "New formula guard misses spill-ghost cells: `cell?.f` is only set on the spill anchor, so a checkbox over a spilled formula result still reports a successful toggle while `setData` silently discards the write",
+            "evidence": "The guard only tests `cell?.f` (sheet.ts:3842). Cells produced by a spilling formula carry `spillAnchor` and `v` but no `f`. `Sheet.setData` bails out for exactly those cells — `if (existing?.spillAnchor) return;` (packages/sheets/src/model/worksheet/sheet.ts:1004) — yet `toggleCheckboxAt` falls through and returns `true` (sheet.ts:3846-3847). Callers act on that: `packages/sheets/src/view/spreadsheet.ts:366` re-renders on `toggled === true`, and the Space handler at `packages/sheets/src/view/worksheet.ts:4853` re-renders too, so the UI reports a state change that never happened. The stated intent (\"the formula drives the state\") also leaves the spilled-formula case unprotected. Fix belongs on the new guard: also bail on `cell?.spillAnchor`.",
+            "searchedFor": [],
+            "mergedFrom": [
+              {
+                "severity": "minor",
+                "summary": "`toggleCheckboxAt` still returns `true` on a pivot sheet where `setData` is a no-op, so the new `false`-means-nothing-changed contract is inconsistent",
+                "evidence": "`Sheet.setData` opens with `if (this.pivotDefinition) return;` (packages/sheets/src/model/worksheet/sheet.ts:995). `toggleCheckboxAt` (sheet.ts:3846) awaits it and unconditionally returns `true`, so on a pivot sheet the view (`packages/sheets/src/view/spreadsheet.ts:366`) treats the no-op as a real toggle. The diff establishes `false` = \"nothing was written\"; this sibling no-op path was not updated to match."
+              }
+            ],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "42d17c8d81b9fa0bac6be942d06c3e1e455b1a94",
+              "contentSha": "42d17c8d81b9fa0bac6be942d06c3e1e455b1a94",
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "Verified in-repo. `toggleCheckboxAt` (packages/sheets/src/model/worksheet/sheet.ts:3834-3848) guards only on `cell?.f` (3842) and then returns `true` unconditionally after `setData` (3846-3847). Spill ghost cells are written by calculator.ts:128 as `{ v, spillAnchor }` with no `f` (contract documented at model/core/types.ts:184-192), so the new guard does not fire for them, while `setData` silently no-ops on exactly those cells via `if (existing?.spillAnchor) return;` (sheet.ts:1004). `normalizeRefToAnchor` (sheet.ts:748, used at 873 and 997) only resolves merged-cell anchors, so it does not redirect a ghost ref in either the guard's `getCell` or `setData`. The path is reachable: checkboxes are rendered for any cell carrying a checkbox rule with no spill exclusion (view/gridcanvas.ts:674, 1026-1042), and a formula may spill into an empty checkbox range since only cells with `v`/`f` block a spill (calculator.ts:96). Out-of-diff consumers act on the false `true`: view/spreadsheet.ts:363-368 re-renders when `toggled`, view/worksheet.ts:4850-4856 (Space key) re-renders, and view/worksheet.ts:3405 fires on click — so the API reports a toggle that never persisted. No guard anywhere checks `spillAnchor` before toggling, so no `already-guarded` refutation exists; the issue is a violated out-of-diff invariant plus callers left inconsistent, squarely in the blast-radius lane rather than pure in-diff logic.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/sheets/src/model/worksheet/sheet.ts:3834-3848",
+              "packages/sheets/src/model/worksheet/sheet.ts:994-1004",
+              "packages/sheets/src/model/worksheet/sheet.ts:748",
+              "packages/sheets/src/model/worksheet/sheet.ts:872-873",
+              "packages/sheets/src/model/worksheet/calculator.ts:96",
+              "packages/sheets/src/model/worksheet/calculator.ts:128",
+              "packages/sheets/src/model/core/types.ts:184-192",
+              "packages/sheets/src/view/spreadsheet.ts:363-368",
+              "packages/sheets/src/view/worksheet.ts:4850-4856",
+              "packages/sheets/src/view/worksheet.ts:3405",
+              "packages/sheets/src/view/gridcanvas.ts:674",
+              "packages/sheets/src/view/gridcanvas.ts:1026-1042"
+            ]
+          },
+          "dropped": false
+        }
+      ]
+    }
+  },
+  "files": {
+    "panel.json": "present",
+    "review-lens-stats.json": "present",
+    "review-execution.json": "present",
+    "review-timing.json": "present"
+  },
+  "exit_code": 0,
+  "stderr_tail": ""
+}

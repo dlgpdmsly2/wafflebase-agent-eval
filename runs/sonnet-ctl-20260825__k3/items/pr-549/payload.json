@@ -1,0 +1,1243 @@
+{
+  "adapter": "reviewer",
+  "panel": [
+    {
+      "id": "docs",
+      "title": "Docs",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "correctness",
+      "title": "Correctness",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "design-fit",
+      "title": "Design-fit",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": true
+    },
+    {
+      "id": "test-adequacy",
+      "title": "Test-adequacy",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": true
+    },
+    {
+      "id": "blast-radius",
+      "title": "Blast-radius",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": true
+    }
+  ],
+  "lensStats": [
+    {
+      "id": "docs",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0,
+        "nit": 1
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0,
+        "nit": 1
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "correctness",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 0,
+        "minor": 5,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 1,
+        "medium": 2,
+        "low": 2,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 5,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "design-fit",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 2,
+        "minor": 1,
+        "nit": 1
+      },
+      "raisedConfidence": {
+        "high": 2,
+        "medium": 2,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 2,
+        "refuted": 1,
+        "refutedHighConfidence": 1,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 2,
+        "minor": 1,
+        "nit": 1
+      },
+      "lanes": {
+        "blocking": 2,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "test-adequacy",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 2,
+        "minor": 3,
+        "nit": 1
+      },
+      "raisedConfidence": {
+        "high": 4,
+        "medium": 2,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 2,
+        "refuted": 1,
+        "refutedHighConfidence": 1,
+        "dropped": 1,
+        "absenceRaised": 2,
+        "absenceRefuted": 1,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 3,
+        "nit": 1
+      },
+      "lanes": {
+        "blocking": 1,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "blast-radius",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 3,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 1,
+        "medium": 2,
+        "low": 1,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 1,
+        "refuted": 1,
+        "refutedHighConfidence": 1,
+        "dropped": 1,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 3,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "security",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 2,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 2,
+        "low": 1,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 1,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 2,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 1,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    }
+  ],
+  "findings": [
+    {
+      "severity": "nit",
+      "confidence": "low",
+      "summary": "Task file dated 2026-07-24 is introduced a month after that date (current date 2026-08-24) with all steps but reproduction still unchecked.",
+      "claimType": "presence",
+      "evidence": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md checklist shows only 'Reproduce + root-cause' checked; the rest ('Add plugin', 'Wire it into preview.ts', 'Unit tests', 'Note deviation', 'Draft PR') are unchecked, yet the filename date (20260724) is a month before today (2026-08-24). This is only a minor naming/timeline inconsistency, not a functional problem.",
+      "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+      "line": 1,
+      "lens": "docs"
+    },
+    {
+      "severity": "minor",
+      "confidence": "low",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 182,
+      "summary": "wrappedList's silent short-circuit skips upstream `list`'s ≥4-space indent guard",
+      "evidence": "`isEmptyBulletLine` only checks `state.sCount[line] >= state.blkIndent` (line 32) and never the upper bound `state.sCount[startLine] - state.blkIndent >= 4` that markdown-it's own `list` rule applies first. The wrapper (lines 182-191) returns `true` before delegating, so a 4+-space-indented lone `-` after a paragraph (`foo\\n    -`) would terminate the paragraph and then be re-tokenized by the `code` rule as an indented code block instead of staying a lazy continuation (`<p>foo<br>-</p>`). Mitigation I could not fully rule out: both callers of the 'paragraph' terminator chain (markdown-it's `paragraph` rule and the ported `lheading` at line 86) `continue` for lines with `sCount - blkIndent > 3`, which may make this unreachable in practice — node_modules is absent in this worktree so I could not confirm the paragraph rule's source. Adding the same `>= 4` bail to `isEmptyBulletLine` is cheap insurance.",
+      "searchedFor": [],
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 39,
+      "summary": "Paragraph-interrupt relaxation applies to `*` and `+` too, changing rendering beyond the documented lone-`-` case",
+      "evidence": "`isEmptyBulletLine` accepts 0x2a (`*`) and 0x2b (`+`) as well as `-` (line 39), so `wrappedList` now lets any empty bullet interrupt a paragraph. Upstream and the design doc (docs/design/notes/notes.md:293-299, which scopes the deviation to a \"lone single `-`\") would render e.g. `1 + 2\\n+` or `a\\n*` as lazy continuation text `<p>a<br>*</p>`; with this plugin they become `<p>a</p><ul><li></li></ul>`. No test covers the `*`/`+` shapes, and the trailing-`*` case is plausible in prose (footnote markers, emphasis typos).",
+      "searchedFor": [],
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "low",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 21,
+      "summary": "Re-implemented `asciiTrim` may not match upstream lheading's content trimming for non-ASCII whitespace",
+      "evidence": "Line 134 trims setext heading content with the local `ASCII_TRIM_RE` (space/\\t/\\n/\\v/\\f/\\r only). markdown-it 14.x's `rules_block/lheading` trims the content with JS `String.prototype.trim()`, which also strips NBSP ( ), ﻿ and Unicode spaces. If so, a heading like ` Heading\\n===` now keeps the leading NBSP in the rendered `<h1>` where it previously did not. Cosmetic, but it is an unintended divergence in a rule described as a faithful port. Could not verify upstream source directly (no node_modules in the worktree).",
+      "searchedFor": [],
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 211,
+      "summary": "getRuleFn reads markdown-it's private `__rules__` and throws at module-evaluation time if the shape changes",
+      "evidence": "`getRuleFn` (lines 207-214) casts `md.block.ruler` to an object with a private `__rules__` array and throws `markdown-it block rule not found: list` if it is absent or renamed. It is called from `listEmptyBulletPlugin`, which `preview.ts:48` invokes at module top level, so any markdown-it internal rename (a patch/minor bump is enough — `markdown-it: ^14.1.0` in packages/notes/package.json floats) turns into an import-time exception that takes down the whole notes preview module, not just the bullet feature. A defensive fallback (skip the wrapper, leave stock `list` in place) would degrade instead of crash.",
+      "searchedFor": [],
+      "lens": "correctness"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 105,
+      "summary": "Single-dash setext headings (`Heading\\n-`) no longer render as `<h2>` anywhere in notes",
+      "evidence": "`const isLoneDash = marker === DASH && runLength === 1;` (line 105) suppresses the setext underline unconditionally, not only when the line sits under a list item. Combined with the relaxed `list` rule, plain prose `Heading\\n-` now renders as `<p>Heading</p><ul><li></li></ul>` where CommonMark/GitHub give `<h2>Heading</h2>`. The design doc records the deviation only for the nested-bullet shape (notes.md:293-299) and the tests only assert the multi-dash `---` case still works, so this wider regression is untested and undocumented.",
+      "searchedFor": [],
+      "lens": "correctness"
+    },
+    {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 68,
+      "summary": "Upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped",
+      "evidence": "`lheadingRule` re-implements markdown-it 14.x `rules_block/lheading.mjs` verbatim (terminator loop, token pushes, `asciiTrim` re-created at lines 17-22) for the sake of one added `isLoneDash` guard, and installs it with `md.block.ruler.at('lheading', lheadingRule)`. The same file already demonstrates the cheaper reuse pattern for `list` (`getRuleFn` + delegate), so the fork is avoidable: the plugin could delegate to the original `lheading` and only pre-empt it when the underline candidate is a lone `-`. As written, any markdown-it upgrade silently keeps the frozen 14.x copy (including the private `asciiTrim` semantics) with nothing in CI to detect the drift.",
+      "searchedFor": [],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "introduced",
+        "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+        "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 112,
+      "summary": "Fix is broader than the issue: a lone single `-` is disqualified as a setext underline everywhere, not just under a list item",
+      "evidence": "The issue #517 outcome is scoped to \"a list item followed by an empty nested list item\" — the parent should keep body styling and the bullet nest as an empty child. The implemented guard `const isLoneDash = marker === DASH && runLength === 1;` applies at every paragraph in the document, so top-level valid CommonMark setext headings written as `Title\\n-` stop rendering as `<h2>` even though no list is involved. Likewise the `list` wrapper (lines 176-195) lets *any* empty bullet interrupt *any* paragraph. This is documented as deliberate in docs/design/notes/notes.md:293-299, but it is a global markdown-semantics change delivered under a nested-list bug, i.e. unrequested scope beyond the acceptance criteria.",
+      "searchedFor": [],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "introduced",
+        "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+        "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+        "alsoAt": null
+      },
+      "lens": "design-fit"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 208,
+      "summary": "Depends on markdown-it's private `__rules__` registry",
+      "evidence": "`getRuleFn` casts `md.block.ruler` to `{ __rules__: Array<{name; fn; enabled}> }` to recover the stock `list` rule. This couples the notes preview to a private, untyped library internal; a markdown-it internal rename turns into a runtime throw (`markdown-it block rule not found: list`) at module init rather than a type error. A public-API alternative (e.g. capturing the rule via a probe instance, or inserting a terminator rule `before('list')` rather than wrapping it) would avoid reaching into internals; the existing `details-plugin.ts` sticks to `ruler.before`.",
+      "searchedFor": [],
+      "lens": "design-fit"
+    },
+    {
+      "severity": "nit",
+      "confidence": "high",
+      "claimType": "absence",
+      "file": "docs/design/notes/notes.md",
+      "line": 276,
+      "summary": "Design doc records the deviation but not the collateral top-level `Title\\n-` behavior change",
+      "evidence": "The new section is correctly folded into the canonical subsystem doc (no parallel file) and follows the `details-plugin` precedent, and the backticked path resolves. It does state multi-dash `---` and `=` underlines are untouched, but it does not call out that a *single*-dash setext underline at top level (`Title\\n-`) now also stops being a heading — the most user-visible collateral of the deviation.",
+      "searchedFor": [
+        "docs/design/notes/notes.md full read",
+        "glob docs/design/notes/*.md",
+        "grep CommonMark|Non-Goal in notes.md"
+      ],
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "confidence": "high",
+      "claimType": "absence",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "line": 182,
+      "summary": "No test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite",
+      "evidence": "The plugin's rewritten `lheading` rule (list-empty-bullet-plugin.ts:105) refuses to treat a lone single `-` as a setext underline anywhere, not just inside a list. That means plain `Heading\\n-` (valid CommonMark `<h2>`) now renders as a paragraph plus an empty list — a deliberate CommonMark deviation for all note content. The only setext test added is `preserves multi-dash setext headings` with `'Heading\\n---'` (preview.test.ts:182-187), which exercises the untouched multi-dash path. Nothing pins down (or even documents in a test) what a lone top-level `-` now produces, so a future change to that guard cannot be detected.",
+      "searchedFor": [
+        "read all of packages/notes/src/view/preview.test.ts",
+        "grep for `setext|lheading|h1` under packages/notes",
+        "grep for `render\\(` across packages/notes/src",
+        "glob packages/notes/src/view/*.ts (no list-empty-bullet-plugin.test.ts exists)"
+      ],
+      "lane": "blocking",
+      "novelty": {
+        "origin": "introduced",
+        "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+        "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "absence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 41,
+      "summary": "Empty `*` and `+` bullets accepted by isEmptyBulletLine have no test",
+      "evidence": "`isEmptyBulletLine` explicitly accepts `-`, `*` and `+` markers (list-empty-bullet-plugin.ts:41-44), so the paragraph-terminating branch fires for `- 1\\n  *` and `- 1\\n  +` too. Every added test uses only `-` (preview.test.ts:155/170/177/191). The `*`/`+` branches of the new predicate are never exercised, so a regression there is invisible.",
+      "searchedFor": [
+        "read packages/notes/src/view/preview.test.ts",
+        "grep for `render\\(` in packages/notes/src to enumerate all markdown fixtures"
+      ],
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "absence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 108,
+      "summary": "The rewritten lheading rule's `=` (h1) branch is not covered anywhere",
+      "evidence": "The whole upstream lheading rule was re-implemented, including the `marker === EQUALS -> level 1` path (line 108), the `asciiTrim` content extraction and the token map/markup assignments. No test renders `Heading\\n===`; the only h1 assertion in the package (editor.test.ts:17) comes from ATX `# Title`, not setext. A copy error in the `=` path would ship green.",
+      "searchedFor": [
+        "grep `setext|lheading|h1|===` under packages/notes",
+        "read packages/notes/src/view/editor.test.ts",
+        "read packages/notes/src/view/preview.test.ts"
+      ],
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "line": 172,
+      "summary": "Two of the new tests assert only structure existence, not that the nested item is the empty bullet",
+      "evidence": "`nests an empty bullet with a trailing space too` (line 168-173) and `still renders the blank-line workaround correctly` (line 175-180) assert only `querySelector('ul > li > ul > li')` is truthy plus no `h2`. They would pass equally if the nested item contained arbitrary text (e.g. if the marker leaked through as content), unlike the first test which checks `textContent.trim() === ''` (line 165). Cheap to strengthen with the same emptiness assertion.",
+      "searchedFor": [],
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "nit",
+      "confidence": "medium",
+      "claimType": "absence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 207,
+      "summary": "No direct unit test for the plugin module itself, including the private `__rules__` lookup failure path",
+      "evidence": "`getRuleFn` reads markdown-it's private `__rules__` registry and throws `markdown-it block rule not found` if the internal shape changes on a dependency bump. There is no packages/notes/src/view/list-empty-bullet-plugin.test.ts (glob of the view dir shows only preview/editor/commands/note-sync/remote-selection tests), so this brittle coupling is only exercised transitively; the throw path is never asserted.",
+      "searchedFor": [
+        "glob packages/notes/src/view/*.ts",
+        "glob for *.test.ts in packages/notes/src/view"
+      ],
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "summary": "Editor source pane still parses the lone `-` as a setext underline, so the two panes now disagree",
+      "evidence": "`packages/notes/src/view/editor.ts:200` builds the CodeMirror source pane with `markdown()` from `@codemirror/lang-markdown` (lezer-markdown), which follows strict CommonMark and will keep highlighting `- 1\\n  -` as a setext heading on the parent line. The preview `md` singleton (packages/notes/src/view/preview.ts:48) now renders it as a nested empty bullet, so the source pane's syntax colouring and the rendered preview describe different documents for exactly the shape this change targets. Fix belongs either in the editor's markdown language config or in the design note that records the deviation.",
+      "file": "packages/notes/src/view/editor.ts",
+      "line": 200,
+      "claimType": "presence",
+      "searchedFor": [
+        "grep markdown|lang-markdown in packages/notes/src/view/editor.ts",
+        "grep markdown-it across repo (only notes/preview.ts + details-plugin.ts)"
+      ],
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "summary": "Deviation is broader than nested bullets: any top-level single-dash setext heading, and `*`/`+` empty bullets, change rendering for existing stored notes",
+      "evidence": "The wrapper is keyed only on `state.parentType === 'paragraph'` and `isEmptyBulletLine` (packages/notes/src/view/list-empty-bullet-plugin.ts:181-190), which is also true at top level. Existing note content of the form `Title\\n-` (a legal CommonMark h2) will now render as a paragraph plus an empty `<ul>`, and `foo\\n*` / `foo\\n+` now terminate the paragraph into an empty list where they previously stayed inline text (`breaks: true` soft break, preview.ts:18). No consumer of the shared `md` singleton (all NotePreview instances, editor.ts:117) was scoped away from this; docs/design/notes/notes.md:297 only documents that `---` and `=` underlines are untouched, not that single-dash top-level setext headings stop working.",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 183,
+      "claimType": "presence",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "minor",
+      "confidence": "high",
+      "summary": "`lheading` is now a hand-copied fork of markdown-it 14.x internals; upstream fixes to that rule will silently stop applying",
+      "evidence": "`md.block.ruler.at('lheading', lheadingRule)` (packages/notes/src/view/list-empty-bullet-plugin.ts:180) replaces the upstream rule with a full copy of `rules_block/lheading.mjs`, including a re-implementation of markdown-it's private `asciiTrim` (lines 17-23). Any upstream change to lheading (token shape, map handling, terminator semantics) is now invisible to this package, and nothing in CI pins the markdown-it version's rule body, so the fork can diverge without a test failing. Only notes consumes markdown-it (grep: preview.ts, details-plugin.ts), so the impact is contained to the notes preview.",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 180,
+      "claimType": "presence",
+      "lens": "blast-radius"
+    },
+    {
+      "severity": "major",
+      "confidence": "medium",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 20,
+      "summary": "Hand-rolled `asciiTrim` uses a catastrophically backtracking (quadratic) regex on attacker-controlled note text",
+      "evidence": "`ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` (line 19-20) is applied with `String.replace` to the whole setext-heading body at line 134-136 (`asciiTrim(state.getLines(startLine, nextLine, state.blkIndent, false))`). The second alternative `[ws]+$` is not anchored at the start, so with the `g` flag the engine restarts at every index; for an interior whitespace run of length L that is NOT at the end of the string it greedily consumes the run, fails `$`, and backtracks one character at a time — O(L) per start index, O(L^2) overall. Vector: a workspace collaborator saves a note containing a setext heading whose paragraph line holds a long interior whitespace run, e.g. `\"x\" + \" \".repeat(200000) + \"x\\n===\"`. Note content lives in Yorkie and is rendered by every other member's `NotePreview.render()` (packages/notes/src/view/preview.ts:165, synchronous `md.render` on the main thread with no timeout and no try/catch), so the stored note freezes each viewer's tab — a stored client-side DoS. Upstream markdown-it's `lheading` uses the native, linear `String.prototype.trim()` here, so this regex is a regression introduced by the diff; the comment on line 17 claiming it re-creates markdown-it's own `asciiTrim` does not change the backtracking behaviour. Fix: use `str.trim()` or split into two separately-anchored non-global replaces (`/^[ws]+/` and `/[ws]+$/`).",
+      "lane": "blocking",
+      "novelty": {
+        "origin": "introduced",
+        "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+        "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+        "alsoAt": null
+      },
+      "verification": "confirmed-high",
+      "lens": "security"
+    },
+    {
+      "severity": "minor",
+      "confidence": "low",
+      "claimType": "presence",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 190,
+      "summary": "Silent-mode `return true` asserts a paragraph terminator without re-checking the conditions the non-silent `list` rule enforces, risking an uncaught markdown-it exception (blank preview) on crafted input",
+      "evidence": "`wrappedList` (lines 181-193) short-circuits with `return true` whenever `silent && parentType === 'paragraph' && isEmptyBulletLine(...)`, never delegating to `originalList`. `isEmptyBulletLine` only checks `sCount[line] >= blkIndent` (line 32); it does not reproduce the stock list rule's non-silent rejections (`sCount - blkIndent >= 4` code-block guard, and the `listIndent` special case). If any caller invokes paragraph-terminator rules with `parentType === 'paragraph'` on a line the non-silent `list` rule would then refuse, markdown-it's block tokenizer can end up with no rule consuming the line and throws (`none of the block rules matched` / `block rule didn't increment state.line`); `NotePreview.render` (packages/notes/src/view/preview.ts:165) has no try/catch, so the exception propagates out of render and the preview pane is left broken for anyone opening that note. I traced the two in-tree callers that set `parentType='paragraph'` (markdown-it's `paragraph` rule and the copied `lheading` at line 86), and both skip lines with `sCount - blkIndent > 3` before invoking terminators, so I could not complete an exploit chain — hence low confidence. Hardening: make the fast path `return originalList(...) || <empty-bullet check>` narrowed to conditions the non-silent rule accepts, rather than an unconditional `true`.",
+      "lens": "security"
+    },
+    {
+      "severity": "minor",
+      "confidence": "medium",
+      "claimType": "absence",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "line": 151,
+      "summary": "No test exercises adversarial/pathological input for the new block rules (long whitespace runs, deep or repeated empty-bullet nesting)",
+      "evidence": "The added tests (preview.test.ts:151-195) only cover the four happy-path shapes from the todo doc. Nothing renders a large or adversarial document through the new `lheading`/`list` replacements, so the quadratic `asciiTrim` behaviour and any parser-divergence crash would ship undetected. This does not by itself create a vulnerability, but it means the DoS surface introduced by the new rules is unmeasured.",
+      "searchedFor": [
+        "Read packages/notes/src/view/preview.test.ts (new hunks)",
+        "Grep 'markdown-it|NotePreview' across **/*.{ts,tsx,json} — only packages/notes/src/view/* and harness.config.json",
+        "Grep 'asciiTrim|\\.trim\\(\\)' in packages/notes/src",
+        "Glob packages/notes/src/view/*.ts for a dedicated plugin test file (none exists for list-empty-bullet-plugin.ts)"
+      ],
+      "lens": "security"
+    }
+  ],
+  "stageDetail": {
+    "docs": {
+      "lensDiff": "diff --git a/docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md b/docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md\nnew file mode 100644\nindex 000000000..e17232d96\n--- /dev/null\n+++ b/docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md\n@@ -0,0 +1,24 @@\n+# Lessons — Notes empty nested bullet setext bug (#517)\n+\n+## Context\n+\n+Bug fix in the `@wafflebase/notes` markdown preview pipeline.\n+\n+## Findings\n+\n+- The bug is a genuine CommonMark ambiguity, not a Wafflebase-specific defect:\n+  strict CommonMark (and GitHub's cmark-gfm) also render `- 1\\n  -` as an `<h2>`.\n+  A lone `-` after a paragraph is a setext-heading underline by spec. The fix is\n+  a deliberate, notes-scoped deviation toward the more intuitive \"empty bullet\".\n+- Two markdown-it guards conspire here: `lheading` claims the underline before\n+  `list` runs, AND `list` forbids an *empty* bullet from interrupting a\n+  paragraph. Relaxing only one is not enough — disabling `lheading` alone yields\n+  literal `1<br>-` lazy-continuation text.\n+- `Ruler.at(name, fn, options)` REPLACES the rule's `alt` chain with\n+  `options.alt || []`. When replacing `list`, its original\n+  `alt: ['paragraph','reference','blockquote']` must be passed back or it stops\n+  acting as a paragraph terminator.\n+\n+## Follow-ups\n+\n+- (fill in during/after review)\ndiff --git a/docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md b/docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md\nnew file mode 100644\nindex 000000000..d2c7dd1e6\n--- /dev/null\n+++ b/docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md\n@@ -0,0 +1,71 @@\n+# Notes: empty nested bullet turns parent list item into an H2 (#517)\n+\n+## Problem\n+\n+In the Notes markdown preview, a list item followed by an *empty* indented\n+nested bullet renders the parent's text as an `<h2>`:\n+\n+```\n+- 1\n+  -\n+```\n+\n+renders as\n+\n+```html\n+<ul><li><h2>1</h2></li></ul>\n+```\n+\n+Root cause: this is CommonMark's setext-heading ambiguity. The lone `-` on the\n+indented line is a valid setext-heading *underline* for the paragraph `1`\n+directly above it, and markdown-it's `lheading` block rule claims it before the\n+`list` rule ever runs. A blank line between the two lines avoids it (breaks the\n+setext syntax), which is the reporter's workaround.\n+\n+Confirmed with markdown-it 14.3.0 (`md.render(\"- 1\\n  -\")` → `<h2>1</h2>`).\n+\n+## Desired behavior\n+\n+The parent keeps body-text styling and the empty bullet renders as an empty\n+nested child:\n+\n+```html\n+<ul><li>1<ul><li></li></ul></li></ul>\n+```\n+\n+Neither strict CommonMark nor simply disabling `lheading` yields this: CommonMark\n+also forbids an *empty* bullet from interrupting a paragraph (it becomes lazy\n+`1<br>-` text), so two guards must be relaxed together.\n+\n+## Plan\n+\n+Add a small markdown-it plugin `list-empty-bullet-plugin.ts` used by the notes\n+preview that makes a *lone single dash* behave as an empty bullet rather than a\n+setext underline:\n+\n+1. Replace the `lheading` rule with a copy that rejects a setext underline made\n+   of exactly one `-` (the empty-bullet shape). Multi-dash `---` and `=` setext\n+   underlines are unchanged.\n+2. Wrap the `list` rule so that, in paragraph-terminator (silent) mode, an empty\n+   bullet is allowed to interrupt the paragraph. Non-silent list creation already\n+   accepts empty items, so the actual nested list forms naturally.\n+\n+Deliberate deviation from CommonMark, scoped to the notes preview, matching user\n+expectation. Documented as such.\n+\n+## Steps\n+\n+- [x] Reproduce + root-cause (markdown-it lheading + list interrupt guards)\n+- [ ] Add `packages/notes/src/view/list-empty-bullet-plugin.ts`\n+- [ ] Wire it into `preview.ts`\n+- [ ] Unit tests in `preview.test.ts` (bug case, workaround, `---` setext still\n+      works, non-empty nested list unaffected, top-level lone dash)\n+- [ ] Note the deviation in `docs/design/notes/notes.md`\n+- [ ] Draft PR\n+\n+## Acceptance criteria\n+\n+- `- 1\\n  -` → parent stays body text, empty nested `<li>` (no `<h2>`)\n+- `- 1\\n\\n  -` (workaround) still renders correctly\n+- `Heading\\n---` still renders `<h2>` (multi-dash setext preserved)\n+- `- 1\\n  - 2` unchanged (non-empty nested list)",
+      "lensDiffSha256": "f4a3f5ededce223ed85c34384d2f72738451c346ba191ee3964ca0ee51b260be",
+      "lensDiffBytes": 4208,
+      "lensFiles": [
+        "docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md",
+        "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "nit",
+            "confidence": "low",
+            "summary": "Task file dated 2026-07-24 is introduced a month after that date (current date 2026-08-24) with all steps but reproduction still unchecked.",
+            "claimType": "presence",
+            "evidence": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md checklist shows only 'Reproduce + root-cause' checked; the rest ('Add plugin', 'Wire it into preview.ts', 'Unit tests', 'Note deviation', 'Draft PR') are unchecked, yet the filename date (20260724) is a month before today (2026-08-24). This is only a minor naming/timeline inconsistency, not a functional problem.",
+            "file": "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+            "line": 1
+          }
+        ]
+      ],
+      "verifications": []
+    },
+    "correctness": {
+      "lensDiff": "diff --git a/packages/notes/src/view/list-empty-bullet-plugin.ts b/packages/notes/src/view/list-empty-bullet-plugin.ts\nnew file mode 100644\nindex 000000000..86e050095\n--- /dev/null\n+++ b/packages/notes/src/view/list-empty-bullet-plugin.ts\n@@ -0,0 +1,214 @@\n+import type MarkdownIt from 'markdown-it';\n+\n+// `markdown-it`'s `export =` shape means its `MarkdownIt.StateBlock` namespace\n+// type isn't reachable through the default import (same note as in\n+// `details-plugin.ts` / `preview.ts`). Derive it from the instance shape.\n+type StateBlock = InstanceType<MarkdownIt['block']['State']>;\n+type BlockRule = (\n+  state: StateBlock,\n+  startLine: number,\n+  endLine: number,\n+  silent: boolean,\n+) => boolean;\n+\n+const DASH = 0x2d; /* - */\n+const EQUALS = 0x3d; /* = */\n+\n+// ASCII whitespace trimmed by markdown-it's own `asciiTrim` (space, \\t, \\n, \\v,\n+// \\f, \\r). Re-created here so we don't reach into a private markdown-it export.\n+const ASCII_TRIM_RE =\n+  /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g;\n+function asciiTrim(str: string): string {\n+  return str.replace(ASCII_TRIM_RE, '');\n+}\n+\n+/**\n+ * Is the given line an *empty* bullet marker (`-`, `*`, `+` followed only by\n+ * whitespace) sitting at or beyond the current block indent? That is exactly the\n+ * shape CommonMark refuses to let interrupt a paragraph, and the shape whose `-`\n+ * variant `lheading` otherwise swallows as a setext underline.\n+ */\n+function isEmptyBulletLine(state: StateBlock, line: number): boolean {\n+  if (state.sCount[line] < state.blkIndent) return false;\n+\n+  let pos = state.bMarks[line] + state.tShift[line];\n+  const max = state.eMarks[line];\n+  if (pos >= max) return false;\n+\n+  const marker = state.src.charCodeAt(pos);\n+  if (marker !== DASH && marker !== 0x2a /* * */ && marker !== 0x2b /* + */) {\n+    return false;\n+  }\n+  pos += 1;\n+\n+  // A bullet marker is a marker char followed by whitespace or end-of-line.\n+  if (pos < max && !isSpaceOrTab(state.src.charCodeAt(pos))) return false;\n+\n+  // Empty item: nothing but whitespace after the marker.\n+  return state.skipSpaces(pos) >= max;\n+}\n+\n+function isSpaceOrTab(code: number): boolean {\n+  return code === 0x20 || code === 0x09;\n+}\n+\n+/**\n+ * A drop-in replacement for markdown-it's `lheading` (setext heading) rule that\n+ * declines to treat a **lone single `-`** as a setext underline. That single\n+ * dash is the shape of an empty bullet (`-` / `- `), so letting `lheading` claim\n+ * it is what turns\n+ *\n+ *   - 1\n+ *     -\n+ *\n+ * into `<li><h2>1</h2></li>` (issue #517). Multi-dash `---` underlines and `=`\n+ * underlines are untouched, so ordinary setext headings still work.\n+ *\n+ * Mirrors the upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a\n+ * single added guard on the dash run length.\n+ */\n+const lheadingRule: BlockRule = (state, startLine, endLine) => {\n+  const terminatorRules = state.md.block.ruler.getRules('paragraph');\n+\n+  // if it's indented more than 3 spaces, it should be a code block\n+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;\n+\n+  const oldParentType = state.parentType;\n+  state.parentType = 'paragraph'; // use paragraph to match terminatorRules\n+\n+  let level = 0;\n+  let marker = 0;\n+  let nextLine = startLine + 1;\n+\n+  for (; nextLine < endLine && !state.isEmpty(nextLine); nextLine++) {\n+    // this would be a code block normally, but after paragraph it's considered\n+    // a lazy continuation regardless of what's there\n+    if (state.sCount[nextLine] - state.blkIndent > 3) continue;\n+\n+    // Check for an underline in a setext header.\n+    if (state.sCount[nextLine] >= state.blkIndent) {\n+      let pos = state.bMarks[nextLine] + state.tShift[nextLine];\n+      const max = state.eMarks[nextLine];\n+\n+      if (pos < max) {\n+        marker = state.src.charCodeAt(pos);\n+\n+        if (marker === DASH || marker === EQUALS) {\n+          const markerStart = pos;\n+          pos = state.skipChars(pos, marker);\n+          const runLength = pos - markerStart;\n+          pos = state.skipSpaces(pos);\n+\n+          // #517: a lone single `-` is an empty bullet, not a setext underline.\n+          // Fall through so the paragraph terminates here and the list rule can\n+          // start the (empty) nested item instead.\n+          const isLoneDash = marker === DASH && runLength === 1;\n+\n+          if (pos >= max && !isLoneDash) {\n+            level = marker === EQUALS ? 1 : 2;\n+            break;\n+          }\n+        }\n+      }\n+    }\n+\n+    // quirk for blockquotes, this line should already be checked by that rule\n+    if (state.sCount[nextLine] < 0) continue;\n+\n+    // Some tags can terminate a paragraph without an empty line.\n+    let terminate = false;\n+    for (let i = 0, l = terminatorRules.length; i < l; i++) {\n+      if (terminatorRules[i](state, nextLine, endLine, true)) {\n+        terminate = true;\n+        break;\n+      }\n+    }\n+    if (terminate) break;\n+  }\n+\n+  if (!level) {\n+    state.parentType = oldParentType;\n+    return false;\n+  }\n+\n+  const content = asciiTrim(\n+    state.getLines(startLine, nextLine, state.blkIndent, false),\n+  );\n+\n+  state.line = nextLine + 1;\n+\n+  const tokenOpen = state.push('heading_open', 'h' + String(level), 1);\n+  tokenOpen.markup = String.fromCharCode(marker);\n+  tokenOpen.map = [startLine, state.line];\n+\n+  const tokenInline = state.push('inline', '', 0);\n+  tokenInline.content = content;\n+  tokenInline.map = [startLine, state.line - 1];\n+  tokenInline.children = [];\n+\n+  const tokenClose = state.push('heading_close', 'h' + String(level), -1);\n+  tokenClose.markup = String.fromCharCode(marker);\n+\n+  state.parentType = oldParentType;\n+\n+  return true;\n+};\n+\n+/**\n+ * markdown-it plugin (notes preview only) that makes a **lone empty bullet**\n+ * render as a nested list item instead of accidentally styling the line above it\n+ * as a Header 2 (issue #517).\n+ *\n+ * Two upstream CommonMark guards conspire to produce the `<h2>`:\n+ *\n+ *  1. `lheading` treats the lone `-` as a setext heading underline for the\n+ *     paragraph above it — replaced above so a single dash no longer qualifies.\n+ *  2. `list` refuses to let an *empty* bullet interrupt a paragraph (it would\n+ *     otherwise become lazy `1<br>-` text) — relaxed below so, in\n+ *     paragraph-terminator (silent) mode, an empty bullet ends the paragraph and\n+ *     the normal non-silent list machinery then builds the empty nested item.\n+ *\n+ * This is a deliberate, notes-scoped deviation from CommonMark toward the more\n+ * intuitive editing behavior. See docs/design/notes/notes.md.\n+ */\n+export function listEmptyBulletPlugin(md: MarkdownIt): void {\n+  md.block.ruler.at('lheading', lheadingRule);\n+\n+  // Grab the current `list` rule so we can delegate to it for every case other\n+  // than the empty-bullet-interrupts-a-paragraph one.\n+  const originalList = getRuleFn(md, 'list');\n+\n+  const wrappedList: BlockRule = (state, startLine, endLine, silent) => {\n+    if (\n+      silent &&\n+      state.parentType === 'paragraph' &&\n+      isEmptyBulletLine(state, startLine)\n+    ) {\n+      // Signal that this empty bullet terminates the paragraph. The paragraph\n+      // rule stops here; the list rule then runs non-silently on this line,\n+      // where the empty-item guard does not apply, and builds the nested list.\n+      return true;\n+    }\n+    return originalList(state, startLine, endLine, silent);\n+  };\n+\n+  // `Ruler.at` replaces the rule's `alt` chain, so restore `list`'s original\n+  // paragraph/reference/blockquote membership or it stops terminating them.\n+  md.block.ruler.at('list', wrappedList, {\n+    alt: ['paragraph', 'reference', 'blockquote'],\n+  });\n+}\n+\n+/**\n+ * Read a block rule's current function by name. markdown-it's Ruler exposes no\n+ * public getter, so we read its private `__rules__` registry (each entry pairs a\n+ * rule `name` with its `fn`). Used to delegate to the stock `list` rule.\n+ */\n+function getRuleFn(md: MarkdownIt, name: string): BlockRule {\n+  const ruler = md.block.ruler as unknown as {\n+    __rules__: Array<{ name: string; fn: BlockRule; enabled: boolean }>;\n+  };\n+  const rule = ruler.__rules__.find((r) => r.name === name);\n+  if (!rule) throw new Error(`markdown-it block rule not found: ${name}`);\n+  return rule.fn;\n+}\ndiff --git a/packages/notes/src/view/preview.test.ts b/packages/notes/src/view/preview.test.ts\nindex 48980ae21..23b32e5b3 100644\n--- a/packages/notes/src/view/preview.test.ts\n+++ b/packages/notes/src/view/preview.test.ts\n@@ -148,6 +148,52 @@ describe('NotePreview', () => {\n     expect(preview.el.textContent).toContain('<script>alert(1)</script>');\n   });\n \n+  // Issue #517: a list item followed by an empty nested bullet used to render\n+  // the parent's text as a setext `<h2>` (the lone `-` was read as an underline).\n+  it('nests an empty bullet instead of turning the parent into an <h2>', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  -');\n+\n+    // No accidental heading.\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+\n+    // Parent keeps body text and gains an empty nested child item.\n+    const outer = preview.el.querySelector('ul > li');\n+    expect(outer?.textContent?.trim().startsWith('1')).toBe(true);\n+    const nested = outer?.querySelector('ul > li');\n+    expect(nested).toBeTruthy();\n+    expect(nested?.textContent?.trim()).toBe('');\n+  });\n+\n+  it('nests an empty bullet with a trailing space too', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('still renders the blank-line workaround correctly', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('preserves multi-dash setext headings', () => {\n+    const preview = new NotePreview();\n+    preview.render('Heading\\n---');\n+    const h2 = preview.el.querySelector('h2');\n+    expect(h2?.textContent).toBe('Heading');\n+  });\n+\n+  it('leaves a non-empty nested list unchanged', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - 2');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    const nested = preview.el.querySelector('ul > li > ul > li');\n+    expect(nested?.textContent?.trim()).toBe('2');\n+  });\n+\n   it('copies code to the clipboard when the copy button is clicked', async () => {\n     const writeText = vi.fn().mockResolvedValue(undefined);\n     Object.assign(navigator, { clipboard: { writeText } });\ndiff --git a/packages/notes/src/view/preview.ts b/packages/notes/src/view/preview.ts\nindex aa78f1cf8..2300b739e 100644\n--- a/packages/notes/src/view/preview.ts\n+++ b/packages/notes/src/view/preview.ts\n@@ -9,6 +9,7 @@ import hljs from 'highlight.js/lib/common';\n import taskLists from 'markdown-it-task-lists';\n import katexPlugin from '@vscode/markdown-it-katex';\n import { detailsPlugin } from './details-plugin.js';\n+import { listEmptyBulletPlugin } from './list-empty-bullet-plugin.js';\n \n const md: MarkdownIt = new MarkdownIt({\n   html: false,\n@@ -42,6 +43,10 @@ md.use(katexPlugin);\n // (no arbitrary raw HTML) while supporting GitHub/MDN-style foldouts.\n md.use(detailsPlugin);\n \n+// A lone empty bullet under a list item should nest as an empty child, not turn\n+// the line above it into a setext `<h2>` (issue #517).\n+md.use(listEmptyBulletPlugin);\n+\n /**\n  * Code fences: reuses markdown-it's own `highlight` option (configured\n  * above) but renders the block ourselves so we can guarantee the `hljs`\n",
+      "lensDiffSha256": "4da180b1c121f0dfa7307f03f92fdeff1f2a24654988c3050a75e389366401ae",
+      "lensDiffBytes": 11725,
+      "lensFiles": [
+        "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "packages/notes/src/view/preview.test.ts",
+        "packages/notes/src/view/preview.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "minor",
+            "confidence": "low",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 182,
+            "summary": "wrappedList's silent short-circuit skips upstream `list`'s ≥4-space indent guard",
+            "evidence": "`isEmptyBulletLine` only checks `state.sCount[line] >= state.blkIndent` (line 32) and never the upper bound `state.sCount[startLine] - state.blkIndent >= 4` that markdown-it's own `list` rule applies first. The wrapper (lines 182-191) returns `true` before delegating, so a 4+-space-indented lone `-` after a paragraph (`foo\\n    -`) would terminate the paragraph and then be re-tokenized by the `code` rule as an indented code block instead of staying a lazy continuation (`<p>foo<br>-</p>`). Mitigation I could not fully rule out: both callers of the 'paragraph' terminator chain (markdown-it's `paragraph` rule and the ported `lheading` at line 86) `continue` for lines with `sCount - blkIndent > 3`, which may make this unreachable in practice — node_modules is absent in this worktree so I could not confirm the paragraph rule's source. Adding the same `>= 4` bail to `isEmptyBulletLine` is cheap insurance.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 39,
+            "summary": "Paragraph-interrupt relaxation applies to `*` and `+` too, changing rendering beyond the documented lone-`-` case",
+            "evidence": "`isEmptyBulletLine` accepts 0x2a (`*`) and 0x2b (`+`) as well as `-` (line 39), so `wrappedList` now lets any empty bullet interrupt a paragraph. Upstream and the design doc (docs/design/notes/notes.md:293-299, which scopes the deviation to a \"lone single `-`\") would render e.g. `1 + 2\\n+` or `a\\n*` as lazy continuation text `<p>a<br>*</p>`; with this plugin they become `<p>a</p><ul><li></li></ul>`. No test covers the `*`/`+` shapes, and the trailing-`*` case is plausible in prose (footnote markers, emphasis typos).",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "low",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 21,
+            "summary": "Re-implemented `asciiTrim` may not match upstream lheading's content trimming for non-ASCII whitespace",
+            "evidence": "Line 134 trims setext heading content with the local `ASCII_TRIM_RE` (space/\\t/\\n/\\v/\\f/\\r only). markdown-it 14.x's `rules_block/lheading` trims the content with JS `String.prototype.trim()`, which also strips NBSP ( ), ﻿ and Unicode spaces. If so, a heading like ` Heading\\n===` now keeps the leading NBSP in the rendered `<h1>` where it previously did not. Cosmetic, but it is an unintended divergence in a rule described as a faithful port. Could not verify upstream source directly (no node_modules in the worktree).",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 211,
+            "summary": "getRuleFn reads markdown-it's private `__rules__` and throws at module-evaluation time if the shape changes",
+            "evidence": "`getRuleFn` (lines 207-214) casts `md.block.ruler` to an object with a private `__rules__` array and throws `markdown-it block rule not found: list` if it is absent or renamed. It is called from `listEmptyBulletPlugin`, which `preview.ts:48` invokes at module top level, so any markdown-it internal rename (a patch/minor bump is enough — `markdown-it: ^14.1.0` in packages/notes/package.json floats) turns into an import-time exception that takes down the whole notes preview module, not just the bullet feature. A defensive fallback (skip the wrapper, leave stock `list` in place) would degrade instead of crash.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 105,
+            "summary": "Single-dash setext headings (`Heading\\n-`) no longer render as `<h2>` anywhere in notes",
+            "evidence": "`const isLoneDash = marker === DASH && runLength === 1;` (line 105) suppresses the setext underline unconditionally, not only when the line sits under a list item. Combined with the relaxed `list` rule, plain prose `Heading\\n-` now renders as `<p>Heading</p><ul><li></li></ul>` where CommonMark/GitHub give `<h2>Heading</h2>`. The design doc records the deviation only for the nested-bullet shape (notes.md:293-299) and the tests only assert the multi-dash `---` case still works, so this wider regression is untested and undocumented.",
+            "searchedFor": []
+          }
+        ]
+      ],
+      "verifications": []
+    },
+    "design-fit": {
+      "lensDiff": "diff --git a/docs/design/notes/notes.md b/docs/design/notes/notes.md\nindex ca03f8913..055c5eedc 100644\n--- a/docs/design/notes/notes.md\n+++ b/docs/design/notes/notes.md\n@@ -273,6 +273,31 @@ is ever produced. `<details open>` renders expanded by default; a stray\n `</details>` with no matching open falls through and is escaped as literal\n text. Styling lives in `packages/frontend/src/app/notes/notes-preview.css`.\n \n+#### Empty nested bullet vs setext heading — shipped (issue #517)\n+\n+CommonMark has a genuine ambiguity: a lone `-` on the line after a paragraph is\n+a valid **setext heading underline**, so\n+\n+```\n+- 1\n+  -\n+```\n+\n+renders (in strict CommonMark, and on GitHub) as `<li><h2>1</h2></li>` — the\n+empty nested bullet a user is typing turns the parent's text into a Header 2.\n+Two upstream guards conspire: `markdown-it`'s `lheading` rule claims the lone\n+`-` as an underline before `list` runs, and even without `lheading` the `list`\n+rule refuses to let an *empty* bullet interrupt a paragraph (it degrades to\n+lazy `1<br>-` text).\n+\n+`packages/notes/src/view/list-empty-bullet-plugin.ts` makes the notes preview\n+deviate — deliberately and narrowly — toward the intuitive reading: a **lone\n+single `-`** (the empty-bullet shape) is never a setext underline, and an empty\n+bullet is allowed to interrupt a paragraph so it nests as an empty child item.\n+Multi-dash `---` and `=` setext underlines are untouched, so ordinary setext\n+headings still render. This is a notes-preview-only rendering choice, not a\n+change to the shared markdown model.\n+\n ### P3 — CodePair → Wafflebase migration\n \n Because note content lives **only in Yorkie** and the schema is identical:\ndiff --git a/packages/notes/src/view/list-empty-bullet-plugin.ts b/packages/notes/src/view/list-empty-bullet-plugin.ts\nnew file mode 100644\nindex 000000000..86e050095\n--- /dev/null\n+++ b/packages/notes/src/view/list-empty-bullet-plugin.ts\n@@ -0,0 +1,214 @@\n+import type MarkdownIt from 'markdown-it';\n+\n+// `markdown-it`'s `export =` shape means its `MarkdownIt.StateBlock` namespace\n+// type isn't reachable through the default import (same note as in\n+// `details-plugin.ts` / `preview.ts`). Derive it from the instance shape.\n+type StateBlock = InstanceType<MarkdownIt['block']['State']>;\n+type BlockRule = (\n+  state: StateBlock,\n+  startLine: number,\n+  endLine: number,\n+  silent: boolean,\n+) => boolean;\n+\n+const DASH = 0x2d; /* - */\n+const EQUALS = 0x3d; /* = */\n+\n+// ASCII whitespace trimmed by markdown-it's own `asciiTrim` (space, \\t, \\n, \\v,\n+// \\f, \\r). Re-created here so we don't reach into a private markdown-it export.\n+const ASCII_TRIM_RE =\n+  /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g;\n+function asciiTrim(str: string): string {\n+  return str.replace(ASCII_TRIM_RE, '');\n+}\n+\n+/**\n+ * Is the given line an *empty* bullet marker (`-`, `*`, `+` followed only by\n+ * whitespace) sitting at or beyond the current block indent? That is exactly the\n+ * shape CommonMark refuses to let interrupt a paragraph, and the shape whose `-`\n+ * variant `lheading` otherwise swallows as a setext underline.\n+ */\n+function isEmptyBulletLine(state: StateBlock, line: number): boolean {\n+  if (state.sCount[line] < state.blkIndent) return false;\n+\n+  let pos = state.bMarks[line] + state.tShift[line];\n+  const max = state.eMarks[line];\n+  if (pos >= max) return false;\n+\n+  const marker = state.src.charCodeAt(pos);\n+  if (marker !== DASH && marker !== 0x2a /* * */ && marker !== 0x2b /* + */) {\n+    return false;\n+  }\n+  pos += 1;\n+\n+  // A bullet marker is a marker char followed by whitespace or end-of-line.\n+  if (pos < max && !isSpaceOrTab(state.src.charCodeAt(pos))) return false;\n+\n+  // Empty item: nothing but whitespace after the marker.\n+  return state.skipSpaces(pos) >= max;\n+}\n+\n+function isSpaceOrTab(code: number): boolean {\n+  return code === 0x20 || code === 0x09;\n+}\n+\n+/**\n+ * A drop-in replacement for markdown-it's `lheading` (setext heading) rule that\n+ * declines to treat a **lone single `-`** as a setext underline. That single\n+ * dash is the shape of an empty bullet (`-` / `- `), so letting `lheading` claim\n+ * it is what turns\n+ *\n+ *   - 1\n+ *     -\n+ *\n+ * into `<li><h2>1</h2></li>` (issue #517). Multi-dash `---` underlines and `=`\n+ * underlines are untouched, so ordinary setext headings still work.\n+ *\n+ * Mirrors the upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a\n+ * single added guard on the dash run length.\n+ */\n+const lheadingRule: BlockRule = (state, startLine, endLine) => {\n+  const terminatorRules = state.md.block.ruler.getRules('paragraph');\n+\n+  // if it's indented more than 3 spaces, it should be a code block\n+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;\n+\n+  const oldParentType = state.parentType;\n+  state.parentType = 'paragraph'; // use paragraph to match terminatorRules\n+\n+  let level = 0;\n+  let marker = 0;\n+  let nextLine = startLine + 1;\n+\n+  for (; nextLine < endLine && !state.isEmpty(nextLine); nextLine++) {\n+    // this would be a code block normally, but after paragraph it's considered\n+    // a lazy continuation regardless of what's there\n+    if (state.sCount[nextLine] - state.blkIndent > 3) continue;\n+\n+    // Check for an underline in a setext header.\n+    if (state.sCount[nextLine] >= state.blkIndent) {\n+      let pos = state.bMarks[nextLine] + state.tShift[nextLine];\n+      const max = state.eMarks[nextLine];\n+\n+      if (pos < max) {\n+        marker = state.src.charCodeAt(pos);\n+\n+        if (marker === DASH || marker === EQUALS) {\n+          const markerStart = pos;\n+          pos = state.skipChars(pos, marker);\n+          const runLength = pos - markerStart;\n+          pos = state.skipSpaces(pos);\n+\n+          // #517: a lone single `-` is an empty bullet, not a setext underline.\n+          // Fall through so the paragraph terminates here and the list rule can\n+          // start the (empty) nested item instead.\n+          const isLoneDash = marker === DASH && runLength === 1;\n+\n+          if (pos >= max && !isLoneDash) {\n+            level = marker === EQUALS ? 1 : 2;\n+            break;\n+          }\n+        }\n+      }\n+    }\n+\n+    // quirk for blockquotes, this line should already be checked by that rule\n+    if (state.sCount[nextLine] < 0) continue;\n+\n+    // Some tags can terminate a paragraph without an empty line.\n+    let terminate = false;\n+    for (let i = 0, l = terminatorRules.length; i < l; i++) {\n+      if (terminatorRules[i](state, nextLine, endLine, true)) {\n+        terminate = true;\n+        break;\n+      }\n+    }\n+    if (terminate) break;\n+  }\n+\n+  if (!level) {\n+    state.parentType = oldParentType;\n+    return false;\n+  }\n+\n+  const content = asciiTrim(\n+    state.getLines(startLine, nextLine, state.blkIndent, false),\n+  );\n+\n+  state.line = nextLine + 1;\n+\n+  const tokenOpen = state.push('heading_open', 'h' + String(level), 1);\n+  tokenOpen.markup = String.fromCharCode(marker);\n+  tokenOpen.map = [startLine, state.line];\n+\n+  const tokenInline = state.push('inline', '', 0);\n+  tokenInline.content = content;\n+  tokenInline.map = [startLine, state.line - 1];\n+  tokenInline.children = [];\n+\n+  const tokenClose = state.push('heading_close', 'h' + String(level), -1);\n+  tokenClose.markup = String.fromCharCode(marker);\n+\n+  state.parentType = oldParentType;\n+\n+  return true;\n+};\n+\n+/**\n+ * markdown-it plugin (notes preview only) that makes a **lone empty bullet**\n+ * render as a nested list item instead of accidentally styling the line above it\n+ * as a Header 2 (issue #517).\n+ *\n+ * Two upstream CommonMark guards conspire to produce the `<h2>`:\n+ *\n+ *  1. `lheading` treats the lone `-` as a setext heading underline for the\n+ *     paragraph above it — replaced above so a single dash no longer qualifies.\n+ *  2. `list` refuses to let an *empty* bullet interrupt a paragraph (it would\n+ *     otherwise become lazy `1<br>-` text) — relaxed below so, in\n+ *     paragraph-terminator (silent) mode, an empty bullet ends the paragraph and\n+ *     the normal non-silent list machinery then builds the empty nested item.\n+ *\n+ * This is a deliberate, notes-scoped deviation from CommonMark toward the more\n+ * intuitive editing behavior. See docs/design/notes/notes.md.\n+ */\n+export function listEmptyBulletPlugin(md: MarkdownIt): void {\n+  md.block.ruler.at('lheading', lheadingRule);\n+\n+  // Grab the current `list` rule so we can delegate to it for every case other\n+  // than the empty-bullet-interrupts-a-paragraph one.\n+  const originalList = getRuleFn(md, 'list');\n+\n+  const wrappedList: BlockRule = (state, startLine, endLine, silent) => {\n+    if (\n+      silent &&\n+      state.parentType === 'paragraph' &&\n+      isEmptyBulletLine(state, startLine)\n+    ) {\n+      // Signal that this empty bullet terminates the paragraph. The paragraph\n+      // rule stops here; the list rule then runs non-silently on this line,\n+      // where the empty-item guard does not apply, and builds the nested list.\n+      return true;\n+    }\n+    return originalList(state, startLine, endLine, silent);\n+  };\n+\n+  // `Ruler.at` replaces the rule's `alt` chain, so restore `list`'s original\n+  // paragraph/reference/blockquote membership or it stops terminating them.\n+  md.block.ruler.at('list', wrappedList, {\n+    alt: ['paragraph', 'reference', 'blockquote'],\n+  });\n+}\n+\n+/**\n+ * Read a block rule's current function by name. markdown-it's Ruler exposes no\n+ * public getter, so we read its private `__rules__` registry (each entry pairs a\n+ * rule `name` with its `fn`). Used to delegate to the stock `list` rule.\n+ */\n+function getRuleFn(md: MarkdownIt, name: string): BlockRule {\n+  const ruler = md.block.ruler as unknown as {\n+    __rules__: Array<{ name: string; fn: BlockRule; enabled: boolean }>;\n+  };\n+  const rule = ruler.__rules__.find((r) => r.name === name);\n+  if (!rule) throw new Error(`markdown-it block rule not found: ${name}`);\n+  return rule.fn;\n+}\ndiff --git a/packages/notes/src/view/preview.test.ts b/packages/notes/src/view/preview.test.ts\nindex 48980ae21..23b32e5b3 100644\n--- a/packages/notes/src/view/preview.test.ts\n+++ b/packages/notes/src/view/preview.test.ts\n@@ -148,6 +148,52 @@ describe('NotePreview', () => {\n     expect(preview.el.textContent).toContain('<script>alert(1)</script>');\n   });\n \n+  // Issue #517: a list item followed by an empty nested bullet used to render\n+  // the parent's text as a setext `<h2>` (the lone `-` was read as an underline).\n+  it('nests an empty bullet instead of turning the parent into an <h2>', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  -');\n+\n+    // No accidental heading.\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+\n+    // Parent keeps body text and gains an empty nested child item.\n+    const outer = preview.el.querySelector('ul > li');\n+    expect(outer?.textContent?.trim().startsWith('1')).toBe(true);\n+    const nested = outer?.querySelector('ul > li');\n+    expect(nested).toBeTruthy();\n+    expect(nested?.textContent?.trim()).toBe('');\n+  });\n+\n+  it('nests an empty bullet with a trailing space too', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('still renders the blank-line workaround correctly', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('preserves multi-dash setext headings', () => {\n+    const preview = new NotePreview();\n+    preview.render('Heading\\n---');\n+    const h2 = preview.el.querySelector('h2');\n+    expect(h2?.textContent).toBe('Heading');\n+  });\n+\n+  it('leaves a non-empty nested list unchanged', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - 2');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    const nested = preview.el.querySelector('ul > li > ul > li');\n+    expect(nested?.textContent?.trim()).toBe('2');\n+  });\n+\n   it('copies code to the clipboard when the copy button is clicked', async () => {\n     const writeText = vi.fn().mockResolvedValue(undefined);\n     Object.assign(navigator, { clipboard: { writeText } });\ndiff --git a/packages/notes/src/view/preview.ts b/packages/notes/src/view/preview.ts\nindex aa78f1cf8..2300b739e 100644\n--- a/packages/notes/src/view/preview.ts\n+++ b/packages/notes/src/view/preview.ts\n@@ -9,6 +9,7 @@ import hljs from 'highlight.js/lib/common';\n import taskLists from 'markdown-it-task-lists';\n import katexPlugin from '@vscode/markdown-it-katex';\n import { detailsPlugin } from './details-plugin.js';\n+import { listEmptyBulletPlugin } from './list-empty-bullet-plugin.js';\n \n const md: MarkdownIt = new MarkdownIt({\n   html: false,\n@@ -42,6 +43,10 @@ md.use(katexPlugin);\n // (no arbitrary raw HTML) while supporting GitHub/MDN-style foldouts.\n md.use(detailsPlugin);\n \n+// A lone empty bullet under a list item should nest as an empty child, not turn\n+// the line above it into a setext `<h2>` (issue #517).\n+md.use(listEmptyBulletPlugin);\n+\n /**\n  * Code fences: reuses markdown-it's own `highlight` option (configured\n  * above) but renders the block ourselves so we can guarantee the `hljs`\n",
+      "lensDiffSha256": "0f3591f77b24711228d09cdcbbbbc4d112524553979503bbc62e9e624660fe0d",
+      "lensDiffBytes": 13420,
+      "lensFiles": [
+        "docs/design/notes/notes.md",
+        "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "packages/notes/src/view/preview.test.ts",
+        "packages/notes/src/view/preview.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 68,
+            "summary": "Upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped",
+            "evidence": "`lheadingRule` re-implements markdown-it 14.x `rules_block/lheading.mjs` verbatim (terminator loop, token pushes, `asciiTrim` re-created at lines 17-22) for the sake of one added `isLoneDash` guard, and installs it with `md.block.ruler.at('lheading', lheadingRule)`. The same file already demonstrates the cheaper reuse pattern for `list` (`getRuleFn` + delegate), so the fork is avoidable: the plugin could delegate to the original `lheading` and only pre-empt it when the underline candidate is a lone `-`. As written, any markdown-it upgrade silently keeps the frozen 14.x copy (including the private `asciiTrim` semantics) with nothing in CI to detect the drift.",
+            "searchedFor": []
+          },
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 112,
+            "summary": "Fix is broader than the issue: a lone single `-` is disqualified as a setext underline everywhere, not just under a list item",
+            "evidence": "The issue #517 outcome is scoped to \"a list item followed by an empty nested list item\" — the parent should keep body styling and the bullet nest as an empty child. The implemented guard `const isLoneDash = marker === DASH && runLength === 1;` applies at every paragraph in the document, so top-level valid CommonMark setext headings written as `Title\\n-` stop rendering as `<h2>` even though no list is involved. Likewise the `list` wrapper (lines 176-195) lets *any* empty bullet interrupt *any* paragraph. This is documented as deliberate in docs/design/notes/notes.md:293-299, but it is a global markdown-semantics change delivered under a nested-list bug, i.e. unrequested scope beyond the acceptance criteria.",
+            "searchedFor": []
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 208,
+            "summary": "Depends on markdown-it's private `__rules__` registry",
+            "evidence": "`getRuleFn` casts `md.block.ruler` to `{ __rules__: Array<{name; fn; enabled}> }` to recover the stock `list` rule. This couples the notes preview to a private, untyped library internal; a markdown-it internal rename turns into a runtime throw (`markdown-it block rule not found: list`) at module init rather than a type error. A public-API alternative (e.g. capturing the rule via a probe instance, or inserting a terminator rule `before('list')` rather than wrapping it) would avoid reaching into internals; the existing `details-plugin.ts` sticks to `ruler.before`.",
+            "searchedFor": []
+          },
+          {
+            "severity": "nit",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "docs/design/notes/notes.md",
+            "line": 276,
+            "summary": "Design doc records the deviation but not the collateral top-level `Title\\n-` behavior change",
+            "evidence": "The new section is correctly folded into the canonical subsystem doc (no parallel file) and follows the `details-plugin` precedent, and the backticked path resolves. It does state multi-dash `---` and `=` underlines are untouched, but it does not call out that a *single*-dash setext underline at top level (`Title\\n-`) now also stops being a heading — the most user-visible collateral of the deviation.",
+            "searchedFor": [
+              "docs/design/notes/notes.md full read",
+              "glob docs/design/notes/*.md",
+              "grep CommonMark|Non-Goal in notes.md"
+            ]
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 68,
+            "summary": "Upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped",
+            "evidence": "`lheadingRule` re-implements markdown-it 14.x `rules_block/lheading.mjs` verbatim (terminator loop, token pushes, `asciiTrim` re-created at lines 17-22) for the sake of one added `isLoneDash` guard, and installs it with `md.block.ruler.at('lheading', lheadingRule)`. The same file already demonstrates the cheaper reuse pattern for `list` (`getRuleFn` + delegate), so the fork is avoidable: the plugin could delegate to the original `lheading` and only pre-empt it when the underline candidate is a lone `-`. As written, any markdown-it upgrade silently keeps the frozen 14.x copy (including the private `asciiTrim` semantics) with nothing in CI to detect the drift.",
+            "searchedFor": [],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "Verified present as described. `lheadingRule` (list-empty-bullet-plugin.ts:70-155) reimplements markdown-it's `lheading` block rule in full — paragraph terminator loop (line 71, 120-126), 4-space indent guard (74), parentType save/restore (76-77, 130, 152), underline scan (89-113), and heading_open/inline/heading_close token pushes with markup/map (138-154) — for the sake of the single `isLoneDash` guard at 105-107; its own comment (line 67) states it mirrors upstream 14.x `rules_block/lheading.mjs`. `asciiTrim` is re-created at 17-23 explicitly to avoid a private markdown-it export, and the fork is installed wholesale at line 175 via `md.block.ruler.at('lheading', lheadingRule)`. The cheaper reuse pattern the reviewer cites exists in the very same file for `list`: `getRuleFn(md, 'list')` (179, 207-214) with a delegating wrapper that falls through to `originalList` (181-193). Dependency is `markdown-it: ^14.1.0` (packages/notes/package.json:63), a caret range, and grepping for `lheading` finds no drift check anywhere — only this file, preview.ts:48, behavioral cases in preview.test.ts, and the design doc. The design doc section for issue #517 (docs/design/notes/notes.md:276-299) documents the behavioral deviation but does not sanction forking the upstream rule. This falls in the design-fit lane under duplication/reuse and approach fit, and is major by kind (reinventing an existing module), so it blocks. The only arguable point is whether a delegate-then-rollback wrapper is ergonomic for `lheading`'s forward scan, but an imperfect suggested remedy is not a ground to drop a factually verified finding.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:17-23",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:66-68",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:70-155",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:175",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:179-193",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:207-214",
+              "packages/notes/package.json:63",
+              "packages/notes/src/view/preview.ts:46-48",
+              "docs/design/notes/notes.md:276-299"
+            ]
+          },
+          "dropped": false
+        },
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 112,
+            "summary": "Fix is broader than the issue: a lone single `-` is disqualified as a setext underline everywhere, not just under a list item",
+            "evidence": "The issue #517 outcome is scoped to \"a list item followed by an empty nested list item\" — the parent should keep body styling and the bullet nest as an empty child. The implemented guard `const isLoneDash = marker === DASH && runLength === 1;` applies at every paragraph in the document, so top-level valid CommonMark setext headings written as `Title\\n-` stop rendering as `<h2>` even though no list is involved. Likewise the `list` wrapper (lines 176-195) lets *any* empty bullet interrupt *any* paragraph. This is documented as deliberate in docs/design/notes/notes.md:293-299, but it is a global markdown-semantics change delivered under a nested-list bug, i.e. unrequested scope beyond the acceptance criteria.",
+            "searchedFor": [],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "alsoAt": null
+            }
+          },
+          "verdict": {
+            "verdict": "refuted",
+            "confidence": "high",
+            "reason": "The code is present as quoted (list-empty-bullet-plugin.ts:105 disqualifies any lone single `-` as a setext underline, and lines 181-193 let any empty bullet interrupt any paragraph), but the finding's ground — that this breadth is unrequested scope creep beyond issue #517's outcome/acceptance criteria — is contradicted by the originating spec in the repo. The #517 task doc (docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md), whose implementation steps are still unchecked at lines 59-64 (i.e. it is the plan, not a post-hoc justification), prescribes exactly this approach: line 46-48 \"Replace the `lheading` rule with a copy that rejects a setext underline made of exactly one `-`. Multi-dash `---` and `=` setext underlines are unchanged\", line 49-51 \"Wrap the `list` rule so that, in paragraph-terminator (silent) mode, an empty bullet is allowed to interrupt the paragraph\", and line 53-54 \"Deliberate deviation from CommonMark, scoped to the notes preview.\" Line 61-62 explicitly lists \"top-level lone dash\" as a required test case, so the document-wide effect was anticipated and requested. None of the four acceptance criteria (lines 68-71) is unmet: the only setext-preservation criterion is `Heading\\n---` -> `<h2>`, which is preserved and tested (preview.test.ts:182-187); the other three are tested at preview.test.ts:151-195. No stated Non-Goal is exceeded — the notes Non-Goals (docs/design/notes/notes.md:49-63) cover AI/RAG, WYSIWYG, parity extras, CodePair migration and folders, nothing about CommonMark fidelity. Design-doc discipline is met (folded into the canonical subsystem doc at docs/design/notes/notes.md:276-299, not a parallel file), and the deviation is genuinely notes-local: the plugin is applied to the notes preview's own private MarkdownIt instance at preview.ts:48, not to a shared/core markdown pipeline. What remains is the preference that the guard be keyed on list context; under this lens that is a taste/approach preference (minor), not a failed acceptance criterion or Non-Goal violation, so it does not block.",
+            "refutationGround": "counterexample",
+            "groundedIn": [
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:96-111",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:174-199",
+              "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:40-54",
+              "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:56-72",
+              "packages/notes/src/view/preview.test.ts:151-195",
+              "docs/design/notes/notes.md:49-63",
+              "docs/design/notes/notes.md:276-299",
+              "packages/notes/src/view/preview.ts:46-48"
+            ]
+          },
+          "dropped": false
+        }
+      ]
+    },
+    "test-adequacy": {
+      "lensDiff": "diff --git a/packages/notes/src/view/list-empty-bullet-plugin.ts b/packages/notes/src/view/list-empty-bullet-plugin.ts\nnew file mode 100644\nindex 000000000..86e050095\n--- /dev/null\n+++ b/packages/notes/src/view/list-empty-bullet-plugin.ts\n@@ -0,0 +1,214 @@\n+import type MarkdownIt from 'markdown-it';\n+\n+// `markdown-it`'s `export =` shape means its `MarkdownIt.StateBlock` namespace\n+// type isn't reachable through the default import (same note as in\n+// `details-plugin.ts` / `preview.ts`). Derive it from the instance shape.\n+type StateBlock = InstanceType<MarkdownIt['block']['State']>;\n+type BlockRule = (\n+  state: StateBlock,\n+  startLine: number,\n+  endLine: number,\n+  silent: boolean,\n+) => boolean;\n+\n+const DASH = 0x2d; /* - */\n+const EQUALS = 0x3d; /* = */\n+\n+// ASCII whitespace trimmed by markdown-it's own `asciiTrim` (space, \\t, \\n, \\v,\n+// \\f, \\r). Re-created here so we don't reach into a private markdown-it export.\n+const ASCII_TRIM_RE =\n+  /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g;\n+function asciiTrim(str: string): string {\n+  return str.replace(ASCII_TRIM_RE, '');\n+}\n+\n+/**\n+ * Is the given line an *empty* bullet marker (`-`, `*`, `+` followed only by\n+ * whitespace) sitting at or beyond the current block indent? That is exactly the\n+ * shape CommonMark refuses to let interrupt a paragraph, and the shape whose `-`\n+ * variant `lheading` otherwise swallows as a setext underline.\n+ */\n+function isEmptyBulletLine(state: StateBlock, line: number): boolean {\n+  if (state.sCount[line] < state.blkIndent) return false;\n+\n+  let pos = state.bMarks[line] + state.tShift[line];\n+  const max = state.eMarks[line];\n+  if (pos >= max) return false;\n+\n+  const marker = state.src.charCodeAt(pos);\n+  if (marker !== DASH && marker !== 0x2a /* * */ && marker !== 0x2b /* + */) {\n+    return false;\n+  }\n+  pos += 1;\n+\n+  // A bullet marker is a marker char followed by whitespace or end-of-line.\n+  if (pos < max && !isSpaceOrTab(state.src.charCodeAt(pos))) return false;\n+\n+  // Empty item: nothing but whitespace after the marker.\n+  return state.skipSpaces(pos) >= max;\n+}\n+\n+function isSpaceOrTab(code: number): boolean {\n+  return code === 0x20 || code === 0x09;\n+}\n+\n+/**\n+ * A drop-in replacement for markdown-it's `lheading` (setext heading) rule that\n+ * declines to treat a **lone single `-`** as a setext underline. That single\n+ * dash is the shape of an empty bullet (`-` / `- `), so letting `lheading` claim\n+ * it is what turns\n+ *\n+ *   - 1\n+ *     -\n+ *\n+ * into `<li><h2>1</h2></li>` (issue #517). Multi-dash `---` underlines and `=`\n+ * underlines are untouched, so ordinary setext headings still work.\n+ *\n+ * Mirrors the upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a\n+ * single added guard on the dash run length.\n+ */\n+const lheadingRule: BlockRule = (state, startLine, endLine) => {\n+  const terminatorRules = state.md.block.ruler.getRules('paragraph');\n+\n+  // if it's indented more than 3 spaces, it should be a code block\n+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;\n+\n+  const oldParentType = state.parentType;\n+  state.parentType = 'paragraph'; // use paragraph to match terminatorRules\n+\n+  let level = 0;\n+  let marker = 0;\n+  let nextLine = startLine + 1;\n+\n+  for (; nextLine < endLine && !state.isEmpty(nextLine); nextLine++) {\n+    // this would be a code block normally, but after paragraph it's considered\n+    // a lazy continuation regardless of what's there\n+    if (state.sCount[nextLine] - state.blkIndent > 3) continue;\n+\n+    // Check for an underline in a setext header.\n+    if (state.sCount[nextLine] >= state.blkIndent) {\n+      let pos = state.bMarks[nextLine] + state.tShift[nextLine];\n+      const max = state.eMarks[nextLine];\n+\n+      if (pos < max) {\n+        marker = state.src.charCodeAt(pos);\n+\n+        if (marker === DASH || marker === EQUALS) {\n+          const markerStart = pos;\n+          pos = state.skipChars(pos, marker);\n+          const runLength = pos - markerStart;\n+          pos = state.skipSpaces(pos);\n+\n+          // #517: a lone single `-` is an empty bullet, not a setext underline.\n+          // Fall through so the paragraph terminates here and the list rule can\n+          // start the (empty) nested item instead.\n+          const isLoneDash = marker === DASH && runLength === 1;\n+\n+          if (pos >= max && !isLoneDash) {\n+            level = marker === EQUALS ? 1 : 2;\n+            break;\n+          }\n+        }\n+      }\n+    }\n+\n+    // quirk for blockquotes, this line should already be checked by that rule\n+    if (state.sCount[nextLine] < 0) continue;\n+\n+    // Some tags can terminate a paragraph without an empty line.\n+    let terminate = false;\n+    for (let i = 0, l = terminatorRules.length; i < l; i++) {\n+      if (terminatorRules[i](state, nextLine, endLine, true)) {\n+        terminate = true;\n+        break;\n+      }\n+    }\n+    if (terminate) break;\n+  }\n+\n+  if (!level) {\n+    state.parentType = oldParentType;\n+    return false;\n+  }\n+\n+  const content = asciiTrim(\n+    state.getLines(startLine, nextLine, state.blkIndent, false),\n+  );\n+\n+  state.line = nextLine + 1;\n+\n+  const tokenOpen = state.push('heading_open', 'h' + String(level), 1);\n+  tokenOpen.markup = String.fromCharCode(marker);\n+  tokenOpen.map = [startLine, state.line];\n+\n+  const tokenInline = state.push('inline', '', 0);\n+  tokenInline.content = content;\n+  tokenInline.map = [startLine, state.line - 1];\n+  tokenInline.children = [];\n+\n+  const tokenClose = state.push('heading_close', 'h' + String(level), -1);\n+  tokenClose.markup = String.fromCharCode(marker);\n+\n+  state.parentType = oldParentType;\n+\n+  return true;\n+};\n+\n+/**\n+ * markdown-it plugin (notes preview only) that makes a **lone empty bullet**\n+ * render as a nested list item instead of accidentally styling the line above it\n+ * as a Header 2 (issue #517).\n+ *\n+ * Two upstream CommonMark guards conspire to produce the `<h2>`:\n+ *\n+ *  1. `lheading` treats the lone `-` as a setext heading underline for the\n+ *     paragraph above it — replaced above so a single dash no longer qualifies.\n+ *  2. `list` refuses to let an *empty* bullet interrupt a paragraph (it would\n+ *     otherwise become lazy `1<br>-` text) — relaxed below so, in\n+ *     paragraph-terminator (silent) mode, an empty bullet ends the paragraph and\n+ *     the normal non-silent list machinery then builds the empty nested item.\n+ *\n+ * This is a deliberate, notes-scoped deviation from CommonMark toward the more\n+ * intuitive editing behavior. See docs/design/notes/notes.md.\n+ */\n+export function listEmptyBulletPlugin(md: MarkdownIt): void {\n+  md.block.ruler.at('lheading', lheadingRule);\n+\n+  // Grab the current `list` rule so we can delegate to it for every case other\n+  // than the empty-bullet-interrupts-a-paragraph one.\n+  const originalList = getRuleFn(md, 'list');\n+\n+  const wrappedList: BlockRule = (state, startLine, endLine, silent) => {\n+    if (\n+      silent &&\n+      state.parentType === 'paragraph' &&\n+      isEmptyBulletLine(state, startLine)\n+    ) {\n+      // Signal that this empty bullet terminates the paragraph. The paragraph\n+      // rule stops here; the list rule then runs non-silently on this line,\n+      // where the empty-item guard does not apply, and builds the nested list.\n+      return true;\n+    }\n+    return originalList(state, startLine, endLine, silent);\n+  };\n+\n+  // `Ruler.at` replaces the rule's `alt` chain, so restore `list`'s original\n+  // paragraph/reference/blockquote membership or it stops terminating them.\n+  md.block.ruler.at('list', wrappedList, {\n+    alt: ['paragraph', 'reference', 'blockquote'],\n+  });\n+}\n+\n+/**\n+ * Read a block rule's current function by name. markdown-it's Ruler exposes no\n+ * public getter, so we read its private `__rules__` registry (each entry pairs a\n+ * rule `name` with its `fn`). Used to delegate to the stock `list` rule.\n+ */\n+function getRuleFn(md: MarkdownIt, name: string): BlockRule {\n+  const ruler = md.block.ruler as unknown as {\n+    __rules__: Array<{ name: string; fn: BlockRule; enabled: boolean }>;\n+  };\n+  const rule = ruler.__rules__.find((r) => r.name === name);\n+  if (!rule) throw new Error(`markdown-it block rule not found: ${name}`);\n+  return rule.fn;\n+}\ndiff --git a/packages/notes/src/view/preview.test.ts b/packages/notes/src/view/preview.test.ts\nindex 48980ae21..23b32e5b3 100644\n--- a/packages/notes/src/view/preview.test.ts\n+++ b/packages/notes/src/view/preview.test.ts\n@@ -148,6 +148,52 @@ describe('NotePreview', () => {\n     expect(preview.el.textContent).toContain('<script>alert(1)</script>');\n   });\n \n+  // Issue #517: a list item followed by an empty nested bullet used to render\n+  // the parent's text as a setext `<h2>` (the lone `-` was read as an underline).\n+  it('nests an empty bullet instead of turning the parent into an <h2>', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  -');\n+\n+    // No accidental heading.\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+\n+    // Parent keeps body text and gains an empty nested child item.\n+    const outer = preview.el.querySelector('ul > li');\n+    expect(outer?.textContent?.trim().startsWith('1')).toBe(true);\n+    const nested = outer?.querySelector('ul > li');\n+    expect(nested).toBeTruthy();\n+    expect(nested?.textContent?.trim()).toBe('');\n+  });\n+\n+  it('nests an empty bullet with a trailing space too', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('still renders the blank-line workaround correctly', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('preserves multi-dash setext headings', () => {\n+    const preview = new NotePreview();\n+    preview.render('Heading\\n---');\n+    const h2 = preview.el.querySelector('h2');\n+    expect(h2?.textContent).toBe('Heading');\n+  });\n+\n+  it('leaves a non-empty nested list unchanged', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - 2');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    const nested = preview.el.querySelector('ul > li > ul > li');\n+    expect(nested?.textContent?.trim()).toBe('2');\n+  });\n+\n   it('copies code to the clipboard when the copy button is clicked', async () => {\n     const writeText = vi.fn().mockResolvedValue(undefined);\n     Object.assign(navigator, { clipboard: { writeText } });\ndiff --git a/packages/notes/src/view/preview.ts b/packages/notes/src/view/preview.ts\nindex aa78f1cf8..2300b739e 100644\n--- a/packages/notes/src/view/preview.ts\n+++ b/packages/notes/src/view/preview.ts\n@@ -9,6 +9,7 @@ import hljs from 'highlight.js/lib/common';\n import taskLists from 'markdown-it-task-lists';\n import katexPlugin from '@vscode/markdown-it-katex';\n import { detailsPlugin } from './details-plugin.js';\n+import { listEmptyBulletPlugin } from './list-empty-bullet-plugin.js';\n \n const md: MarkdownIt = new MarkdownIt({\n   html: false,\n@@ -42,6 +43,10 @@ md.use(katexPlugin);\n // (no arbitrary raw HTML) while supporting GitHub/MDN-style foldouts.\n md.use(detailsPlugin);\n \n+// A lone empty bullet under a list item should nest as an empty child, not turn\n+// the line above it into a setext `<h2>` (issue #517).\n+md.use(listEmptyBulletPlugin);\n+\n /**\n  * Code fences: reuses markdown-it's own `highlight` option (configured\n  * above) but renders the block ourselves so we can guarantee the `hljs`\n",
+      "lensDiffSha256": "4da180b1c121f0dfa7307f03f92fdeff1f2a24654988c3050a75e389366401ae",
+      "lensDiffBytes": 11725,
+      "lensFiles": [
+        "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "packages/notes/src/view/preview.test.ts",
+        "packages/notes/src/view/preview.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "major",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "packages/notes/src/view/preview.test.ts",
+            "line": 182,
+            "summary": "No test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite",
+            "evidence": "The plugin's rewritten `lheading` rule (list-empty-bullet-plugin.ts:105) refuses to treat a lone single `-` as a setext underline anywhere, not just inside a list. That means plain `Heading\\n-` (valid CommonMark `<h2>`) now renders as a paragraph plus an empty list — a deliberate CommonMark deviation for all note content. The only setext test added is `preserves multi-dash setext headings` with `'Heading\\n---'` (preview.test.ts:182-187), which exercises the untouched multi-dash path. Nothing pins down (or even documents in a test) what a lone top-level `-` now produces, so a future change to that guard cannot be detected.",
+            "searchedFor": [
+              "read all of packages/notes/src/view/preview.test.ts",
+              "grep for `setext|lheading|h1` under packages/notes",
+              "grep for `render\\(` across packages/notes/src",
+              "glob packages/notes/src/view/*.ts (no list-empty-bullet-plugin.test.ts exists)"
+            ]
+          },
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 198,
+            "summary": "The `alt: ['paragraph','reference','blockquote']` restoration on the re-registered `list` rule is untested",
+            "evidence": "`md.block.ruler.at('list', wrappedList, { alt: [...] })` replaces the stock rule's alt chain; the code comment itself warns that omitting/mistyping the alt list makes `list` stop terminating paragraphs, reference definitions and blockquotes. None of the added tests renders a list that interrupts a paragraph (`text\\n- item`), a reference definition (`[a]: /u\\n- item`), or a blockquote — every new case (preview.test.ts:151-195) starts the document with a list. If a member of that alt array were dropped, all added tests would still pass.",
+            "searchedFor": [
+              "read packages/notes/src/view/preview.test.ts in full",
+              "grep for `blockquote`/`reference` in packages/notes"
+            ]
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 41,
+            "summary": "Empty `*` and `+` bullets accepted by isEmptyBulletLine have no test",
+            "evidence": "`isEmptyBulletLine` explicitly accepts `-`, `*` and `+` markers (list-empty-bullet-plugin.ts:41-44), so the paragraph-terminating branch fires for `- 1\\n  *` and `- 1\\n  +` too. Every added test uses only `-` (preview.test.ts:155/170/177/191). The `*`/`+` branches of the new predicate are never exercised, so a regression there is invisible.",
+            "searchedFor": [
+              "read packages/notes/src/view/preview.test.ts",
+              "grep for `render\\(` in packages/notes/src to enumerate all markdown fixtures"
+            ]
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 108,
+            "summary": "The rewritten lheading rule's `=` (h1) branch is not covered anywhere",
+            "evidence": "The whole upstream lheading rule was re-implemented, including the `marker === EQUALS -> level 1` path (line 108), the `asciiTrim` content extraction and the token map/markup assignments. No test renders `Heading\\n===`; the only h1 assertion in the package (editor.test.ts:17) comes from ATX `# Title`, not setext. A copy error in the `=` path would ship green.",
+            "searchedFor": [
+              "grep `setext|lheading|h1|===` under packages/notes",
+              "read packages/notes/src/view/editor.test.ts",
+              "read packages/notes/src/view/preview.test.ts"
+            ]
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/preview.test.ts",
+            "line": 172,
+            "summary": "Two of the new tests assert only structure existence, not that the nested item is the empty bullet",
+            "evidence": "`nests an empty bullet with a trailing space too` (line 168-173) and `still renders the blank-line workaround correctly` (line 175-180) assert only `querySelector('ul > li > ul > li')` is truthy plus no `h2`. They would pass equally if the nested item contained arbitrary text (e.g. if the marker leaked through as content), unlike the first test which checks `textContent.trim() === ''` (line 165). Cheap to strengthen with the same emptiness assertion.",
+            "searchedFor": []
+          },
+          {
+            "severity": "nit",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 207,
+            "summary": "No direct unit test for the plugin module itself, including the private `__rules__` lookup failure path",
+            "evidence": "`getRuleFn` reads markdown-it's private `__rules__` registry and throws `markdown-it block rule not found` if the internal shape changes on a dependency bump. There is no packages/notes/src/view/list-empty-bullet-plugin.test.ts (glob of the view dir shows only preview/editor/commands/note-sync/remote-selection tests), so this brittle coupling is only exercised transitively; the throw path is never asserted.",
+            "searchedFor": [
+              "glob packages/notes/src/view/*.ts",
+              "glob for *.test.ts in packages/notes/src/view"
+            ]
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "high",
+            "claimType": "absence",
+            "file": "packages/notes/src/view/preview.test.ts",
+            "line": 182,
+            "summary": "No test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite",
+            "evidence": "The plugin's rewritten `lheading` rule (list-empty-bullet-plugin.ts:105) refuses to treat a lone single `-` as a setext underline anywhere, not just inside a list. That means plain `Heading\\n-` (valid CommonMark `<h2>`) now renders as a paragraph plus an empty list — a deliberate CommonMark deviation for all note content. The only setext test added is `preserves multi-dash setext headings` with `'Heading\\n---'` (preview.test.ts:182-187), which exercises the untouched multi-dash path. Nothing pins down (or even documents in a test) what a lone top-level `-` now produces, so a future change to that guard cannot be detected.",
+            "searchedFor": [
+              "read all of packages/notes/src/view/preview.test.ts",
+              "grep for `setext|lheading|h1` under packages/notes",
+              "grep for `render\\(` across packages/notes/src",
+              "glob packages/notes/src/view/*.ts (no list-empty-bullet-plugin.test.ts exists)"
+            ],
+            "lane": "blocking",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "The lone-dash guard in the rewritten lheading rule is unconditional (list-empty-bullet-plugin.ts:105 — `marker === DASH && runLength === 1`, with no blkIndent/parentType/list-context condition), so it changes rendering for a top-level `paragraph\\n-` as well as the nested-list bug case, and the plugin is applied to all notes preview content (preview.ts:48). I read all 219 lines of preview.test.ts: the setext-adjacent tests are `- 1\\n  -` (153-166), `- 1\\n  - ` (168-173), `- 1\\n\\n  - ` (175-180), `Heading\\n---` (182-187, the multi-dash path the guard does not touch), and `- 1\\n  - 2` (189-195). None renders a top-level paragraph followed by a lone `-`. I searched wide for a counterexample: repo-wide grep for `setext|lheading|listEmptyBulletPlugin|list-empty-bullet` returns only the plugin, preview.ts, preview.test.ts and three docs files; repo-wide grep for `NotePreview` finds no other test harness; globs over packages/notes tests, e2e/test dirs and all `*.spec.ts`/`*.e2e-spec.ts` turned up no other test exercising this markdown pipeline; grep for lone-dash literals in all package test files found only unrelated stdin/TEXTJOIN matches. The project's own task file confirms the gap: docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:61-62 lists the unit-test step as including \"top-level lone dash\" and is still unchecked, while its acceptance criteria (68-71) omit that case; the four other listed scenarios do exist in the test file. Blocking under this lens: a real behavior change (a deliberate CommonMark deviation affecting all note content) ships with no meaningful test, so reverting or breaking the guard at line 105 would go undetected.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:96-110",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:105",
+              "packages/notes/src/view/preview.ts:48",
+              "packages/notes/src/view/preview.test.ts:151-195",
+              "packages/notes/src/view/preview.test.ts:182-187",
+              "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md:56-71"
+            ]
+          },
+          "dropped": false
+        },
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 198,
+            "summary": "The `alt: ['paragraph','reference','blockquote']` restoration on the re-registered `list` rule is untested",
+            "evidence": "`md.block.ruler.at('list', wrappedList, { alt: [...] })` replaces the stock rule's alt chain; the code comment itself warns that omitting/mistyping the alt list makes `list` stop terminating paragraphs, reference definitions and blockquotes. None of the added tests renders a list that interrupts a paragraph (`text\\n- item`), a reference definition (`[a]: /u\\n- item`), or a blockquote — every new case (preview.test.ts:151-195) starts the document with a list. If a member of that alt array were dropped, all added tests would still pass.",
+            "searchedFor": [
+              "read packages/notes/src/view/preview.test.ts in full",
+              "grep for `blockquote`/`reference` in packages/notes"
+            ],
+            "lane": "discarded",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "alsoAt": null
+            }
+          },
+          "verdict": {
+            "verdict": "refuted",
+            "confidence": "high",
+            "reason": "The finding claims no added test exercises the restored `alt` chain and that \"if a member of that alt array were dropped, all added tests would still pass\". That is refuted by preview.test.ts:153-166 (and 168-173). `'- 1\\n  -'` is precisely a list interrupting a paragraph: `1` is a paragraph inside the outer <li>, and the nested empty bullet terminates it. The plugin's silent branch (list-empty-bullet-plugin.ts:181-193) fires only when `state.parentType === 'paragraph'`, which is reachable only because `list` sits in the `'paragraph'` terminator group — the group both the paragraph rule and the replacement lheading rule read via `getRules('paragraph')` (list-empty-bullet-plugin.ts:71). Drop `'paragraph'` from the alt array at line 198 and lheadingRule returns false for the lone dash, the paragraph rule swallows `1\\n-` lazily, and `expect(nested).toBeTruthy()` at preview.test.ts:164 plus the `ul > li > ul > li` assertion at preview.test.ts:172 both fail. The contrast with the blank-line test (preview.test.ts:175-180), which does not depend on the alt chain, shows the coverage is real rather than incidental. I did confirm the narrower residual gap: no test covers the `'reference'` or `'blockquote'` alt members (searched all packages/notes test files, grepped repo-wide for listEmptyBulletPlugin and NotePreview — only preview.ts/preview.test.ts consume the plugin, no e2e fixtures). Those two entries restore stock pre-existing behavior rather than shipping a behavior change, so under this lens that is at most minor coverage breadth (\"core behavior is tested\"), not a blocking major.",
+            "refutationGround": "counterexample",
+            "groundedIn": [
+              "packages/notes/src/view/preview.test.ts:153-166",
+              "packages/notes/src/view/preview.test.ts:168-173",
+              "packages/notes/src/view/preview.test.ts:175-180",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:181-199",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:70-71",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:118-126",
+              "packages/notes/src/view/preview.ts:48"
+            ]
+          },
+          "dropped": true
+        }
+      ]
+    },
+    "blast-radius": {
+      "lensDiff": "diff --git a/packages/notes/src/view/list-empty-bullet-plugin.ts b/packages/notes/src/view/list-empty-bullet-plugin.ts\nnew file mode 100644\nindex 000000000..86e050095\n--- /dev/null\n+++ b/packages/notes/src/view/list-empty-bullet-plugin.ts\n@@ -0,0 +1,214 @@\n+import type MarkdownIt from 'markdown-it';\n+\n+// `markdown-it`'s `export =` shape means its `MarkdownIt.StateBlock` namespace\n+// type isn't reachable through the default import (same note as in\n+// `details-plugin.ts` / `preview.ts`). Derive it from the instance shape.\n+type StateBlock = InstanceType<MarkdownIt['block']['State']>;\n+type BlockRule = (\n+  state: StateBlock,\n+  startLine: number,\n+  endLine: number,\n+  silent: boolean,\n+) => boolean;\n+\n+const DASH = 0x2d; /* - */\n+const EQUALS = 0x3d; /* = */\n+\n+// ASCII whitespace trimmed by markdown-it's own `asciiTrim` (space, \\t, \\n, \\v,\n+// \\f, \\r). Re-created here so we don't reach into a private markdown-it export.\n+const ASCII_TRIM_RE =\n+  /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g;\n+function asciiTrim(str: string): string {\n+  return str.replace(ASCII_TRIM_RE, '');\n+}\n+\n+/**\n+ * Is the given line an *empty* bullet marker (`-`, `*`, `+` followed only by\n+ * whitespace) sitting at or beyond the current block indent? That is exactly the\n+ * shape CommonMark refuses to let interrupt a paragraph, and the shape whose `-`\n+ * variant `lheading` otherwise swallows as a setext underline.\n+ */\n+function isEmptyBulletLine(state: StateBlock, line: number): boolean {\n+  if (state.sCount[line] < state.blkIndent) return false;\n+\n+  let pos = state.bMarks[line] + state.tShift[line];\n+  const max = state.eMarks[line];\n+  if (pos >= max) return false;\n+\n+  const marker = state.src.charCodeAt(pos);\n+  if (marker !== DASH && marker !== 0x2a /* * */ && marker !== 0x2b /* + */) {\n+    return false;\n+  }\n+  pos += 1;\n+\n+  // A bullet marker is a marker char followed by whitespace or end-of-line.\n+  if (pos < max && !isSpaceOrTab(state.src.charCodeAt(pos))) return false;\n+\n+  // Empty item: nothing but whitespace after the marker.\n+  return state.skipSpaces(pos) >= max;\n+}\n+\n+function isSpaceOrTab(code: number): boolean {\n+  return code === 0x20 || code === 0x09;\n+}\n+\n+/**\n+ * A drop-in replacement for markdown-it's `lheading` (setext heading) rule that\n+ * declines to treat a **lone single `-`** as a setext underline. That single\n+ * dash is the shape of an empty bullet (`-` / `- `), so letting `lheading` claim\n+ * it is what turns\n+ *\n+ *   - 1\n+ *     -\n+ *\n+ * into `<li><h2>1</h2></li>` (issue #517). Multi-dash `---` underlines and `=`\n+ * underlines are untouched, so ordinary setext headings still work.\n+ *\n+ * Mirrors the upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a\n+ * single added guard on the dash run length.\n+ */\n+const lheadingRule: BlockRule = (state, startLine, endLine) => {\n+  const terminatorRules = state.md.block.ruler.getRules('paragraph');\n+\n+  // if it's indented more than 3 spaces, it should be a code block\n+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;\n+\n+  const oldParentType = state.parentType;\n+  state.parentType = 'paragraph'; // use paragraph to match terminatorRules\n+\n+  let level = 0;\n+  let marker = 0;\n+  let nextLine = startLine + 1;\n+\n+  for (; nextLine < endLine && !state.isEmpty(nextLine); nextLine++) {\n+    // this would be a code block normally, but after paragraph it's considered\n+    // a lazy continuation regardless of what's there\n+    if (state.sCount[nextLine] - state.blkIndent > 3) continue;\n+\n+    // Check for an underline in a setext header.\n+    if (state.sCount[nextLine] >= state.blkIndent) {\n+      let pos = state.bMarks[nextLine] + state.tShift[nextLine];\n+      const max = state.eMarks[nextLine];\n+\n+      if (pos < max) {\n+        marker = state.src.charCodeAt(pos);\n+\n+        if (marker === DASH || marker === EQUALS) {\n+          const markerStart = pos;\n+          pos = state.skipChars(pos, marker);\n+          const runLength = pos - markerStart;\n+          pos = state.skipSpaces(pos);\n+\n+          // #517: a lone single `-` is an empty bullet, not a setext underline.\n+          // Fall through so the paragraph terminates here and the list rule can\n+          // start the (empty) nested item instead.\n+          const isLoneDash = marker === DASH && runLength === 1;\n+\n+          if (pos >= max && !isLoneDash) {\n+            level = marker === EQUALS ? 1 : 2;\n+            break;\n+          }\n+        }\n+      }\n+    }\n+\n+    // quirk for blockquotes, this line should already be checked by that rule\n+    if (state.sCount[nextLine] < 0) continue;\n+\n+    // Some tags can terminate a paragraph without an empty line.\n+    let terminate = false;\n+    for (let i = 0, l = terminatorRules.length; i < l; i++) {\n+      if (terminatorRules[i](state, nextLine, endLine, true)) {\n+        terminate = true;\n+        break;\n+      }\n+    }\n+    if (terminate) break;\n+  }\n+\n+  if (!level) {\n+    state.parentType = oldParentType;\n+    return false;\n+  }\n+\n+  const content = asciiTrim(\n+    state.getLines(startLine, nextLine, state.blkIndent, false),\n+  );\n+\n+  state.line = nextLine + 1;\n+\n+  const tokenOpen = state.push('heading_open', 'h' + String(level), 1);\n+  tokenOpen.markup = String.fromCharCode(marker);\n+  tokenOpen.map = [startLine, state.line];\n+\n+  const tokenInline = state.push('inline', '', 0);\n+  tokenInline.content = content;\n+  tokenInline.map = [startLine, state.line - 1];\n+  tokenInline.children = [];\n+\n+  const tokenClose = state.push('heading_close', 'h' + String(level), -1);\n+  tokenClose.markup = String.fromCharCode(marker);\n+\n+  state.parentType = oldParentType;\n+\n+  return true;\n+};\n+\n+/**\n+ * markdown-it plugin (notes preview only) that makes a **lone empty bullet**\n+ * render as a nested list item instead of accidentally styling the line above it\n+ * as a Header 2 (issue #517).\n+ *\n+ * Two upstream CommonMark guards conspire to produce the `<h2>`:\n+ *\n+ *  1. `lheading` treats the lone `-` as a setext heading underline for the\n+ *     paragraph above it — replaced above so a single dash no longer qualifies.\n+ *  2. `list` refuses to let an *empty* bullet interrupt a paragraph (it would\n+ *     otherwise become lazy `1<br>-` text) — relaxed below so, in\n+ *     paragraph-terminator (silent) mode, an empty bullet ends the paragraph and\n+ *     the normal non-silent list machinery then builds the empty nested item.\n+ *\n+ * This is a deliberate, notes-scoped deviation from CommonMark toward the more\n+ * intuitive editing behavior. See docs/design/notes/notes.md.\n+ */\n+export function listEmptyBulletPlugin(md: MarkdownIt): void {\n+  md.block.ruler.at('lheading', lheadingRule);\n+\n+  // Grab the current `list` rule so we can delegate to it for every case other\n+  // than the empty-bullet-interrupts-a-paragraph one.\n+  const originalList = getRuleFn(md, 'list');\n+\n+  const wrappedList: BlockRule = (state, startLine, endLine, silent) => {\n+    if (\n+      silent &&\n+      state.parentType === 'paragraph' &&\n+      isEmptyBulletLine(state, startLine)\n+    ) {\n+      // Signal that this empty bullet terminates the paragraph. The paragraph\n+      // rule stops here; the list rule then runs non-silently on this line,\n+      // where the empty-item guard does not apply, and builds the nested list.\n+      return true;\n+    }\n+    return originalList(state, startLine, endLine, silent);\n+  };\n+\n+  // `Ruler.at` replaces the rule's `alt` chain, so restore `list`'s original\n+  // paragraph/reference/blockquote membership or it stops terminating them.\n+  md.block.ruler.at('list', wrappedList, {\n+    alt: ['paragraph', 'reference', 'blockquote'],\n+  });\n+}\n+\n+/**\n+ * Read a block rule's current function by name. markdown-it's Ruler exposes no\n+ * public getter, so we read its private `__rules__` registry (each entry pairs a\n+ * rule `name` with its `fn`). Used to delegate to the stock `list` rule.\n+ */\n+function getRuleFn(md: MarkdownIt, name: string): BlockRule {\n+  const ruler = md.block.ruler as unknown as {\n+    __rules__: Array<{ name: string; fn: BlockRule; enabled: boolean }>;\n+  };\n+  const rule = ruler.__rules__.find((r) => r.name === name);\n+  if (!rule) throw new Error(`markdown-it block rule not found: ${name}`);\n+  return rule.fn;\n+}\ndiff --git a/packages/notes/src/view/preview.test.ts b/packages/notes/src/view/preview.test.ts\nindex 48980ae21..23b32e5b3 100644\n--- a/packages/notes/src/view/preview.test.ts\n+++ b/packages/notes/src/view/preview.test.ts\n@@ -148,6 +148,52 @@ describe('NotePreview', () => {\n     expect(preview.el.textContent).toContain('<script>alert(1)</script>');\n   });\n \n+  // Issue #517: a list item followed by an empty nested bullet used to render\n+  // the parent's text as a setext `<h2>` (the lone `-` was read as an underline).\n+  it('nests an empty bullet instead of turning the parent into an <h2>', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  -');\n+\n+    // No accidental heading.\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+\n+    // Parent keeps body text and gains an empty nested child item.\n+    const outer = preview.el.querySelector('ul > li');\n+    expect(outer?.textContent?.trim().startsWith('1')).toBe(true);\n+    const nested = outer?.querySelector('ul > li');\n+    expect(nested).toBeTruthy();\n+    expect(nested?.textContent?.trim()).toBe('');\n+  });\n+\n+  it('nests an empty bullet with a trailing space too', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('still renders the blank-line workaround correctly', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('preserves multi-dash setext headings', () => {\n+    const preview = new NotePreview();\n+    preview.render('Heading\\n---');\n+    const h2 = preview.el.querySelector('h2');\n+    expect(h2?.textContent).toBe('Heading');\n+  });\n+\n+  it('leaves a non-empty nested list unchanged', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - 2');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    const nested = preview.el.querySelector('ul > li > ul > li');\n+    expect(nested?.textContent?.trim()).toBe('2');\n+  });\n+\n   it('copies code to the clipboard when the copy button is clicked', async () => {\n     const writeText = vi.fn().mockResolvedValue(undefined);\n     Object.assign(navigator, { clipboard: { writeText } });\ndiff --git a/packages/notes/src/view/preview.ts b/packages/notes/src/view/preview.ts\nindex aa78f1cf8..2300b739e 100644\n--- a/packages/notes/src/view/preview.ts\n+++ b/packages/notes/src/view/preview.ts\n@@ -9,6 +9,7 @@ import hljs from 'highlight.js/lib/common';\n import taskLists from 'markdown-it-task-lists';\n import katexPlugin from '@vscode/markdown-it-katex';\n import { detailsPlugin } from './details-plugin.js';\n+import { listEmptyBulletPlugin } from './list-empty-bullet-plugin.js';\n \n const md: MarkdownIt = new MarkdownIt({\n   html: false,\n@@ -42,6 +43,10 @@ md.use(katexPlugin);\n // (no arbitrary raw HTML) while supporting GitHub/MDN-style foldouts.\n md.use(detailsPlugin);\n \n+// A lone empty bullet under a list item should nest as an empty child, not turn\n+// the line above it into a setext `<h2>` (issue #517).\n+md.use(listEmptyBulletPlugin);\n+\n /**\n  * Code fences: reuses markdown-it's own `highlight` option (configured\n  * above) but renders the block ourselves so we can guarantee the `hljs`\n",
+      "lensDiffSha256": "4da180b1c121f0dfa7307f03f92fdeff1f2a24654988c3050a75e389366401ae",
+      "lensDiffBytes": 11725,
+      "lensFiles": [
+        "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "packages/notes/src/view/preview.test.ts",
+        "packages/notes/src/view/preview.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "summary": "Editor source pane still parses the lone `-` as a setext underline, so the two panes now disagree",
+            "evidence": "`packages/notes/src/view/editor.ts:200` builds the CodeMirror source pane with `markdown()` from `@codemirror/lang-markdown` (lezer-markdown), which follows strict CommonMark and will keep highlighting `- 1\\n  -` as a setext heading on the parent line. The preview `md` singleton (packages/notes/src/view/preview.ts:48) now renders it as a nested empty bullet, so the source pane's syntax colouring and the rendered preview describe different documents for exactly the shape this change targets. Fix belongs either in the editor's markdown language config or in the design note that records the deviation.",
+            "file": "packages/notes/src/view/editor.ts",
+            "line": 200,
+            "claimType": "presence",
+            "searchedFor": [
+              "grep markdown|lang-markdown in packages/notes/src/view/editor.ts",
+              "grep markdown-it across repo (only notes/preview.ts + details-plugin.ts)"
+            ]
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "summary": "Deviation is broader than nested bullets: any top-level single-dash setext heading, and `*`/`+` empty bullets, change rendering for existing stored notes",
+            "evidence": "The wrapper is keyed only on `state.parentType === 'paragraph'` and `isEmptyBulletLine` (packages/notes/src/view/list-empty-bullet-plugin.ts:181-190), which is also true at top level. Existing note content of the form `Title\\n-` (a legal CommonMark h2) will now render as a paragraph plus an empty `<ul>`, and `foo\\n*` / `foo\\n+` now terminate the paragraph into an empty list where they previously stayed inline text (`breaks: true` soft break, preview.ts:18). No consumer of the shared `md` singleton (all NotePreview instances, editor.ts:117) was scoped away from this; docs/design/notes/notes.md:297 only documents that `---` and `=` underlines are untouched, not that single-dash top-level setext headings stop working.",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 183,
+            "claimType": "presence"
+          },
+          {
+            "severity": "major",
+            "confidence": "low",
+            "summary": "Plugin init throws at module scope on any markdown-it internal change, taking the whole notes editor import chain down",
+            "evidence": "`getRuleFn` reads markdown-it's private `__rules__` and throws (`packages/notes/src/view/list-empty-bullet-plugin.ts:206-213`), and `md.block.ruler.at('lheading'|'list', ...)` itself throws when the rule is absent. Both run at module-evaluation time via `md.use(listEmptyBulletPlugin)` (packages/notes/src/view/preview.ts:48), and `preview.js` is imported unconditionally by `packages/notes/src/view/editor.ts:20`, which is the package's public `initialize` entry point re-exported from `packages/notes/src/index.ts:13` and consumed by `packages/frontend/src/app/notes/notes-view.tsx`. So a markdown-it upgrade that renames `__rules__` or reworks these rules turns a rendering nicety into a hard crash of the entire notes feature at import time rather than a degraded preview. A try/catch that falls back to stock behaviour would confine the blast radius.",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 211,
+            "claimType": "presence"
+          },
+          {
+            "severity": "minor",
+            "confidence": "high",
+            "summary": "`lheading` is now a hand-copied fork of markdown-it 14.x internals; upstream fixes to that rule will silently stop applying",
+            "evidence": "`md.block.ruler.at('lheading', lheadingRule)` (packages/notes/src/view/list-empty-bullet-plugin.ts:180) replaces the upstream rule with a full copy of `rules_block/lheading.mjs`, including a re-implementation of markdown-it's private `asciiTrim` (lines 17-23). Any upstream change to lheading (token shape, map handling, terminator semantics) is now invisible to this package, and nothing in CI pins the markdown-it version's rule body, so the fork can diverge without a test failing. Only notes consumes markdown-it (grep: preview.ts, details-plugin.ts), so the impact is contained to the notes preview.",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 180,
+            "claimType": "presence"
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "low",
+            "summary": "Plugin init throws at module scope on any markdown-it internal change, taking the whole notes editor import chain down",
+            "evidence": "`getRuleFn` reads markdown-it's private `__rules__` and throws (`packages/notes/src/view/list-empty-bullet-plugin.ts:206-213`), and `md.block.ruler.at('lheading'|'list', ...)` itself throws when the rule is absent. Both run at module-evaluation time via `md.use(listEmptyBulletPlugin)` (packages/notes/src/view/preview.ts:48), and `preview.js` is imported unconditionally by `packages/notes/src/view/editor.ts:20`, which is the package's public `initialize` entry point re-exported from `packages/notes/src/index.ts:13` and consumed by `packages/frontend/src/app/notes/notes-view.tsx`. So a markdown-it upgrade that renames `__rules__` or reworks these rules turns a rendering nicety into a hard crash of the entire notes feature at import time rather than a degraded preview. A try/catch that falls back to stock behaviour would confine the blast radius.",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 211,
+            "claimType": "presence",
+            "lane": "discarded",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "alsoAt": null
+            }
+          },
+          "verdict": {
+            "verdict": "refuted",
+            "confidence": "high",
+            "reason": "The code exists as quoted (getRuleFn throws at list-empty-bullet-plugin.ts:212; ruler.at at :175/:197; invoked at module scope via preview.ts:48, imported by editor.ts:20 and exported at index.ts:12-18). But it is not a blast-radius defect: no existing consumer in the repo is broken, no guard is bypassed, no contract/export changed for other callers. The only markdown-it instance is preview.ts:14 (default preset), and the only other ruler user, details-plugin.ts:104, adds a rule without removing 'list'/'lheading'; a repo-wide grep for __rules__ finds a single site. With the declared dependency \"markdown-it\": \"^14.1.0\" (packages/notes/package.json:63) the rules and __rules__ exist, so the throw is unreachable today — preview.test.ts:151-168 exercises the same module-scope initialization successfully. The claimed harm is contingent on a hypothetical future upstream rename, and the proposed fix (try/catch fallback) is entirely inside the new file, i.e. a robustness/design concern statable without leaving the diff — explicitly out of this lens's lane.",
+            "refutationGround": "out-of-scope",
+            "groundedIn": [
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:175",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:197",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:207-214",
+              "packages/notes/src/view/preview.ts:14",
+              "packages/notes/src/view/preview.ts:48",
+              "packages/notes/src/view/editor.ts:20",
+              "packages/notes/src/index.ts:12-18",
+              "packages/notes/src/view/details-plugin.ts:104",
+              "packages/notes/package.json:63",
+              "packages/notes/src/view/preview.test.ts:151-168"
+            ]
+          },
+          "dropped": true
+        }
+      ]
+    },
+    "security": {
+      "lensDiff": "diff --git a/docs/design/notes/notes.md b/docs/design/notes/notes.md\nindex ca03f8913..055c5eedc 100644\n--- a/docs/design/notes/notes.md\n+++ b/docs/design/notes/notes.md\n@@ -273,6 +273,31 @@ is ever produced. `<details open>` renders expanded by default; a stray\n `</details>` with no matching open falls through and is escaped as literal\n text. Styling lives in `packages/frontend/src/app/notes/notes-preview.css`.\n \n+#### Empty nested bullet vs setext heading — shipped (issue #517)\n+\n+CommonMark has a genuine ambiguity: a lone `-` on the line after a paragraph is\n+a valid **setext heading underline**, so\n+\n+```\n+- 1\n+  -\n+```\n+\n+renders (in strict CommonMark, and on GitHub) as `<li><h2>1</h2></li>` — the\n+empty nested bullet a user is typing turns the parent's text into a Header 2.\n+Two upstream guards conspire: `markdown-it`'s `lheading` rule claims the lone\n+`-` as an underline before `list` runs, and even without `lheading` the `list`\n+rule refuses to let an *empty* bullet interrupt a paragraph (it degrades to\n+lazy `1<br>-` text).\n+\n+`packages/notes/src/view/list-empty-bullet-plugin.ts` makes the notes preview\n+deviate — deliberately and narrowly — toward the intuitive reading: a **lone\n+single `-`** (the empty-bullet shape) is never a setext underline, and an empty\n+bullet is allowed to interrupt a paragraph so it nests as an empty child item.\n+Multi-dash `---` and `=` setext underlines are untouched, so ordinary setext\n+headings still render. This is a notes-preview-only rendering choice, not a\n+change to the shared markdown model.\n+\n ### P3 — CodePair → Wafflebase migration\n \n Because note content lives **only in Yorkie** and the schema is identical:\ndiff --git a/docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md b/docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md\nnew file mode 100644\nindex 000000000..e17232d96\n--- /dev/null\n+++ b/docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md\n@@ -0,0 +1,24 @@\n+# Lessons — Notes empty nested bullet setext bug (#517)\n+\n+## Context\n+\n+Bug fix in the `@wafflebase/notes` markdown preview pipeline.\n+\n+## Findings\n+\n+- The bug is a genuine CommonMark ambiguity, not a Wafflebase-specific defect:\n+  strict CommonMark (and GitHub's cmark-gfm) also render `- 1\\n  -` as an `<h2>`.\n+  A lone `-` after a paragraph is a setext-heading underline by spec. The fix is\n+  a deliberate, notes-scoped deviation toward the more intuitive \"empty bullet\".\n+- Two markdown-it guards conspire here: `lheading` claims the underline before\n+  `list` runs, AND `list` forbids an *empty* bullet from interrupting a\n+  paragraph. Relaxing only one is not enough — disabling `lheading` alone yields\n+  literal `1<br>-` lazy-continuation text.\n+- `Ruler.at(name, fn, options)` REPLACES the rule's `alt` chain with\n+  `options.alt || []`. When replacing `list`, its original\n+  `alt: ['paragraph','reference','blockquote']` must be passed back or it stops\n+  acting as a paragraph terminator.\n+\n+## Follow-ups\n+\n+- (fill in during/after review)\ndiff --git a/docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md b/docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md\nnew file mode 100644\nindex 000000000..d2c7dd1e6\n--- /dev/null\n+++ b/docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md\n@@ -0,0 +1,71 @@\n+# Notes: empty nested bullet turns parent list item into an H2 (#517)\n+\n+## Problem\n+\n+In the Notes markdown preview, a list item followed by an *empty* indented\n+nested bullet renders the parent's text as an `<h2>`:\n+\n+```\n+- 1\n+  -\n+```\n+\n+renders as\n+\n+```html\n+<ul><li><h2>1</h2></li></ul>\n+```\n+\n+Root cause: this is CommonMark's setext-heading ambiguity. The lone `-` on the\n+indented line is a valid setext-heading *underline* for the paragraph `1`\n+directly above it, and markdown-it's `lheading` block rule claims it before the\n+`list` rule ever runs. A blank line between the two lines avoids it (breaks the\n+setext syntax), which is the reporter's workaround.\n+\n+Confirmed with markdown-it 14.3.0 (`md.render(\"- 1\\n  -\")` → `<h2>1</h2>`).\n+\n+## Desired behavior\n+\n+The parent keeps body-text styling and the empty bullet renders as an empty\n+nested child:\n+\n+```html\n+<ul><li>1<ul><li></li></ul></li></ul>\n+```\n+\n+Neither strict CommonMark nor simply disabling `lheading` yields this: CommonMark\n+also forbids an *empty* bullet from interrupting a paragraph (it becomes lazy\n+`1<br>-` text), so two guards must be relaxed together.\n+\n+## Plan\n+\n+Add a small markdown-it plugin `list-empty-bullet-plugin.ts` used by the notes\n+preview that makes a *lone single dash* behave as an empty bullet rather than a\n+setext underline:\n+\n+1. Replace the `lheading` rule with a copy that rejects a setext underline made\n+   of exactly one `-` (the empty-bullet shape). Multi-dash `---` and `=` setext\n+   underlines are unchanged.\n+2. Wrap the `list` rule so that, in paragraph-terminator (silent) mode, an empty\n+   bullet is allowed to interrupt the paragraph. Non-silent list creation already\n+   accepts empty items, so the actual nested list forms naturally.\n+\n+Deliberate deviation from CommonMark, scoped to the notes preview, matching user\n+expectation. Documented as such.\n+\n+## Steps\n+\n+- [x] Reproduce + root-cause (markdown-it lheading + list interrupt guards)\n+- [ ] Add `packages/notes/src/view/list-empty-bullet-plugin.ts`\n+- [ ] Wire it into `preview.ts`\n+- [ ] Unit tests in `preview.test.ts` (bug case, workaround, `---` setext still\n+      works, non-empty nested list unaffected, top-level lone dash)\n+- [ ] Note the deviation in `docs/design/notes/notes.md`\n+- [ ] Draft PR\n+\n+## Acceptance criteria\n+\n+- `- 1\\n  -` → parent stays body text, empty nested `<li>` (no `<h2>`)\n+- `- 1\\n\\n  -` (workaround) still renders correctly\n+- `Heading\\n---` still renders `<h2>` (multi-dash setext preserved)\n+- `- 1\\n  - 2` unchanged (non-empty nested list)\ndiff --git a/packages/notes/src/view/list-empty-bullet-plugin.ts b/packages/notes/src/view/list-empty-bullet-plugin.ts\nnew file mode 100644\nindex 000000000..86e050095\n--- /dev/null\n+++ b/packages/notes/src/view/list-empty-bullet-plugin.ts\n@@ -0,0 +1,214 @@\n+import type MarkdownIt from 'markdown-it';\n+\n+// `markdown-it`'s `export =` shape means its `MarkdownIt.StateBlock` namespace\n+// type isn't reachable through the default import (same note as in\n+// `details-plugin.ts` / `preview.ts`). Derive it from the instance shape.\n+type StateBlock = InstanceType<MarkdownIt['block']['State']>;\n+type BlockRule = (\n+  state: StateBlock,\n+  startLine: number,\n+  endLine: number,\n+  silent: boolean,\n+) => boolean;\n+\n+const DASH = 0x2d; /* - */\n+const EQUALS = 0x3d; /* = */\n+\n+// ASCII whitespace trimmed by markdown-it's own `asciiTrim` (space, \\t, \\n, \\v,\n+// \\f, \\r). Re-created here so we don't reach into a private markdown-it export.\n+const ASCII_TRIM_RE =\n+  /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g;\n+function asciiTrim(str: string): string {\n+  return str.replace(ASCII_TRIM_RE, '');\n+}\n+\n+/**\n+ * Is the given line an *empty* bullet marker (`-`, `*`, `+` followed only by\n+ * whitespace) sitting at or beyond the current block indent? That is exactly the\n+ * shape CommonMark refuses to let interrupt a paragraph, and the shape whose `-`\n+ * variant `lheading` otherwise swallows as a setext underline.\n+ */\n+function isEmptyBulletLine(state: StateBlock, line: number): boolean {\n+  if (state.sCount[line] < state.blkIndent) return false;\n+\n+  let pos = state.bMarks[line] + state.tShift[line];\n+  const max = state.eMarks[line];\n+  if (pos >= max) return false;\n+\n+  const marker = state.src.charCodeAt(pos);\n+  if (marker !== DASH && marker !== 0x2a /* * */ && marker !== 0x2b /* + */) {\n+    return false;\n+  }\n+  pos += 1;\n+\n+  // A bullet marker is a marker char followed by whitespace or end-of-line.\n+  if (pos < max && !isSpaceOrTab(state.src.charCodeAt(pos))) return false;\n+\n+  // Empty item: nothing but whitespace after the marker.\n+  return state.skipSpaces(pos) >= max;\n+}\n+\n+function isSpaceOrTab(code: number): boolean {\n+  return code === 0x20 || code === 0x09;\n+}\n+\n+/**\n+ * A drop-in replacement for markdown-it's `lheading` (setext heading) rule that\n+ * declines to treat a **lone single `-`** as a setext underline. That single\n+ * dash is the shape of an empty bullet (`-` / `- `), so letting `lheading` claim\n+ * it is what turns\n+ *\n+ *   - 1\n+ *     -\n+ *\n+ * into `<li><h2>1</h2></li>` (issue #517). Multi-dash `---` underlines and `=`\n+ * underlines are untouched, so ordinary setext headings still work.\n+ *\n+ * Mirrors the upstream rule (markdown-it 14.x `rules_block/lheading.mjs`) with a\n+ * single added guard on the dash run length.\n+ */\n+const lheadingRule: BlockRule = (state, startLine, endLine) => {\n+  const terminatorRules = state.md.block.ruler.getRules('paragraph');\n+\n+  // if it's indented more than 3 spaces, it should be a code block\n+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;\n+\n+  const oldParentType = state.parentType;\n+  state.parentType = 'paragraph'; // use paragraph to match terminatorRules\n+\n+  let level = 0;\n+  let marker = 0;\n+  let nextLine = startLine + 1;\n+\n+  for (; nextLine < endLine && !state.isEmpty(nextLine); nextLine++) {\n+    // this would be a code block normally, but after paragraph it's considered\n+    // a lazy continuation regardless of what's there\n+    if (state.sCount[nextLine] - state.blkIndent > 3) continue;\n+\n+    // Check for an underline in a setext header.\n+    if (state.sCount[nextLine] >= state.blkIndent) {\n+      let pos = state.bMarks[nextLine] + state.tShift[nextLine];\n+      const max = state.eMarks[nextLine];\n+\n+      if (pos < max) {\n+        marker = state.src.charCodeAt(pos);\n+\n+        if (marker === DASH || marker === EQUALS) {\n+          const markerStart = pos;\n+          pos = state.skipChars(pos, marker);\n+          const runLength = pos - markerStart;\n+          pos = state.skipSpaces(pos);\n+\n+          // #517: a lone single `-` is an empty bullet, not a setext underline.\n+          // Fall through so the paragraph terminates here and the list rule can\n+          // start the (empty) nested item instead.\n+          const isLoneDash = marker === DASH && runLength === 1;\n+\n+          if (pos >= max && !isLoneDash) {\n+            level = marker === EQUALS ? 1 : 2;\n+            break;\n+          }\n+        }\n+      }\n+    }\n+\n+    // quirk for blockquotes, this line should already be checked by that rule\n+    if (state.sCount[nextLine] < 0) continue;\n+\n+    // Some tags can terminate a paragraph without an empty line.\n+    let terminate = false;\n+    for (let i = 0, l = terminatorRules.length; i < l; i++) {\n+      if (terminatorRules[i](state, nextLine, endLine, true)) {\n+        terminate = true;\n+        break;\n+      }\n+    }\n+    if (terminate) break;\n+  }\n+\n+  if (!level) {\n+    state.parentType = oldParentType;\n+    return false;\n+  }\n+\n+  const content = asciiTrim(\n+    state.getLines(startLine, nextLine, state.blkIndent, false),\n+  );\n+\n+  state.line = nextLine + 1;\n+\n+  const tokenOpen = state.push('heading_open', 'h' + String(level), 1);\n+  tokenOpen.markup = String.fromCharCode(marker);\n+  tokenOpen.map = [startLine, state.line];\n+\n+  const tokenInline = state.push('inline', '', 0);\n+  tokenInline.content = content;\n+  tokenInline.map = [startLine, state.line - 1];\n+  tokenInline.children = [];\n+\n+  const tokenClose = state.push('heading_close', 'h' + String(level), -1);\n+  tokenClose.markup = String.fromCharCode(marker);\n+\n+  state.parentType = oldParentType;\n+\n+  return true;\n+};\n+\n+/**\n+ * markdown-it plugin (notes preview only) that makes a **lone empty bullet**\n+ * render as a nested list item instead of accidentally styling the line above it\n+ * as a Header 2 (issue #517).\n+ *\n+ * Two upstream CommonMark guards conspire to produce the `<h2>`:\n+ *\n+ *  1. `lheading` treats the lone `-` as a setext heading underline for the\n+ *     paragraph above it — replaced above so a single dash no longer qualifies.\n+ *  2. `list` refuses to let an *empty* bullet interrupt a paragraph (it would\n+ *     otherwise become lazy `1<br>-` text) — relaxed below so, in\n+ *     paragraph-terminator (silent) mode, an empty bullet ends the paragraph and\n+ *     the normal non-silent list machinery then builds the empty nested item.\n+ *\n+ * This is a deliberate, notes-scoped deviation from CommonMark toward the more\n+ * intuitive editing behavior. See docs/design/notes/notes.md.\n+ */\n+export function listEmptyBulletPlugin(md: MarkdownIt): void {\n+  md.block.ruler.at('lheading', lheadingRule);\n+\n+  // Grab the current `list` rule so we can delegate to it for every case other\n+  // than the empty-bullet-interrupts-a-paragraph one.\n+  const originalList = getRuleFn(md, 'list');\n+\n+  const wrappedList: BlockRule = (state, startLine, endLine, silent) => {\n+    if (\n+      silent &&\n+      state.parentType === 'paragraph' &&\n+      isEmptyBulletLine(state, startLine)\n+    ) {\n+      // Signal that this empty bullet terminates the paragraph. The paragraph\n+      // rule stops here; the list rule then runs non-silently on this line,\n+      // where the empty-item guard does not apply, and builds the nested list.\n+      return true;\n+    }\n+    return originalList(state, startLine, endLine, silent);\n+  };\n+\n+  // `Ruler.at` replaces the rule's `alt` chain, so restore `list`'s original\n+  // paragraph/reference/blockquote membership or it stops terminating them.\n+  md.block.ruler.at('list', wrappedList, {\n+    alt: ['paragraph', 'reference', 'blockquote'],\n+  });\n+}\n+\n+/**\n+ * Read a block rule's current function by name. markdown-it's Ruler exposes no\n+ * public getter, so we read its private `__rules__` registry (each entry pairs a\n+ * rule `name` with its `fn`). Used to delegate to the stock `list` rule.\n+ */\n+function getRuleFn(md: MarkdownIt, name: string): BlockRule {\n+  const ruler = md.block.ruler as unknown as {\n+    __rules__: Array<{ name: string; fn: BlockRule; enabled: boolean }>;\n+  };\n+  const rule = ruler.__rules__.find((r) => r.name === name);\n+  if (!rule) throw new Error(`markdown-it block rule not found: ${name}`);\n+  return rule.fn;\n+}\ndiff --git a/packages/notes/src/view/preview.test.ts b/packages/notes/src/view/preview.test.ts\nindex 48980ae21..23b32e5b3 100644\n--- a/packages/notes/src/view/preview.test.ts\n+++ b/packages/notes/src/view/preview.test.ts\n@@ -148,6 +148,52 @@ describe('NotePreview', () => {\n     expect(preview.el.textContent).toContain('<script>alert(1)</script>');\n   });\n \n+  // Issue #517: a list item followed by an empty nested bullet used to render\n+  // the parent's text as a setext `<h2>` (the lone `-` was read as an underline).\n+  it('nests an empty bullet instead of turning the parent into an <h2>', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  -');\n+\n+    // No accidental heading.\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+\n+    // Parent keeps body text and gains an empty nested child item.\n+    const outer = preview.el.querySelector('ul > li');\n+    expect(outer?.textContent?.trim().startsWith('1')).toBe(true);\n+    const nested = outer?.querySelector('ul > li');\n+    expect(nested).toBeTruthy();\n+    expect(nested?.textContent?.trim()).toBe('');\n+  });\n+\n+  it('nests an empty bullet with a trailing space too', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('still renders the blank-line workaround correctly', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n\\n  - ');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    expect(preview.el.querySelector('ul > li > ul > li')).toBeTruthy();\n+  });\n+\n+  it('preserves multi-dash setext headings', () => {\n+    const preview = new NotePreview();\n+    preview.render('Heading\\n---');\n+    const h2 = preview.el.querySelector('h2');\n+    expect(h2?.textContent).toBe('Heading');\n+  });\n+\n+  it('leaves a non-empty nested list unchanged', () => {\n+    const preview = new NotePreview();\n+    preview.render('- 1\\n  - 2');\n+    expect(preview.el.querySelector('h2')).toBeNull();\n+    const nested = preview.el.querySelector('ul > li > ul > li');\n+    expect(nested?.textContent?.trim()).toBe('2');\n+  });\n+\n   it('copies code to the clipboard when the copy button is clicked', async () => {\n     const writeText = vi.fn().mockResolvedValue(undefined);\n     Object.assign(navigator, { clipboard: { writeText } });\ndiff --git a/packages/notes/src/view/preview.ts b/packages/notes/src/view/preview.ts\nindex aa78f1cf8..2300b739e 100644\n--- a/packages/notes/src/view/preview.ts\n+++ b/packages/notes/src/view/preview.ts\n@@ -9,6 +9,7 @@ import hljs from 'highlight.js/lib/common';\n import taskLists from 'markdown-it-task-lists';\n import katexPlugin from '@vscode/markdown-it-katex';\n import { detailsPlugin } from './details-plugin.js';\n+import { listEmptyBulletPlugin } from './list-empty-bullet-plugin.js';\n \n const md: MarkdownIt = new MarkdownIt({\n   html: false,\n@@ -42,6 +43,10 @@ md.use(katexPlugin);\n // (no arbitrary raw HTML) while supporting GitHub/MDN-style foldouts.\n md.use(detailsPlugin);\n \n+// A lone empty bullet under a list item should nest as an empty child, not turn\n+// the line above it into a setext `<h2>` (issue #517).\n+md.use(listEmptyBulletPlugin);\n+\n /**\n  * Code fences: reuses markdown-it's own `highlight` option (configured\n  * above) but renders the block ourselves so we can guarantee the `hljs`\n",
+      "lensDiffSha256": "46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+      "lensDiffBytes": 17629,
+      "lensFiles": [
+        "docs/design/notes/notes.md",
+        "docs/tasks/active/20260724-notes-empty-bullet-setext-lessons.md",
+        "docs/tasks/active/20260724-notes-empty-bullet-setext-todo.md",
+        "packages/notes/src/view/list-empty-bullet-plugin.ts",
+        "packages/notes/src/view/preview.test.ts",
+        "packages/notes/src/view/preview.ts"
+      ],
+      "scopeNote": "",
+      "samples": [
+        [
+          {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 20,
+            "summary": "Hand-rolled `asciiTrim` uses a catastrophically backtracking (quadratic) regex on attacker-controlled note text",
+            "evidence": "`ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` (line 19-20) is applied with `String.replace` to the whole setext-heading body at line 134-136 (`asciiTrim(state.getLines(startLine, nextLine, state.blkIndent, false))`). The second alternative `[ws]+$` is not anchored at the start, so with the `g` flag the engine restarts at every index; for an interior whitespace run of length L that is NOT at the end of the string it greedily consumes the run, fails `$`, and backtracks one character at a time — O(L) per start index, O(L^2) overall. Vector: a workspace collaborator saves a note containing a setext heading whose paragraph line holds a long interior whitespace run, e.g. `\"x\" + \" \".repeat(200000) + \"x\\n===\"`. Note content lives in Yorkie and is rendered by every other member's `NotePreview.render()` (packages/notes/src/view/preview.ts:165, synchronous `md.render` on the main thread with no timeout and no try/catch), so the stored note freezes each viewer's tab — a stored client-side DoS. Upstream markdown-it's `lheading` uses the native, linear `String.prototype.trim()` here, so this regex is a regression introduced by the diff; the comment on line 17 claiming it re-creates markdown-it's own `asciiTrim` does not change the backtracking behaviour. Fix: use `str.trim()` or split into two separately-anchored non-global replaces (`/^[ws]+/` and `/[ws]+$/`)."
+          },
+          {
+            "severity": "minor",
+            "confidence": "low",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 190,
+            "summary": "Silent-mode `return true` asserts a paragraph terminator without re-checking the conditions the non-silent `list` rule enforces, risking an uncaught markdown-it exception (blank preview) on crafted input",
+            "evidence": "`wrappedList` (lines 181-193) short-circuits with `return true` whenever `silent && parentType === 'paragraph' && isEmptyBulletLine(...)`, never delegating to `originalList`. `isEmptyBulletLine` only checks `sCount[line] >= blkIndent` (line 32); it does not reproduce the stock list rule's non-silent rejections (`sCount - blkIndent >= 4` code-block guard, and the `listIndent` special case). If any caller invokes paragraph-terminator rules with `parentType === 'paragraph'` on a line the non-silent `list` rule would then refuse, markdown-it's block tokenizer can end up with no rule consuming the line and throws (`none of the block rules matched` / `block rule didn't increment state.line`); `NotePreview.render` (packages/notes/src/view/preview.ts:165) has no try/catch, so the exception propagates out of render and the preview pane is left broken for anyone opening that note. I traced the two in-tree callers that set `parentType='paragraph'` (markdown-it's `paragraph` rule and the copied `lheading` at line 86), and both skip lines with `sCount - blkIndent > 3` before invoking terminators, so I could not complete an exploit chain — hence low confidence. Hardening: make the fast path `return originalList(...) || <empty-bullet check>` narrowed to conditions the non-silent rule accepts, rather than an unconditional `true`."
+          },
+          {
+            "severity": "minor",
+            "confidence": "medium",
+            "claimType": "absence",
+            "file": "packages/notes/src/view/preview.test.ts",
+            "line": 151,
+            "summary": "No test exercises adversarial/pathological input for the new block rules (long whitespace runs, deep or repeated empty-bullet nesting)",
+            "evidence": "The added tests (preview.test.ts:151-195) only cover the four happy-path shapes from the todo doc. Nothing renders a large or adversarial document through the new `lheading`/`list` replacements, so the quadratic `asciiTrim` behaviour and any parser-divergence crash would ship undetected. This does not by itself create a vulnerability, but it means the DoS surface introduced by the new rules is unmeasured.",
+            "searchedFor": [
+              "Read packages/notes/src/view/preview.test.ts (new hunks)",
+              "Grep 'markdown-it|NotePreview' across **/*.{ts,tsx,json} — only packages/notes/src/view/* and harness.config.json",
+              "Grep 'asciiTrim|\\.trim\\(\\)' in packages/notes/src",
+              "Glob packages/notes/src/view/*.ts for a dedicated plugin test file (none exists for list-empty-bullet-plugin.ts)"
+            ]
+          }
+        ]
+      ],
+      "verifications": [
+        {
+          "population": "fresh",
+          "finding": {
+            "severity": "major",
+            "confidence": "medium",
+            "claimType": "presence",
+            "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+            "line": 20,
+            "summary": "Hand-rolled `asciiTrim` uses a catastrophically backtracking (quadratic) regex on attacker-controlled note text",
+            "evidence": "`ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` (line 19-20) is applied with `String.replace` to the whole setext-heading body at line 134-136 (`asciiTrim(state.getLines(startLine, nextLine, state.blkIndent, false))`). The second alternative `[ws]+$` is not anchored at the start, so with the `g` flag the engine restarts at every index; for an interior whitespace run of length L that is NOT at the end of the string it greedily consumes the run, fails `$`, and backtracks one character at a time — O(L) per start index, O(L^2) overall. Vector: a workspace collaborator saves a note containing a setext heading whose paragraph line holds a long interior whitespace run, e.g. `\"x\" + \" \".repeat(200000) + \"x\\n===\"`. Note content lives in Yorkie and is rendered by every other member's `NotePreview.render()` (packages/notes/src/view/preview.ts:165, synchronous `md.render` on the main thread with no timeout and no try/catch), so the stored note freezes each viewer's tab — a stored client-side DoS. Upstream markdown-it's `lheading` uses the native, linear `String.prototype.trim()` here, so this regex is a regression introduced by the diff; the comment on line 17 claiming it re-creates markdown-it's own `asciiTrim` does not change the backtracking behaviour. Fix: use `str.trim()` or split into two separately-anchored non-global replaces (`/^[ws]+/` and `/[ws]+$/`).",
+            "lane": "blocking",
+            "novelty": {
+              "origin": "introduced",
+              "addedBy": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "contentSha": "d7fea222a81170524e3e74bd41ac633ba21dfe95",
+              "alsoAt": null
+            },
+            "verification": "confirmed-high"
+          },
+          "verdict": {
+            "verdict": "confirmed",
+            "confidence": "high",
+            "reason": "Verified in the repo, not taken on faith. list-empty-bullet-plugin.ts:19-23 defines ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g and applies it with String.replace. The second alternative is unanchored at the start and the /g flag makes the engine retry at every index; inside an interior whitespace run of length L each start index greedily consumes the run, fails the `$` assertion, and backtracks one character at a time, giving O(L^2). This is the exact pattern of the documented `trim` npm ReDoS (CVE-2020-7753). The regex is applied at line 134-136 to state.getLines(startLine, nextLine, state.blkIndent, false), the raw setext-heading paragraph body, reached whenever level !== 0 (guard at line 129), so any `===`/`---` underline reaches it. Reachability is real and unguarded: preview.ts:48 registers listEmptyBulletPlugin unconditionally, and list-empty-bullet-plugin.ts:175 replaces the stock lheading rule via md.block.ruler.at('lheading', lheadingRule), so this is the default notes-preview path. preview.ts:164-166 runs md.render(markdown) synchronously on the main thread with no timeout, no try/catch, and no input-length cap, so a stored note authored by one workspace collaborator freezes every other viewer's tab. I searched for a mitigating guard (size limit, sanitizer, worker offload) and found none; the only documented control is html:false at preview.ts:118-127, which addresses XSS and not parser cost. In-lane as unsafe handling of attacker-controlled input (CWE-1333) with a cross-principal availability impact, so it is not out-of-scope, not-present, or already-guarded. I did not verify the reviewer's side claim that upstream markdown-it uses native trim() here, but that concerns provenance, which is judged separately and does not change whether the defect is real.",
+            "refutationGround": "none",
+            "groundedIn": [
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:17-23",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:129-136",
+              "packages/notes/src/view/list-empty-bullet-plugin.ts:174-176",
+              "packages/notes/src/view/preview.ts:46-48",
+              "packages/notes/src/view/preview.ts:164-166",
+              "packages/notes/src/view/preview.ts:118-127"
+            ]
+          },
+          "dropped": false
+        }
+      ]
+    }
+  },
+  "files": {
+    "panel.json": "present",
+    "review-lens-stats.json": "present",
+    "review-execution.json": "present",
+    "review-timing.json": "present"
+  },
+  "exit_code": 0,
+  "stderr_tail": ""
+}

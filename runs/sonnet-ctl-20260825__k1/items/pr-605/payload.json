@@ -1,0 +1,322 @@
+{
+  "adapter": "reviewer",
+  "panel": [
+    {
+      "id": "docs",
+      "title": "Docs",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "success",
+      "valid": true
+    },
+    {
+      "id": "correctness",
+      "title": "Correctness",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": false,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired"
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": false,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired"
+    },
+    {
+      "id": "design-fit",
+      "title": "Design-fit",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": false,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired"
+    },
+    {
+      "id": "test-adequacy",
+      "title": "Test-adequacy",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": false,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired"
+    },
+    {
+      "id": "blast-radius",
+      "title": "Blast-radius",
+      "blocking": true,
+      "applicable": true,
+      "conclusion": "failure",
+      "valid": false,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired"
+    }
+  ],
+  "lensStats": [
+    {
+      "id": "docs",
+      "samplesRun": 1,
+      "samplesOk": 1,
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "unknown": 0
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0,
+        "absenceRaised": 0,
+        "absenceRefuted": 0,
+        "unresolved": 0,
+        "errored": 0,
+        "reusedPriorVerdicts": 0,
+        "failures": {
+          "apiError": 0,
+          "limit": 0,
+          "noOutput": 0,
+          "unknown": 0,
+          "total": 0
+        }
+      },
+      "kept": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0,
+        "nit": 0
+      },
+      "lanes": {
+        "blocking": 0,
+        "backlog": 0,
+        "unknownOrigin": 0
+      },
+      "clusters": {
+        "clustered": 0,
+        "collapsed": 0
+      }
+    },
+    {
+      "id": "correctness",
+      "samplesRun": 1,
+      "samplesOk": 0,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired",
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "unknown": 1
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      }
+    },
+    {
+      "id": "security",
+      "samplesRun": 1,
+      "samplesOk": 0,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired",
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "unknown": 1
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      }
+    },
+    {
+      "id": "design-fit",
+      "samplesRun": 1,
+      "samplesOk": 0,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired",
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "unknown": 1
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      }
+    },
+    {
+      "id": "test-adequacy",
+      "samplesRun": 1,
+      "samplesOk": 0,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired",
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "unknown": 1
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      }
+    },
+    {
+      "id": "blast-radius",
+      "samplesRun": 1,
+      "samplesOk": 0,
+      "infraError": "[POOL_EXHAUSTED] every credential in the pool was retired",
+      "agreement": "single",
+      "raised": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      },
+      "raisedConfidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "unknown": 1
+      },
+      "verifier": {
+        "sentToVerifier": 0,
+        "refuted": 0,
+        "refutedHighConfidence": 0,
+        "dropped": 0
+      },
+      "kept": {
+        "critical": 0,
+        "major": 1,
+        "minor": 0,
+        "nit": 0
+      }
+    }
+  ],
+  "findings": [
+    {
+      "severity": "major",
+      "summary": "Review could not run — Claude API/quota error: [POOL_EXHAUSTED] every credential in the pool was retired",
+      "infra": true,
+      "lens": "correctness"
+    },
+    {
+      "severity": "major",
+      "summary": "Review could not run — Claude API/quota error: [POOL_EXHAUSTED] every credential in the pool was retired",
+      "infra": true,
+      "lens": "security"
+    },
+    {
+      "severity": "major",
+      "summary": "Review could not run — Claude API/quota error: [POOL_EXHAUSTED] every credential in the pool was retired",
+      "infra": true,
+      "lens": "design-fit"
+    },
+    {
+      "severity": "major",
+      "summary": "Review could not run — Claude API/quota error: [POOL_EXHAUSTED] every credential in the pool was retired",
+      "infra": true,
+      "lens": "test-adequacy"
+    },
+    {
+      "severity": "major",
+      "summary": "Review could not run — Claude API/quota error: [POOL_EXHAUSTED] every credential in the pool was retired",
+      "infra": true,
+      "lens": "blast-radius"
+    }
+  ],
+  "stageDetail": {
+    "docs": {
+      "lensDiff": "diff --git a/docs/tasks/active/20260730-notes-native-undo-lessons.md b/docs/tasks/active/20260730-notes-native-undo-lessons.md\nnew file mode 100644\nindex 000000000..9fa76ee00\n--- /dev/null\n+++ b/docs/tasks/active/20260730-notes-native-undo-lessons.md\n@@ -0,0 +1,26 @@\n+# Notes native undo — lessons (issue #604)\n+\n+## Context\n+\n+Migrate WaffleNotes undo/redo from CodeMirror local history to Yorkie\n+`doc.history`, so undo preserves peers' concurrent edits.\n+\n+## Lessons\n+\n+- The issue's prerequisite spike resolved cleanly: `Text.edit()` reverse\n+  ops are supported on `@yorkie-js/sdk` 0.7.13. The `Tree.editByPath`\n+  merge caveat that motivated the spike is a Tree-only limitation and\n+  never applied to notes, whose whole content is one `Text`.\n+- An empty `doc.update()` pushes nothing onto the undo stack, so\n+  `batch()` does not need to pre-check whether the body will mutate.\n+- Disabling `basicSetup`'s `history()` silently breaks vim's `u` /\n+  `<C-r>` too: `@replit/codemirror-vim` routes them through\n+  `CodeMirror.commands.undo/redo`, which call `@codemirror/commands`'\n+  `undo(view)` and no-op without the history extension. The static\n+  `CodeMirror.commands` map is read at call time, so overriding it is\n+  the supported-shaped hook; its `:undo` ex-command copy is snapshotted\n+  at module load and cannot be re-routed.\n+- Undo granularity changes: CM history groups keystrokes by time\n+  (`newGroupDelay`), Yorkie's unit is one change. One CM transaction =\n+  one undo unit, so undo now steps per keystroke — the same behavior\n+  Docs and Slides already have after their migrations.\ndiff --git a/docs/tasks/active/20260730-notes-native-undo-todo.md b/docs/tasks/active/20260730-notes-native-undo-todo.md\nnew file mode 100644\nindex 000000000..22270affe\n--- /dev/null\n+++ b/docs/tasks/active/20260730-notes-native-undo-todo.md\n@@ -0,0 +1,81 @@\n+# Notes native undo — migrate to Yorkie `doc.history` (issue #604)\n+\n+PR: (to be filled after opening)\n+\n+## Goal\n+\n+Move WaffleNotes undo/redo off CodeMirror's local history onto\n+Yorkie-native undo (`doc.history`), so undo carries CRDT semantics and\n+preserves a peer's concurrent edits instead of last-write-wins-ing over\n+them. Reuses the pattern already shipped in Slides\n+(`docs/design/slides/slides-native-undo.md`) and Docs\n+(`packages/frontend/src/app/docs/yorkie-doc-store.ts`).\n+\n+## Prerequisite spike (done — result recorded here)\n+\n+Verified against the pinned `@yorkie-js/sdk` 0.7.13 that character-level\n+`Text.edit()` **is** reversible through `doc.history`:\n+\n+- Two `content.edit()` calls inside ONE `doc.update()` push exactly one\n+  undo-stack entry; `history.undo()` reverts both, `redo()` re-applies.\n+- The undo emits a `local-change` event with `source === 'undoredo'`\n+  carrying `edit` ops on `$.content` with correct `from`/`to`/`content`\n+  (already reversed in apply order), i.e. the dormant `isUndoRedo` path\n+  in `yorkie-note-store.ts` receives exactly what it needs.\n+- A `doc.update()` whose body mutates nothing pushes **no** undo entry,\n+  so an empty batch is free.\n+\n+(`Tree.editByPath` merge non-reversibility, called out in the issue,\n+does not apply — notes store markdown in a single `Text`.)\n+\n+## Approach\n+\n+**Store layer (`packages/notes/src/store/store.ts`)** — extend\n+`NoteStore` with `batch(fn)`, `undo()`, `redo()`, `canUndo()`,\n+`canRedo()`. Undo becomes store-owned (like `DocStore`/`SlidesStore`)\n+rather than view-owned.\n+\n+**`YorkieNoteStore`** — ambient-root + `withUpdate()`: a top-level\n+`batch()` opens ONE `doc.update()` and every `editText()` runs against\n+that ambient root, so one CodeMirror transaction group = one Yorkie\n+change = one undo unit. `setLocalSelection` folds into the batch's\n+ambient presence proxy when a batch is open. `undo()/redo()` delegate to\n+`doc.history`, gated by an undo floor captured at construction (after\n+`ensureText()` seeding) so a user cannot undo the seed away.\n+\n+**`MemNoteStore`** — snapshot-based local history so the engine still\n+has working undo without a CRDT (tests / non-collaborative use). Undo\n+emits a `replace` remote change so the view reflects it, mirroring how\n+the Yorkie store's undo comes back through `subscribeRemote`.\n+\n+**`note-sync.ts`** — wrap the per-`ViewUpdate` `editText` loop in\n+`store.batch()`.\n+\n+**`editor.ts`** — `basicSetup({ history: false, historyKeymap: false })`;\n+bind `Mod-z` / `Mod-Shift-z` / `Mod-y` to the store (skipped in\n+read-only); `NoteEditorAPI.undo/redo/canUndo/canRedo` delegate to the\n+store. Vim's `u` / `<C-r>` go through `CodeMirror.commands.undo/redo`,\n+which the vim adapter looks up at call time — override them once to\n+route to the note store resolved from the view's `noteStoreFacet`, else\n+vim undo would silently no-op with CM history disabled.\n+\n+## Tasks\n+\n+- [ ] `NoteStore`: `batch` / `undo` / `redo` / `canUndo` / `canRedo`\n+- [ ] `MemNoteStore`: snapshot history + `replace` emission on undo/redo\n+- [ ] `YorkieNoteStore`: ambient root, `withUpdate`, batch, undo floor,\n+      `doc.history` delegation\n+- [ ] `note-sync.ts`: wrap local edits in `store.batch()`\n+- [ ] `editor.ts`: disable CM history, history keymap → store, API\n+      delegation, vim command routing\n+- [ ] Tests: batch grouping = 1 undo unit, undo floor, peer-edit\n+      preservation (churn regression), no-echo on undo, MemNoteStore\n+      history, engine-level keybinding\n+- [ ] `docs/design/notes/notes.md`: Yorkie-native undo section\n+\n+## Out of scope\n+\n+- Time-based keystroke coalescing (Yorkie's undo unit is the change;\n+  Docs and Slides behave the same way).\n+- `:undo` / `:redo` ex-commands in vim (the vim package snapshots those\n+  handlers at module load, so they cannot be re-routed).",
+      "lensDiffSha256": "76b17c7fb32b8b7e4ccd18828bd6b94c90a9c616de20d739a0e3b173b8f111a1",
+      "lensDiffBytes": 5735,
+      "lensFiles": [
+        "docs/tasks/active/20260730-notes-native-undo-lessons.md",
+        "docs/tasks/active/20260730-notes-native-undo-todo.md"
+      ],
+      "scopeNote": "",
+      "samples": [
+        []
+      ],
+      "verifications": []
+    }
+  },
+  "files": {
+    "panel.json": "present",
+    "review-lens-stats.json": "present",
+    "review-execution.json": "present",
+    "review-timing.json": "present"
+  },
+  "exit_code": 0,
+  "stderr_tail": ""
+}
