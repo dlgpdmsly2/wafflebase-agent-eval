@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "docker-compose.yaml::nothing in the repo registers the yorkie project event webhook, so every environment that isn't manually reconfigured silently loses \"last modified\"",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The core factual claim holds: `attachMeta` (document.controller.ts) now reads `updatedAt` solely from Postgres, and only the webhook at yorkie-event.controller.ts:38 advances it for content edits, while the only Yorkie deployment artifact supplied (docker-compose.yaml) registers no event webhook — the diff explicitly defers registration to an unchecked manual ops task in docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md and prose in docs/design/documents-last-modified.md:69. The claim overstates impact, though: `YorkieAdminService.getSummaries` already returned an empty map when `YORKIE_SECRET_KEY` is unset and the e2e lane stubs the service, so local dev and the integration lane showed `createdAt` before this change too; the real regression is confined to configured clusters, where the design doc reports the admin read was timing out on ~every poll anyway. I could not check the whole repo for a helm chart or CI step (no checkout mounted), so the \"nothing anywhere registers it\" part rests on the supplied directory listings and the project's own unchecked ops item.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/sql-validator.ts::multi-statement detection strips string literals with a naive regex whose quote pairing differs from postgres (e'' escapes, dollar quoting), so statement stacking may be possible",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "sql-validator.ts:~58-60 strips literals with /'[^']*'/g and then splits on ';', while datasource.service.ts executes the ORIGINAL dto.query via client.query(text) (simple-query protocol, multi-statement capable). The regex's quote phasing genuinely diverges from Postgres for E-strings: in E'\\'' pg consumes three quotes and ends outside a string, whereas the regex pairs the first two and is left mis-phased, so the next quote opens a pseudo-string that swallows subsequent ';' characters. A payload such as `SELECT E'\\'' AS x) AS y; SET ROLE nobody; SELECT * FROM (SELECT 'z'` passes the first-token check, the keyword blacklist (SET/COPY/DO/CALL are absent), and the collapsed single-statement check, yet parses as three balanced statements once wrapped in `SELECT * FROM (...) AS _q LIMIT 10001`. Caveats: I reasoned the payload rather than running it against a live server, and sql-validator.ts is pre-existing code untouched by this diff (the controller gates on workspace membership, so the escalation is member-to-member on a shared datasource).",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/document.service.spec.ts::`documentservice.touchupdatedat` — the core new persistence primitive — has no test at all",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: `document.service.spec.ts` (31 lines) contains only two `updateDocument` cases and its Prisma stub exposes only `document.update`, not `updateMany`, so `touchUpdatedAt` (document.service.ts, the `updateMany where { id, updatedAt: { lt: at } }` monotonic guard) is never exercised. `yorkie-event.controller.spec.ts` injects `touchUpdatedAt` as a jest mock, so it asserts only the arguments the controller passes, never the `lt` filter or the missing-document no-op; the diff adds no e2e coverage either (the PR's own todo explicitly marks the DB-backed advance-only e2e as deferred, and no pre-existing e2e spec is touched). Real gap, but low impact: the untested code is a three-line Prisma call, and the monotonic semantics are enforced by the query itself rather than app logic.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": "scripts/agent/checks.mjs::the promote gate accepts any `agent-review-*` check run without verifying the producing app, so a token with checks:write can forge panel approval",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied sources: `scripts/agent/checks.mjs:7` filters check runs by `r.name` only, and `mark-ready.mjs`'s `reviewChecks()` hands it the raw `/commits/{sha}/check-runs` list, so gate 2 accepts any `agent-review-<lens>` check regardless of the producing App — while `agent-review-panel.yml` deliberately does verify `r.app.slug === 'github-actions'` in both its round-counter and findings steps. The claimed provenance gap and the inconsistency with the panel's own guard are therefore accurate, and the script's \"the author agent cannot forge them\" comment overstates what the code enforces. The exploit path is softer than the prose suggests: the promote job's token has `checks: read`, `agent-iterate-ci.yml` declares no `checks: write`, and the App installation's permission set is not visible in the repo, so forging requires some other checks:write holder; impact is also bounded to the draft→ready flag, which has no merge power. Also worth noting `checks.mjs` is unchanged by this diff, so this is a pre-existing defense-in-depth gap rather than something the change introduced.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

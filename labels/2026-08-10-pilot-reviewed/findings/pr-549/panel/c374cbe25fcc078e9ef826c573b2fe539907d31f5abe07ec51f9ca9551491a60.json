@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/preview.test.ts::no test for the top-level lone-dash case (`heading\\n-`), the change's most visible commonmark deviation — the project's own task plan lists it as required",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: the new tests in preview.test.ts (the block starting at the \"#517\" comment) cover only `- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---`, and `- 1\\n  - 2` — there is no case for a paragraph followed by a lone `-` outside a list. The claim's premise about the code is also correct: in list-empty-bullet-plugin.ts the guard `const isLoneDash = marker === DASH && runLength === 1;` is unconditional on nesting, so top-level `Heading\\n-` also stops being an `<h2>` (and, since the wrapped `list` rule terminates the paragraph on any empty bullet at silent/paragraph time, becomes `<p>Heading</p><ul><li></li></ul>`) — an untested global rendering change. The diff of the task doc itself lists \"top-level lone dash\" among the planned unit tests, so the plan-vs-tests gap is real; it is a coverage gap rather than a functional bug, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

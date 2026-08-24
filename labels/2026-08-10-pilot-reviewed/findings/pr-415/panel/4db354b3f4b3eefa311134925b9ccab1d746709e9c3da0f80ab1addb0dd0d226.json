@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "docs/design/sheets/datasource.md::datasource design doc not updated for the new per-connection session settings and custom pg type-parser policy",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "nit",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied docs/design/sheets/datasource.md §\"Query Execution\" enumerates the connection/execution contract (query wrapping, 30s statement timeout, 10s connection timeout, 10k row cap, response shape) and contains no mention of the two new session statements added in datasource.service.ts (`SET TimeZone = 'UTC'`, `SET DateStyle = 'ISO, MDY'`) or of the new `types: { getTypeParser: datasourceTypeParser }` policy that returns DATE/TIMESTAMP/TIMESTAMPTZ as raw Postgres text — so the factual assertion of doc drift is correct, and the UTC normalization is genuinely user-visible. One sub-point is weaker: limitation #9 (\"all values displayed as strings\") and the \"Column type awareness\" roadmap item remain accurate, since the change deliberately keeps everything string-valued (toCell in readonly.ts) rather than introducing type mapping. Impact is documentation-only with no functional or correctness consequence, and the doc is already stale elsewhere (e.g. the Access Control section still describes `ds.authorID === userId` while the controller now checks workspace membership).",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

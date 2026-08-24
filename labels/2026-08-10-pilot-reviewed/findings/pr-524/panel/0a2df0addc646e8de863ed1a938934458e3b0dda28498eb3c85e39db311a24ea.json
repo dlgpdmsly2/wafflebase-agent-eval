@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-review-panel.yml::bot allow-list hardcodes `yorkie-agent[bot]`, but the app identity is a maintainer-provided secret — if the installed app's slug differs, the allow-list never matches and the fix/iterate steps stay blocked",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff does exactly what the claim describes: `allowed_bots: \"yorkie-agent[bot],yorkie-agent\"` is a hardcoded literal at agent-review-panel.yml:413 and agent-iterate-ci.yml:160, while the App identity that actually initiates the bot push is minted from `secrets.AGENT_APP_ID` / `AGENT_APP_PRIVATE_KEY` (agent-review-panel.yml app-token step; agent-iterate-ci.yml app-token step). Nothing in the supplied workflows, mark-ready.mjs, or the design doc pins or validates the App slug, and `actions/create-github-app-token` does expose an `app-slug` output that would make the value self-consistent — so the allow-list silently depends on an unverifiable maintainer secret, and the suspicious name (`yorkie-agent` in a \"wafflebase\" repo) makes a mismatch plausible. Failure mode is fail-closed rather than a security hole: a mismatch means claude-code-action still refuses, the fix job errors, and the newly added `needs.fix.result == 'failure'` branch pages a human each cycle, so it is loud rather than silent. I could not check the action's own `allowed_bots` semantics (action.yml not supplied) nor the quoted todo-doc lines, hence medium confidence.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

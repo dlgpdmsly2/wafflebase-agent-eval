@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::the iterate prompt interpolates branch-produced diagnosis text with no data fence, and the review-panel fence it is modelled on is closeable by the untrusted text",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The two code facts are as described. In agent-iterate-ci.yml the \"Run Claude Code\" prompt splices `${{ steps.diag.outputs.summary }}` with only the line \"Structured failure diagnosis from the harness reports:\" — no delimiter and no \"treat as data\" instruction — while agent-review-panel.yml wraps `steps.findings.outputs.summary` in a plain `<panel-findings>` tag with no escaping, so summary text containing the literal closing tag would terminate the fence. The provenance chain is also real: verify-self.mjs's `extractFailureSummary` lifts a line (<=500 chars) straight out of branch-produced lane output, summarize-ci.mjs re-prints it verbatim, and the fix job holds a contents:write App token. What the claim understates is the marginal risk: the same actor who can shape that lane output already controls branch code that this very job checks out, `pnpm install --frozen-lockfile` (postinstall) executes, and an unrestricted-Bash agent runs — and fork events plus the agent/ branch gate mean only base-repo write holders reach it, so the injection channel adds little over the code execution already granted (a risk the design doc explicitly accepts). I could not inspect review-panel.mjs/summary.md generation to confirm how literally lens summaries quote diff text, so the fence-escape half is reasoned rather than verified end to end.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

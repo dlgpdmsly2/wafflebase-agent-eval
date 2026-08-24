@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::forcing `set datestyle = 'iso, mdy'` also changes date *input* interpretation and can silently produce wrong results for user queries written against a dmy server",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Confirmed the line exists in the supplied packages/backend/src/datasource/datasource.service.ts (`await client.query(`SET DateStyle = 'ISO, MDY'`)` in executeQuery, right before the wrapped user query). In Postgres, DateStyle's second component (DMY/MDY/YMD) controls input parsing of ambiguous date literals, not just output, so forcing MDY does reinterpret literals like '06/07/2025' on a server configured DMY and rejects '15/06/2025' — a silent behavior change for existing saved queries. The claim's premise that only the output half is needed is also accurate: `SET DateStyle = 'ISO'` sets the output format while leaving the existing field order untouched, so the input reinterpretation is avoidable. Impact is narrow (only non-ISO/ambiguous literals against non-MDY servers; the raw-text DATE/TIMESTAMP parsers only need ISO output), so I rate it minor rather than major.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

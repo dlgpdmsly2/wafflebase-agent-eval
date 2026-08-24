@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::new unauthenticated webhook endpoint is exempted from rate limiting (`@skipthrottle`) while the body is fully parsed (up to 25mb) and the raw bytes retained *before* the hmac guard runs — unauthenticated dos amplification",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The code facts are as described: yorkie-event.controller.ts:31-34 puts `@SkipThrottle()` and only `YorkieSignatureGuard` (no JWT) on `POST /internal/yorkie/events`, app.module.ts registers `ThrottlerGuard` as the sole global `APP_GUARD` (120/60s), and main.ts:45-56 parses every JSON body at the 25MB `JSON_BODY_LIMIT` and retains the full raw Buffer specifically for this path — all as Express middleware, i.e. before Nest guards, so an unauthenticated caller reaches parse + raw-buffer retention + a 25MB HMAC (yorkie-signature.guard.ts:52-54) before the 401, at an unbounded rate. Nothing in the repo restricts `/internal/*`; the \"internal cluster URL, no public exposure\" is only an ops note in docs/design/documents-last-modified.md. The claim overstates the delta slightly: because `ThrottlerGuard` is itself a Nest guard, the 25MB parse also happens before the 429 on every other route, so `@SkipThrottle` removes the sustained-request cap rather than enabling the parse cost per se — which is why I rate this a real but modest hardening gap rather than a serious DoS hole.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

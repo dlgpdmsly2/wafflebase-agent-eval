@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/api/v1/documents.controller.ts::mass assignment into prisma `updatedocument` on the v1 patch route (pre-existing, but it is the other call site of the method this diff changed)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "In packages/backend/src/api/v1/documents.controller.ts the PATCH handler declares `@Body() body: { title?: string }` and passes it verbatim as `data: body` to `DocumentService.updateDocument`. Because an inline type literal emits `design:paramtypes = Object`, Nest's ValidationPipe (configured with whitelist/forbidNonWhitelisted in packages/backend/src/main.ts) skips validation for that metatype, so arbitrary `Prisma.DocumentUpdateInput` keys — notably `workspace: { connect: { id } }` and `author: { connect: { id } }` — reach Prisma unchecked; `getDocumentOrThrow({ id, workspaceId })` only validates the document's current workspace, not the reconnect target. The sibling legacy route in document/document.controller.ts does allowlist fields and re-runs `assertMember` on `body.workspaceId`, confirming the asymmetry the claim describes. One caveat: WorkspaceScopeGuard was not supplied, so the last step of the exploit narrative (guard checks only the route param) is inferred rather than read; the mass-assignment sink itself is directly verified. Note the attacker-supplied `updatedAt` specifically is neutralized by the diff's `{ ...data, updatedAt: new Date() }` spread.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

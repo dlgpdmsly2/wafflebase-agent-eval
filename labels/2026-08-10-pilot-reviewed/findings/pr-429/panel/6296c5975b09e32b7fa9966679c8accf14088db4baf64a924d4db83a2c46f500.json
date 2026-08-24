@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/docs/export-utils.ts::new pptx export path fetches arbitrary, collaborator-controlled image `src` values with `credentials: \"include\"` and no host allowlist (client-side ssrf / credentialed request forgery)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:28"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified export-utils.ts:41-51 (`fetch(resolved, { credentials: \"include\" })`) and resolveImageUrl's deliberate pass-through of any absolute scheme, plus pptx-actions.ts's `fetchImage: docsImageFetcher` and pptx/index.ts step 2 / `extFromMime` (no size cap, unknown MIME defaults to .png), and docs-content.controller.ts `assertValidElement`, which validates only id/type/frame — so collaborator-controlled `data.src` really does reach a credentialed fetch with no host allowlist, and the pptx-actions docstring's \"same-origin-fetched\" claim is not enforced. Impact is far smaller than the claim implies, though: `credentials: \"include\"` sends the target origin's own cookies (not the victim's Wafflebase session), the default cors mode makes non-CORS cross-origin responses unreadable so the export just fails, and the editor already emits requests to the same srcs via plain `img.src` when the deck is viewed — so the delta is request emission (beacon / unauthenticated intranet GET), not exfiltration. Rated minor: a genuine missing-allowlist hygiene defect on an additional call site, not a critical SSRF.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

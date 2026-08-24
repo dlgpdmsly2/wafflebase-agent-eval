@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::new pptx export fetches attacker-controllable image `src` values with `credentials: \"include\"` and no scheme/host allowlist",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:28"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The code facts in the claim check out: `exportSlidesPptxAndDownload` (pptx-actions.ts:88-100) wires `fetchImage: (src) => docsImageFetcher(src)`, `exportPptx` pre-scans and calls `fetchImage` for every unique `ImageElement.data.src` (packages/slides/src/export/pptx/index.ts, Step 1/2), `docsImageFetcher` does `fetch(resolved, { credentials: \"include\" })` (export-utils.ts), and `resolveImageUrl` returns any URL that begins with a scheme untouched — so there is no scheme/host allowlist. The write boundary does allow arbitrary srcs: `assertValidElement` in docs-content.controller.ts only checks `id`/`type`/`frame`, never `data.src`. So the described condition is genuinely present. Impact is modest, though: cross-origin `credentials:'include'` sends only the *target* origin's cookies (no Wafflebase session leak), CORS blocks reading responses so internal probing is mostly timing/error-based, the requester must already be an authorized workspace collaborator, and the editor's canvas renderer already loads the same `src` into an `<img>` (so the IP/UA beacon exists before export). The PDF export path uses the identical fetcher, so this is a pre-existing pattern that the change merely adds another consumer to.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

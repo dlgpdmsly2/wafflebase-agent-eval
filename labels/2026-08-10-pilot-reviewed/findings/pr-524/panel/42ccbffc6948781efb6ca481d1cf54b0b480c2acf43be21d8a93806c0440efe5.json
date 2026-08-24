@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::agent-iterate-ci has no paging net for a failed fixer step, so the same failure mode the review-panel diff now catches still stalls the ci-fix loop silently",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The full text of .github/workflows/agent-iterate-ci.yml is supplied, and the claim's reading of it is accurate: the workflow has exactly one job (`iterate`) whose final step is `Run Claude Code` (the step the diff touches, ~line 147), and there is no `if: always()`/`if: failure()` step and no second job that comments or applies `agent:needs-human-review` when that step errors. The only paging path is inside the `Attempts guard` script, which fires only when `failedCi >= MAX_ATTEMPTS`; since a fixer that errors pushes no commit, no new CI run is created, so that counter cannot advance and no further `workflow_run` event fires — the branch stalls without notification. That is the same failure shape the diff explicitly adds `needs.fix.result == 'failure'` to `stalled` for in agent-review-panel.yml (comment at the `stalled` job), so the asymmetry the claim describes is genuinely present. Weighing it down: the diff also adds `allowed_bots` here, removing the specific bot-rejection cause, the pipeline is inert unless `AGENT_PIPELINE_ENABLED=true`, and the failed run is still visible in the Actions UI — so the impact is a lost safety-net/observability gap on an opt-in loop rather than a functional break.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

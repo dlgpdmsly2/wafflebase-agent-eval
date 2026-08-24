@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::fix is broader than issue #517: single-dash setext headings are disabled everywhere, not just inside lists",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The `isLoneDash` guard in `lheadingRule` (list-empty-bullet-plugin.ts:~105-110) is unconditional — it does not consult `state.blkIndent`, `state.parentType`, or any list context — so any single-`-` setext underline is rejected everywhere, top level and in blockquotes included. `isEmptyBulletLine` likewise only requires `sCount[line] >= blkIndent`, and `wrappedList` only requires `silent && state.parentType === 'paragraph'`, so a top-level `Heading\\n-` now terminates the paragraph and yields `<p>Heading</p><ul><li></li></ul>` instead of the standard CommonMark `<h2>Heading</h2>`. The claim's secondary point also checks out: the only setext regression test is `'Heading\\n---'` (preview.test.ts, \"preserves multi-dash setext headings\"), and the plugin's own TODO doc listed a \"top-level lone dash\" test that was never added. The deviation is documented as intentional in notes.md, so this is a scope/design-fit concern rather than an outright bug, and single-dash setext headings are uncommon relative to `---`, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

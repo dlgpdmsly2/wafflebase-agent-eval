@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "docs/design/sheets/datasource.md::query-execution behavior change (session timezone/datestyle + raw-text date parsers) is not recorded in the canonical datasource design doc",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: `datasource.service.ts` now issues `SET TimeZone = 'UTC'` and `SET DateStyle = 'ISO, MDY'` per connection and installs a custom `getTypeParser` returning DATE/TIMESTAMP/TIMESTAMPTZ as raw text, while the diff touches no file under docs/. The canonical `docs/design/sheets/datasource.md` \"Query Execution\" section still enumerates only wrapping, 30s statement timeout, 10s connection timeout, and the 10k row limit (and \"Current Limitations\" #9 / \"Column type awareness\" in Next Steps), so the new user-visible timezone/date-style normalization is genuinely unrecorded — the claim's reading of both the code and the doc is accurate. I could not check CONTRIBUTING.md (not present in this run), so the exact strength of the design-doc discipline rule is unverified; the impact is documentation drift rather than a functional bug, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

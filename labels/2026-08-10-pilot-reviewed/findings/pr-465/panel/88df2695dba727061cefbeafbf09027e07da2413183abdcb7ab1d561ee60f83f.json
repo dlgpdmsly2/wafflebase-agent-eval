@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/document.controller.spec.ts::the central behavior change — list ordering and `updatedat` now sourced from postgres instead of the yorkie admin call — has no test at all",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: `document.controller.spec.ts` contains only the `createDocument` fileId-gating describe block, and its stub at line 13 is `{ getSummaries: jest.fn() } as never` — the controller now calls `getEditors` (document.controller.ts:65), so `attachMeta` is provably never exercised by that spec (it would throw on an undefined method). The new spec files added in this PR cover `updateDocument` (document.service.spec.ts), the webhook controller, the guard, and `parseYorkieDocKey`, but none assert the `updatedAt: d.updatedAt.toISOString()` sourcing or the `orderBy: [{updatedAt:'desc'},{createdAt:'desc'}]` on lines 116/148. The e2e list test in authenticated-http.e2e-spec.ts stubs YorkieAdminService and only asserts list length and id, so ordering/updatedAt regressions would go undetected. Real gap, but the untested change is a straightforward field read plus orderBy, so impact is limited to future regression risk.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

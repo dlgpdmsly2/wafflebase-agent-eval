@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/cli/src/docs/image-fetcher.ts::ssrf via unvalidated image `src` in the cli slides/docs export fetcher that this change promotes as a shipped feature",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:28"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The code facts check out in the supplied files: `resolveImageUrl` in packages/cli/src/docs/image-fetcher.ts explicitly passes through any scheme-bearing URL (\"http:\", \"file:\", etc.) untouched, and the returned fetcher does a bare `await fetchImpl(resolved)` with no scheme/host/private-IP allowlist; it is wired into `slides export` (packages/cli/src/commands/slides.ts, `createImageFetcher({serverBase: getConfig(opts).server})` → `exportPptxCli`) and both docs export paths (packages/cli/src/commands/docs.ts). The attacker-controlled-src premise also holds: `assertValidElement` in packages/backend/src/api/v1/docs-content.controller.ts validates only `id`/`type`/`frame`, never `data.src`, and packages/slides/src/export/pptx/index.ts embeds whatever `fetchImage` returns verbatim as a `ppt/media/` part. So the described request-forgery/exfiltration mechanism is genuinely present as written. I rate it minor rather than higher because it is untouched pre-existing code (this diff only edits docs plus frontend/homepage files), the fetch originates from a user-run CLI rather than a network service, no credentials are attached, and exploitation needs deck write access plus a privileged runner plus access to the produced artifact; fetching remote image URLs is also inherent to the exporter's contract. My confidence is medium because I could not run the exploit chain or inspect `packages/cli/src/slides/pptx-export.ts` (not supplied) to confirm it forwards the fetcher unmodified.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

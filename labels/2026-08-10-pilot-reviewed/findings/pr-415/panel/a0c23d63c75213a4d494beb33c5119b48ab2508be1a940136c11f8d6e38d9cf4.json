@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::read-only enforcement is a sql keyword blocklist only; the newly added session `set` block omits `default_transaction_read_only`, so side-effecting functions inside a select can still write to the connected database",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: `executeQuery` (datasource.service.ts:143-145) issues only `SET statement_timeout`, `SET TimeZone`, `SET DateStyle` — there is no `default_transaction_read_only`/`SESSION CHARACTERISTICS ... READ ONLY`, and the only other gate is `validateSelectQuery` (sql-validator.ts:1-13), a whole-word blocklist of INSERT/UPDATE/DELETE/etc. plus a \"first token must be SELECT/WITH\" check. So the claim's mechanics are accurate: `SELECT nextval('s')`, `SELECT some_volatile_writer()`, `SELECT pg_read_file(...)` contain no forbidden token, pass validation, and are executed inside the `SELECT * FROM (...) AS _q` wrapper; and the query endpoint only requires `assertMember` (datasource.controller.ts, executeQuery), so any workspace member can run it with the owner's stored credentials. Caveats on severity, not on truth: this gap is pre-existing (the PR only adds timezone/datestyle settings, it does not remove any read-only guard), it is explicitly acknowledged in docs/design/sheets/datasource.md's risk table (\"function calls with side effects may still be possible. Consider using a read-only database role\"), and exploitation depends on the configured connection user actually holding write/superuser rights on the remote DB.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/notes/yorkie-note-store.ts::setlocalselection folding into an open batch's ambient presence has no test",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The new branch at yorkie-note-store.ts (`if (this.activeRoot && this.activePresence) { publish(...); return; }`, ~line 186) plus the `activePresence` field are added in this diff, and neither test file that touches YorkieNoteStore exercises it: yorkie-note-store.test.ts (shown in full) never calls `setLocalSelection`, and the four cases in notes-undo-integration.test.ts assert only text/undo-stack state, never presence or peer selections. The mounted-editor tests do reach `setLocalSelection` indirectly through the remote-selection plugin, but that runs after NoteSyncPluginValue.update has already closed its synchronous `store.batch()` (and jsdom has no focus, so it takes the `head === null` no-op path), so `activeRoot`/`activePresence` are null there — the folding path itself is never entered or asserted. The other `setLocalSelection` references in the diff are stubs in note-sync/remote-selection/memory tests, not the Yorkie store. Impact is limited: this is a defensive path guarding against a nested `doc.update`, and Yorkie publishes local-change events after `update()` returns, so it is rarely (if ever) hit in practice — hence minor rather than major.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

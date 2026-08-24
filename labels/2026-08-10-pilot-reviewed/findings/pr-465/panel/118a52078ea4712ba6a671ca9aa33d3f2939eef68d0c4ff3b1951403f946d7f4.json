@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "docs/design/backend.md::data-model + api change not folded into the canonical backend design doc; a new parallel top-level doc was created instead",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "nit",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: docs/design/backend.md's ER block still lists Document with `createdAt` only (no `updatedAt`), its module table describes DocumentModule as just \"Document REST endpoints\" with no YorkieEventController/YorkieSignatureGuard, and its API reference has no `POST /internal/yorkie/events`; the diff never touches backend.md and instead adds a new top-level docs/design/documents-last-modified.md. The cited conventions are real — CONTRIBUTING.md says \"Update the existing doc when evolving an area instead of creating parallel files,\" and docs/design/README.md's \"Obsolete docs\" section says to fold single-PR notes into the canonical doc. Mitigating context: backend.md's schema block was already stale (it omits `type`, `fileId`, `workspaceId` from earlier migrations), and the repo hosts many standalone topic docs, so this is incremental doc drift rather than a new pattern. Docs-only, no runtime or correctness impact, hence nit.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

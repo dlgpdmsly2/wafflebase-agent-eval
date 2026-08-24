@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::raw_text_oids only covers scalar date/timestamp/timestamptz; array and range date/time types still get parsed into js `date` and remain timezone-shifted",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "In packages/backend/src/datasource/datasource.service.ts:20-36, RAW_TEXT_OIDS contains only the three scalar OIDs (DATE 1082, TIMESTAMP 1114, TIMESTAMPTZ 1184) and datasourceTypeParser delegates every other OID to pg-types' default parser. pg-types' textParsers registers parseDateArray for 1115 (timestamp[]), 1182 (date[]) and 1185 (timestamptz[]), which builds JS Date objects per element via the same local-time parse the comment says is wrong, so array-typed date/timestamp columns still come back as Dates and toCell/JSON.stringify emits ISO strings shifted by the Node runtime offset for `timestamp`/`date` arrays — the claim's core point holds. The claim is partly inaccurate about range types: pg-types does not register parsers for 3908/3910/3912 (only 3907 numrange[] as strings), so tsrange/tstzrange/daterange already fall through as raw text; that detail is wrong but incidental to the finding. I verified the service file directly; the pg-types parser table is from knowledge of the library rather than the pinned source, hence medium confidence.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::monotonic guard mixes two different clocks (yorkie `issuedat` vs. backend `now()`), so a backend-side bump can permanently block later webhook bumps under clock skew",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The mechanism is real as written: `touchUpdatedAt` gates on `updatedAt < at` (document.service.ts, `updateMany where updatedAt: { lt: at }`), and `at` is derived from Yorkie's `issuedAt` clamped with `Math.min(issuedMs, now)` in yorkie-event.controller.ts:56-58, while `updateDocument` (document.service.ts) and the migration/`@default(now())` write the backend's clock. So any value stored from the backend clock (rename/move PATCH, row creation default, or the NaN fallback) can exceed a lagging Yorkie server's `issuedAt`, in which case subsequent `DocumentRootChanged` events are silently no-ops (count ignored, 200 returned, no log). The design doc's \"Clock skew\" section indeed only reasons about future-skewed events, so the symmetric past-skew case is unhandled. Impact is bounded by the skew magnitude (typically ms on NTP-synced clusters) and self-heals once wall-clock passes the stored value, so this is a minor ordering-staleness bug rather than the \"permanent\" block the wording suggests.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

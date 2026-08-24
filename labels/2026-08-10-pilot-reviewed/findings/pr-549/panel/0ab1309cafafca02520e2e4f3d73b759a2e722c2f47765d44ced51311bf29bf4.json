@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled trim regex backtracks quadratically (redos) on attacker-controlled note content, replacing upstream's linear `.trim()`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in the supplied packages/notes/src/view/list-empty-bullet-plugin.ts: lines 19–22 define `ASCII_TRIM_RE = /^[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+|[\\x09\\x0a\\x0b\\x0c\\x0d\\x20]+$/g` and `asciiTrim`, which is applied to `state.getLines(...)` in `lheadingRule` (the `const content = asciiTrim(...)` block, ~line 134), reachable from `NotePreview.render()` via `md.use(listEmptyBulletPlugin)` in preview.ts. The trailing alternative `[ws]+$` under `g` is the classic quadratic-trim ReDoS: `replace` retries at every offset, and inside a whitespace run not terminated by end-of-string each offset greedily consumes the run then backtracks char-by-char failing `$`, giving O(k²); upstream markdown-it's lheading uses linear `String.prototype.trim()`, so this path is newly introduced. I rate it minor rather than higher because it needs a deliberately crafted payload of tens-to-hundreds of KB of whitespace plus a setext underline, and the victim impact is a frozen browser tab in the preview pane (I could not confirm any server-side renderer shares this markdown-it instance); a smaller side effect is that the regex trims only ASCII whitespace where `.trim()` trimmed all Unicode whitespace.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

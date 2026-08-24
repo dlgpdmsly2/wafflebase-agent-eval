@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::ssrf / internal network probing: datasource host and port are fully user-controlled with no allowlist, and connection errors are returned to the caller as an oracle",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied datasource.service.ts confirms every factual element of the claim: `create`/`update` persist `dto.host`/`dto.port` with no allowlist or private-range check (the DTO in datasource.dto.ts only enforces string length 1-253 and port 1-65535), `createClient` (the `new Client({ host: ds.host, port: ds.port, ... connectionTimeoutMillis: 10_000 })` block at the end of the file, the line the diff touches to add `types`) dials that address directly, and `testConnection` returns `{ success: false, error: (error as Error).message }` verbatim to the caller — with `executeQuery` similarly surfacing `pgError.message` in a BadRequestException. So an authenticated workspace member can use these endpoints as an internal host/port existence oracle, distinguishing ECONNREFUSED / timeout / auth-failure / non-Postgres-service responses; the controller only checks workspace membership, never destination. Two caveats that temper but do not falsify it: this behavior is entirely pre-existing (the diff only adds a type-parser option to the same constructor call), and it is the inherent design of a user-configured DB connector, so the practical severity depends on network egress controls I cannot inspect; the trust-auth read-access escalation is explicitly unconfirmed by the reviewer as well.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

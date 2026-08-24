@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::mutable `@v1` tag for the action that consumes agent_app_private_key, in the same job as the sha-pinned claude-code-action step",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The code fact checks out: in the supplied .github/workflows/agent-iterate-ci.yml the \"Generate GitHub App token\" step is `uses: actions/create-github-app-token@v1` (mutable tag) receiving `secrets.AGENT_APP_PRIVATE_KEY`, while the claude-code-action step in the same job is SHA-pinned with an explicit supply-chain comment — so the described asymmetry is actually present, though on lines the diff does not touch (the diff only adds `allowed_bots` and extends `stalled`'s needs/if). The claim's justification is largely wrong, however: it says every other App-token site pins a SHA, but agent-review-panel.yml at this commit also uses plain `actions/create-github-app-token@v1`, and the cited agent-fix.yml/agent-rerun.yml/agent-loop.yml/agent-summarize.yml/agent-review-on-demand.yml do not exist at this revision; all cited line numbers are off by 35–120 lines, suggesting the finding was written against a different tree. I rate it minor rather than major: `actions/create-github-app-token` is a first-party GitHub action, floating its major tag is common accepted practice, the repo does this uniformly (so there is no self-inconsistency to fix here specifically), and the condition is pre-existing rather than introduced. Confidence is medium because I could only read the two supplied workflow files and not the withheld/absent ones the claim leans on.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

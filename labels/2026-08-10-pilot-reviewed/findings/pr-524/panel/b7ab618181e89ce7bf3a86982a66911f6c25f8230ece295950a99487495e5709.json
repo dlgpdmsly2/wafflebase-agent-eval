@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-review-panel.yml::`allowed_bots` may not be a supported input at the pinned claude-code-action commit, in which case it is silently ignored and the fix job still fails",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "low",
+  "evidence": "The claim is a hedged hypothesis (\"may not be a supported input\"), not an observed defect: it depends entirely on anthropics/claude-code-action's action.yml at pin af0559ee (agent-review-panel.yml:404, agent-iterate-ci.yml:151), which is listed as absent-at-round and which I have no checkout to inspect. The mechanism it describes is accurate — undeclared inputs only produce a warning — but that only matters if the input is genuinely missing at that SHA. Evidence in the diff itself cuts against the claim: the author's comment at agent-iterate-ci.yml:155-157 cites action-specific behaviour (\"'*', which the action warns is unsafe on public repos\"), which matches the documented v1 `allowed_bots` input, suggesting the input was checked rather than invented. I therefore call it not-real, but with low confidence, since I could not read action.yml at the pinned commit; if the input truly did not exist there, the whole fix would be a no-op and the severity would be major.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

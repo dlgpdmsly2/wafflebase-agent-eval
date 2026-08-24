@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::`allowed_bots` disables claude-code-action's actor (non-bot) guard on the two secret-bearing, contents:write, bash-enabled agent jobs, making a fully human-free execution path for prompts built from untrusted branch output",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The data path is real — verify-self.mjs writes `failureSummary: extractFailureSummary(output)` from raw lane output, summarize-ci.mjs prints it verbatim, and agent-iterate-ci.yml interpolates it into the prompt of a Bash-enabled, contents:write, secret-bearing step. But the claim misreads the change on two points: the value is `\"yorkie-agent[bot],yorkie-agent\"`, not `*`, so the actor guard is narrowed to the repo's own App rather than disabled; and that guard was never a human-in-the-loop control — a bot-initiated run just errors out (which is exactly why this same PR adds `needs.fix.result == 'failure'` to the `stalled` pager). The real human gates (AGENT_PIPELINE_ENABLED, fork-origin rejection, protected `agent` environment, branch-protection approval) are unchanged, and the injection-into-autonomous-agent surface pre-exists this line (the same job already runs `pnpm install` on branch code with the App token, and agent-implement.yml already feeds an untrusted issue body to an unrestricted-Bash agent) and is documented as an accepted residual risk in docs/design/harness-engineering.md. Without `allowed_bots` the loop cannot run at all, so this is the intended enablement, not a newly introduced defect; the only actionable item is verifying repo environment settings. I could not read claude-code-action's source (not supplied), so my reading of the guard's exact semantics comes from the input name and the in-repo comments.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

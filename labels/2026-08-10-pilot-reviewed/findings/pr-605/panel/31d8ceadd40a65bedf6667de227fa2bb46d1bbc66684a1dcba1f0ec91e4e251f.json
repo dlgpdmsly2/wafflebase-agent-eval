@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/notes/yorkie-note-store.ts::write-capable undo()/redo() have no read-only/permission gate; the read-only check lives only in the two view-level callers",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "nit",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The mechanical observation is right: `YorkieNoteStore.undo()`/`redo()` (yorkie-note-store.ts, the `undo()`/`redo()` methods) take no readOnly/permission argument, and `NoteEditorAPI.undo()` in editor.ts calls `runHistory('undo')` unconditionally — the store simply has no notion of readOnly. But the described defect (a viewer-role session writing reverse ops into the shared doc) cannot occur as the code stands. `undo()` first checks `canUndo()`, which requires `doc.getUndoStackForTest().length > this.undoFloor`, and `undoFloor` is captured at construction; a read-only mount never produces a local document change (notes-view.tsx skips `ensureText` when readOnly, `EditorView.editable.of(!readOnly)` is set outside any compartment so a vim keymap switch cannot flip it, and note-sync only forwards non-remote user-event transactions), so the local undo/redo stacks stay empty and both calls return early without touching the CRDT. Combined with the reviewer's own admission that no reachable caller exists, this is a defense-in-depth/layering observation rather than a present defect; the claim's specific attack chain (including \"a keymap switch whose editable facet changes\") misreads the wiring.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

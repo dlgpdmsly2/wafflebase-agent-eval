@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/scripts/migrate-yorkie-cf-ranges.ts::bulk yorkie data-migration scripts will mass-bump every document's new `updatedat` once the webhook is registered, destroying list ordering fleet-wide",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The mechanism is coherent and matches the supplied code: both maintenance scripts mutate the Yorkie root (`migrate-yorkie-cf-ranges.ts` `doc.update(... migrateConditionalFormatRanges ...)` + `client.sync`, and `migrate-yorkie-worksheet-shape.ts` `replaceYorkieRoot` + `client.sync`), and the new ingestion path (`yorkie-event.controller.ts` `touchUpdatedAt(parsed.id, min(issuedAt, now))`) has no notion of \"this was a migration, not a user edit\", while `document.controller.ts:116,148` now sorts by that column — so a migration run would stamp migrated docs with the migration time and wipe edit-recency ordering. Two things temper the claim's framing: both scripts only `doc.update`/`sync` when `changed` is true, so it is *not* \"every document in the DB\" — only rows the legacy migration actually rewrites; and because both scripts iterate `createdAt asc`, the resulting order collapses to roughly `createdAt desc`, i.e. the pre-PR default, and self-heals on each document's next real edit. I could not verify Yorkie's event semantics (whether an admin-SDK root write emits `DocumentRootChanged`) from source here, and the webhook is not registered yet per the todo's open ops item, so the failure requires two conditions to line up — hence medium confidence and minor severity rather than a blocking defect.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

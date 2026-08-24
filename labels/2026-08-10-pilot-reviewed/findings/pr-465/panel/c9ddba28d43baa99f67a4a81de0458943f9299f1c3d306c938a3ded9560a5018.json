@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/document.controller.ts::the pr's headline behavior — list `updatedat`/ordering now sourced from postgres, editors from the best-effort yorkie call — has no test at all",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "document.controller.ts:56-70 rewrites attachMeta (updatedAt from the DB column, editors from getEditors) and lines 116/148 switch to the orderBy array, yet the only supplied controller spec (document.controller.spec.ts) tests createDocument fileId gating and still stubs the admin service as `{ getSummaries: jest.fn() }` (line 13), never invoking attachMeta; the three new specs added by the PR all cover the webhook ingest side. The e2e authenticated-http.e2e-spec.ts does call GET /documents but asserts only `body[0].id`, so nothing asserts updatedAt's source, order stability when the Yorkie call fails, or editor attachment — the claim is slightly overstated in saying \"no test at all\" touches the path. I could not read packages/backend/test/http.e2e-spec.ts (not supplied, and no checkout is mounted), which the reviewer also skipped and which is the repo's mocked-service controller contract suite, so a partial assertion there cannot be ruled out. Impact is a test-coverage gap only, not a behavioral defect.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

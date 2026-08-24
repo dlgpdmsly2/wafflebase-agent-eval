@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/notes/yorkie-note-store.ts::setlocalselection folding into an open batch (activeroot/activepresence path) is untested",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied full text of `packages/frontend/src/app/notes/yorkie-note-store.test.ts` and `notes-undo-integration.test.ts`: neither calls `setLocalSelection`, and the integration test asserts only text/undo-stack state, never presence. Structurally the folding branch at yorkie-note-store.ts:186-193 cannot be hit through the mounted editor either, because `noteSync.update()` opens and closes `store.batch()` within its own ViewPlugin update, while the only caller of `setLocalSelection` (`remote-selection.ts`'s plugin update) runs as a separate plugin update after `activeRoot` has been reset to null. `remote-selection.test.ts` exercises a stub store, not `YorkieNoteStore`. So the new branch and the \"presence never pollutes the undo unit\" claim are genuinely unexercised; impact is limited since the branch is defensive and likely unreachable today.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

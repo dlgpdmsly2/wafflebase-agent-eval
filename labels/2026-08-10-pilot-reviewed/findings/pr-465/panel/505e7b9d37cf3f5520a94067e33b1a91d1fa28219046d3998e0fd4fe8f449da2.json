@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/document.service.ts::`touchupdatedat`'s monotonic guard (`where: { updatedat: { lt: at } }`) is untested — the idempotency/out-of-order property the code and webhook rely on is unverified",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Confirmed against the supplied files: document.service.ts:118 adds `touchUpdatedAt` with the advance-only guard `where: { id, updatedAt: { lt: at } }`, but document.service.spec.ts builds the service with only `{ document: { update } }` and tests just `updateDocument`'s two branches — no `updateMany` mock exists. yorkie-event.controller.spec.ts:8-12 replaces `touchUpdatedAt` with a jest mock, so its cases cover key parsing / event filtering / the issuedAt clamp but never the `lt` filter; removing that filter would keep every test in the diff green, and the todo file itself records the DB-backed advance-only e2e as deferred. Impact is a coverage gap on correct code (regression would cause list-ordering churn, not data loss), hence minor; I had no checkout, so I judged only the specs supplied at this commit.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

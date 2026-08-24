@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::unauthenticated, throttle-exempt webhook endpoint accepts up to 25mb bodies — unbounded pre-auth resource consumption",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Every mechanical claim checks out against the supplied files: `yorkie-event.controller.ts:31-33` declares `@Controller('internal/yorkie')` with `@SkipThrottle()` and only `YorkieSignatureGuard` (no JWT/API-key), so the sole global rate limit (ThrottlerGuard as APP_GUARD, 120/60s, app.module.ts) is opted out for an anonymous route; `main.ts` applies one global `bodyParser.json({ limit: JSON_BODY_LIMIT /* 25mb */, verify })` and the verify hook pins `req.rawBody = buf` specifically for `/internal/yorkie/events`, and Express body parsing completes before Nest guards run, so the 25MB buffer plus parsed object exist and (with any non-empty `X-Signature-256`) the guard HMACs the full 25MB before the 401 — the guard's early-out only covers a *missing* header. So the described pre-auth resource-consumption path genuinely exists as written, and no per-route body cap or finite throttle bounds it. I rate it minor rather than higher because the marginal exposure over the pre-existing global 25MB limit is modest (a 120/60s bucket would barely have blunted 25MB bodies either), HMAC over 25MB is cheap relative to the JSON parse that any large-body route already incurs, and the endpoint is intended for an internal cluster URL — though I could not verify ingress/path restrictions, since no deployment manifests were supplied and no checkout was available.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

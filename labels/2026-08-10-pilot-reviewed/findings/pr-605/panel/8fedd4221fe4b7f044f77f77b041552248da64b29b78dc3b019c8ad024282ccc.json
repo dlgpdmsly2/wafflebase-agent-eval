@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/note-sync.ts::read-only note viewers now open a yorkie `doc.update()` on every remote change",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The mechanical part of the claim is accurate: note-sync.ts:56-61 calls `this.store.batch(...)` for every docChanged ViewUpdate before the `Transaction.remote` filter, and YorkieNoteStore.batch (yorkie-note-store.ts, `batch`) unconditionally opens `this.doc.update((root, presence) => ...)`, so a read-only viewer applying a peer edit does enter `doc.update`. But the inferred harm does not follow: `Document.update` in @yorkie-js/sdk only commits, queues a local change, touches the undo stack and publishes events inside an `if (context.hasChange())` guard, so an empty body produces no change, no `localChanges` entry, and therefore no PushPull/auth-webhook traffic — `doc.update` is purely local and never itself hits the server or the permission path that `ensureText()` avoids (ensureText actually writes `r.content`). The PR's own integration test 'applies a peer edit without recording a local undo unit' exercises precisely this remote-only ViewUpdate path against the real SDK and asserts the undo stack is unchanged, which would fail if the empty update registered anything. I could not read node_modules here (empty worktree), so confidence is medium rather than high, but the residual cost is a no-op context allocation per remote transaction, not a correctness or permission defect.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::vendored copy of markdown-it's upstream `lheading` rule instead of wrapping the existing one (duplication of third-party logic, drift risk)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied file confirms the factual core: `lheadingRule` at packages/notes/src/view/list-empty-bullet-plugin.ts:68-152 is a line-for-line reimplementation of markdown-it 14.x `rules_block/lheading.mjs` — same terminator-rule loop, the same upstream comments (\"this would be a code block normally, but after paragraph it's considered a lazy continuation\", \"quirk for blockquotes, this line should already be checked by that rule\"), the same token emission — with only the `isLoneDash` guard added; the docstring itself says \"Mirrors the upstream rule\". `asciiTrim` plus `ASCII_TRIM_RE` (lines 17-23) are likewise re-created rather than imported, and the same file demonstrates the delegate-to-original pattern for `list` via `getRuleFn` (lines 175-190), so the inconsistency the reviewer points at is real, and a markdown-it upgrade would indeed leave this frozen copy in place for notes. The one soft spot is the suggested fix: upstream `lheading` scans forward over multiple paragraph lines, so \"return false if the immediately following line is a lone empty bullet\" is not by itself equivalent — a correct wrapper would have to inspect the underline line the original consumed and roll back `state.line`/pushed tokens. That makes this a maintainability/design-fit concern rather than a functional defect.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

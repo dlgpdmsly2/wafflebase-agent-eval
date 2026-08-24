@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::allowed_bots re-enables the autonomous fixer agents, whose prompts/instructions pull in world-writable pr-thread text while a contents:write app token sits in .git/config",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified each mechanical premise: agent-iterate-ci.yml ~line 160 adds `allowed_bots`, which by the PR's own comment is what un-blocks the previously-refused bot-initiated fixer run; the prompt just below directs the agent to \"reply in the PR's verification thread\" and `claude_args` grants unrestricted `Bash`; and the preceding `actions/checkout@v4` (ref head_branch, token = App token) omits `persist-credentials: false`, so the installation token is written into .git/config in the same workspace where branch `postinstall` and the agent run. The same shape holds for the review-panel `fix` job, while the sibling review job explicitly sets `persist-credentials: false` citing this exact exfiltration path, and the issue-spec ingestion applies an `agent:candidate`+non-Bot provenance filter that no PR-thread text passes through. Confidence is medium, not high, because the prompts interpolate only trusted data (harness diagnosis / panel check summaries) — untrusted comment text reaches the agent only if it fetches the thread or if claude-code-action pulls PR context for workflow_run, and `action.yml` was not supplied; the design doc also already accepts secret exposure in these code-executing jobs, making this a hardening gap on a documented risk surface.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

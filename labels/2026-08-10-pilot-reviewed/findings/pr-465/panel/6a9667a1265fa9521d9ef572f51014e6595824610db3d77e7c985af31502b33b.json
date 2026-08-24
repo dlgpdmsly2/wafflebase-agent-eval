@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/scripts/migrate-yorkie-worksheet-shape.ts::bulk yorkie maintenance scripts now rewrite every document's last-modified time and scramble the global list ordering",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The mechanism is real: `migrate-yorkie-worksheet-shape.ts` (`migrateDocument` → `doc.update(replaceYorkieRoot)` + `client.sync`) and `migrate-yorkie-cf-ranges.ts` both perform root-content mutations on `sheet-<id>` docs, and `yorkie-event.controller.ts` unconditionally calls `documentService.touchUpdatedAt(parsed.id, min(issuedAt, now))` for any `DocumentRootChanged` without distinguishing maintenance writes from user edits — so a bulk migration run after the webhook is registered would bump `updatedAt` for every changed doc and show a false \"Last modified\" in the list ordered by `[{updatedAt:desc},{createdAt:desc}]` (document.controller.ts). Two mitigations the prose ignores: both scripts iterate `orderBy: createdAt asc`, so the resulting order is ≈`createdAt desc` (the pre-PR default) rather than a scramble, and `copy-yorkie-documents.ts` writes to a separate target cluster where this project's webhook isn't registered. It also requires a condition not yet true in the merged state (webhook registration is still an unchecked post-merge ops item) plus a future run of a one-shot migration script, so I score this as a genuine but minor blast-radius/data-fidelity side effect rather than a functional defect.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/editor.ts::new vim history routing (`routevimhistorytostore`) has no test at all",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "`routeVimHistoryToStore` is new code (packages/notes/src/view/editor.ts:27-60) that monkey-patches `CodeMirror.commands.undo/redo`, resolves the store from `noteStoreFacet`, and gates on `EditorView.editable` with a fall-through to `defaultVimHistory`. The full editor.test.ts supplied at this commit contains only Mod-z/Mod-Shift-z, read-only-unbound, store-routing and \"switches the keybinding mode\" tests — none enter vim mode and invoke `u`/`<C-r>` or `CodeMirror.commands.undo`, and the new frontend integration test (notes-undo-integration.test.ts) never touches vim either; since the function is brand new, no pre-existing test could cover it. So the claim is accurate: the routing, facet lookup, editable guard, and fall-through are entirely untested, and because CM history is now disabled a regression there would silently strip undo for vim users. I rate it minor rather than higher because it is a test-coverage gap, not a defect in shipped behavior (I could not run the suite, but the relevant test files were fully visible).",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

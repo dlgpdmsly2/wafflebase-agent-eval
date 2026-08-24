@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::`allowed_bots` hardcodes a bot login (`yorkie-agent[bot]`) that is not tied to the app the workflows actually mint tokens for; a mismatch makes the guard a no-op and both fixer loops keep failing",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The factual premises of the claim check out in the supplied files: the App identity is entirely deployment-supplied (`app-id: ${{ secrets.AGENT_APP_ID }}` / `private-key: ${{ secrets.AGENT_APP_PRIVATE_KEY }}` in agent-iterate-ci.yml's \"Generate GitHub App token\" step and the equivalent step in agent-review-panel.yml's `fix` job), while the new input hardcodes a literal login (`allowed_bots: \"yorkie-agent[bot],yorkie-agent\"`, agent-iterate-ci.yml:160 and agent-review-panel.yml:~411). Nothing in the diff or the other supplied workflows/scripts derives, asserts, or documents that the installed App's slug is `yorkie-agent` — harness-engineering.md even describes the token as \"the Claude GitHub App installation token ... or a PAT\", i.e. deployment-specific — and the double-entry hedge (`...[bot]` plus bare name) suggests the author was guessing at the exact login form. So if the configured App has any other slug the allow-list silently fails to match and the fixer step keeps being refused, which the same diff then routes into the `needs: fix` stalled page. I cannot confirm from the repo (no checkout mounted, and the cited todo doc was withheld) whether the value happens to be correct for this deployment, and the failure mode is fail-safe (human page rather than silent stall), so I rate this a real but modest config-robustness defect: brittle hardcoded identity with no validation or documented prerequisite.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

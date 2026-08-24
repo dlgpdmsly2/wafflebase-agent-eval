@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/document.controller.ts::the changed `attachmeta` / list-ordering behavior (the point of the pr) is untested",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: packages/backend/src/document/document.controller.spec.ts contains only the three `createDocument` fileId-gating cases and constructs the controller with a `{ getSummaries: jest.fn() }` Yorkie stub — it never invokes `findByWorkspace`/`getDocuments`, so the rewritten `attachMeta` (document.controller.ts:53-70) and the new `orderBy: [{updatedAt:'desc'},{createdAt:'desc'}]` (lines ~116, ~148) are never exercised. The e2e suite (test/authenticated-http.e2e-spec.ts, the `enforces document ownership` case) lists documents but asserts only `toHaveLength(1)` and `body[0].id`, and stubs YorkieAdminService with empty maps, so neither the `updatedAt` source nor the ordering is asserted anywhere; the new unit specs added by the PR cover the guard, key parser, webhook controller and `updateDocument`, not the read path. Real test-adequacy gap on the PR's central behavior, though it is a missing-coverage issue rather than a production defect.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

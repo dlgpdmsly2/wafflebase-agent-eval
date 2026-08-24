@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::`allowed_bots` may not be a supported input on the pinned claude-code-action commit, in which case it is silently ignored (warning only) and the bot block persists",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The claim is speculative by its own admission: it hinges on `allowed_bots` being absent from claude-code-action at the pinned commit af0559ee (agent-iterate-ci.yml:151, agent-review-panel.yml:404), and the action's action.yml is listed as cited-but-not-supplied, so neither the reviewer nor I could inspect it. `allowed_bots` is a documented v1 input of anthropics/claude-code-action, and the comment added at agent-iterate-ci.yml:155-157 paraphrases the action's own warning that '*' is unsafe on public repos — a warning emitted by the very code path that consumes `allowed_bots`, indicating the author read the pinned implementation. The mechanical premise (Actions only warns on unknown `with:` keys, it does not fail) is accurate, but the condition the finding depends on most likely does not hold, so no defect is present as written; severity would be major if the input truly were absent, since the fix loop would silently never run.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

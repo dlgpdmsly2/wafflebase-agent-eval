@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-review-panel.yml::`allowed_bots` hardcodes the bot login \"yorkie-agent\" with nothing tying it to the app actually configured via agent_app_id; if the slug differs the allow-list silently fails to match and every fix run still aborts",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The supplied files confirm the mechanics of the claim: `allowed_bots: \"yorkie-agent[bot],yorkie-agent\"` is a literal string (agent-review-panel.yml ~line 413, agent-iterate-ci.yml ~line 160) while the App identity comes solely from `secrets.AGENT_APP_ID` / `secrets.AGENT_APP_PRIVATE_KEY` in the `Generate GitHub App token` steps, and the design doc (harness-engineering.md, threat-model section) speaks generically of \"the Claude GitHub App\" / \"the write-capable App token\" without pinning a slug. None of the other supplied workflow files (agent-implement.yml, agent-review-reply.yml) or scripts reference `yorkie-agent`, so nothing in the visible tree asserts or validates that the installed App's slug matches the allow-list; `actions/create-github-app-token` does expose an `app-slug` output that would make this derived. The defect is therefore real as a brittle, unverified coupling — but it is contingent (it only bites when the deployed App's slug differs) and fails safe rather than dangerously: the fix job errors and the newly added `needs.fix.result == 'failure'` branch of `stalled` pages a human instead of the loop silently proceeding. I could not grep the actual repo (no checkout) or see the withheld task doc, so I cannot confirm the repo-wide grep claim or what App the maintainer actually installed, hence medium confidence.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

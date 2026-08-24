@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/editor.ts::read-only notes mounts are enforced only at the view layer (`editorview.editable`), which the new undo gating treats as a write-permission check; keymap-driven commands can still dispatch changes that `notesync` pushes into the crdt for a viewer-role share link.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "editor.ts sets only `EditorView.editable.of(!readOnly)` and never `EditorState.readOnly`; per CodeMirror's documented semantics, `editable: false` removes contenteditable but does not stop keymap-driven or programmatic dispatch. `keymapExt()` binds `indentWithTab` unconditionally (no readOnly branch), and `indentMore` bails only on `state.readOnly`, so a Tab-driven `input.indent` transaction would flow through `note-sync.ts` update() (which matches 'input') into `YorkieNoteStore.editText`'s `doc.update` — and the server backstop in yorkie-auth.controller.ts defaults to shadow mode (`YORKIE_AUTH_WEBHOOK_ENFORCE !== 'true'` returns allow). The new `route()`/historyKeymap comments do treat `EditorView.editable` as a write-permission test, as claimed. I mark severity minor rather than higher because shared viewers are forced into `viewMode=\"view\"`, which hides the editor pane (`display: none`), making the path hard to reach without devtools, and the `editable`-only pattern predates this diff; I could not read @codemirror/commands or verify contentDOM focusability in a read-only mount, hence medium confidence.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

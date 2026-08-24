@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.dto.ts::ssrf: fully user-controlled `host`/`port` are dialed by the server and connection errors are reflected verbatim, allowing internal port/service probing and unix-socket access to the app's own database",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Confirmed in the supplied files: datasource.dto.ts validates `host` only as `@IsString() @Length(1,253)` and `port` as `@IsInt() @Min(1) @Max(65535)` with no allow-list and no rejection of loopback/RFC1918/link-local or a leading `/` (pg treats such a host as a Unix-socket path); createClient() in datasource.service.ts feeds these straight into `new Client(...)`. testConnection() returns `{ success: false, error: (error as Error).message }` and executeQuery() rethrows `pgError.message`, giving exactly the ECONNREFUSED/timeout/SSL-negotiation oracle the claim describes; datasource.controller.ts gates this behind JwtAuthGuard + assertMember, so any authenticated workspace member can drive it. Caveats on weight, not correctness: this is pre-existing code that the diff does not touch (the diff only adds the type parser, SET TimeZone/DateStyle, and tests), and reaching the app's own Postgres additionally requires local trust/peer auth or guessed credentials — though the internal port-probing oracle works regardless.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

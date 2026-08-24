@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/editor.ts::vim `u` / `<c-r>` routing to the store history is untested",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The claim is about coverage, and the supplied test files at this commit bear it out: packages/notes/src/view/editor.ts:41-59 adds `routeVimHistoryToStore()` (global patch of `CodeMirror.commands.undo/redo`, gated on `noteStoreFacet` + `EditorView.editable`), but editor.test.ts only adds default-keymap tests ('routes undo/redo through the store', 'binds Mod-z / Mod-Shift-z', 'leaves history unbound on a read-only mount') plus the pre-existing vim test that merely calls `setKeymap('vim')` and asserts `getKeymap()`/`getText()` — no `u`/`<C-r>` press, no assertion that the store's undo ran, no fallback-path coverage. notes-undo-integration.test.ts and note-sync.test.ts likewise never touch vim. Since basicSetup's `history`/`historyKeymap` are now false, a regression in this routing would make vim undo a silent no-op with all tests still green, though the shipped code itself appears functionally correct, so the impact is a coverage gap rather than a live bug.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::no lower bound on `issuedat`: an epoch-zero / far-past timestamp silently drops the edit",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied source: `yorkie-event.controller.ts` clamps only the upper bound (`Math.min(issuedMs, now)`) and only special-cases `NaN`, so a parseable epoch-zero or Go-zero `issuedAt` yields an `at` far in the past; `DocumentService.touchUpdatedAt`'s `where: { id, updatedAt: { lt: at } }` then matches no rows and the discarded `count` plus the unconditional `{ ok: true }` make the drop silent. The claimed inconsistency is also accurate — `parseTimestamp` in `yorkie-admin.service.ts` rejects `ms <= 0` as Yorkie's \"unset\" value, so the codebase itself assumes that value can arrive. I could not verify from the Yorkie side whether the event webhook ever emits an unset `issuedAt`, so this may be defensive hardening rather than an observed failure; impact per occurrence is one missed `updatedAt` advance (self-healing on the next valid event), hence minor, though it would be major if Yorkie systematically sent zero timestamps.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

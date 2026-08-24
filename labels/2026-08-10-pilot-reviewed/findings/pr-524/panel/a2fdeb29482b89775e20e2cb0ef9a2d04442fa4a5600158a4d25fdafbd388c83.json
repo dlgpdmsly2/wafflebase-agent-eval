@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::app token in the ci-fix job is minted with no permission scoping, then handed to the llm fixer this diff enables",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Confirmed in the supplied `agent-iterate-ci.yml`: the `Generate GitHub App token` step (~line 55-60, not 93 as claimed) passes only `app-id`/`private-key`, so the token inherits the installation's full permission set; the subsequent `actions/checkout` sets `token:` without `persist-credentials: false`, and the same token is handed to `claude-code-action` as `github_token` (~line 154, matching the diff hunk at 152) in a job that runs `pnpm install` and an unrestricted-`Bash` agent. The asymmetry is verifiable: the `fix` job in `agent-review-panel.yml` mints the same App token with `permission-contents/pull-requests/issues` and explicitly comments that it is \"used in a job that checks out and executes untrusted branch code,\" so the missing scoping here is a genuine least-privilege gap, and the diff's `allowed_bots` addition is indeed what lets the fixer step execute rather than abort on the bot-actor check. The claim's line numbers are all wrong for this revision and two cited comparison files (`agent-fix.yml`, `agent-review-on-demand.yml`) don't exist here, but the substance holds. I rate it minor rather than major because the incremental capability over the contents/PR write the job already requires depends on the App installation's granted permissions, which are not visible in the repo, and the pipeline is inert unless `AGENT_PIPELINE_ENABLED` is set; note also that the unscoped mint is pre-existing code the diff does not touch.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

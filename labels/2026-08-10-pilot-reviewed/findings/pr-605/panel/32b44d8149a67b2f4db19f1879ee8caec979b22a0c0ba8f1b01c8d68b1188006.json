@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/note-sync.ts::`notesync.update` now opens a real yorkie `doc.update()` on every doc-changed viewupdate, including purely remote ones and re-entrantly during yorkie's own event publish",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The mechanics are described correctly: note-sync.ts:61 calls store.batch() unconditionally on any docChanged ViewUpdate, and YorkieNoteStore.batch (yorkie-note-store.ts, batch()) always opens doc.update(), including re-entrantly during Yorkie's synchronous event publish. But the claimed defect doesn't materialize: an empty doc.update creates no change (context.hasChange() false), so nothing is pushed to the undo stack, the redo branch is not cleared, and no write/ops reach the server — contradicting \"every incoming peer keystroke now opens a write transaction\". The re-entrancy is precisely what notes-undo-integration.test.ts covers (\"does not push the undo back as a new change\" asserts depthAfterEdit-1 and doc.history.canRedo() === true; \"applies a peer edit without recording a local undo unit\" asserts the undo stack is unchanged), and the SDK's documented refusal is undo-during-update, not update-during-publish. The only genuine throw path (DocumentStatus.Removed) is a narrow edge since applyChangePack publishes remote-change events before applying the removed status. Confidence is medium because no checkout was available to read @yorkie-js/sdk 0.7.13's Document.update/undo directly.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

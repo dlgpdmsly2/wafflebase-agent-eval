@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "docs/design/backend.md::canonical backend design doc not updated for this data-model/api change; a parallel top-level doc was added instead. contributing.md:55-59 says architecture/data-model changes belong in the existing area doc (\"update the existing doc when evolving an area instead of creating parallel files\"). backend.md is the canonical backend doc and is now stale in four places: the `document` er entity (backend.md:315-320) and its field list (:355-359) still show `createdat` only, with no `updatedat`; the module architecture table (:70) still describes documentmodule without the yorkie event controller/signature guard; the api reference has no entry for `post /internal/yorkie/events` (:74-176); and the rate limiting table's `@skipthrottle()` row (:287) omits the new exempt webhook route. the new `docs/design/documents-last-modified.md` duplicates the schema/endpoint description rather than folding into backend.md (also placed top-level, not `docs/design/<area>/<topic>.md` as contributing:56 prescribes).",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "nit",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied docs/design/backend.md: the Document ER entity and its bullet list stop at `createdAt` (no `updatedAt`), the Module Architecture row for DocumentModule lists only DocumentService/UserService/PrismaService despite document.module.ts now registering YorkieEventController and YorkieSignatureGuard, the API Reference has no `POST /internal/yorkie/events` entry, and the Rate Limiting `@SkipThrottle()` row lists only /health and /health/ready despite the new @SkipThrottle-decorated webhook controller. CONTRIBUTING.md (\"Update the existing doc when evolving an area instead of creating parallel files\") and the design README's fold-into-canonical-doc policy do apply, so the core claim is correct. The sub-claim about top-level placement is wrong: the design README's \"Common\" section is a flat top-level list (frontend.md, sharing.md, rest-api.md), so the new doc sits where comparable cross-cutting docs sit; also backend.md's Document entity was already stale before this PR (missing workspaceId, type, fileId), so this is continued drift rather than newly introduced. Impact is documentation-only, hence nit.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::ssrf / internal port scanning: datasource host and port are unvalidated and the backend dials them on demand",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The code facts in the claim check out against the supplied files: `createClient` (packages/backend/src/datasource/datasource.service.ts, the method the diff edits to add `types`) passes `ds.host`/`ds.port` straight into `new Client({...})` with no allow-list or private/link-local filtering; `CreateDataSourceDto` (datasource.dto.ts:13-25) only applies `@Length(1,253)` to `host` and `@Min(1)/@Max(65535)` to `port`; and `testConnection` returns `{ success: false, error: (error as Error).message }` verbatim, which does give an ECONNREFUSED-vs-timeout oracle usable for internal port probing by any authenticated workspace member (controller `POST /datasources/:id/test` only calls `assertMember`). So the described condition genuinely exists in the code as written. Caveats I weighed: it is pre-existing (the diff only adds a type-parser option to the same client config, which the claim concedes), exfiltration is limited by the fact that pg speaks its own protocol, and permitting arbitrary internal hosts is partly inherent to a \"connect to your own Postgres\" feature — but the network-mapping oracle and lack of any egress policy are still real.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

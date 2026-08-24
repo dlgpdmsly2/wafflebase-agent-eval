@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/documentation/sheets/datasources.md::new datasources doc gives a false security assurance: it claims collaborators must \"run their own connection\", but any workspace member can execute queries with the creator's stored credentials",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:28"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The new doc's final bullet (packages/documentation/sheets/datasources.md, \"Good to know\" — \"the connection belongs to the person who created it… collaborators … run their own connection to execute it\") is contradicted by the code: datasource.controller.ts `@Post('datasources/:id/query')` only calls `workspaceService.assertMember(ds.workspaceId, userId)` with no `authorID` check, and datasource.service.ts `executeQuery` → `createClient` connects with `decrypt(ds.password)`, so any workspace member can run arbitrary SELECTs with the creator's stored DB credentials (exposed to the UI via `executeDataSourceQuery` in frontend/src/api/datasources.ts). The claim is therefore correct about the code as written. I rate it minor rather than higher because the defect is a documentation sentence, not a code change in this PR, and the phrase \"run their own connection\" is ambiguous enough that it could be read as \"each execution opens its own pg Client\" (which createClient literally does); still, alongside password masking in findAllByWorkspace, the natural reading falsely implies teammates cannot use the creator's credentials.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

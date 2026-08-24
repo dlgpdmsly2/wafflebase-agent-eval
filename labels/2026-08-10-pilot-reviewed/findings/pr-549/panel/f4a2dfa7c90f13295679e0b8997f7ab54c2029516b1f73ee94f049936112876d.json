@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` replaces markdown-it's linear native `.trim()` with a backtracking regex that is quadratic on long whitespace runs (redos / stored client-side dos)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The regex at list-empty-bullet-plugin.ts:19-20, applied with `String.replace` at line 22, contains the classic quadratic-trim alternative `[ws]+$`: an unanchored greedy single-char-class loop followed by an end assertion, which in V8 restarts and fully backtracks at every offset of a non-terminal whitespace run (O(k^2)) — the same shape as the known `trim`/`trim-newlines` ReDoS advisories. It is reached from `lheadingRule`'s `asciiTrim(state.getLines(...))` (~line 133) on unbounded paragraph text, and preview.ts:`render()` plus editor.ts's `docChanged` updateListener re-run `md.render()` on the whole document for every local keystroke and every remote Yorkie sync, so a stored note can pin a collaborator's main thread. Qualifications that lower severity rather than negate the finding: the path requires an actual setext underline to be recognized, needs tens of thousands of contiguous whitespace chars on one line, and the author must already have write access; I also could not verify (no checkout) that upstream markdown-it uses linear `.trim()` here, though that affects only the \"introduced by this change\" framing, not the quadratic behavior of the code as written.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

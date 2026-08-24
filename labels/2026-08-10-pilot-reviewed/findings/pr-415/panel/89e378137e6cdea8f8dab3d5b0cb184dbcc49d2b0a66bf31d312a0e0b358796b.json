@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::duplicate e2e test: two `it('queries real tables with rows')` blocks now exist",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied post-change copy of packages/backend/test/database.e2e-spec.ts contains two sibling `it('queries real tables with rows', ...)` blocks inside the same `describe('DataSourceService')`: the newly added one (right after the ownership test, asserting via `toCell(...)` and `String(tablesResult.rows[0].table_name)`) and the original one further down (asserting raw shapes `expect(dataResult.rows).toEqual([{ id: 1, name: 'Widget', price: '9.99' }, ...])`). The unified diff corroborates this: the trailing context line after the new type-coverage test is the unchanged `it('queries real tables with rows', async () => {`, so the rewrite was appended rather than substituted. Both copies create/TRUNCATE/DROP the same `_test_products` table, duplicating fixture and DDL work; this is test-hygiene noise rather than a production defect, hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

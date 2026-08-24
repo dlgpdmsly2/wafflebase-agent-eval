@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::timezone fix misses date/time array oids — timestamp[]/date[] are still parsed into js dates shifted by the node runtime timezone",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "datasource.service.ts:20-24 lists only the scalar OIDs DATE/TIMESTAMP/TIMESTAMPTZ, and datasourceTypeParser (lines 33-36) delegates all other OIDs to pg-types' default parser; pg-types registers the array OIDs 1115/1182/1185 to an array-of-date parser that uses the same timezone-sensitive parseDate, so timestamp[]/date[] still yield JS Dates and toCell (readonly.ts:31-35) JSON.stringifies them into shifted ISO strings. The added `SET TimeZone = 'UTC'` does not help, since the local-time interpretation of naive timestamps happens in the Node parser, not in Postgres output. The claim's extension to composite/row and range types is wrong — pg-types leaves those as raw text — but that does not undermine the array-OID gap. Confidence is medium because no checkout was mounted, so the pg-types array parser registration is from library knowledge rather than source I read; impact is limited to array-typed date/time columns plus an inconsistency with the scalar rendering.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

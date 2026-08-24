@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::`isemptybulletline` also accepts `*` and `+`, so a lone `*`/`+` after a paragraph silently loses the literal character",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Verified in the supplied `list-empty-bullet-plugin.ts`: `isEmptyBulletLine` (line ~39) accepts 0x2a and 0x2b in addition to DASH, and `wrappedList` returns true for any of them in silent/paragraph mode, bypassing upstream markdown-it's `isTerminatingParagraph` empty-item guard; the non-silent pass then builds `<ul><li></li></ul>`. The replaced `lheading` only ever special-cases `marker === DASH && runLength === 1`, and upstream lheading only handles `-`/`=`, so `*`/`+` are indeed unrelated to the #517 setext ambiguity — this is genuine scope creep, undocumented in notes.md (\"a lone single `-`\") and untested in preview.test.ts. I rate it minor rather than major because the resulting render (an empty bullet) is the same intuitive outcome the plugin deliberately adopts for `-`, so the \"lost\" `*` becomes a bullet marker rather than vanishing entirely; confidence is medium because I could not execute markdown-it and relied on knowledge of its list-rule internals.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

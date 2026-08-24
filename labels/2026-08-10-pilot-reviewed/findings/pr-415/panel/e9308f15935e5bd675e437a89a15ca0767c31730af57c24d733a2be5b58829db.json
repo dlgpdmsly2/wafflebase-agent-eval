@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::datasource tls connections disable certificate verification (`rejectunauthorized: false`)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied `packages/backend/src/datasource/datasource.service.ts` `createClient` builds every pg Client with `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (the line immediately above the newly added `types: { getTypeParser: datasourceTypeParser }`), and the password on the preceding line is `decrypt(ds.password)`. So the factual claim is accurate: when a user enables SSL, the TLS handshake accepts any certificate, so a network/DNS attacker between the backend and the user-supplied `ds.host` can MITM, capture plaintext DB credentials, and return forged rows. The claim itself concedes this is a pre-existing line that the diff merely edits around, which affects scope but not correctness. Severity is major rather than critical because exploitation requires network-position/DNS control and the host/credentials are attacker-supplied only in the sense that the datasource owner chooses them.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

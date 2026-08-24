@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/sql-validator.ts::sql read-only guard is bypassable: comment stripping ignores string literals, letting a crafted query smuggle extra statements into the interpolated wrapper in executequery",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "critical",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied sources: sql-validator.ts:29-31 strips `--...` and `/*...*/` with plain regexes before any quote handling, and the only string-literal handling (`replace(/'[^']*'/g,'')`, ~line 53) happens afterwards, so a `--` inside a literal erases the rest of the query from the validator's view. Hand-tracing the reviewer's payload `SELECT '--' ) AS q ; DROP TABLE t ; SELECT 1 FROM (SELECT 1` gives `withoutComments === \"SELECT '\"`, which passes the first-token, forbidden-keyword, and single-statement checks; datasource.service.ts then interpolates it into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001`, and `client.query(text)` with no values uses pg's simple query protocol, which executes the three `;`-separated statements including the DDL under the datasource's decrypted credentials. Two caveats: the flaw is pre-existing (this diff only adds pg type parsers and `SET TimeZone`/`SET DateStyle`, it does not touch the validator), and exploitation requires a workspace member who already has query access — but the read-only guard is the sole boundary being defeated, hence critical.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::array date/time oids are not covered by raw_text_oids, so timestamp[]/date[]/timestamptz[] columns are still parsed into js dates using the node runtime timezone",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "RAW_TEXT_OIDS at packages/backend/src/datasource/datasource.service.ts:20-24 contains only the scalar OIDs types.builtins.DATE (1082), TIMESTAMP (1114) and TIMESTAMPTZ (1184); pg-types' builtins map has no array entries, so the array OIDs (_timestamp 1115, _date 1182, _timestamptz 1185) fall through to getDefaultParser at line 35, which is pg-types' parseDateArray and yields JS `Date` elements. For `timestamp without time zone`, pg-types interprets the naive text in the Node process timezone, and toCell (readonly.ts:31 → JSON.stringify → Date#toJSON, UTC ISO) then renders the shifted instant — the exact defect the comment on lines 18-19 claims to remove, plus a rendering inconsistency versus the raw-text scalars (SET TimeZone='UTC' only affects Postgres' text output for tz-aware types, not the client-side Date construction for naive timestamps). I rated it minor rather than major because it only affects array-typed date/time columns, which are an uncommon shape in query results, and the change is still a net improvement for the scalar cases.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

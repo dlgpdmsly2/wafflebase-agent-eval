@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/api/v1/documents.controller.ts::mass assignment into the `documentservice.updatedocument` sink touched by this diff: the v1 api patch forwards the raw request body as the prisma update payload, allowing arbitrary scalar columns (`workspaceid`, `authorid`, `fileid`) to be set",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/backend/src/api/v1/documents.controller.ts (Patch handler, `@Body() body: { title?: string }` → `data: body`): the inline type literal makes the runtime metatype `Object`, which Nest's ValidationPipe skips, so `whitelist`/`forbidNonWhitelisted` from main.ts strip nothing, and the raw body reaches `DocumentService.updateDocument` → `prisma.document.update({ data: { ...data, updatedAt } })` (document.service.ts:88-102). Prisma's `update.data` is XOR<checked, unchecked>, so scalar FKs declared in schema.prisma (`workspaceId`, `authorID`, `fileId`, `type`) are accepted field names, letting a workspace-scoped caller retarget tenancy/ownership or repoint `fileId` at another tenant's blob, which document-file.controller.ts then serves after checking only the document's own workspace membership. The contrast with the explicit allow-list in document.controller.ts updateDocument is accurate; the claim correctly notes it is pre-existing rather than introduced here, and the fileId-exfil variant is bounded by needing a UUID blob id, which is why I rate it major rather than critical.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

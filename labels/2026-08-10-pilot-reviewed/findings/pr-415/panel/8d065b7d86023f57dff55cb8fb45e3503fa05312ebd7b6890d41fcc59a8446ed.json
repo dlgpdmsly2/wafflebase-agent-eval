@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/test/database.e2e-spec.ts::duplicated test `queries real tables with rows` — the diff adds a second copy with weaker assertions while the original remains",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "packages/backend/test/database.e2e-spec.ts contains two `it('queries real tables with rows', ...)` blocks inside the same `describe('DataSourceService')`: the newly added one (asserting via `toCell`/`String`) and the untouched original later in the file (asserting `dataResult.rows` toEqual `[{ id: 1, name: 'Widget', price: '9.99' }, ...]`). Both create/truncate/insert into and drop `_test_products`, so Jest runs the same fixture twice under an identical name — exactly what the claim describes, and the diff shows the original retained verbatim below the new copy. The new copy's `String()`/`toCell` coercion is looser than the original's structural `toEqual`, so it adds no coverage. Impact is test hygiene/duplicate reporting only (the older assertions still pass, since only DATE/TIMESTAMP/TIMESTAMPTZ parsers were overridden, leaving int4 a number), hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

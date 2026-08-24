@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/image/image.controller.ts::`delete /images/:id` is authenticated but performs no ownership/workspace authorization — any signed-in user who knows an image url can delete another workspace's image (idor)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:28"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied image.controller.ts DELETE handler (the `@Delete(':id')` block, ~lines 55-63) guards only with `JwtAuthGuard`, validates the id against `VALID_IMAGE_ID_PATTERN`, then calls `imageService.delete(id)`, which issues a bare `DeleteObjectCommand` on the shared bucket (image.service.ts `delete`) with no owner/workspace check — so authorization is authentication-only, exactly as claimed. The legacy flat namespace is real too: `docsImageUploader` in packages/frontend/src/app/docs/export-utils.ts POSTs to `${BACKEND_BASE}/images` with no `keyPrefix`, so frontend-uploaded doc/slide images live at bare `<uuid>.<ext>` keys, and those ids are visible in every rendered `src`, meaning any signed-in user (including a read-only collaborator) can delete them. Scope caveat: the id pattern means workspace-prefixed keys written by the v1 controller (`{workspaceId}/{id}`) can't be reached through this route, and the defect is pre-existing rather than introduced by this diff — the diff only touches rest-api.md prose and slides export — so it is an accurate observation about existing code rather than a regression in the change under review; I could not independently confirm `VALID_IMAGE_ID_PATTERN` since image.constants.ts was not supplied, but the flat-key delete path is visible in the excerpts.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

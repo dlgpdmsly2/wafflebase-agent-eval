@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/document.service.ts::`touchupdatedat`'s monotonic/idempotent guard (`updatedat: { lt: at }`) is untested",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The whole diff is given, and the only new/modified test files are document.service.spec.ts (which mocks just `{ document: { update } }` and exercises `updateDocument`), yorkie-event.controller.spec.ts (which mocks `touchUpdatedAt` itself), and yorkie-doc-key.spec.ts. Nothing constructs a fake `document.updateMany` or asserts the `where: { id, updatedAt: { lt: at } }` predicate in document.service.ts:122, so inverting or dropping the monotonic guard would not fail any test — the PR's own todo file even states \"DB-backed e2e for the advance-only path deferred\". The claim is therefore accurate as a test-coverage gap; the production code itself looks correct, so impact is limited to future regression risk on the at-least-once/out-of-order webhook safety story.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

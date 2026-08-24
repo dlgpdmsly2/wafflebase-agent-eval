@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::webhook accepts an epoch-zero / go zero-time `issuedat` and turns it into a permanent no-op instead of falling back to now()",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified at yorkie-event.controller.ts:55-58: only `Number.isNaN(issuedMs)` falls back to `now()`, so a parseable epoch-zero (`1970-01-01T00:00:00Z` → 0) or Go zero-time (`0001-01-01T00:00:00Z` → negative) passes through `Math.min` intact. `DocumentService.touchUpdatedAt` then filters `where: { updatedAt: { lt: at } }`, which can never match because the column defaults to `now()` / is backfilled to `createdAt`, so the event is silently dropped and 200-swallowed. The claimed sibling guard is real too: `yorkie-admin.service.ts` `parseTimestamp` rejects `ms <= 0` as Yorkie's \"unset\", and `yorkie-event.controller.spec.ts` has no zero-timestamp case. I could not confirm from this tree whether Yorkie 0.7.12 actually emits a zero `issuedAt`, so the trigger likelihood (and hence blast radius) is unverified, but the missing guard and its consequence are exactly as described.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

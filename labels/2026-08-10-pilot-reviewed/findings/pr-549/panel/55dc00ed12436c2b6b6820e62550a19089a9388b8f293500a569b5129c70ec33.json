@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/preview.test.ts::no test for the top-level lone-dash case (`text\\n-`), the broadest behavior change of the lheading rewrite",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The added tests in preview.test.ts (lines ~151-195) cover exactly five cases: `- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---`, and `- 1\\n  - 2` — none of them a top-level lone `-` (e.g. `Heading\\n-`). Meanwhile list-empty-bullet-plugin.ts's `isLoneDash = marker === DASH && runLength === 1` has no indent/list-context condition, so an ordinary top-level setext h2 written with a single dash stops being a heading everywhere in the notes preview; the wrapped `list` rule (silent + parentType==='paragraph' + empty bullet) will also terminate the paragraph at top level, so the output shape genuinely changes and is unpinned. The PR's own task doc in this diff lists \"top-level lone dash\" among the intended unit tests, confirming the gap is an omission rather than a deliberate scoping choice.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

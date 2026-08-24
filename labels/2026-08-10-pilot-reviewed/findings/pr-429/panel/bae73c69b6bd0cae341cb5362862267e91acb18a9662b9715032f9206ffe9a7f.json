@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::new `exportslidespptxanddownload` has no test anywhere",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:28"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "No checkout was mounted, so I verified against the supplied listings. The complete `packages/frontend/src/` listing (270 entries) shows the only colocated test under `src/app/slides/` is `theme-fonts.test.ts`, and the `packages/frontend/tests/app/slides/` entries are enumerated alphabetically end-to-end (border-picker-close … zoom-controller) with no `pptx-actions`/export test — the truncation in that listing occurs later, in `tests/visual/baselines`. So the new `exportSlidesPptxAndDownload` (pptx-actions.ts:85-101) — its `fetchImage` blob→`{bytes,mime}` adaptation, the `image/png` mime fallback, the PPTX Blob type and `safeFilename(title,\"pptx\")` — is indeed untested; the existing coverage (`packages/slides/test/export/pptx/*`, `packages/cli/test/slides-export.test.ts`) exercises `exportPptx` and the CLI, not this adapter. I rate it minor rather than higher because it is ~10 lines of browser-download glue that mirrors the equally untested `slides/pdf-actions.ts`/`docs/pdf-actions.ts`, i.e. consistent with the repo's existing convention, and the underlying exporter is heavily covered.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

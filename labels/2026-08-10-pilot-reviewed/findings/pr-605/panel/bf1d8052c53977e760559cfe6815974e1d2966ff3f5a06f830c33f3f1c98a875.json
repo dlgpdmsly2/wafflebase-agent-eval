@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/note-sync.ts::note-sync now opens a yorkie `doc.update` on every docchanged viewupdate, including read-only mounts reacting to remote changes",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "note-sync.ts:56-61 does wrap the whole loop in `store.batch()` before any transaction filtering, and `YorkieNoteStore.batch` (yorkie-note-store.ts, top-level branch) unconditionally calls `this.doc.update(...)`, so a read-only mount reacting to a peer edit does enter a `doc.update`. But the consequence the claim draws is wrong: an empty `doc.update` records no change, pushes nothing, and never reaches the auth webhook — the PR's own tests pin this (\"records nothing for a batch that edits nothing\"; \"applies a peer edit without recording a local undo unit\" asserts the undo stack is unchanged). The premise that read-only mounts previously never reached `doc.update` is also incorrect, since `remote-selection.ts` calls `store.setLocalSelection` (which opens a `doc.update` with presence) on every ViewUpdate irrespective of editability. What is left is a negligible per-remote-change context/clone cost; I could not read the vendored Yorkie SDK to confirm `hasChange()` semantics first-hand, hence medium confidence.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::user sql is string-interpolated into the executed statement and gated only by a keyword blacklist, permitting server file reads / ssrf / non-blacklisted ddl-free abuse",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The code matches the claim: `datasource.service.ts:148` builds `SELECT * FROM (${dto.query}) AS _q LIMIT ...` by raw string interpolation, and the only gate is `validateSelectQuery` (sql-validator.ts), which just checks the first token is SELECT/WITH, rejects a fixed `\\b`-delimited keyword list (INSERT/UPDATE/DELETE/DROP/ALTER/CREATE/TRUNCATE/GRANT/REVOKE/EXEC/EXECUTE), and rejects multiple statements. None of those checks block `SELECT pg_read_file(...)`, `SELECT pg_ls_dir('/')`, `SELECT lo_import(...)`, `dblink(...)`, or `pg_terminate_backend(...)`, all of which are single SELECT statements that survive the subquery wrapping; the controller only asserts workspace membership (datasource.controller.ts POST /datasources/:id/query), so any member can run them against an admin-configured connection. Caveats that bound impact: the dangerous functions require superuser/`pg_read_server_files` privileges or the dblink extension on the target DB, and this is pre-existing behavior the diff merely extends (docs/design/sheets/datasource.md already lists it as a known risk with \"consider a read-only role\"). The claim is nonetheless accurate about the code as written.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

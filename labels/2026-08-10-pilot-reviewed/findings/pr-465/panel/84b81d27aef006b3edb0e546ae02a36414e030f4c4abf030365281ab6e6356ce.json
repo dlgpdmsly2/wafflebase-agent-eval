@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/main.ts::rawbody capture keyed on an exact-string url match; any path variation (trailing slash, differing case, future global prefix) leaves `rawbody` undefined and the guard 401s every webhook",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "packages/backend/src/main.ts:51 does a literal `req.url?.split('?',1)[0] === '/internal/yorkie/events'` compare, and the constant is hand-duplicated from `@Controller('internal/yorkie')`/`@Post('events')` with no linkage. Express defaults are non-strict and case-insensitive routing, so `POST /internal/yorkie/events/` (or a case variant) still reaches the controller but skips the rawBody capture, after which yorkie-signature.guard.ts:49 (`if (!header || !rawBody)`) throws UnauthorizedException on every delivery — a silent 401/retry loop where `updatedAt` never advances. The claim's \"future global prefix\" variant is speculative (the supplied main.ts has no setGlobalPrefix), and the trailing-slash case requires an operator registering a URL that differs from the documented ops command, so I score it minor rather than major; it is real brittleness, untested, with a silent total-feature-failure mode.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

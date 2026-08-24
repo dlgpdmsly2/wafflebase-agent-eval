@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/main.ts::rawbody capture keyed on an exact path string; any url variant (trailing slash, global prefix, proxy rewrite) makes every webhook 401 forever",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in the supplied packages/backend/src/main.ts: the verify hook captures rawBody only on exact, case-sensitive equality with '/internal/yorkie/events', while Express's default non-strict and case-insensitive routing still dispatches '/internal/yorkie/events/' or '/Internal/Yorkie/Events' to YorkieEventController.handleEvent — so rawBody is undefined and yorkie-signature.guard.ts:49-52 throws UnauthorizedException('Missing webhook signature') with no distinguishing log, exactly as claimed. The claim's global-prefix variant is hypothetical (the supplied bootstrap has no setGlobalPrefix), and the documented ops URL in docs/design/documents-last-modified.md matches byte-exactly, so the happy path works; a trailing slash entered by an operator is the realistic trigger. Impact when triggered is total-but-silent webhook rejection degrading list ordering to creation order plus misleading logs, not data loss, and it requires a misconfiguration, so I rate it minor rather than major. I could not execute the code (no checkout mounted); the Express strict/case-sensitive routing defaults are relied on from knowledge, but the file contents themselves were read directly.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

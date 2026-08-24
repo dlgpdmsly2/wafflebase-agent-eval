@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::createclient disables tls certificate verification (`rejectunauthorized: false`) whenever sslenabled is set, so \"ssl\" connections are mitm-able",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied copy of packages/backend/src/datasource/datasource.service.ts confirms `createClient` builds the pg Client with `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` immediately above the newly added `types: { getTypeParser: datasourceTypeParser }` line, and `password: decrypt(ds.password)` is sent on that connection. With `rejectUnauthorized: false` the driver encrypts but does not authenticate the server certificate, so an active MITM presenting any self-signed cert can capture the decrypted datasource credentials and query traffic; no CA/`sslmode`/verify option is plumbed through the DTOs (datasource.dto.ts only has `sslEnabled: boolean`) or the Prisma model, so the claim's \"no verify option anywhere\" is also accurate. The one caveat is scope: this line is pre-existing and untouched by the diff — the PR only adds the `types` option to the same object literal — so it is a valid observation about the code as written but not a regression introduced here.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

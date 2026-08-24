@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/notes/yorkie-note-store.ts::setlocalselection's new fold-into-open-batch path is untested",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The new fold-into-ambient-batch branch in `yorkie-note-store.ts` setLocalSelection (`if (this.activeRoot && this.activePresence) publish(...)`) is not exercised by any supplied test: yorkie-note-store.test.ts never calls setLocalSelection, and in notes-undo-integration.test.ts the remote-selection plugin's setLocalSelection call happens in its own plugin update(), after noteSync's update() has already opened and closed store.batch(), so activeRoot/activePresence are null (and jsdom's unfocused view takes the `head === null` early return). The notes-package tests that do call setLocalSelection use stub/MemNoteStore implementations, which cannot cover the Yorkie path. Impact is limited because nothing inside batch() currently publishes selection, so the branch is defensive/near-unreachable rather than a live defect — hence minor.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

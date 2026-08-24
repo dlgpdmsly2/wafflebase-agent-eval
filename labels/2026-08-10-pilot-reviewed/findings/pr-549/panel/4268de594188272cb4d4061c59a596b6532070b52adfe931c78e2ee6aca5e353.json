@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` regex is quadratic (redos) on attacker-controlled note content, replacing markdown-it's linear native `.trim()`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:5"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in packages/notes/src/view/list-empty-bullet-plugin.ts:19-23 that the new `ASCII_TRIM_RE` uses the `[ws]+$` alternative with the `g` flag, and around line 134 `asciiTrim(state.getLines(...))` is applied to the whole paragraph body whenever the replaced `lheading` rule accepts an underline (`---`/`===` are still accepted; only a lone `-` is rejected). That is the known polynomial-ReDoS shape — identical to the trim-newlines advisory `/^[\\r\\n]+|[\\r\\n]+$/g`, CVE-2021-33623 — since `replace` with `/g` retries at every index of a whitespace run and the greedy class loop backtracks one iteration per failed `$` test, giving O(n^2); upstream markdown-it uses native `.trim()` at this spot, so the quadratic term is introduced by this diff. It is reachable from note content any workspace member can save, and preview.ts renders synchronously via `this.el.innerHTML = md.render(...)`, so a crafted note can wedge collaborators' tabs. I could not execute markdown-it/V8 here to time the hang, so only the exploit magnitude (not the defect itself) is soft.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

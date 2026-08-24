@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::pptx export aborts entirely when a single image fetch fails, unlike the pdf path which degrades gracefully",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:28"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied sources confirm every link in the chain: `exportSlidesPptxAndDownload` in packages/frontend/src/app/slides/pptx-actions.ts passes an un-guarded `fetchImage` that calls `docsImageFetcher`, which throws on any non-ok response (packages/frontend/src/app/docs/export-utils.ts, `Image fetch failed: ...`); `exportPptx` awaits `opts.fetchImage(src)` in the Step-2 pre-scan loop of packages/slides/src/export/pptx/index.ts with no try/catch, so the rejection propagates out and `runExport` in slides-export-button.tsx surfaces \"Export failed\". The PDF sibling does degrade: `resolveDeckImages` in packages/slides/src/export/pdf.ts wraps each `fetcher(src)` in try/catch and substitutes `BLANK_PNG`, so the described inconsistency is real. I rate it minor rather than major because it only triggers for a deleted/forbidden image and fails loudly with a message rather than producing a corrupt file — but the all-or-nothing abort for one bad image is a genuine, avoidable UX regression relative to the PDF path.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

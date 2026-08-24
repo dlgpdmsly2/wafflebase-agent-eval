@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-review-panel.yml::the max_review_rounds bound the diff now relies on is erasable by the very agent it constrains (force-push resets it; the paging comment and label are deletable)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:9"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "Read the supplied agent-review-panel.yml: the guard labelled \"Unforgeable round bound\" derives failedRounds from `pulls.listCommits` + `checks.listForRef` per commit SHA, so the counter is keyed to the SHAs currently on the PR; a rebase/squash force-push produces new SHAs and the old failed `agent-review-*` check runs stop being counted, resetting failedRounds to 0. The fix job holds contents:write and mints an App token with permission-contents: write and permission-issues: write, and the only thing preventing a force-push is prompt text (\"Append a follow-up commit (do NOT force-push)\"), while the `<!-- agent-review-paged -->` latch is an issue comment the same issues:write token can delete — so neither the bound nor the latch is mechanically unforgeable, contrary to the in-file comment. Two supporting points I could not verify without a checkout: whether any ruleset protects `agent/**` (only main's protection is checked, in agent-implement.yml) and the reviewer's claim that the fix step previously always failed on the bot gate, so the \"newly load-bearing\" framing is plausible but unconfirmed. I rate it minor rather than higher because the normal loop (append-only commits) counts correctly, escape requires the agent to disobey the append-only instruction or delete its own paging comment, and the human approval/branch-protection merge gate is unaffected.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/sheets/src/store/readonly.ts::new exported `tocell` (and the readonlystore change that uses it) has no test in the sheets suite; its `date` branch is exercised nowhere",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The diff adds `toCell` at packages/sheets/src/store/readonly.ts:32, exports it from src/index.ts, and uses it in loadQueryResults (readonly.ts:73), but adds/modifies no test under packages/sheets/test — the supplied listing of that directory (55 entries) has no readonly test, and the only new usage is in packages/backend/test/database.e2e-spec.ts, which runs under `describeDb` (integration-helpers.ts: `describe.skip` unless RUN_DB_INTEGRATION_TESTS==='true'). The Date-branch point also checks out internally: RAW_TEXT_OIDS in datasource.service.ts:20-24 makes DATE/TIMESTAMP/TIMESTAMPTZ come back as raw strings, and the e2e type table asserts string values, so no test path passes a Date to toCell. Supporting inference: toCell changes behavior for Date (String → toISOString) and objects (\"[object Object]\" → JSON), yet no existing sheets test needed updating, implying none covered those values. Confidence is medium only because I have no checkout and could not inspect packages/sheets/test/store/store.test.ts, which was not supplied.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

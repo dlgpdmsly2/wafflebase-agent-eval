@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::task's verification criterion \"e2e: signed webhook advances `updatedat`; unsigned/bad-sig rejected\" is not delivered — the diff adds only unit specs (controller, guard, service, key parser) and no e2e coverage exercising the real http path with the `bodyparser.json({ verify })` raw-body capture. that path (raw-body scoping by url, guard wiring, module registration) is exactly what unit tests with hand-built contexts cannot confirm, and the repo has a postgres/yorkie integration lane plus existing backend e2e specs where it would live.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The diff of the todo file does list, under \"## Verification\", the bullet \"e2e: signed webhook advances `updatedAt`; unsigned/bad-sig rejected\", while the Tests checkbox earlier in the same file explicitly says \"(DB-backed e2e for the advance-only path deferred; covered by unit + monotonic SQL.)\" — an internal contradiction. The change adds only unit specs (yorkie-event.controller.spec.ts, yorkie-signature.guard.spec.ts, document.service.spec.ts, yorkie-doc-key.spec.ts); the supplied listing of packages/backend/test/ contains no new webhook e2e spec, so nothing exercises the real HTTP path (main.ts `bodyParser.json({ verify })` URL-scoped rawBody capture + guard/module wiring). The guard spec builds an ExecutionContext by hand with a fake `rawBody`, so it cannot validate that scoping; note the e2e helper `applyGlobalBootstrap` also does not replicate main.ts's body-parser wiring, which is precisely the drift such a test would catch. This is a documentation-overclaim / coverage-gap finding rather than a runtime bug, so I rate it minor.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

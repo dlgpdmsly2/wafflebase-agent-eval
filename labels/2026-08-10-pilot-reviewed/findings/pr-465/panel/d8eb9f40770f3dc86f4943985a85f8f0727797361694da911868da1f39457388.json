@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/main.ts::the rawbody capture wiring (path-scoped `verify` hook) has no test, and the guard spec mocks it away",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "At packages/backend/src/main.ts:48 the path-scoped `verify` hook is the sole producer of `req.rawBody`, yet no test exercises it: `yorkie-signature.guard.spec.ts` injects `rawBody` directly via `contextFor(...)`, and `yorkie-event.controller.spec.ts` constructs the controller directly, bypassing guard and body parser. No e2e spec for `/internal/yorkie/events` was added, and the untouched pre-existing e2e files cannot cover a route this PR introduces; `test/helpers/integration-helpers.ts` `applyGlobalBootstrap` claims to mirror `main.ts` but installs only the ValidationPipe, so the raw-body hook is absent from the e2e pipeline too. The claim is therefore accurate — a coverage gap where a drifted path constant or added global prefix would 401 every real webhook with all tests still green; it is a test-adequacy issue, not a defect in shipped behavior.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

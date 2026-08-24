@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::datasource tls connections disable certificate verification (`rejectunauthorized: false`), so a network attacker can mitm and capture the decrypted datasource credentials",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:11"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The code as supplied does contain `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` in `DataSourceService.createClient` (packages/backend/src/datasource/datasource.service.ts, in the `createClient` literal immediately above the newly added `types: { getTypeParser: datasourceTypeParser }` line), and `decrypt(ds.password)` is sent over that connection. `CreateDataSourceDto`/`UpdateDataSourceDto` (datasource.dto.ts) expose only `sslEnabled` — no CA, servername, or reject flag — so there is indeed no way for a caller to obtain a verified TLS session, exactly as the claim states. The defect is pre-existing rather than introduced by this diff (the diff only appends the `types` option to the same object literal), but the claim is accurate about the code as written and does not misdescribe the mechanism.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

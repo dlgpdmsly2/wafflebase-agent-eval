@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-605",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/notes/yorkie-note-store.ts::no way to re-base `undofloor`; a yorkie snapshot that resets the undo stack can leave notes permanently un-undoable",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:14"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "low",
+  "evidence": "The factual part of the claim checks out: `undoFloor` is set once in the constructor (`yorkie-note-store.ts`, `this.undoFloor = doc.getUndoStackForTest().length`) and never re-based, and `notes-view.tsx` builds the store only on `[didMount, doc]`, so nothing recaptures it. But the defect itself rests on an unverified premise — that applying a Yorkie snapshot clears the client's undo stack. As far as I can tell from the SDK's design (`applySnapshot` replaces root/clone and publishes a `snapshot` event; clearing history is a separate explicit `doc.clearHistory()` API, which notes calls only in `ensureText()` *before* the store is constructed), snapshot application does not reset `history`, so the stack length cannot drop below the recorded floor; the reviewer also states outright they could not confirm this. Even granting the premise, the described impact is overstated: after a reset to 0, new local edits push entries back and `canUndo()` (`length > undoFloor`, floor typically 1 from the attach seed) becomes true again, so at most the earliest floor-many edits become non-undoable rather than undo being \"silently disabled for the session\". I could not read `@yorkie-js/sdk` in this environment, hence low confidence.",
+  "notes": null,
+  "diff_sha256": "sha256:8c30f3a8699be82b83d4d7c2da8035defa50f1d321d50f5789cfa76f59e790c2",
+  "class_id": null,
+  "class_members": null
+}

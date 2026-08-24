@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::new `exportslidespptxanddownload` ships with no test at all",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:28"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The working tree is empty (Glob returns nothing), so I judged from the supplied listings. The new function is packages/frontend/src/app/slides/pptx-actions.ts:85 (`exportSlidesPptxAndDownload`), and the enumerated frontend listing (packages/frontend/tests/... through tests/visual/baselines, plus colocated src tests like slides/theme-fonts.test.ts) contains no pptx-actions/pdf-actions/docx-actions/export-utils test; the only exportPptx coverage supplied is packages/slides/test/export/pptx/* and packages/cli/test/slides-export.test.ts, which exercise the library and CLI, not this browser adapter. So the factual assertion holds. I score it minor rather than major because the untested code is thin glue (arrayBuffer→Uint8Array, `blob.type || \"image/png\"` fallback, safeFilename+downloadBlob) over a well-tested exporter, and the claim's aside that the frontend \"has no tsc lane\" is contradicted by the task doc recording `tsc --noEmit` clean.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/main.ts::raw-body capture keys off an exact `req.url` string match while express routes the same endpoint far more leniently — any trailing slash, case difference, duplicated slash or path prefix makes every webhook 401 and silently disables the feature",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:31",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The code at packages/backend/src/main.ts:51 does an exact equality check `req.url?.split('?', 1)[0] === '/internal/yorkie/events'`, while Nest's Express adapter routes with the defaults `caseSensitive: false` and `strict: false`, so `/internal/yorkie/events/` or `/Internal/Yorkie/Events` still reaches `YorkieEventController.handleEvent` but with `rawBody` unset, and yorkie-signature.guard.ts:49 then throws `UnauthorizedException('Missing webhook signature')` — the coupling described is genuinely brittle. The claim's supporting detail is also accurate that no test covers the capture: test/helpers/integration-helpers.ts `applyGlobalBootstrap` installs only the ValidationPipe, not the bodyParser verify hook. Two sub-points are shaky: a duplicated slash (`//internal/...`) would generally not match the Express route at all (404, not a silent 401), and there is no `setGlobalPrefix` today so the \"path prefix\" case is hypothetical; also the 401 is not entirely silent since pino logs 4xx at warn. Net: a real latent fragility that only bites if the ops-registered webhook URL differs in case/trailing slash from the documented one (docs/design/documents-last-modified.md ops block), which makes it a robustness/minor issue rather than a defect on the happy path.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}
