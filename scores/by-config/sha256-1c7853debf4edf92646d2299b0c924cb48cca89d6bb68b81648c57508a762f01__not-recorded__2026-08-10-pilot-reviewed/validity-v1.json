@@ -31,32 +31,32 @@
     "basis": "the content hash of the module whose output a CodeRabbit finding_key hashes"
   },
   "labels": {
-    "total": 0,
+    "total": 97,
     "unreadable": [],
     "unreadable_count": 0,
     "census": {
-      "n": 0,
+      "n": 97,
       "schema": {
         "item-label": 0,
-        "finding-label": 0
+        "finding-label": 97
       },
       "label_source": {
         "gold": 0,
-        "silver": 0,
+        "silver": 97,
         "distant": 0
       },
       "arm": {
-        "panel": 0,
+        "panel": 97,
         "coderabbit": 0
       },
       "confidence": {
-        "high": 0,
-        "medium": 0,
-        "low": 0
+        "high": 64,
+        "medium": 30,
+        "low": 3
       },
       "is_real": {
-        "true": 0,
-        "false": 0
+        "true": 87,
+        "false": 10
       },
       "verdict_label": {
         "block": 0,
@@ -65,11 +65,11 @@
       },
       "mode": {
         "human": 0,
-        "model": 0
+        "model": 97
       },
-      "items": 0,
+      "items": 6,
       "bundled": 0,
-      "readings": 0
+      "readings": 97
     }
   },
   "metrics": [
@@ -200,10 +200,10 @@
           "stated-severity-varies": 0
         }
       },
-      "labels": 0,
+      "labels": 97,
       "join": {
         "counts": {
-          "joined": 0,
+          "joined": 97,
           "unmatched": 0,
           "stale-parse": 0,
           "parse-vintage-unknown": 0,
@@ -213,24 +213,484 @@
         "stale_parse_keys": []
       },
       "claim_population": "pending",
-      "unlabelled_claims": 426,
+      "unlabelled_claims": 329,
       "label_sources": {
         "gold": 0,
-        "silver": 0,
+        "silver": 97,
         "distant": 0
       },
-      "tiers_scored": []
+      "tiers_scored": [
+        "silver"
+      ]
     }
   ],
-  "cells": [],
-  "relative_recall": [],
-  "fp_profile": [],
+  "cells": [
+    {
+      "segment": "metric=precision/arm=panel/tier=silver/stratum=all",
+      "metric": "precision",
+      "arm": "panel",
+      "label_source": "silver",
+      "stratum_basis": "stratum",
+      "stratum": "all",
+      "availability": "present",
+      "min_n": 5,
+      "labelled_findings": 97,
+      "readings": 97,
+      "bundled_labels": 0,
+      "denominator_level": "one judgement written to disk about one claim — one file per (arm, finding_key). Counted as `labelled_findings`, and it is the precision denominator",
+      "unclear_findings": 0,
+      "unclear_basis": "the label schema has no `unclear` state — is_real is boolean and refuses anything else — so the spec's excluded-unclear count is structurally zero rather than measured",
+      "confidence": {
+        "high": 64,
+        "medium": 30,
+        "low": 3
+      },
+      "value": 0.8969072164948454,
+      "real_findings": 87,
+      "interval": {
+        "low": 0.8205423256074809,
+        "high": 0.9430325066141896,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=severity_weighted_precision/arm=panel/tier=silver/stratum=all",
+      "metric": "severity_weighted_precision",
+      "arm": "panel",
+      "label_source": "silver",
+      "stratum_basis": "stratum",
+      "stratum": "all",
+      "availability": "present",
+      "min_n": 5,
+      "labelled_findings": 97,
+      "readings": 97,
+      "bundled_labels": 0,
+      "denominator_level": "one judgement written to disk about one claim — one file per (arm, finding_key). Counted as `labelled_findings`, and it is the precision denominator",
+      "unclear_findings": 0,
+      "unclear_basis": "the label schema has no `unclear` state — is_real is boolean and refuses anything else — so the spec's excluded-unclear count is structurally zero rather than measured",
+      "confidence": {
+        "high": 64,
+        "medium": 30,
+        "low": 3
+      },
+      "value": 0.8878504672897196,
+      "real_weight_sum": 190,
+      "labelled_weight_sum": 214,
+      "real_findings": 87,
+      "weight_basis": "the ANNOTATOR's own severity, never the reviewer's — weighting by the severity the arm claimed would let an arm set the weight of its own errors",
+      "interval": {
+        "low": null,
+        "high": null,
+        "z": null,
+        "method": null,
+        "undefined_reason": "severity-weighted precision is a ratio of weight sums, not k successes in n trials, so no Wilson interval exists for it"
+      }
+    },
+    {
+      "segment": "metric=precision/arm=panel/tier=silver/annotator-severity=critical",
+      "metric": "precision",
+      "arm": "panel",
+      "label_source": "silver",
+      "stratum_basis": "annotator-severity",
+      "stratum": "critical",
+      "availability": "suppressed",
+      "min_n": 5,
+      "labelled_findings": 2,
+      "readings": 2,
+      "bundled_labels": 0,
+      "denominator_level": "one judgement written to disk about one claim — one file per (arm, finding_key). Counted as `labelled_findings`, and it is the precision denominator",
+      "unclear_findings": 0,
+      "unclear_basis": "the label schema has no `unclear` state — is_real is boolean and refuses anything else — so the spec's excluded-unclear count is structurally zero rather than measured",
+      "confidence": {
+        "high": 2,
+        "medium": 0,
+        "low": 0
+      },
+      "reason": "2 labelled finding(s) on the panel arm in critical — below min_n 5, so the ratio is withheld rather than printed"
+    },
+    {
+      "segment": "metric=precision/arm=panel/tier=silver/annotator-severity=major",
+      "metric": "precision",
+      "arm": "panel",
+      "label_source": "silver",
+      "stratum_basis": "annotator-severity",
+      "stratum": "major",
+      "availability": "present",
+      "min_n": 5,
+      "labelled_findings": 21,
+      "readings": 21,
+      "bundled_labels": 0,
+      "denominator_level": "one judgement written to disk about one claim — one file per (arm, finding_key). Counted as `labelled_findings`, and it is the precision denominator",
+      "unclear_findings": 0,
+      "unclear_basis": "the label schema has no `unclear` state — is_real is boolean and refuses anything else — so the spec's excluded-unclear count is structurally zero rather than measured",
+      "confidence": {
+        "high": 15,
+        "medium": 4,
+        "low": 2
+      },
+      "value": 0.7619047619047619,
+      "real_findings": 16,
+      "interval": {
+        "low": 0.5490882631704924,
+        "high": 0.8937198697736354,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=precision/arm=panel/tier=silver/annotator-severity=minor",
+      "metric": "precision",
+      "arm": "panel",
+      "label_source": "silver",
+      "stratum_basis": "annotator-severity",
+      "stratum": "minor",
+      "availability": "present",
+      "min_n": 5,
+      "labelled_findings": 69,
+      "readings": 69,
+      "bundled_labels": 0,
+      "denominator_level": "one judgement written to disk about one claim — one file per (arm, finding_key). Counted as `labelled_findings`, and it is the precision denominator",
+      "unclear_findings": 0,
+      "unclear_basis": "the label schema has no `unclear` state — is_real is boolean and refuses anything else — so the spec's excluded-unclear count is structurally zero rather than measured",
+      "confidence": {
+        "high": 44,
+        "medium": 24,
+        "low": 1
+      },
+      "value": 0.9420289855072463,
+      "real_findings": 65,
+      "interval": {
+        "low": 0.8602075664233835,
+        "high": 0.9772276111196287,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "segment": "metric=precision/arm=panel/tier=silver/annotator-severity=nit",
+      "metric": "precision",
+      "arm": "panel",
+      "label_source": "silver",
+      "stratum_basis": "annotator-severity",
+      "stratum": "nit",
+      "availability": "present",
+      "min_n": 5,
+      "labelled_findings": 5,
+      "readings": 5,
+      "bundled_labels": 0,
+      "denominator_level": "one judgement written to disk about one claim — one file per (arm, finding_key). Counted as `labelled_findings`, and it is the precision denominator",
+      "unclear_findings": 0,
+      "unclear_basis": "the label schema has no `unclear` state — is_real is boolean and refuses anything else — so the spec's excluded-unclear count is structurally zero rather than measured",
+      "confidence": {
+        "high": 3,
+        "medium": 2,
+        "low": 0
+      },
+      "value": 0.8,
+      "real_findings": 4,
+      "interval": {
+        "low": 0.3755346297625253,
+        "high": 0.9637758913675698,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    }
+  ],
+  "relative_recall": [
+    {
+      "metric": "relative_recall",
+      "segment": "metric=relative_recall/arm=panel/tier=silver/stratum=all",
+      "arm": "panel",
+      "label_source": "silver",
+      "other_arm": "coderabbit",
+      "real_findings": 87,
+      "labelled_findings": 97,
+      "other_arm_real_findings": 0,
+      "other_arm_labelled_findings": 0,
+      "min_n": 5,
+      "overlap_resolved": false,
+      "denominator_level": "confirmed-real findings in the union of the two arms' labelled sets; the union's overlap is unresolved, so it is a band rather than a number",
+      "bound_basis": "union_low = max(a, b) when every defect either arm confirmed the other confirmed too; union_high = a + b when the two sets are disjoint. Resolving the cross-arm pairs narrows the band; nothing here resolves them",
+      "availability": "not-computed",
+      "reason": "the coderabbit arm has no labelled finding, so the union of confirmed defects is this arm's own set and the band collapses to [1, 1] — a relative recall of 1.0 that is a property of the labelling rather than of the reviewer. Label the coderabbit arm and the denominator becomes a real one"
+    }
+  ],
+  "fp_profile": [
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "annotator_severity",
+      "axis_note": "the adjudicator's own severity for the defect they judged",
+      "bucket": "critical",
+      "false_findings": 0,
+      "labelled_findings": 2,
+      "min_n": 5,
+      "share_availability": "suppressed",
+      "reason": "2 labelled finding(s) on the panel arm in annotator_severity=critical — below min_n 5, so the ratio is withheld rather than printed"
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "annotator_severity",
+      "axis_note": "the adjudicator's own severity for the defect they judged",
+      "bucket": "major",
+      "false_findings": 5,
+      "labelled_findings": 21,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0.23809523809523808,
+      "interval": {
+        "low": 0.10628013022636468,
+        "high": 0.4509117368295075,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "annotator_severity",
+      "axis_note": "the adjudicator's own severity for the defect they judged",
+      "bucket": "minor",
+      "false_findings": 4,
+      "labelled_findings": 69,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0.057971014492753624,
+      "interval": {
+        "low": 0.02277238888037121,
+        "high": 0.13979243357661653,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "annotator_severity",
+      "axis_note": "the adjudicator's own severity for the defect they judged",
+      "bucket": "nit",
+      "false_findings": 1,
+      "labelled_findings": 5,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0.2,
+      "interval": {
+        "low": 0.036224108632430085,
+        "high": 0.6244653702374747,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "stated_severity",
+      "axis_note": "the severity the REVIEWER put on the claim, read off the joined finding record",
+      "bucket": "critical",
+      "false_findings": 0,
+      "labelled_findings": 4,
+      "min_n": 5,
+      "share_availability": "suppressed",
+      "reason": "4 labelled finding(s) on the panel arm in stated_severity=critical — below min_n 5, so the ratio is withheld rather than printed"
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "stated_severity",
+      "axis_note": "the severity the REVIEWER put on the claim, read off the joined finding record",
+      "bucket": "major",
+      "false_findings": 10,
+      "labelled_findings": 93,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0.10752688172043011,
+      "interval": {
+        "low": 0.059463070231909915,
+        "high": 0.18672755009773168,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "confidence",
+      "axis_note": "how sure the adjudicator was — a false-positive profile resting on low-confidence judgements is a different object",
+      "bucket": "high",
+      "false_findings": 0,
+      "labelled_findings": 64,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0,
+      "interval": {
+        "low": 3.469446951953614e-18,
+        "high": 0.05662405979280534,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "confidence",
+      "axis_note": "how sure the adjudicator was — a false-positive profile resting on low-confidence judgements is a different object",
+      "bucket": "low",
+      "false_findings": 3,
+      "labelled_findings": 3,
+      "min_n": 5,
+      "share_availability": "suppressed",
+      "reason": "3 labelled finding(s) on the panel arm in confidence=low — below min_n 5, so the ratio is withheld rather than printed"
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "confidence",
+      "axis_note": "how sure the adjudicator was — a false-positive profile resting on low-confidence judgements is a different object",
+      "bucket": "medium",
+      "false_findings": 7,
+      "labelled_findings": 30,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0.23333333333333334,
+      "interval": {
+        "low": 0.11792388144489496,
+        "high": 0.40928326158122164,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "item",
+      "axis_note": "the pull request the claim was raised on",
+      "bucket": "pr-415",
+      "false_findings": 0,
+      "labelled_findings": 20,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0,
+      "interval": {
+        "low": 0,
+        "high": 0.16112515805281938,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "item",
+      "axis_note": "the pull request the claim was raised on",
+      "bucket": "pr-429",
+      "false_findings": 0,
+      "labelled_findings": 15,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0,
+      "interval": {
+        "low": 0,
+        "high": 0.20388330103584862,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "item",
+      "axis_note": "the pull request the claim was raised on",
+      "bucket": "pr-465",
+      "false_findings": 0,
+      "labelled_findings": 27,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0,
+      "interval": {
+        "low": 0,
+        "high": 0.12455502974186705,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "item",
+      "axis_note": "the pull request the claim was raised on",
+      "bucket": "pr-524",
+      "false_findings": 4,
+      "labelled_findings": 15,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0.26666666666666666,
+      "interval": {
+        "low": 0.10897453325692374,
+        "high": 0.5195043405598057,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "item",
+      "axis_note": "the pull request the claim was raised on",
+      "bucket": "pr-549",
+      "false_findings": 0,
+      "labelled_findings": 8,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0,
+      "interval": {
+        "low": 0,
+        "high": 0.32440756488388023,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    },
+    {
+      "arm": "panel",
+      "label_source": "silver",
+      "axis": "item",
+      "axis_note": "the pull request the claim was raised on",
+      "bucket": "pr-605",
+      "false_findings": 6,
+      "labelled_findings": 12,
+      "min_n": 5,
+      "share_availability": "present",
+      "false_share": 0.5,
+      "interval": {
+        "low": 0.2537815976337061,
+        "high": 0.7462184023662939,
+        "z": 1.959963984540054,
+        "method": "wilson-score",
+        "undefined_reason": null
+      }
+    }
+  ],
   "completeness": {
     "verdict": "partial",
     "reasons": [
       "coderabbit: 30 of 30 distinct claim(s) carry no label, so every zero-denominator cell on this arm is not-computed rather than not-measurable",
-      "panel: 426 of 426 distinct claim(s) carry no label, so every zero-denominator cell on this arm is not-computed rather than not-measurable",
-      "no finding label exists for this corpus version, so every figure is not-computed — the honest result of a store nobody has adjudicated yet"
+      "panel: 329 of 426 distinct claim(s) carry no label, so every zero-denominator cell on this arm is not-computed rather than not-measurable"
     ]
   },
   "panel_digest": "not-recorded",
