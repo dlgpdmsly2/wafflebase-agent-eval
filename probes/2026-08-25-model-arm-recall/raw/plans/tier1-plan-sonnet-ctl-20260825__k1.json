@@ -1,0 +1,68 @@
+{
+  "generated_by": "model-arm-tier1-population.mjs",
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "run_id": "sonnet-ctl-20260825__k1",
+  "seed": "census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding)",
+  "population": "reported",
+  "predicate": "gating === 'gates' && panel.verification === 'confirmed-high', grouped with finding-match.mjs::groupFindings over both arms per item; class has zero variant members",
+  "scope_items": [
+    "pr-415",
+    "pr-429",
+    "pr-465",
+    "pr-471",
+    "pr-524",
+    "pr-549"
+  ],
+  "excluded": {
+    "pr-605": "control has zero usable observations (all 3 legs infra on a drained pool)"
+  },
+  "n": 10,
+  "items": [
+    {
+      "item_id": "pr-415",
+      "n": 3,
+      "keys": [
+        "packages/backend/src/datasource/datasource.service.ts::ssrf / internal port scanning: user-supplied host+port are connected to with no allowlist, and raw driver errors are returned to the caller, making the backend an oracle for the internal network",
+        "packages/backend/src/datasource/datasource.service.ts::tls certificate verification permanently disabled for datasource connections (`rejectunauthorized: false`), so \"ssl enabled\" gives no mitm protection for credentials or query data",
+        "packages/backend/src/datasource/datasource.service.ts::sql statement injection: validateselectquery validates a comment-stripped copy of the query, but executequery interpolates the original string into a simple-protocol query, so ddl/dml can be smuggled past the read-only guard"
+      ]
+    },
+    {
+      "item_id": "pr-429",
+      "n": 1,
+      "keys": [
+        "packages/frontend/src/app/slides/pptx-actions.ts::a single failing image fetch aborts the whole pptx export (pdf path degrades gracefully instead)"
+      ]
+    },
+    {
+      "item_id": "pr-465",
+      "n": 1,
+      "keys": [
+        "packages/backend/src/main.ts::raw-body capture keys off an exact `req.url` match, so any path variation (trailing slash, proxy prefix) silently yields 401 + infinite yorkie retries"
+      ]
+    },
+    {
+      "item_id": "pr-471",
+      "n": 1,
+      "keys": [
+        "packages/sheets/src/model/worksheet/data-validation.ts::`value.touppercase()` is now called on a value that was only ever compared with `===` before — any non-string `cell.v` reaching the render path throws instead of rendering unchecked"
+      ]
+    },
+    {
+      "item_id": "pr-524",
+      "n": 3,
+      "keys": [
+        ".github/workflows/agent-review-panel.yml::the \"only our panel's checks\" filter on the fix prompt is app-slug based, and every workflow in the repo — including one added on the untrusted branch — produces app slug `github-actions`",
+        ".github/workflows/agent-iterate-ci.yml::github app installation token is persisted into .git/config of the untrusted branch checkout, then branch-controlled install scripts are executed",
+        ".github/workflows/agent-iterate-ci.yml::branch-controlled ci output is interpolated verbatim into the fixer prompt with no data delimiter or \"treat as data\" instruction — the sibling workflow does wrap its untrusted input"
+      ]
+    },
+    {
+      "item_id": "pr-549",
+      "n": 1,
+      "keys": [
+        "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` regex has quadratic (redos-style) worst case on attacker-supplied note content, replacing upstream's linear `string.prototype.trim()`"
+      ]
+    }
+  ]
+}

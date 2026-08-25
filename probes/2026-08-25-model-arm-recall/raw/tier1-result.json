@@ -1,0 +1,361 @@
+{
+  "generated_by": "model-arm-tier1-analyse.mjs",
+  "categories": {
+    "missed": 29,
+    "non_blocking": 7,
+    "blocking": 7
+  },
+  "missed_by_lens": {
+    "security": 14,
+    "design-fit": 4,
+    "blast-radius": 2,
+    "correctness": 5,
+    "docs": 1,
+    "test-adequacy": 3
+  },
+  "non_blocking_defects": [
+    {
+      "item_id": "pr-415",
+      "lens": "test-adequacy",
+      "file": "packages/backend/src/datasource/datasource.service.spec.ts",
+      "finding_key": "packages/backend/src/datasource/datasource.service.spec.ts::adding the two new set statements silently broke the 'converts query runtime failures to bad request' test — it now throws on `set timezone`, not on the query under test",
+      "variant_severities": [
+        "minor"
+      ]
+    },
+    {
+      "item_id": "pr-415",
+      "lens": "correctness",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::date/time array oids are not in raw_text_oids, so array columns are still parsed into js date and shifted by the node runtime timezone",
+      "variant_severities": [
+        "minor"
+      ]
+    },
+    {
+      "item_id": "pr-429",
+      "lens": "security",
+      "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+      "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::new pptx export fetches every image `src` from the deck with `credentials: \"include\"` and no scheme/host allowlist (browser-side ssrf / confused-deputy read)",
+      "variant_severities": [
+        "minor"
+      ]
+    },
+    {
+      "item_id": "pr-465",
+      "lens": "test-adequacy",
+      "file": "packages/backend/src/document/document.controller.ts",
+      "finding_key": "packages/backend/src/document/document.controller.ts::the headline behavior change — list `updatedat`/ordering now sourced from postgres, editors best-effort — has no test",
+      "variant_severities": [
+        "major",
+        "minor"
+      ]
+    },
+    {
+      "item_id": "pr-465",
+      "lens": "test-adequacy",
+      "file": "packages/backend/src/main.ts",
+      "finding_key": "packages/backend/src/main.ts::the rawbody `verify` hook (path-scoped capture) has no test, yet the whole webhook auth depends on the path string matching the controller route",
+      "variant_severities": [
+        "minor"
+      ]
+    },
+    {
+      "item_id": "pr-471",
+      "lens": "blast-radius",
+      "file": "packages/sheets/src/model/worksheet/sheet.ts",
+      "finding_key": "packages/sheets/src/model/worksheet/sheet.ts::new formula guard misses spill-ghost cells: `cell?.f` is only set on the spill anchor, so a checkbox over a spilled formula result still reports a successful toggle while `setdata` silently discards the write",
+      "variant_severities": [
+        "minor"
+      ]
+    },
+    {
+      "item_id": "pr-524",
+      "lens": "correctness",
+      "file": ".github/workflows/agent-review-panel.yml",
+      "finding_key": ".github/workflows/agent-review-panel.yml::`needs.fix.result == 'failure'` pages a human and latches the fix loop off even when the fixer already pushed a commit and a fresh cycle is running",
+      "variant_severities": [
+        "minor"
+      ]
+    }
+  ],
+  "judged": 29,
+  "of": 29,
+  "real": {
+    "k": 28,
+    "n": 29,
+    "wilson95": [
+      0.8282410893529976,
+      0.9938869433859677
+    ]
+  },
+  "real_and_blocking": {
+    "k": 8,
+    "n": 29,
+    "wilson95": [
+      0.1469858133850274,
+      0.4571747634443597
+    ]
+  },
+  "per_lens": {
+    "security": {
+      "n": 14,
+      "real": 14
+    },
+    "design-fit": {
+      "n": 4,
+      "real": 4
+    },
+    "blast-radius": {
+      "n": 2,
+      "real": 1
+    },
+    "correctness": {
+      "n": 5,
+      "real": 5
+    },
+    "docs": {
+      "n": 1,
+      "real": 1
+    },
+    "test-adequacy": {
+      "n": 3,
+      "real": 3
+    }
+  },
+  "spend_usd": 5.422105400000001,
+  "verdicts": [
+    {
+      "item_id": "pr-415",
+      "lens": "security",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-415",
+      "lens": "security",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "is_real": true,
+      "severity": "major",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-415",
+      "lens": "security",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "is_real": true,
+      "severity": "critical",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-415",
+      "lens": "design-fit",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-415",
+      "lens": "blast-radius",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "medium"
+    },
+    {
+      "item_id": "pr-429",
+      "lens": "security",
+      "file": "packages/documentation/sheets/datasources.md",
+      "is_real": true,
+      "severity": "major",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-429",
+      "lens": "security",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-429",
+      "lens": "correctness",
+      "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-429",
+      "lens": "security",
+      "file": "packages/backend/src/datasource/sql-validator.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "medium"
+    },
+    {
+      "item_id": "pr-429",
+      "lens": "security",
+      "file": "packages/backend/src/datasource/datasource.controller.ts",
+      "is_real": true,
+      "severity": "major",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-429",
+      "lens": "docs",
+      "file": "packages/documentation/guide/collaboration.md",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "medium"
+    },
+    {
+      "item_id": "pr-465",
+      "lens": "design-fit",
+      "file": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-465",
+      "lens": "correctness",
+      "file": "packages/backend/src/document/yorkie-signature.guard.ts",
+      "is_real": true,
+      "severity": "major",
+      "confidence": "low"
+    },
+    {
+      "item_id": "pr-465",
+      "lens": "design-fit",
+      "file": "docs/design/documents-last-modified.md",
+      "is_real": true,
+      "severity": "nit",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-465",
+      "lens": "test-adequacy",
+      "file": "packages/backend/src/document/yorkie-event.controller.spec.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-465",
+      "lens": "correctness",
+      "file": "packages/backend/src/document/yorkie-event.controller.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "medium"
+    },
+    {
+      "item_id": "pr-465",
+      "lens": "correctness",
+      "file": "packages/backend/src/main.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-471",
+      "lens": "blast-radius",
+      "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+      "is_real": false,
+      "severity": "nit",
+      "confidence": "medium"
+    },
+    {
+      "item_id": "pr-524",
+      "lens": "security",
+      "file": ".github/workflows/agent-review-panel.yml",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "medium"
+    },
+    {
+      "item_id": "pr-524",
+      "lens": "correctness",
+      "file": ".github/workflows/agent-review-panel.yml",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "medium"
+    },
+    {
+      "item_id": "pr-524",
+      "lens": "security",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "medium"
+    },
+    {
+      "item_id": "pr-524",
+      "lens": "security",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "is_real": true,
+      "severity": "major",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-524",
+      "lens": "security",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "is_real": true,
+      "severity": "major",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-524",
+      "lens": "security",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-549",
+      "lens": "security",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "is_real": true,
+      "severity": "major",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-549",
+      "lens": "design-fit",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-549",
+      "lens": "security",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-549",
+      "lens": "test-adequacy",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    },
+    {
+      "item_id": "pr-549",
+      "lens": "test-adequacy",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "is_real": true,
+      "severity": "minor",
+      "confidence": "high"
+    }
+  ]
+}

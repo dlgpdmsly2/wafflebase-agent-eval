@@ -1,0 +1,525 @@
+{
+  "generated_by": "model-arm-tier1-population.mjs",
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "scope_items": [
+    "pr-415",
+    "pr-429",
+    "pr-465",
+    "pr-471",
+    "pr-524",
+    "pr-549"
+  ],
+  "control_runs": [
+    "sonnet-ctl-20260825__k1",
+    "sonnet-ctl-20260825__k2",
+    "sonnet-ctl-20260825__k3"
+  ],
+  "variant_runs": [
+    "sonnet-var-20260825__k1",
+    "sonnet-var-20260825__k2",
+    "sonnet-var-20260825__k3"
+  ],
+  "distinct_ctl_confirmed_high_blocking": 43,
+  "variant_raised": 14,
+  "variant_missed": 29,
+  "instances_behind_missed": 45,
+  "by_lens": {
+    "security": 14,
+    "design-fit": 4,
+    "blast-radius": 2,
+    "correctness": 5,
+    "docs": 1,
+    "test-adequacy": 3
+  },
+  "by_item": {
+    "pr-415": 5,
+    "pr-429": 6,
+    "pr-465": 6,
+    "pr-471": 1,
+    "pr-524": 6,
+    "pr-549": 5
+  },
+  "collisions_with_published_labels": 0,
+  "defects": [
+    {
+      "item_id": "pr-415",
+      "class_id": "D-5a32b4a801c44ae8",
+      "lens": "security",
+      "severity": "major",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 196,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::ssrf / internal port scanning: user-supplied host+port are connected to with no allowlist, and raw driver errors are returned to the caller, making the backend an oracle for the internal network",
+      "ctl_instances": 3,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1",
+        "sonnet-ctl-20260825__k2",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "SSRF / internal port scanning: user-supplied host+port are connected to with no allowlist, and raw driver errors are returned to the caller, making the backend an oracle for the internal network"
+    },
+    {
+      "item_id": "pr-415",
+      "class_id": "D-6ad613ee59ff4571",
+      "lens": "security",
+      "severity": "major",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 202,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::tls certificate verification permanently disabled for datasource connections (`rejectunauthorized: false`), so \"ssl enabled\" gives no mitm protection for credentials or query data",
+      "ctl_instances": 3,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1",
+        "sonnet-ctl-20260825__k2",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "TLS certificate verification permanently disabled for datasource connections (`rejectUnauthorized: false`), so \"SSL enabled\" gives no MITM protection for credentials or query data"
+    },
+    {
+      "item_id": "pr-415",
+      "class_id": "D-757bf0244489c3d6",
+      "lens": "security",
+      "severity": "critical",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 148,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::sql statement injection: validateselectquery validates a comment-stripped copy of the query, but executequery interpolates the original string into a simple-protocol query, so ddl/dml can be smuggled past the read-only guard",
+      "ctl_instances": 3,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1",
+        "sonnet-ctl-20260825__k2",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "SQL statement injection: validateSelectQuery validates a comment-stripped copy of the query, but executeQuery interpolates the ORIGINAL string into a simple-protocol query, so DDL/DML can be smuggled past the read-only guard"
+    },
+    {
+      "item_id": "pr-415",
+      "class_id": "D-bdcd92d8615a9e74",
+      "lens": "design-fit",
+      "severity": "major",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 20,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::partial/inconsistent fix for value fidelity: only date/timestamp/timestamptz are pinned to raw postgres text, while other pg types that the default parser turns into js objects still flow through and end up json-stringified into sheet cells. the change's own e2e expectations enshrine this: bytea renders as `{\"type\":\"buffer\",\"data\":[222,173,190,239]}`, interval as `{\"years\":1,\"months\":2,\"days\":3}`, circle as `{\"x\":1,\"y\":2,\"radius\":3}`. if the intent is \"cells show the value the database shows\", these are user-visible wrong values left unaddressed; if the intent is only the timezone shift, the accepted json-blob rendering should be a stated decision (in the design doc) rather than an incidental test expectation.",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Partial/inconsistent fix for value fidelity: only DATE/TIMESTAMP/TIMESTAMPTZ are pinned to raw Postgres text, while other pg types that the default parser turns into JS objects still flow through and end up JSON-stringified into sheet cells. The change's own e2e expectations enshrine this: BYTEA renders as `{\"type\":\"Buffer\",\"data\":[222,173,190,239]}`, INTERVAL as `{\"years\":1,\"months\":2,\"days\":3}`, CIRCLE as `{\"x\":1,\"y\":2,\"radius\":3}`. If the intent is \"cells show the value the database shows\", these are user-visible wrong values left unaddressed; if the intent is only the timezone shift, the accepted JSON-blob rendering should be a stated decision (in the design doc) rather than an incidental test expectation."
+    },
+    {
+      "item_id": "pr-415",
+      "class_id": "D-c46bd5665b0490a0",
+      "lens": "blast-radius",
+      "severity": "major",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 20,
+      "representative_run": "sonnet-ctl-20260825__k3",
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::raw-text oid guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Raw-text OID guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`"
+    },
+    {
+      "item_id": "pr-429",
+      "class_id": "D-0f7f58a8d47ad032",
+      "lens": "security",
+      "severity": "major",
+      "file": "packages/documentation/sheets/datasources.md",
+      "line": 45,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/documentation/sheets/datasources.md::new docs page misstates the datasource access model: collaborators can execute queries with the owner's stored credentials",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "New docs page misstates the datasource access model: collaborators can execute queries with the owner's stored credentials"
+    },
+    {
+      "item_id": "pr-429",
+      "class_id": "D-14b160864fbf0a58",
+      "lens": "security",
+      "severity": "major",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 204,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::datasource ssl uses rejectunauthorized:false, so the documented \"ssl\" toggle gives no mitm protection",
+      "ctl_instances": 2,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Datasource SSL uses rejectUnauthorized:false, so the documented \"SSL\" toggle gives no MITM protection"
+    },
+    {
+      "item_id": "pr-429",
+      "class_id": "D-1f994f8e10cf5ebe",
+      "lens": "correctness",
+      "severity": "major",
+      "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+      "line": 93,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::a single failing image fetch aborts the whole pptx export (pdf path degrades gracefully instead)",
+      "ctl_instances": 3,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1",
+        "sonnet-ctl-20260825__k2",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "A single failing image fetch aborts the whole PPTX export (PDF path degrades gracefully instead)"
+    },
+    {
+      "item_id": "pr-429",
+      "class_id": "D-2c6b74c1724adc2b",
+      "lens": "security",
+      "severity": "major",
+      "file": "packages/backend/src/datasource/sql-validator.ts",
+      "line": 1,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/backend/src/datasource/sql-validator.ts::\"read-only\" guarantee advertised by the new docs page rests on a bypassable sql keyword denylist",
+      "ctl_instances": 2,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "\"Read-only\" guarantee advertised by the new docs page rests on a bypassable SQL keyword denylist"
+    },
+    {
+      "item_id": "pr-429",
+      "class_id": "D-63bbcf9985f09ba7",
+      "lens": "security",
+      "severity": "critical",
+      "file": "packages/backend/src/datasource/datasource.controller.ts",
+      "line": 100,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/backend/src/datasource/datasource.controller.ts::any workspace member can steal another member's stored db password by re-pointing a datasource's host and hitting /test",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Any workspace member can steal another member's stored DB password by re-pointing a datasource's host and hitting /test"
+    },
+    {
+      "item_id": "pr-429",
+      "class_id": "D-b7a6504653dab790",
+      "lens": "docs",
+      "severity": "major",
+      "file": "packages/documentation/guide/collaboration.md",
+      "line": 79,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/documentation/guide/collaboration.md::collaboration doc scopes the comments side panel to documents only, but sheets also has one",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Collaboration doc scopes the comments side panel to documents only, but sheets also has one"
+    },
+    {
+      "item_id": "pr-465",
+      "class_id": "D-142c27849871f4a5",
+      "lens": "design-fit",
+      "severity": "major",
+      "file": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md",
+      "line": 101,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::the originating task's verification criterion for an e2e test of the webhook path is not met",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "The originating task's Verification criterion for an e2e test of the webhook path is not met"
+    },
+    {
+      "item_id": "pr-465",
+      "class_id": "D-1a94b3595dc75eee",
+      "lens": "correctness",
+      "severity": "major",
+      "file": "packages/backend/src/document/yorkie-signature.guard.ts",
+      "line": 48,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/backend/src/document/yorkie-signature.guard.ts::webhook signature header name/format is an unverified assumption; a mismatch silently 401s every event and `updatedat` never advances",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Webhook signature header name/format is an unverified assumption; a mismatch silently 401s every event and `updatedAt` never advances"
+    },
+    {
+      "item_id": "pr-465",
+      "class_id": "D-6bdea8b4125a0cc9",
+      "lens": "design-fit",
+      "severity": "major",
+      "file": "docs/design/documents-last-modified.md",
+      "line": 1,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "docs/design/documents-last-modified.md::new standalone top-level design doc instead of folding into the canonical backend doc, contrary to the repo's stated doc-filing policy",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "New standalone top-level design doc instead of folding into the canonical backend doc, contrary to the repo's stated doc-filing policy"
+    },
+    {
+      "item_id": "pr-465",
+      "class_id": "D-85d740cfe1ddcae2",
+      "lens": "test-adequacy",
+      "severity": "major",
+      "file": "packages/backend/src/document/yorkie-event.controller.spec.ts",
+      "line": 66,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/backend/src/document/yorkie-event.controller.spec.ts::test titled 'always answers ok so yorkie does not retry' only exercises the trivial early-return path",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Test titled 'always answers ok so Yorkie does not retry' only exercises the trivial early-return path"
+    },
+    {
+      "item_id": "pr-465",
+      "class_id": "D-d38df84ce3c98452",
+      "lens": "correctness",
+      "severity": "major",
+      "file": "packages/backend/src/document/yorkie-event.controller.ts",
+      "line": 58,
+      "representative_run": "sonnet-ctl-20260825__k3",
+      "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::non-nan but non-positive `issuedat` (go zero time / pre-epoch) silently disables the touch instead of falling back to now()",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Non-NaN but non-positive `issuedAt` (Go zero time / pre-epoch) silently disables the touch instead of falling back to now()"
+    },
+    {
+      "item_id": "pr-465",
+      "class_id": "D-f6e271106dc35309",
+      "lens": "correctness",
+      "severity": "major",
+      "file": "packages/backend/src/main.ts",
+      "line": 51,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": "packages/backend/src/main.ts::raw-body capture keys off an exact `req.url` match, so any path variation (trailing slash, proxy prefix) silently yields 401 + infinite yorkie retries",
+      "ctl_instances": 2,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Raw-body capture keys off an exact `req.url` match, so any path variation (trailing slash, proxy prefix) silently yields 401 + infinite Yorkie retries"
+    },
+    {
+      "item_id": "pr-471",
+      "class_id": "D-99901553ea59efe0",
+      "lens": "blast-radius",
+      "severity": "major",
+      "file": "packages/sheets/src/model/worksheet/data-validation.ts",
+      "line": 166,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": "packages/sheets/src/model/worksheet/data-validation.ts::`value.touppercase()` is now called on a value that was only ever compared with `===` before — any non-string `cell.v` reaching the render path throws instead of rendering unchecked",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1"
+      ],
+      "collides_with_published_label": false,
+      "summary": "`value.toUpperCase()` is now called on a value that was only ever compared with `===` before — any non-string `Cell.v` reaching the render path throws instead of rendering unchecked"
+    },
+    {
+      "item_id": "pr-524",
+      "class_id": "D-3d505e5aee14fc63",
+      "lens": "security",
+      "severity": "major",
+      "file": ".github/workflows/agent-review-panel.yml",
+      "line": 358,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": ".github/workflows/agent-review-panel.yml::the \"only our panel's checks\" filter on the fix prompt is app-slug based, and every workflow in the repo — including one added on the untrusted branch — produces app slug `github-actions`",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1"
+      ],
+      "collides_with_published_label": false,
+      "summary": "The \"only OUR panel's checks\" filter on the fix prompt is app-slug based, and every workflow in the repo — including one added on the untrusted branch — produces app slug `github-actions`"
+    },
+    {
+      "item_id": "pr-524",
+      "class_id": "D-49717250d0b8f342",
+      "lens": "correctness",
+      "severity": "major",
+      "file": ".github/workflows/agent-review-panel.yml",
+      "line": 413,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": ".github/workflows/agent-review-panel.yml::`allowed_bots` hardcodes the bot login \"yorkie-agent[bot]\", which is nowhere derived from or documented for the configured app — if the installed app's slug differs, the allow-list never matches and the fix step still fails",
+      "ctl_instances": 2,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "`allowed_bots` hardcodes the bot login \"yorkie-agent[bot]\", which is nowhere derived from or documented for the configured App — if the installed App's slug differs, the allow-list never matches and the fix step still fails"
+    },
+    {
+      "item_id": "pr-524",
+      "class_id": "D-58e9c5fd264d3b77",
+      "lens": "security",
+      "severity": "major",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "line": 142,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": ".github/workflows/agent-iterate-ci.yml::$github_output heredoc uses a fixed, guessable delimiter around attacker-influenceable text (output injection)",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "$GITHUB_OUTPUT heredoc uses a fixed, guessable delimiter around attacker-influenceable text (output injection)"
+    },
+    {
+      "item_id": "pr-524",
+      "class_id": "D-75e533294caacae9",
+      "lens": "security",
+      "severity": "major",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "line": 66,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": ".github/workflows/agent-iterate-ci.yml::github app installation token is persisted into .git/config of the untrusted branch checkout, then branch-controlled install scripts are executed",
+      "ctl_instances": 3,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1",
+        "sonnet-ctl-20260825__k2",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "GitHub App installation token is persisted into .git/config of the untrusted branch checkout, then branch-controlled install scripts are executed"
+    },
+    {
+      "item_id": "pr-524",
+      "class_id": "D-8669c8e996f1b8d1",
+      "lens": "security",
+      "severity": "major",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "line": 57,
+      "representative_run": "sonnet-ctl-20260825__k3",
+      "finding_key": ".github/workflows/agent-iterate-ci.yml::iterate job mints an unscoped github app installation token and hands it to a bash-enabled agent running untrusted branch code",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Iterate job mints an unscoped GitHub App installation token and hands it to a Bash-enabled agent running untrusted branch code"
+    },
+    {
+      "item_id": "pr-524",
+      "class_id": "D-c960a757d066ed18",
+      "lens": "security",
+      "severity": "major",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "line": 165,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": ".github/workflows/agent-iterate-ci.yml::branch-controlled ci output is interpolated verbatim into the fixer prompt with no data delimiter or \"treat as data\" instruction — the sibling workflow does wrap its untrusted input",
+      "ctl_instances": 2,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Branch-controlled CI output is interpolated verbatim into the fixer prompt with no data delimiter or \"treat as data\" instruction — the sibling workflow does wrap its untrusted input"
+    },
+    {
+      "item_id": "pr-549",
+      "class_id": "D-3bddd3d8a9812aaa",
+      "lens": "security",
+      "severity": "major",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 20,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` uses a quadratic backtracking trim regex on attacker-controllable note content (redos → preview/tab hang)",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Hand-rolled `asciiTrim` uses a quadratic backtracking trim regex on attacker-controllable note content (ReDoS → preview/tab hang)"
+    },
+    {
+      "item_id": "pr-549",
+      "class_id": "D-51a9cadc5bbc679d",
+      "lens": "design-fit",
+      "severity": "major",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 68,
+      "representative_run": "sonnet-ctl-20260825__k3",
+      "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped"
+    },
+    {
+      "item_id": "pr-549",
+      "class_id": "D-68de8a5ecd4dbbcd",
+      "lens": "security",
+      "severity": "major",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 20,
+      "representative_run": "sonnet-ctl-20260825__k1",
+      "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` regex has quadratic (redos-style) worst case on attacker-supplied note content, replacing upstream's linear `string.prototype.trim()`",
+      "ctl_instances": 2,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k1",
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "Hand-rolled `asciiTrim` regex has quadratic (ReDoS-style) worst case on attacker-supplied note content, replacing upstream's linear `String.prototype.trim()`"
+    },
+    {
+      "item_id": "pr-549",
+      "class_id": "D-f21af8e8e10204b4",
+      "lens": "test-adequacy",
+      "severity": "major",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "line": 182,
+      "representative_run": "sonnet-ctl-20260825__k2",
+      "finding_key": "packages/notes/src/view/preview.test.ts::the intentional commonmark deviation for a top-level `heading\\n-` (single-dash setext h1... h2) is untested",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k2"
+      ],
+      "collides_with_published_label": false,
+      "summary": "The intentional CommonMark deviation for a top-level `Heading\\n-` (single-dash setext h1... h2) is untested"
+    },
+    {
+      "item_id": "pr-549",
+      "class_id": "D-fe0d8a3c9c13f58d",
+      "lens": "test-adequacy",
+      "severity": "major",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "line": 182,
+      "representative_run": "sonnet-ctl-20260825__k3",
+      "finding_key": "packages/notes/src/view/preview.test.ts::no test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite",
+      "ctl_instances": 1,
+      "ctl_legs": [
+        "sonnet-ctl-20260825__k3"
+      ],
+      "collides_with_published_label": false,
+      "summary": "No test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite"
+    }
+  ]
+}

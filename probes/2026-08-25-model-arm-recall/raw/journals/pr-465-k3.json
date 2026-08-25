@@ -1,0 +1,112 @@
+{
+  "item_id": "pr-465",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "repo": null,
+  "review_commit": "49f4fc8221a0e5588624194e8e86252b056d1049",
+  "results": [
+    {
+      "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::non-nan but non-positive `issuedat` (go zero time / pre-epoch) silently disables the touch instead of falling back to now()",
+      "file": "packages/backend/src/document/yorkie-event.controller.ts",
+      "line": 58,
+      "lens": "correctness",
+      "round_commit": null,
+      "verdict": {
+        "reasoning": "In yorkie-event.controller.ts the guard is `Number.isNaN(issuedMs) ? now : Math.min(issuedMs, now)`, so only unparseable values fall back to now(); a parseable zero/pre-epoch time (Go zero `0001-01-01T00:00:00Z`, or protojson zero Timestamp `1970-01-01T00:00:00Z`) passes through as a negative/zero ms. Combined with `touchUpdatedAt`'s `where: { updatedAt: { lt: at } }` in document.service.ts and the migration backfilling `updatedAt = createdAt`, such an event matches zero rows and is silently swallowed (`count` ignored, `{ ok: true }` returned, no log) — exactly as claimed. The sibling `parseTimestamp` in yorkie-admin.service.ts does guard `ms <= 0` as \"Yorkie's unset\", supporting that the codebase treats epoch-zero as a real Yorkie input; the new controller dropped that guard, and the tests only cover missing and future-skewed values. I could not inspect Yorkie's event_webhook.go to confirm a fired DocumentRootChanged ever carries an unset issuedAt, so the trigger is plausible rather than proven, which is why the impact is limited to one doc's ordering staleness.",
+        "severity": "minor",
+        "confidence": "medium",
+        "is_real": true
+      },
+      "num_turns": 2,
+      "cost_usd": 0.059308499999999986,
+      "saw_cited_files": 13,
+      "cited_unresolved": 4,
+      "saw_diff": true,
+      "cached_prefix": false
+    }
+  ],
+  "session_log": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 29980,
+      "duration_api_ms": 31096,
+      "ttft_ms": 13837,
+      "ttft_stream_ms": 2347,
+      "time_to_request_ms": 267,
+      "num_turns": 2,
+      "result": "{\"reasoning\":\"In yorkie-event.controller.ts the guard is `Number.isNaN(issuedMs) ? now : Math.min(issuedMs, now)`, so only unparseable values fall back to now(); a parseable zero/pre-epoch time (Go zero `0001-01-01T00:00:00Z`, or protojson zero Timestamp `1970-01-01T00:00:00Z`) passes through as a negative/zero ms. Combined with `touchUpdatedAt`'s `where: { updatedAt: { lt: at } }` in document.service.ts and the migration backfilling `updatedAt = createdAt`, such an event matches zero rows and is silently swallowed (`count` ignored, `{ ok: true }` returned, no log) — exactly as claimed. The sibling `parseTimestamp` in yorkie-admin.service.ts does guard `ms <= 0` as \\\"Yorkie's unset\\\", supporting that the codebase treats epoch-zero as a real Yorkie input; the new controller dropped that guard, and the tests only cover missing and future-skewed values. I could not inspect Yorkie's event_webhook.go to confirm a fired DocumentRootChanged ever carries an unset issuedAt, so the trigger is plausible rather than proven, which is why the impact is limited to one doc's ordering staleness.\",\"severity\":\"minor\",\"confidence\":\"medium\",\"is_real\":true}",
+      "stop_reason": "tool_use",
+      "session_id": "6abf4f2f-531d-4350-9ec3-7504552b6bd4",
+      "total_cost_usd": 0.059308499999999986,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 609,
+        "cache_read_input_tokens": 72235,
+        "output_tokens": 2202,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 609,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2202,
+            "cache_read_input_tokens": 72235,
+            "cache_creation_input_tokens": 609,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 609
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 833,
+          "outputTokens": 23,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000948,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 2202,
+          "cacheReadInputTokens": 72235,
+          "cacheCreationInputTokens": 609,
+          "webSearchRequests": 0,
+          "costUSD": 0.05836049999999999,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "reasoning": "In yorkie-event.controller.ts the guard is `Number.isNaN(issuedMs) ? now : Math.min(issuedMs, now)`, so only unparseable values fall back to now(); a parseable zero/pre-epoch time (Go zero `0001-01-01T00:00:00Z`, or protojson zero Timestamp `1970-01-01T00:00:00Z`) passes through as a negative/zero ms. Combined with `touchUpdatedAt`'s `where: { updatedAt: { lt: at } }` in document.service.ts and the migration backfilling `updatedAt = createdAt`, such an event matches zero rows and is silently swallowed (`count` ignored, `{ ok: true }` returned, no log) — exactly as claimed. The sibling `parseTimestamp` in yorkie-admin.service.ts does guard `ms <= 0` as \"Yorkie's unset\", supporting that the codebase treats epoch-zero as a real Yorkie input; the new controller dropped that guard, and the tests only cover missing and future-skewed values. I could not inspect Yorkie's event_webhook.go to confirm a fired DocumentRootChanged ever carries an unset issuedAt, so the trigger is plausible rather than proven, which is why the impact is limited to one doc's ordering staleness.",
+        "severity": "minor",
+        "confidence": "medium",
+        "is_real": true
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "8d6bea02-8b1f-4f04-81fe-9d8d4beb6502",
+      "attribution": {
+        "lens": "correctness",
+        "role": "adjudicator"
+      }
+    }
+  ]
+}

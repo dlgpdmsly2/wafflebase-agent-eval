@@ -1,0 +1,82 @@
+[
+  {
+    "item_id": "pr-429",
+    "round": "c35d715b177647e0443266d21c326f43a5d34705",
+    "finding_key": "packages/backend/src/datasource/datasource.controller.ts::any workspace member can steal another member's stored db password by re-pointing a datasource's host and hitting /test",
+    "token": "controller.ts",
+    "tier": "basename",
+    "reason": "absent-at-round"
+  },
+  {
+    "item_id": "pr-429",
+    "round": "c35d715b177647e0443266d21c326f43a5d34705",
+    "finding_key": "packages/backend/src/datasource/datasource.controller.ts::any workspace member can steal another member's stored db password by re-pointing a datasource's host and hitting /test",
+    "token": "service.ts",
+    "tier": "basename",
+    "reason": "absent-at-round"
+  },
+  {
+    "item_id": "pr-465",
+    "round": "49f4fc8221a0e5588624194e8e86252b056d1049",
+    "finding_key": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::the originating task's verification criterion for an e2e test of the webhook path is not met",
+    "token": "bodyParser.json",
+    "tier": "basename",
+    "reason": "absent-at-round"
+  },
+  {
+    "item_id": "pr-465",
+    "round": "49f4fc8221a0e5588624194e8e86252b056d1049",
+    "finding_key": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::the originating task's verification criterion for an e2e test of the webhook path is not met",
+    "token": "main.ts",
+    "tier": "basename",
+    "reason": "basename-ambiguous (2 candidates: packages/backend/src/main.ts, packages/sheets/src/main.ts)"
+  },
+  {
+    "item_id": "pr-465",
+    "round": "49f4fc8221a0e5588624194e8e86252b056d1049",
+    "finding_key": "packages/backend/src/main.ts::raw-body capture is gated on an exact-string url match, so any url variant (trailing slash, differing case, query-less normalization) yields `rawbody === undefined` and a permanent 401",
+    "token": "body-parser.json",
+    "tier": "basename",
+    "reason": "absent-at-round"
+  },
+  {
+    "item_id": "pr-465",
+    "round": "49f4fc8221a0e5588624194e8e86252b056d1049",
+    "finding_key": "packages/backend/src/main.ts::raw-body capture is gated on an exact-string url match, so any url variant (trailing slash, differing case, query-less normalization) yields `rawbody === undefined` and a permanent 401",
+    "token": "bodyParser.json",
+    "tier": "basename",
+    "reason": "absent-at-round"
+  },
+  {
+    "item_id": "pr-524",
+    "round": "4d3e827f5edb1ca16b0958a77e85ff6b3af66bf9",
+    "finding_key": ".github/workflows/agent-review-panel.yml::the \"only our panel's checks\" filter on the fix prompt is app-slug based, and every workflow in the repo — including one added on the untrusted branch — produces app slug `github-actions`",
+    "token": "docs/tasks/active/20260720-autonomous-issue-to-pr-pipeline-todo.md",
+    "tier": "full-path",
+    "reason": "task-doc-withheld-records-the-review"
+  },
+  {
+    "item_id": "pr-524",
+    "round": "4d3e827f5edb1ca16b0958a77e85ff6b3af66bf9",
+    "finding_key": ".github/workflows/agent-iterate-ci.yml::untrusted ci-artifact text is interpolated raw into the fixer agent's prompt with no data framing (the review-panel fix job frames it; this one does not)",
+    "token": "summary.json",
+    "tier": "basename",
+    "reason": "absent-at-round"
+  },
+  {
+    "item_id": "pr-524",
+    "round": "4d3e827f5edb1ca16b0958a77e85ff6b3af66bf9",
+    "finding_key": ".github/workflows/agent-review-panel.yml::bot allow-list hardcodes the slug `yorkie-agent[bot]`, which is not defined or referenced anywhere else in the repo — if the app's real slug differs, the gate still blocks and the fix loop never runs",
+    "token": "docs/tasks/active/20260720-autonomous-issue-to-pr-pipeline-todo.md",
+    "tier": "full-path",
+    "reason": "task-doc-withheld-records-the-review"
+  },
+  {
+    "item_id": "pr-524",
+    "round": "4d3e827f5edb1ca16b0958a77e85ff6b3af66bf9",
+    "finding_key": ".github/workflows/agent-review-panel.yml::`allowed_bots` hardcodes the bot login \"yorkie-agent[bot]\", which is nowhere derived from or documented for the configured app — if the installed app's slug differs, the allow-list never matches and the fix step still fails",
+    "token": "docs/tasks/active/20260720-autonomous-issue-to-pr-pipeline-todo.md",
+    "tier": "full-path",
+    "reason": "task-doc-withheld-records-the-review"
+  }
+]

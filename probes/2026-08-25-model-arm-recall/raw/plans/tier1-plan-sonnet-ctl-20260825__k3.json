@@ -1,0 +1,51 @@
+{
+  "generated_by": "model-arm-tier1-population.mjs",
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "run_id": "sonnet-ctl-20260825__k3",
+  "seed": "census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding)",
+  "population": "reported",
+  "predicate": "gating === 'gates' && panel.verification === 'confirmed-high', grouped with finding-match.mjs::groupFindings over both arms per item; class has zero variant members",
+  "scope_items": [
+    "pr-415",
+    "pr-429",
+    "pr-465",
+    "pr-471",
+    "pr-524",
+    "pr-549"
+  ],
+  "excluded": {
+    "pr-605": "control has zero usable observations (all 3 legs infra on a drained pool)"
+  },
+  "n": 5,
+  "items": [
+    {
+      "item_id": "pr-415",
+      "n": 1,
+      "keys": [
+        "packages/backend/src/datasource/datasource.service.ts::raw-text oid guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`"
+      ]
+    },
+    {
+      "item_id": "pr-465",
+      "n": 1,
+      "keys": [
+        "packages/backend/src/document/yorkie-event.controller.ts::non-nan but non-positive `issuedat` (go zero time / pre-epoch) silently disables the touch instead of falling back to now()"
+      ]
+    },
+    {
+      "item_id": "pr-524",
+      "n": 1,
+      "keys": [
+        ".github/workflows/agent-iterate-ci.yml::iterate job mints an unscoped github app installation token and hands it to a bash-enabled agent running untrusted branch code"
+      ]
+    },
+    {
+      "item_id": "pr-549",
+      "n": 2,
+      "keys": [
+        "packages/notes/src/view/list-empty-bullet-plugin.ts::upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped",
+        "packages/notes/src/view/preview.test.ts::no test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "item_id": "pr-549",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "repo": null,
+  "review_commit": "158c6faaf517e832e25978c1f9630c65c2158c8e",
+  "results": [
+    {
+      "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 68,
+      "lens": "design-fit",
+      "round_commit": null,
+      "verdict": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high",
+        "reasoning": "list-empty-bullet-plugin.ts:68-150 is a near-verbatim copy of markdown-it 14.x `rules_block/lheading.mjs` (same indent guard, parentType swap, terminator loop, and the three token pushes with identical map arithmetic) plus a re-created `asciiTrim` at lines 17-22, differing only by the `isLoneDash` guard at lines 100-106; it is installed via `md.block.ruler.at('lheading', lheadingRule)` at line 168, so upstream is fully replaced and frozen with no test to detect drift on a markdown-it upgrade. The claim's factual description of the code is correct, and the contrast with the `getRuleFn` delegation used for `list` (lines 170-186) is accurate. Its one weak point is the assertion that delegation was easy: upstream `lheading` ignores `silent` and pushes tokens unconditionally, so a wrapper would have to run it and roll back `state.tokens`/`state.line` — awkward, though still possible. Impact is maintainability only, since the shipped behavior is exercised by preview.test.ts:151-196, so I rate it minor rather than a correctness bug."
+      },
+      "num_turns": 3,
+      "cost_usd": 0.07814399999999999,
+      "saw_cited_files": 4,
+      "cited_unresolved": 0,
+      "saw_diff": true,
+      "cached_prefix": true
+    },
+    {
+      "finding_key": "packages/notes/src/view/preview.test.ts::no test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "line": 182,
+      "lens": "test-adequacy",
+      "round_commit": null,
+      "verdict": {
+        "reasoning": "The supplied `preview.test.ts` at this commit contains exactly five new markdown-structure tests (`- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---`, `- 1\\n  - 2`); there is no case for a top-level `Heading\\n-`. The rewritten `lheadingRule` in list-empty-bullet-plugin.ts (the `isLoneDash` guard, ~line 105) is registered globally via `md.block.ruler.at('lheading', ...)`, so it changes behavior outside lists too: a lone `-` after a top-level paragraph no longer forms an `<h2>` and instead terminates the paragraph (the wrapped `list` rule returns true in silent mode), yielding a paragraph plus an empty list. The project's own TODO doc even listed \"top-level lone dash\" as an intended test case, and it was not added, so the claim is factually correct about the code and the test file. Impact is limited to test coverage of a deliberate deviation, so I rate it minor.",
+        "confidence": "high",
+        "severity": "minor",
+        "is_real": true
+      },
+      "num_turns": 3,
+      "cost_usd": 0.0405849,
+      "saw_cited_files": 4,
+      "cited_unresolved": 0,
+      "saw_diff": true,
+      "cached_prefix": true
+    }
+  ],
+  "session_log": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 41354,
+      "duration_api_ms": 42626,
+      "ttft_ms": 25233,
+      "ttft_stream_ms": 1875,
+      "time_to_request_ms": 320,
+      "num_turns": 3,
+      "result": "{\"is_real\":true,\"severity\":\"minor\",\"confidence\":\"high\",\"reasoning\":\"list-empty-bullet-plugin.ts:68-150 is a near-verbatim copy of markdown-it 14.x `rules_block/lheading.mjs` (same indent guard, parentType swap, terminator loop, and the three token pushes with identical map arithmetic) plus a re-created `asciiTrim` at lines 17-22, differing only by the `isLoneDash` guard at lines 100-106; it is installed via `md.block.ruler.at('lheading', lheadingRule)` at line 168, so upstream is fully replaced and frozen with no test to detect drift on a markdown-it upgrade. The claim's factual description of the code is correct, and the contrast with the `getRuleFn` delegation used for `list` (lines 170-186) is accurate. Its one weak point is the assertion that delegation was easy: upstream `lheading` ignores `silent` and pushes tokens unconditionally, so a wrapper would have to run it and roll back `state.tokens`/`state.line` — awkward, though still possible. Impact is maintainability only, since the shipped behavior is exercised by preview.test.ts:151-196, so I rate it minor rather than a correctness bug.\"}",
+      "stop_reason": "tool_use",
+      "session_id": "ace00f8d-ed9a-4ae7-bfd0-2519f6e9cede",
+      "total_cost_usd": 0.07814399999999999,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 2532,
+        "cache_read_input_tokens": 53790,
+        "output_tokens": 3061,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 2532,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1153,
+            "cache_read_input_tokens": 27166,
+            "cache_creation_input_tokens": 1990,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1990
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 788,
+          "outputTokens": 20,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000888,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 4,
+          "outputTokens": 3061,
+          "cacheReadInputTokens": 53790,
+          "cacheCreationInputTokens": 2532,
+          "webSearchRequests": 0,
+          "costUSD": 0.07725599999999999,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high",
+        "reasoning": "list-empty-bullet-plugin.ts:68-150 is a near-verbatim copy of markdown-it 14.x `rules_block/lheading.mjs` (same indent guard, parentType swap, terminator loop, and the three token pushes with identical map arithmetic) plus a re-created `asciiTrim` at lines 17-22, differing only by the `isLoneDash` guard at lines 100-106; it is installed via `md.block.ruler.at('lheading', lheadingRule)` at line 168, so upstream is fully replaced and frozen with no test to detect drift on a markdown-it upgrade. The claim's factual description of the code is correct, and the contrast with the `getRuleFn` delegation used for `list` (lines 170-186) is accurate. Its one weak point is the assertion that delegation was easy: upstream `lheading` ignores `silent` and pushes tokens unconditionally, so a wrapper would have to run it and roll back `state.tokens`/`state.line` — awkward, though still possible. Impact is maintainability only, since the shipped behavior is exercised by preview.test.ts:151-196, so I rate it minor rather than a correctness bug."
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "0db7199c-d361-497f-a060-0a54de0340a5",
+      "attribution": {
+        "lens": "design-fit",
+        "role": "adjudicator"
+      }
+    },
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 16223,
+      "duration_api_ms": 17030,
+      "ttft_ms": 8168,
+      "ttft_stream_ms": 1735,
+      "time_to_request_ms": 262,
+      "num_turns": 3,
+      "result": "{\"reasoning\":\"The supplied `preview.test.ts` at this commit contains exactly five new markdown-structure tests (`- 1\\\\n  -`, `- 1\\\\n  - `, `- 1\\\\n\\\\n  - `, `Heading\\\\n---`, `- 1\\\\n  - 2`); there is no case for a top-level `Heading\\\\n-`. The rewritten `lheadingRule` in list-empty-bullet-plugin.ts (the `isLoneDash` guard, ~line 105) is registered globally via `md.block.ruler.at('lheading', ...)`, so it changes behavior outside lists too: a lone `-` after a top-level paragraph no longer forms an `<h2>` and instead terminates the paragraph (the wrapped `list` rule returns true in silent mode), yielding a paragraph plus an empty list. The project's own TODO doc even listed \\\"top-level lone dash\\\" as an intended test case, and it was not added, so the claim is factually correct about the code and the test file. Impact is limited to test coverage of a deliberate deviation, so I rate it minor.\",\"confidence\":\"high\",\"severity\":\"minor\",\"is_real\":true}",
+      "stop_reason": "tool_use",
+      "session_id": "a7ad0244-81e0-4be1-ba3c-f79fb0dc24f6",
+      "total_cost_usd": 0.0405849,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 1123,
+        "cache_read_input_tokens": 53753,
+        "output_tokens": 1124,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 1123,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 515,
+            "cache_read_input_tokens": 27129,
+            "cache_creation_input_tokens": 618,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 618
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 764,
+          "outputTokens": 17,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000849,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 4,
+          "outputTokens": 1124,
+          "cacheReadInputTokens": 53753,
+          "cacheCreationInputTokens": 1123,
+          "webSearchRequests": 0,
+          "costUSD": 0.039735900000000005,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "reasoning": "The supplied `preview.test.ts` at this commit contains exactly five new markdown-structure tests (`- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---`, `- 1\\n  - 2`); there is no case for a top-level `Heading\\n-`. The rewritten `lheadingRule` in list-empty-bullet-plugin.ts (the `isLoneDash` guard, ~line 105) is registered globally via `md.block.ruler.at('lheading', ...)`, so it changes behavior outside lists too: a lone `-` after a top-level paragraph no longer forms an `<h2>` and instead terminates the paragraph (the wrapped `list` rule returns true in silent mode), yielding a paragraph plus an empty list. The project's own TODO doc even listed \"top-level lone dash\" as an intended test case, and it was not added, so the claim is factually correct about the code and the test file. Impact is limited to test coverage of a deliberate deviation, so I rate it minor.",
+        "confidence": "high",
+        "severity": "minor",
+        "is_real": true
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "0f7e1b60-8d52-4b42-a4f3-6e71d7ec108d",
+      "attribution": {
+        "lens": "test-adequacy",
+        "role": "adjudicator"
+      }
+    }
+  ]
+}

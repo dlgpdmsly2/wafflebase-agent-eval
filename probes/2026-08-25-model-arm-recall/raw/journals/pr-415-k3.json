@@ -1,0 +1,112 @@
+{
+  "item_id": "pr-415",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "repo": null,
+  "review_commit": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+  "results": [
+    {
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::raw-text oid guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 20,
+      "lens": "blast-radius",
+      "round_commit": null,
+      "verdict": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium",
+        "reasoning": "RAW_TEXT_OIDS at packages/backend/src/datasource/datasource.service.ts:20-24 lists only the scalar 1082/1114/1184 OIDs, and datasourceTypeParser (lines 34-37) sends every other OID to the pg-types default, which registers parseDateArray for 1115 (_timestamp), 1182 (_date) and 1185 (_timestamptz) — so array date/time columns still come back as JS Date built from the Node runtime timezone, and `SET TimeZone = 'UTC'` only changes server-side text rendering, not the offset-less client-side parse. Those arrays hit the object branch of toCell (packages/sheets/src/store/readonly.ts:31-35) and JSON.stringify serializes the Dates as shifted ISO strings, and the new type matrix in packages/backend/test/database.e2e-spec.ts covers scalars only, so nothing catches it. The claim overreaches on ranges: pg-types registers no parser for tsrange/tstzrange (3908/3910), so those stay raw strings and are unaffected — but the array gap, which is the substance of the finding, is real. Severity is minor because only array-typed date/time result columns are affected; confidence is medium since no checkout was mounted to pin the installed pg-types parser table."
+      },
+      "num_turns": 4,
+      "cost_usd": 0.10351629999999999,
+      "saw_cited_files": 7,
+      "cited_unresolved": 0,
+      "saw_diff": true,
+      "cached_prefix": false
+    }
+  ],
+  "session_log": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 52322,
+      "duration_api_ms": 58089,
+      "ttft_ms": 32057,
+      "ttft_stream_ms": 2368,
+      "time_to_request_ms": 283,
+      "num_turns": 4,
+      "result": "{\"is_real\":true,\"severity\":\"minor\",\"confidence\":\"medium\",\"reasoning\":\"RAW_TEXT_OIDS at packages/backend/src/datasource/datasource.service.ts:20-24 lists only the scalar 1082/1114/1184 OIDs, and datasourceTypeParser (lines 34-37) sends every other OID to the pg-types default, which registers parseDateArray for 1115 (_timestamp), 1182 (_date) and 1185 (_timestamptz) — so array date/time columns still come back as JS Date built from the Node runtime timezone, and `SET TimeZone = 'UTC'` only changes server-side text rendering, not the offset-less client-side parse. Those arrays hit the object branch of toCell (packages/sheets/src/store/readonly.ts:31-35) and JSON.stringify serializes the Dates as shifted ISO strings, and the new type matrix in packages/backend/test/database.e2e-spec.ts covers scalars only, so nothing catches it. The claim overreaches on ranges: pg-types registers no parser for tsrange/tstzrange (3908/3910), so those stay raw strings and are unaffected — but the array gap, which is the substance of the finding, is real. Severity is minor because only array-typed date/time result columns are affected; confidence is medium since no checkout was mounted to pin the installed pg-types parser table.\"}",
+      "stop_reason": "tool_use",
+      "session_id": "b697c325-8854-4e3c-bb05-7d8798301cc7",
+      "total_cost_usd": 0.10351629999999999,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 3294,
+        "cache_read_input_tokens": 71171,
+        "output_tokens": 4094,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 3294,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1559,
+            "cache_read_input_tokens": 35934,
+            "cache_creation_input_tokens": 2597,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2597
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 874,
+          "outputTokens": 21,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000979,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 4,
+          "outputTokens": 4094,
+          "cacheReadInputTokens": 71171,
+          "cacheCreationInputTokens": 3294,
+          "webSearchRequests": 0,
+          "costUSD": 0.1025373,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium",
+        "reasoning": "RAW_TEXT_OIDS at packages/backend/src/datasource/datasource.service.ts:20-24 lists only the scalar 1082/1114/1184 OIDs, and datasourceTypeParser (lines 34-37) sends every other OID to the pg-types default, which registers parseDateArray for 1115 (_timestamp), 1182 (_date) and 1185 (_timestamptz) — so array date/time columns still come back as JS Date built from the Node runtime timezone, and `SET TimeZone = 'UTC'` only changes server-side text rendering, not the offset-less client-side parse. Those arrays hit the object branch of toCell (packages/sheets/src/store/readonly.ts:31-35) and JSON.stringify serializes the Dates as shifted ISO strings, and the new type matrix in packages/backend/test/database.e2e-spec.ts covers scalars only, so nothing catches it. The claim overreaches on ranges: pg-types registers no parser for tsrange/tstzrange (3908/3910), so those stay raw strings and are unaffected — but the array gap, which is the substance of the finding, is real. Severity is minor because only array-typed date/time result columns are affected; confidence is medium since no checkout was mounted to pin the installed pg-types parser table."
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "8ea9f389-3be4-4e53-9149-c48551955778",
+      "attribution": {
+        "lens": "blast-radius",
+        "role": "adjudicator"
+      }
+    }
+  ]
+}

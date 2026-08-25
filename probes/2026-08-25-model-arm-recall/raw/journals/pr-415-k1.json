@@ -1,0 +1,314 @@
+{
+  "item_id": "pr-415",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "repo": null,
+  "review_commit": "51c01826aa9f05e4cef9ee498668e3f2321b3602",
+  "results": [
+    {
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::sql statement injection: validateselectquery validates a comment-stripped copy of the query, but executequery interpolates the original string into a simple-protocol query, so ddl/dml can be smuggled past the read-only guard",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 148,
+      "lens": "security",
+      "round_commit": null,
+      "verdict": {
+        "reasoning": "I traced the payload through both files as supplied. sql-validator.ts strips `--...` to end-of-line with a regex that is unaware of double-quoted identifiers, and every subsequent check (first token, FORBIDDEN_KEYWORDS loop, `;` split) runs only on that stripped copy, while datasource.service.ts:148 interpolates the untouched `dto.query` into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001`. For `SELECT 1 AS \"x--\" ) AS q; DROP TABLE users; SELECT * FROM (SELECT 1`, the validator sees only `SELECT 1 AS \"x` (passes all checks), whereas Postgres treats `--` inside the double-quoted identifier as literal text and receives three complete statements; node-postgres sends a value-less string via the simple query protocol, which does execute multiple `;`-separated statements. The claim also correctly notes this is pre-existing and untested (sql-validator.spec.ts only covers the naive `SELECT 1; DROP TABLE users` case), and nothing in this diff closes it.",
+        "confidence": "high",
+        "severity": "critical",
+        "is_real": true
+      },
+      "num_turns": 2,
+      "cost_usd": 0.24331799999999995,
+      "saw_cited_files": 7,
+      "cited_unresolved": 0,
+      "saw_diff": true,
+      "cached_prefix": true
+    },
+    {
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::tls certificate verification permanently disabled for datasource connections (`rejectunauthorized: false`), so \"ssl enabled\" gives no mitm protection for credentials or query data",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 202,
+      "lens": "security",
+      "round_commit": null,
+      "verdict": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high",
+        "reasoning": "In packages/backend/src/datasource/datasource.service.ts, `createClient` builds the pg Client with `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (the same object literal the diff modifies by adding `types`), and the decrypted password is passed in the adjacent `password: decrypt(ds.password)` line. With `rejectUnauthorized: false` and no CA/servername configured, node-postgres/TLS accepts any certificate, so enabling SSL yields encryption without server authentication — a MITM can present a self-signed cert and capture credentials and query results. The claim is accurate about the code as written; I could not run the repo-wide grep (no checkout is mounted) to confirm there is no CA-pinning path elsewhere, but nothing in the supplied datasource files provides one. Note the weakness is pre-existing rather than introduced by this diff, which only adds the `types` parser option."
+      },
+      "num_turns": 3,
+      "cost_usd": 0.0415844,
+      "saw_cited_files": 7,
+      "cited_unresolved": 0,
+      "saw_diff": true,
+      "cached_prefix": true
+    },
+    {
+      "finding_key": "packages/backend/src/datasource/datasource.service.ts::ssrf / internal port scanning: user-supplied host+port are connected to with no allowlist, and raw driver errors are returned to the caller, making the backend an oracle for the internal network",
+      "file": "packages/backend/src/datasource/datasource.service.ts",
+      "line": 196,
+      "lens": "security",
+      "round_commit": null,
+      "verdict": {
+        "reasoning": "Verified against the supplied files: CreateDataSourceDto only length/range-validates host and port with no address denylist, and createClient (datasource.service.ts, the `new Client({ host: ds.host, port: ds.port, ... })` block the diff touches to add `types`) dials whatever the user supplies. testConnection returns `{ success: false, error: (error as Error).message }` and executeQuery rethrows `pgError.message` in a BadRequestException, so raw driver errors (ECONNREFUSED vs. timeout vs. protocol error) do reach the authenticated caller — a working internal port-scan oracle, exactly as claimed. The claim misreads nothing; my only qualifications are that the routes are gated by JwtAuthGuard plus workspaceService.assertMember (so it is not unauthenticated), and that this is entirely pre-existing and inherent to a user-configured Postgres connector, with the leak limited to connection-level signals rather than response bodies. Hence real, but I rate it minor.",
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "num_turns": 2,
+      "cost_usd": 0.0494651,
+      "saw_cited_files": 7,
+      "cited_unresolved": 0,
+      "saw_diff": true,
+      "cached_prefix": true
+    }
+  ],
+  "session_log": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 20944,
+      "duration_api_ms": 21704,
+      "ttft_ms": 16318,
+      "ttft_stream_ms": 1399,
+      "time_to_request_ms": 263,
+      "num_turns": 2,
+      "result": "{\"reasoning\":\"I traced the payload through both files as supplied. sql-validator.ts strips `--...` to end-of-line with a regex that is unaware of double-quoted identifiers, and every subsequent check (first token, FORBIDDEN_KEYWORDS loop, `;` split) runs only on that stripped copy, while datasource.service.ts:148 interpolates the untouched `dto.query` into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001`. For `SELECT 1 AS \\\"x--\\\" ) AS q; DROP TABLE users; SELECT * FROM (SELECT 1`, the validator sees only `SELECT 1 AS \\\"x` (passes all checks), whereas Postgres treats `--` inside the double-quoted identifier as literal text and receives three complete statements; node-postgres sends a value-less string via the simple query protocol, which does execute multiple `;`-separated statements. The claim also correctly notes this is pre-existing and untested (sql-validator.spec.ts only covers the naive `SELECT 1; DROP TABLE users` case), and nothing in this diff closes it.\",\"confidence\":\"high\",\"severity\":\"critical\",\"is_real\":true}",
+      "stop_reason": "tool_use",
+      "session_id": "1255e9c6-00d9-44f6-826e-538e3b7d3264",
+      "total_cost_usd": 0.24331799999999995,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 36222,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 1655,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 36222,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1655,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 36222,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 36222
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1065,
+          "outputTokens": 18,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001155,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 1655,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 36222,
+          "webSearchRequests": 0,
+          "costUSD": 0.24216299999999996,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "reasoning": "I traced the payload through both files as supplied. sql-validator.ts strips `--...` to end-of-line with a regex that is unaware of double-quoted identifiers, and every subsequent check (first token, FORBIDDEN_KEYWORDS loop, `;` split) runs only on that stripped copy, while datasource.service.ts:148 interpolates the untouched `dto.query` into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001`. For `SELECT 1 AS \"x--\" ) AS q; DROP TABLE users; SELECT * FROM (SELECT 1`, the validator sees only `SELECT 1 AS \"x` (passes all checks), whereas Postgres treats `--` inside the double-quoted identifier as literal text and receives three complete statements; node-postgres sends a value-less string via the simple query protocol, which does execute multiple `;`-separated statements. The claim also correctly notes this is pre-existing and untested (sql-validator.spec.ts only covers the naive `SELECT 1; DROP TABLE users` case), and nothing in this diff closes it.",
+        "confidence": "high",
+        "severity": "critical",
+        "is_real": true
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "5a1c679e-fff2-40ad-a07a-62c0f485b24f",
+      "attribution": {
+        "lens": "security",
+        "role": "adjudicator"
+      }
+    },
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 13874,
+      "duration_api_ms": 16864,
+      "ttft_ms": 6257,
+      "ttft_stream_ms": 2008,
+      "time_to_request_ms": 943,
+      "num_turns": 3,
+      "result": "{\"is_real\":true,\"severity\":\"major\",\"confidence\":\"high\",\"reasoning\":\"In packages/backend/src/datasource/datasource.service.ts, `createClient` builds the pg Client with `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (the same object literal the diff modifies by adding `types`), and the decrypted password is passed in the adjacent `password: <REDACTED> line. With `rejectUnauthorized: false` and no CA/servername configured, node-postgres/TLS accepts any certificate, so enabling SSL yields encryption without server authentication — a MITM can present a self-signed cert and capture credentials and query results. The claim is accurate about the code as written; I could not run the repo-wide grep (no checkout is mounted) to confirm there is no CA-pinning path elsewhere, but nothing in the supplied datasource files provides one. Note the weakness is pre-existing rather than introduced by this diff, which only adds the `types` parser option.\"}",
+      "stop_reason": "tool_use",
+      "session_id": "406c244d-1cc2-4f78-9c30-ef3b25d55146",
+      "total_cost_usd": 0.0415844,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 878,
+        "cache_read_input_tokens": 70978,
+        "output_tokens": 945,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 878,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 580,
+            "cache_read_input_tokens": 35741,
+            "cache_creation_input_tokens": 374,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 374
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 746,
+          "outputTokens": 18,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000836,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 4,
+          "outputTokens": 945,
+          "cacheReadInputTokens": 70978,
+          "cacheCreationInputTokens": 878,
+          "webSearchRequests": 0,
+          "costUSD": 0.040748400000000004,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high",
+        "reasoning": "In packages/backend/src/datasource/datasource.service.ts, `createClient` builds the pg Client with `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (the same object literal the diff modifies by adding `types`), and the decrypted password is passed in the adjacent `password: decrypt(ds.password)` line. With `rejectUnauthorized: false` and no CA/servername configured, node-postgres/TLS accepts any certificate, so enabling SSL yields encryption without server authentication — a MITM can present a self-signed cert and capture credentials and query results. The claim is accurate about the code as written; I could not run the repo-wide grep (no checkout is mounted) to confirm there is no CA-pinning path elsewhere, but nothing in the supplied datasource files provides one. Note the weakness is pre-existing rather than introduced by this diff, which only adds the `types` parser option."
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "fa956fc9-6dd6-4252-8ae7-989a438d658a",
+      "attribution": {
+        "lens": "security",
+        "role": "adjudicator"
+      }
+    },
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 32235,
+      "duration_api_ms": 33106,
+      "ttft_ms": 16988,
+      "ttft_stream_ms": 1336,
+      "time_to_request_ms": 233,
+      "num_turns": 2,
+      "result": "{\"reasoning\":\"Verified against the supplied files: CreateDataSourceDto only length/range-validates host and port with no address denylist, and createClient (datasource.service.ts, the `new Client({ host: ds.host, port: ds.port, ... })` block the diff touches to add `types`) dials whatever the user supplies. testConnection returns `{ success: false, error: (error as Error).message }` and executeQuery rethrows `pgError.message` in a BadRequestException, so raw driver errors (ECONNREFUSED vs. timeout vs. protocol error) do reach the authenticated caller — a working internal port-scan oracle, exactly as claimed. The claim misreads nothing; my only qualifications are that the routes are gated by JwtAuthGuard plus workspaceService.assertMember (so it is not unauthenticated), and that this is entirely pre-existing and inherent to a user-configured Postgres connector, with the leak limited to connection-level signals rather than response bodies. Hence real, but I rate it minor.\",\"is_real\":true,\"severity\":\"minor\",\"confidence\":\"high\"}",
+      "stop_reason": "tool_use",
+      "session_id": "30376cd0-c0fa-4e78-84f9-99301f21abc2",
+      "total_cost_usd": 0.0494651,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 546,
+        "cache_read_input_tokens": 35237,
+        "output_tokens": 2316,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 546,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2316,
+            "cache_read_input_tokens": 35237,
+            "cache_creation_input_tokens": 546,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 546
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 787,
+          "outputTokens": 17,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000872,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 2316,
+          "cacheReadInputTokens": 35237,
+          "cacheCreationInputTokens": 546,
+          "webSearchRequests": 0,
+          "costUSD": 0.0485931,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "reasoning": "Verified against the supplied files: CreateDataSourceDto only length/range-validates host and port with no address denylist, and createClient (datasource.service.ts, the `new Client({ host: ds.host, port: ds.port, ... })` block the diff touches to add `types`) dials whatever the user supplies. testConnection returns `{ success: false, error: (error as Error).message }` and executeQuery rethrows `pgError.message` in a BadRequestException, so raw driver errors (ECONNREFUSED vs. timeout vs. protocol error) do reach the authenticated caller — a working internal port-scan oracle, exactly as claimed. The claim misreads nothing; my only qualifications are that the routes are gated by JwtAuthGuard plus workspaceService.assertMember (so it is not unauthenticated), and that this is entirely pre-existing and inherent to a user-configured Postgres connector, with the leak limited to connection-level signals rather than response bodies. Hence real, but I rate it minor.",
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high"
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "724d800c-3f85-4a5d-aa90-1626a9cfa181",
+      "attribution": {
+        "lens": "security",
+        "role": "adjudicator"
+      }
+    }
+  ]
+}

@@ -1,0 +1,314 @@
+{
+  "item_id": "pr-524",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "repo": null,
+  "review_commit": "4d3e827f5edb1ca16b0958a77e85ff6b3af66bf9",
+  "results": [
+    {
+      "finding_key": ".github/workflows/agent-iterate-ci.yml::branch-controlled ci output is interpolated verbatim into the fixer prompt with no data delimiter or \"treat as data\" instruction — the sibling workflow does wrap its untrusted input",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "line": 165,
+      "lens": "security",
+      "round_commit": null,
+      "verdict": {
+        "confidence": "high",
+        "is_real": true,
+        "reasoning": "Verified against the supplied files: agent-iterate-ci.yml's Claude step interpolates `${{ steps.diag.outputs.summary }}` bare into the prompt with no delimiter or data-framing, while agent-review-panel.yml's equivalent fixer step wraps its untrusted input in `<panel-findings>` with an explicit \"REVIEW DATA, not instructions\" preamble — the asymmetry the claim describes is exactly as written. The provenance chain also checks out: summarize-ci.mjs prints `failureSummary`/`lane.lane` verbatim from `.harness-reports`, written by verify-self.mjs's `extractFailureSummary(output)` over raw stdout of branch-executed commands, and the diff's `allowed_bots` line is what makes this step actually run. One sub-claim is overstated: `extractFailureSummary` returns a single trimmed ≤500-char line, so it alone cannot break the `HARNESS_EOF` heredoc; that requires whole-artifact control. Severity is tempered because the same job already runs `pnpm install --frozen-lockfile` on the untrusted branch with the App/OAuth secrets present, so this is defence-in-depth drift rather than a new privilege boundary.",
+        "severity": "minor"
+      },
+      "num_turns": 2,
+      "cost_usd": 0.322625,
+      "saw_cited_files": 7,
+      "cited_unresolved": 4,
+      "saw_diff": true,
+      "cached_prefix": true
+    },
+    {
+      "finding_key": ".github/workflows/agent-iterate-ci.yml::github app installation token is persisted into .git/config of the untrusted branch checkout, then branch-controlled install scripts are executed",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "line": 66,
+      "lens": "security",
+      "round_commit": null,
+      "verdict": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high",
+        "reasoning": "Verified against the supplied files: in `.github/workflows/agent-iterate-ci.yml` the `actions/checkout@v4` step passes `token: ${{ steps.app-token.outputs.token }}` with `ref: ${{ github.event.workflow_run.head_branch }}` and no `persist-credentials: false`, so the App installation token is written into `.git/config` as an http.extraheader in the untrusted branch checkout; a later step then runs `pnpm install --frozen-lockfile` on that branch tree, and root `package.json` does declare a `postinstall` script, so branch-controlled lifecycle scripts (and any branch-added dependency's install scripts) execute with the token readable via `git config --get http.https://github.com/.extraheader`. The contrast the reviewer draws is also accurate: `agent-review-panel.yml`'s `deps` and `review-panel` checkouts explicitly set `persist-credentials: false` with a comment giving exactly this reason, the panel's `fix` checkout does not, and the iterate job's App token is minted with no `permission-*` scoping (unlike the panel's contents/PR/issues-scoped token). Mitigating context (base-repo `agent/` branches only, `AGENT_PIPELINE_ENABLED`, `environment: agent`, and the fact that claude-code-action later receives the same token anyway) reduces but does not eliminate the exposure — it widens the leak to third-party install scripts and violates the repo's own stated rule; note this is pre-existing code, not introduced by the diff under review."
+      },
+      "num_turns": 2,
+      "cost_usd": 0.056272,
+      "saw_cited_files": 7,
+      "cited_unresolved": 4,
+      "saw_diff": true,
+      "cached_prefix": true
+    },
+    {
+      "finding_key": ".github/workflows/agent-review-panel.yml::the \"only our panel's checks\" filter on the fix prompt is app-slug based, and every workflow in the repo — including one added on the untrusted branch — produces app slug `github-actions`",
+      "file": ".github/workflows/agent-review-panel.yml",
+      "line": 358,
+      "lens": "security",
+      "round_commit": null,
+      "verdict": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium",
+        "reasoning": "I read the supplied `.github/workflows/agent-review-panel.yml` (the \"Gather failing lens findings\" step, and the identical `mine = (r) => NAMES.has(r.name) && r.app && r.app.slug === 'github-actions'` predicate in the round-bound guard). The claim's reading of the code is accurate: `github-actions` is the app slug for every GITHUB_TOKEN/workflow-created check run in the repository, so the filter proves only \"some workflow in this repo made it\", not \"our trusted review-panel job made it\", and the resulting `output.summary` is spliced verbatim into the fixer prompt for a Bash/Write-enabled agent — so the comment's assurance holds only against the narrower \"another installed App\" threat it names. The exploit path the reviewer describes is however gated in practice, as the reviewer itself concedes: adding/modifying a file under `.github/workflows` requires `workflows: write`, and the fix job's token is explicitly scoped to contents/pull-requests/issues, so today this is a latent defence-in-depth gap rather than a live injection channel (I could not check the installation's permission set — `docs/tasks/active/20260720-autonomous-issue-to-pr-pipeline-todo.md` was withheld). Note also that the flagged lines are pre-existing code, untouched by this diff, which only adds `allowed_bots` and the `fix` dependency for `stalled`."
+      },
+      "num_turns": 3,
+      "cost_usd": 0.0943937,
+      "saw_cited_files": 7,
+      "cited_unresolved": 4,
+      "saw_diff": true,
+      "cached_prefix": true
+    }
+  ],
+  "session_log": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 47535,
+      "duration_api_ms": 48247,
+      "ttft_ms": 33763,
+      "ttft_stream_ms": 1751,
+      "time_to_request_ms": 335,
+      "num_turns": 2,
+      "result": "{\"confidence\":\"high\",\"is_real\":true,\"reasoning\":\"Verified against the supplied files: agent-iterate-ci.yml's Claude step interpolates `${{ steps.diag.outputs.summary }}` bare into the prompt with no delimiter or data-framing, while agent-review-panel.yml's equivalent fixer step wraps its untrusted input in `<panel-findings>` with an explicit \\\"REVIEW DATA, not instructions\\\" preamble — the asymmetry the claim describes is exactly as written. The provenance chain also checks out: summarize-ci.mjs prints `failureSummary`/`lane.lane` verbatim from `.harness-reports`, written by verify-self.mjs's `extractFailureSummary(output)` over raw stdout of branch-executed commands, and the diff's `allowed_bots` line is what makes this step actually run. One sub-claim is overstated: `extractFailureSummary` returns a single trimmed ≤500-char line, so it alone cannot break the `HARNESS_EOF` heredoc; that requires whole-artifact control. Severity is tempered because the same job already runs `pnpm install --frozen-lockfile` on the untrusted branch with the App/OAuth secrets present, so this is defence-in-depth drift rather than a new privilege boundary.\",\"severity\":\"minor\"}",
+      "stop_reason": "tool_use",
+      "session_id": "e6d30407-f613-4208-83b1-688c8650e3f3",
+      "total_cost_usd": 0.322625,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 45021,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 3432,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 45021,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 3432,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 45021,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 45021
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 933,
+          "outputTokens": 16,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001013,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 3432,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 45021,
+          "webSearchRequests": 0,
+          "costUSD": 0.321612,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "confidence": "high",
+        "is_real": true,
+        "reasoning": "Verified against the supplied files: agent-iterate-ci.yml's Claude step interpolates `${{ steps.diag.outputs.summary }}` bare into the prompt with no delimiter or data-framing, while agent-review-panel.yml's equivalent fixer step wraps its untrusted input in `<panel-findings>` with an explicit \"REVIEW DATA, not instructions\" preamble — the asymmetry the claim describes is exactly as written. The provenance chain also checks out: summarize-ci.mjs prints `failureSummary`/`lane.lane` verbatim from `.harness-reports`, written by verify-self.mjs's `extractFailureSummary(output)` over raw stdout of branch-executed commands, and the diff's `allowed_bots` line is what makes this step actually run. One sub-claim is overstated: `extractFailureSummary` returns a single trimmed ≤500-char line, so it alone cannot break the `HARNESS_EOF` heredoc; that requires whole-artifact control. Severity is tempered because the same job already runs `pnpm install --frozen-lockfile` on the untrusted branch with the App/OAuth secrets present, so this is defence-in-depth drift rather than a new privilege boundary.",
+        "severity": "minor"
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "363fb10b-fca3-4e78-8db8-a1eeefa50a2c",
+      "attribution": {
+        "lens": "security",
+        "role": "adjudicator"
+      }
+    },
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 36666,
+      "duration_api_ms": 37242,
+      "ttft_ms": 30110,
+      "ttft_stream_ms": 1696,
+      "time_to_request_ms": 327,
+      "num_turns": 2,
+      "result": "{\"is_real\":true,\"severity\":\"major\",\"confidence\":\"high\",\"reasoning\":\"Verified against the supplied files: in `.github/workflows/agent-iterate-ci.yml` the `actions/checkout@v4` step passes `token: ${{ steps.app-token.outputs.token }}` with `ref: ${{ github.event.workflow_run.head_branch }}` and no `persist-credentials: false`, so the App installation token is written into `.git/config` as an http.extraheader in the untrusted branch checkout; a later step then runs `pnpm install --frozen-lockfile` on that branch tree, and root `package.json` does declare a `postinstall` script, so branch-controlled lifecycle scripts (and any branch-added dependency's install scripts) execute with the token <REDACTED> via `git config --get http.https://github.com/.extraheader`. The contrast the reviewer draws is also accurate: `agent-review-panel.yml`'s `deps` and `review-panel` checkouts explicitly set `persist-credentials: false` with a comment giving exactly this reason, the panel's `fix` checkout does not, and the iterate job's App token is minted with no `permission-*` scoping (unlike the panel's contents/PR/issues-scoped token). Mitigating context (base-repo `agent/` branches only, `AGENT_PIPELINE_ENABLED`, `environment: agent`, and the fact that claude-code-action later receives the same token anyway) reduces but does not eliminate the exposure — it widens the leak to third-party install scripts and violates the repo's own stated rule; note this is pre-existing code, not introduced by the diff under review.\"}",
+      "stop_reason": "tool_use",
+      "session_id": "1d16678b-6262-4e30-8ea6-9934a9252273",
+      "total_cost_usd": 0.056272,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 702,
+        "cache_read_input_tokens": 44250,
+        "output_tokens": 2519,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 702,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2519,
+            "cache_read_input_tokens": 44250,
+            "cache_creation_input_tokens": 702,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 702
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 904,
+          "outputTokens": 18,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.0009939999999999999,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 2519,
+          "cacheReadInputTokens": 44250,
+          "cacheCreationInputTokens": 702,
+          "webSearchRequests": 0,
+          "costUSD": 0.055278,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high",
+        "reasoning": "Verified against the supplied files: in `.github/workflows/agent-iterate-ci.yml` the `actions/checkout@v4` step passes `token: ${{ steps.app-token.outputs.token }}` with `ref: ${{ github.event.workflow_run.head_branch }}` and no `persist-credentials: false`, so the App installation token is written into `.git/config` as an http.extraheader in the untrusted branch checkout; a later step then runs `pnpm install --frozen-lockfile` on that branch tree, and root `package.json` does declare a `postinstall` script, so branch-controlled lifecycle scripts (and any branch-added dependency's install scripts) execute with the token readable via `git config --get http.https://github.com/.extraheader`. The contrast the reviewer draws is also accurate: `agent-review-panel.yml`'s `deps` and `review-panel` checkouts explicitly set `persist-credentials: false` with a comment giving exactly this reason, the panel's `fix` checkout does not, and the iterate job's App token is minted with no `permission-*` scoping (unlike the panel's contents/PR/issues-scoped token). Mitigating context (base-repo `agent/` branches only, `AGENT_PIPELINE_ENABLED`, `environment: agent`, and the fact that claude-code-action later receives the same token anyway) reduces but does not eliminate the exposure — it widens the leak to third-party install scripts and violates the repo's own stated rule; note this is pre-existing code, not introduced by the diff under review."
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "efc44109-8824-4c8f-8ce1-e06a7568604a",
+      "attribution": {
+        "lens": "security",
+        "role": "adjudicator"
+      }
+    },
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 47576,
+      "duration_api_ms": 48307,
+      "ttft_ms": 37673,
+      "ttft_stream_ms": 2214,
+      "time_to_request_ms": 311,
+      "num_turns": 3,
+      "result": "{\"is_real\":true,\"severity\":\"minor\",\"confidence\":\"medium\",\"reasoning\":\"I read the supplied `.github/workflows/agent-review-panel.yml` (the \\\"Gather failing lens findings\\\" step, and the identical `mine = (r) => NAMES.has(r.name) && r.app && r.app.slug === 'github-actions'` predicate in the round-bound guard). The claim's reading of the code is accurate: `github-actions` is the app slug for every GITHUB_TOKEN/workflow-created check run in the repository, so the filter proves only \\\"some workflow in this repo made it\\\", not \\\"our trusted review-panel job made it\\\", and the resulting `output.summary` is spliced verbatim into the fixer prompt for a Bash/Write-enabled agent — so the comment's assurance holds only against the narrower \\\"another installed App\\\" threat it names. The exploit path the reviewer describes is however gated in practice, as the reviewer itself concedes: adding/modifying a file under `.github/workflows` requires `workflows: write`, and the fix job's token is explicitly scoped to contents/pull-requests/issues, so today this is a latent defence-in-depth gap rather than a live injection channel (I could not check the installation's permission set — `docs/tasks/active/20260720-autonomous-issue-to-pr-pipeline-todo.md` was withheld). Note also that the flagged lines are pre-existing code, untouched by this diff, which only adds `allowed_bots` and the `fix` dependency for `stalled`.\"}",
+      "stop_reason": "tool_use",
+      "session_id": "4481372b-e927-41ea-813d-4eb6797d05bc",
+      "total_cost_usd": 0.0943937,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 3228,
+        "cache_read_input_tokens": 89229,
+        "output_tokens": 3149,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 3228,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 659,
+            "cache_read_input_tokens": 44979,
+            "cache_creation_input_tokens": 2499,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2499
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 930,
+          "outputTokens": 16,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.00101,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 4,
+          "outputTokens": 3149,
+          "cacheReadInputTokens": 89229,
+          "cacheCreationInputTokens": 3228,
+          "webSearchRequests": 0,
+          "costUSD": 0.0933837,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium",
+        "reasoning": "I read the supplied `.github/workflows/agent-review-panel.yml` (the \"Gather failing lens findings\" step, and the identical `mine = (r) => NAMES.has(r.name) && r.app && r.app.slug === 'github-actions'` predicate in the round-bound guard). The claim's reading of the code is accurate: `github-actions` is the app slug for every GITHUB_TOKEN/workflow-created check run in the repository, so the filter proves only \"some workflow in this repo made it\", not \"our trusted review-panel job made it\", and the resulting `output.summary` is spliced verbatim into the fixer prompt for a Bash/Write-enabled agent — so the comment's assurance holds only against the narrower \"another installed App\" threat it names. The exploit path the reviewer describes is however gated in practice, as the reviewer itself concedes: adding/modifying a file under `.github/workflows` requires `workflows: write`, and the fix job's token is explicitly scoped to contents/pull-requests/issues, so today this is a latent defence-in-depth gap rather than a live injection channel (I could not check the installation's permission set — `docs/tasks/active/20260720-autonomous-issue-to-pr-pipeline-todo.md` was withheld). Note also that the flagged lines are pre-existing code, untouched by this diff, which only adds `allowed_bots` and the `fix` dependency for `stalled`."
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "ad330b74-7b2b-41df-b2ab-ce33effe1c41",
+      "attribution": {
+        "lens": "security",
+        "role": "adjudicator"
+      }
+    }
+  ]
+}

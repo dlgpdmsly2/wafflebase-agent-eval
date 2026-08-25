@@ -1,0 +1,66 @@
+{
+  "generated_by": "model-arm-tier1-population.mjs",
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "run_id": "sonnet-ctl-20260825__k2",
+  "seed": "census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding)",
+  "population": "reported",
+  "predicate": "gating === 'gates' && panel.verification === 'confirmed-high', grouped with finding-match.mjs::groupFindings over both arms per item; class has zero variant members",
+  "scope_items": [
+    "pr-415",
+    "pr-429",
+    "pr-465",
+    "pr-471",
+    "pr-524",
+    "pr-549"
+  ],
+  "excluded": {
+    "pr-605": "control has zero usable observations (all 3 legs infra on a drained pool)"
+  },
+  "n": 14,
+  "items": [
+    {
+      "item_id": "pr-415",
+      "n": 1,
+      "keys": [
+        "packages/backend/src/datasource/datasource.service.ts::partial/inconsistent fix for value fidelity: only date/timestamp/timestamptz are pinned to raw postgres text, while other pg types that the default parser turns into js objects still flow through and end up json-stringified into sheet cells. the change's own e2e expectations enshrine this: bytea renders as `{\"type\":\"buffer\",\"data\":[222,173,190,239]}`, interval as `{\"years\":1,\"months\":2,\"days\":3}`, circle as `{\"x\":1,\"y\":2,\"radius\":3}`. if the intent is \"cells show the value the database shows\", these are user-visible wrong values left unaddressed; if the intent is only the timezone shift, the accepted json-blob rendering should be a stated decision (in the design doc) rather than an incidental test expectation."
+      ]
+    },
+    {
+      "item_id": "pr-429",
+      "n": 5,
+      "keys": [
+        "packages/documentation/sheets/datasources.md::new docs page misstates the datasource access model: collaborators can execute queries with the owner's stored credentials",
+        "packages/backend/src/datasource/datasource.service.ts::datasource ssl uses rejectunauthorized:false, so the documented \"ssl\" toggle gives no mitm protection",
+        "packages/backend/src/datasource/sql-validator.ts::\"read-only\" guarantee advertised by the new docs page rests on a bypassable sql keyword denylist",
+        "packages/backend/src/datasource/datasource.controller.ts::any workspace member can steal another member's stored db password by re-pointing a datasource's host and hitting /test",
+        "packages/documentation/guide/collaboration.md::collaboration doc scopes the comments side panel to documents only, but sheets also has one"
+      ]
+    },
+    {
+      "item_id": "pr-465",
+      "n": 4,
+      "keys": [
+        "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::the originating task's verification criterion for an e2e test of the webhook path is not met",
+        "packages/backend/src/document/yorkie-signature.guard.ts::webhook signature header name/format is an unverified assumption; a mismatch silently 401s every event and `updatedat` never advances",
+        "docs/design/documents-last-modified.md::new standalone top-level design doc instead of folding into the canonical backend doc, contrary to the repo's stated doc-filing policy",
+        "packages/backend/src/document/yorkie-event.controller.spec.ts::test titled 'always answers ok so yorkie does not retry' only exercises the trivial early-return path"
+      ]
+    },
+    {
+      "item_id": "pr-524",
+      "n": 2,
+      "keys": [
+        ".github/workflows/agent-review-panel.yml::`allowed_bots` hardcodes the bot login \"yorkie-agent[bot]\", which is nowhere derived from or documented for the configured app — if the installed app's slug differs, the allow-list never matches and the fix step still fails",
+        ".github/workflows/agent-iterate-ci.yml::$github_output heredoc uses a fixed, guessable delimiter around attacker-influenceable text (output injection)"
+      ]
+    },
+    {
+      "item_id": "pr-549",
+      "n": 2,
+      "keys": [
+        "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` uses a quadratic backtracking trim regex on attacker-controllable note content (redos → preview/tab hang)",
+        "packages/notes/src/view/preview.test.ts::the intentional commonmark deviation for a top-level `heading\\n-` (single-dash setext h1... h2) is untested"
+      ]
+    }
+  ]
+}

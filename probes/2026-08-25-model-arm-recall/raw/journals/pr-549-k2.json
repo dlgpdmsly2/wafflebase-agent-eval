@@ -1,0 +1,213 @@
+{
+  "item_id": "pr-549",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "repo": null,
+  "review_commit": "158c6faaf517e832e25978c1f9630c65c2158c8e",
+  "results": [
+    {
+      "finding_key": "packages/notes/src/view/preview.test.ts::the intentional commonmark deviation for a top-level `heading\\n-` (single-dash setext h1... h2) is untested",
+      "file": "packages/notes/src/view/preview.test.ts",
+      "line": 182,
+      "lens": "test-adequacy",
+      "round_commit": null,
+      "verdict": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high",
+        "reasoning": "The `isLoneDash` guard in list-empty-bullet-plugin.ts (~lines 100-112) is unconditional on nesting, so a top-level `Heading\\n-` — which markdown-it previously rendered as `<h2>` — now falls through to paragraph + empty list, a real user-visible deviation. The only setext test added, preview.test.ts:181-186, renders `Heading\\n---` (runLength 3), which takes the guard's false branch and therefore never pins the lone-dash outcome; no other test in the full file exercises a `=` or single-`-` underline outside a list. The PR's own todo doc even lists \"top-level lone dash\" as an intended test case with the unit-test step left unchecked, corroborating the gap. This is a coverage gap for a deliberate deviation rather than a functional defect, hence minor."
+      },
+      "num_turns": 4,
+      "cost_usd": 0.202734,
+      "saw_cited_files": 4,
+      "cited_unresolved": 0,
+      "saw_diff": true,
+      "cached_prefix": true
+    },
+    {
+      "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` uses a quadratic backtracking trim regex on attacker-controllable note content (redos → preview/tab hang)",
+      "file": "packages/notes/src/view/list-empty-bullet-plugin.ts",
+      "line": 20,
+      "lens": "security",
+      "round_commit": null,
+      "verdict": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high",
+        "reasoning": "Verified at packages/notes/src/view/list-empty-bullet-plugin.ts:19-23: the global regex `/^[\\x09...\\x20]+|[\\x09...\\x20]+$/g` has an unanchored trailing alternative, so `String.replace` retries `[ws]+$` at every offset and backtracks the whole run each time — the textbook quadratic trim (trim-newlines / CVE-2021-33623 shape); `^` without `m` makes the first alternative cheap, so it offers no protection. It is applied to `state.getLines(...)` in the lheading heading branch (reached by any `Text\\n===`/`---` paragraph), and preview.ts's `md.render` is synchronous and re-run from editor.ts's `docChanged` updateListener, so a note containing a long internal whitespace run followed by non-whitespace freezes the tab on every edit or remote patch. I could not execute the code or inspect the installed markdown-it to confirm the secondary claim that upstream `lheading` uses native `.trim()`, but the quadratic pattern exists in this file as written. Severity is major rather than critical: it is a crafted-input, availability-only DoS requiring a very large whitespace run from a collaborator, not a data or integrity compromise."
+      },
+      "num_turns": 3,
+      "cost_usd": 0.1301365,
+      "saw_cited_files": 4,
+      "cited_unresolved": 0,
+      "saw_diff": true,
+      "cached_prefix": true
+    }
+  ],
+  "session_log": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 24624,
+      "duration_api_ms": 25281,
+      "ttft_ms": 9194,
+      "ttft_stream_ms": 2115,
+      "time_to_request_ms": 327,
+      "num_turns": 4,
+      "result": "{\"is_real\":true,\"severity\":\"minor\",\"confidence\":\"high\",\"reasoning\":\"The `isLoneDash` guard in list-empty-bullet-plugin.ts (~lines 100-112) is unconditional on nesting, so a top-level `Heading\\\\n-` — which markdown-it previously rendered as `<h2>` — now falls through to paragraph + empty list, a real user-visible deviation. The only setext test added, preview.test.ts:181-186, renders `Heading\\\\n---` (runLength 3), which takes the guard's false branch and therefore never pins the lone-dash outcome; no other test in the full file exercises a `=` or single-`-` underline outside a list. The PR's own todo doc even lists \\\"top-level lone dash\\\" as an intended test case with the unit-test step left unchecked, corroborating the gap. This is a coverage gap for a deliberate deviation rather than a functional defect, hence minor.\"}",
+      "stop_reason": "tool_use",
+      "session_id": "970e6a5d-8731-4477-9176-de861d6c98e5",
+      "total_cost_usd": 0.202734,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 27962,
+        "cache_read_input_tokens": 27190,
+        "output_tokens": 1726,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 27962,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1017,
+            "cache_read_input_tokens": 27190,
+            "cache_creation_input_tokens": 772,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 772
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 818,
+          "outputTokens": 17,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000903,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 4,
+          "outputTokens": 1726,
+          "cacheReadInputTokens": 27190,
+          "cacheCreationInputTokens": 27962,
+          "webSearchRequests": 0,
+          "costUSD": 0.201831,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "high",
+        "reasoning": "The `isLoneDash` guard in list-empty-bullet-plugin.ts (~lines 100-112) is unconditional on nesting, so a top-level `Heading\\n-` — which markdown-it previously rendered as `<h2>` — now falls through to paragraph + empty list, a real user-visible deviation. The only setext test added, preview.test.ts:181-186, renders `Heading\\n---` (runLength 3), which takes the guard's false branch and therefore never pins the lone-dash outcome; no other test in the full file exercises a `=` or single-`-` underline outside a list. The PR's own todo doc even lists \"top-level lone dash\" as an intended test case with the unit-test step left unchecked, corroborating the gap. This is a coverage gap for a deliberate deviation rather than a functional defect, hence minor."
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "f58da7d9-838a-415e-8adb-f6ac28b391af",
+      "attribution": {
+        "lens": "test-adequacy",
+        "role": "adjudicator"
+      }
+    },
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 75463,
+      "duration_api_ms": 75966,
+      "ttft_ms": 55330,
+      "ttft_stream_ms": 2226,
+      "time_to_request_ms": 407,
+      "num_turns": 3,
+      "result": "{\"is_real\":true,\"severity\":\"major\",\"confidence\":\"high\",\"reasoning\":\"Verified at packages/notes/src/view/list-empty-bullet-plugin.ts:19-23: the global regex `/^[\\\\x09...\\\\x20]+|[\\\\x09...\\\\x20]+$/g` has an unanchored trailing alternative, so `String.replace` retries `[ws]+$` at every offset and backtracks the whole run each time — the textbook quadratic trim (trim-newlines / CVE-2021-33623 shape); `^` without `m` makes the first alternative cheap, so it offers no protection. It is applied to `state.getLines(...)` in the lheading heading branch (reached by any `Text\\\\n===`/`---` paragraph), and preview.ts's `md.render` is synchronous and re-run from editor.ts's `docChanged` updateListener, so a note containing a long internal whitespace run followed by non-whitespace freezes the tab on every edit or remote patch. I could not execute the code or inspect the installed markdown-it to confirm the secondary claim that upstream `lheading` uses native `.trim()`, but the quadratic pattern exists in this file as written. Severity is major rather than critical: it is a crafted-input, availability-only DoS requiring a very large whitespace run from a collaborator, not a data or integrity compromise.\"}",
+      "stop_reason": "tool_use",
+      "session_id": "81d94837-433b-427e-bf71-8afbe1488187",
+      "total_cost_usd": 0.1301365,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 5051,
+        "cache_read_input_tokens": 54215,
+        "output_tokens": 5490,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 5051,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1414,
+            "cache_read_input_tokens": 27591,
+            "cache_creation_input_tokens": 4084,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 4084
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1119,
+          "outputTokens": 17,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001204,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 4,
+          "outputTokens": 5490,
+          "cacheReadInputTokens": 54215,
+          "cacheCreationInputTokens": 5051,
+          "webSearchRequests": 0,
+          "costUSD": 0.1289325,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "is_real": true,
+        "severity": "major",
+        "confidence": "high",
+        "reasoning": "Verified at packages/notes/src/view/list-empty-bullet-plugin.ts:19-23: the global regex `/^[\\x09...\\x20]+|[\\x09...\\x20]+$/g` has an unanchored trailing alternative, so `String.replace` retries `[ws]+$` at every offset and backtracks the whole run each time — the textbook quadratic trim (trim-newlines / CVE-2021-33623 shape); `^` without `m` makes the first alternative cheap, so it offers no protection. It is applied to `state.getLines(...)` in the lheading heading branch (reached by any `Text\\n===`/`---` paragraph), and preview.ts's `md.render` is synchronous and re-run from editor.ts's `docChanged` updateListener, so a note containing a long internal whitespace run followed by non-whitespace freezes the tab on every edit or remote patch. I could not execute the code or inspect the installed markdown-it to confirm the secondary claim that upstream `lheading` uses native `.trim()`, but the quadratic pattern exists in this file as written. Severity is major rather than critical: it is a crafted-input, availability-only DoS requiring a very large whitespace run from a collaborator, not a data or integrity compromise."
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "f72703c5-9915-4670-af78-8e198d95cd61",
+      "attribution": {
+        "lens": "security",
+        "role": "adjudicator"
+      }
+    }
+  ]
+}

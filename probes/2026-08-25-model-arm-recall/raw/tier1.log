@@ -1,0 +1,298 @@
+--plan tier1-plan-sonnet-ctl-20260825__k1.json: 3 of 26 finding(s) selected for pr-415 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-415: 3 planned of 26 finding(s), 0 already answered, 3 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-2SFRKr (empty — claim text only)
+  review commit 51c01826a
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-415-k1.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 51c01826a · 3 finding(s) · diff shown · 7 cited file(s) · 1 warm-up then 2 at a time
+  [1/3] REAL  · critical · high · ges/backend/src/datasource/datasource.service.ts
+      I traced the payload through both files as supplied. sql-validator.ts strips `--...` to end-of-line with a regex that is unaware of double-quoted identifiers, and every subsequent check (first token, FORBIDDEN_KEYWORDS loop, `;` split) runs only on that stripped copy, while datasource.service.ts:148 interpolates the untouched `dto.query` into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001`. For `SELECT 1 AS "x--" ) AS q; DROP TABLE users; SELECT * FROM (SELECT 1`, the validator sees only `SELECT 1 AS "x` (passes all checks), whereas Postgres treats `--` inside the double-quoted identifier as literal text and receives three complete statements; node-postgres sends a value-less string via the simple query protocol, which does execute multiple `;`-separated statements. The claim also correctly notes this is pre-existing and untested (sql-validator.spec.ts only covers the naive `SELECT 1; DROP TABLE users` case), and nothing in this diff closes it.
+  [2/3] REAL  · major · high · ges/backend/src/datasource/datasource.service.ts
+      In packages/backend/src/datasource/datasource.service.ts, `createClient` builds the pg Client with `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (the same object literal the diff modifies by adding `types`), and the decrypted password is passed in the adjacent `password: decrypt(ds.password)` line. With `rejectUnauthorized: false` and no CA/servername configured, node-postgres/TLS accepts any certificate, so enabling SSL yields encryption without server authentication — a MITM can present a self-signed cert and capture credentials and query results. The claim is accurate about the code as written; I could not run the repo-wide grep (no checkout is mounted) to confirm there is no CA-pinning path elsewhere, but nothing in the supplied datasource files provides one. Note the weakness is pre-existing rather than introduced by this diff, which only adds the `types` parser option.
+  [3/3] REAL  · minor · high · ges/backend/src/datasource/datasource.service.ts
+      Verified against the supplied files: CreateDataSourceDto only length/range-validates host and port with no address denylist, and createClient (datasource.service.ts, the `new Client({ host: ds.host, port: ds.port, ... })` block the diff touches to add `types`) dials whatever the user supplies. testConnection returns `{ success: false, error: (error as Error).message }` and executeQuery rethrows `pgError.message` in a BadRequestException, so raw driver errors (ECONNREFUSED vs. timeout vs. protocol error) do reach the authenticated caller — a working internal port-scan oracle, exactly as claimed. The claim misreads nothing; my only qualifications are that the routes are gated by JwtAuthGuard plus workspaceService.assertMember (so it is not unauthenticated), and that this is entirely pre-existing and inherent to a user-configured Postgres connector, with the leak limited to connection-level signals rather than response bodies. Hence real, but I rate it minor.
+
+3 judged · 3 real · 0 not real · 0 failed
+  cost: 3 session(s) logged
+wrote 3 of 3 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-415-k1.json
+--plan tier1-plan-sonnet-ctl-20260825__k2.json: 1 of 23 finding(s) selected for pr-415 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-415: 1 planned of 23 finding(s), 0 already answered, 1 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-28ARcL (empty — claim text only)
+  review commit 51c01826a
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-415-k2.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 51c01826a · 1 finding(s) · diff shown · 7 cited file(s) · single session, uncached
+  [1/1] REAL  · minor · high · ges/backend/src/datasource/datasource.service.ts
+      Verified in datasource.service.ts:20-24 that RAW_TEXT_OIDS covers only DATE/TIMESTAMP/TIMESTAMPTZ, and datasourceTypeParser delegates all other OIDs to the default pg parser, so BYTEA/INTERVAL/CIRCLE/JSON/array values still arrive as JS objects. readonly.ts:32-36 (toCell) JSON-stringifies any non-null object and loadQueryResults writes that into the cell, so those types render as JSON blobs rather than the Postgres text representation; the new e2e table in database.e2e-spec.ts encodes exactly those expectations ('{"type":"Buffer",...}', '{"years":1,...}', '{"x":1,"y":2,"radius":3}'), confirming the claim's reading. It is therefore a genuine, if partial, fidelity gap rather than a misreading. I rate it minor because toCell is still an improvement over the previous String(val) ([object Object]) and the affected types are uncommon in typical query results; the "should be documented in the design doc" portion I could not verify.
+
+1 judged · 1 real · 0 not real · 0 failed
+  cost: 1 session(s) logged
+wrote 1 of 1 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-415-k2.json
+--plan tier1-plan-sonnet-ctl-20260825__k3.json: 1 of 24 finding(s) selected for pr-415 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-415: 1 planned of 24 finding(s), 0 already answered, 1 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-qs7Bd9 (empty — claim text only)
+  review commit 51c01826a
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-415-k3.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 51c01826a · 1 finding(s) · diff shown · 7 cited file(s) · single session, uncached
+  [1/1] REAL  · minor · medium · ges/backend/src/datasource/datasource.service.ts
+      RAW_TEXT_OIDS at packages/backend/src/datasource/datasource.service.ts:20-24 lists only the scalar 1082/1114/1184 OIDs, and datasourceTypeParser (lines 34-37) sends every other OID to the pg-types default, which registers parseDateArray for 1115 (_timestamp), 1182 (_date) and 1185 (_timestamptz) — so array date/time columns still come back as JS Date built from the Node runtime timezone, and `SET TimeZone = 'UTC'` only changes server-side text rendering, not the offset-less client-side parse. Those arrays hit the object branch of toCell (packages/sheets/src/store/readonly.ts:31-35) and JSON.stringify serializes the Dates as shifted ISO strings, and the new type matrix in packages/backend/test/database.e2e-spec.ts covers scalars only, so nothing catches it. The claim overreaches on ranges: pg-types registers no parser for tsrange/tstzrange (3908/3910), so those stay raw strings and are unaffected — but the array gap, which is the substance of the finding, is real. Severity is minor because only array-typed date/time result columns are affected; confidence is medium since no checkout was mounted to pin the installed pg-types parser table.
+
+1 judged · 1 real · 0 not real · 0 failed
+  cost: 1 session(s) logged
+wrote 1 of 1 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-415-k3.json
+--plan tier1-plan-sonnet-ctl-20260825__k1.json: 1 of 19 finding(s) selected for pr-429 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-429: 1 planned of 19 finding(s), 0 already answered, 1 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-n0nD5r (empty — claim text only)
+  review commit c35d715b1
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-429-k1.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round c35d715b1 · 1 finding(s) · diff shown · 12 cited file(s), 2 unresolved · single session, uncached
+  [1/1] REAL  · minor · high · packages/frontend/src/app/slides/pptx-actions.ts
+      Verified against the supplied sources: in `packages/frontend/src/app/slides/pptx-actions.ts` the `fetchImage` callback calls `docsImageFetcher(src)` with no try/catch, and `docsImageFetcher` (packages/frontend/src/app/docs/export-utils.ts) throws `Image fetch failed: ...` on any non-ok response. `exportPptx` (packages/slides/src/export/pptx/index.ts, Step 2 pre-scan loop) awaits `opts.fetchImage(src)` un-guarded, so the rejection propagates and the whole export fails — the button handler in slides-export-button.tsx then shows only "Export failed". The contrast with the PDF path is also correct: `resolveDeckImages` in packages/slides/src/export/pdf.ts wraps `await fetcher(src)` in try/catch and substitutes `BLANK_PNG`. So the claim is accurate; the only nuance is that failing loudly is a defensible design choice (a missing image would otherwise silently vanish from the deck), which keeps the impact moderate rather than severe.
+
+1 judged · 1 real · 0 not real · 0 failed
+  cost: 1 session(s) logged
+wrote 1 of 1 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-429-k1.json
+--plan tier1-plan-sonnet-ctl-20260825__k2.json: 5 of 24 finding(s) selected for pr-429 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-429: 5 planned of 24 finding(s), 0 already answered, 5 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-7AfDu2 (empty — claim text only)
+  review commit c35d715b1
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-429-k2.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round c35d715b1 · 5 finding(s) · diff shown · 12 cited file(s), 2 unresolved · 1 warm-up then 2 at a time
+  [1/5] REAL  · minor · medium · packages/documentation/guide/collaboration.md
+      The new section in packages/documentation/guide/collaboration.md is headed "### The comments panel (documents)" and describes opening it only "In a document…", implying the panel is docs-only. The supplied sheets code contradicts that scoping: packages/sheets/src/view/shortcuts-catalog.ts (Comments category) lists `Mod+Alt+Shift+M` → "Toggle comments side panel" in a file whose header calls it the "single source of truth for the keyboard shortcuts shipped by the sheets editor", and packages/frontend/src/app/spreadsheet/sheet-view.tsx has a keydown handler for Cmd/Ctrl+Alt+Shift+M that fires `onToggleCommentsPanel`, plus a `commentJumpTarget` prop for jumping from a thread list to a cell. The reviewer's detail that sheet-view.tsx renders `CommentSidePanel` is inaccurate — sheet-view.tsx only renders `CommentPopover` and delegates the toggle to a parent-supplied callback — and I could not see the parent that hosts the panel, so I cannot fully confirm the sheets panel UI ships. The core claim (a docs-coverage gap: sheets also has a comments side panel/shortcut the doc doesn't mention) is nonetheless supported by the code shown; impact is limited to documentation completeness.
+  [2/5] REAL  · major · high · packages/documentation/sheets/datasources.md
+      The new page's "Good to know" bullet (datasources.md, last section) says the connection "belongs to the person who created it" and that collaborators "run their own connection to execute it", implying the creator's credentials are private to them. The supplied backend code contradicts that: `POST datasources/:id/query` in datasource.controller.ts only does `findRaw` + `workspaceService.assertMember(ds.workspaceId, userId)` (no author/role check — assertMember accepts any membership row regardless of role), and `DataSourceService.executeQuery` builds the client via `createClient(ds)` with `decrypt(ds.password)`, i.e. the creator's stored credentials. So any workspace member can run arbitrary validated SELECTs against the creator's PostgreSQL instance, which is the opposite of the documented model. I could not inspect the frontend datasource-view UI (not supplied), but the API-level behaviour is definitive for the doc's assertion; the defect is documentation-only, hence major rather than critical.
+  [3/5] REAL  · major · high · /backend/src/datasource/datasource.controller.ts
+      Verified against the supplied sources (no checkout was mounted, so I read the file bodies provided). `DataSourceController.update` and `testConnection`/`executeQuery` (datasource.controller.ts, the `@Patch('datasources/:id')` and `@Post('datasources/:id/test')` handlers) gate only on `workspaceService.assertMember`, which in workspace.service.ts checks membership existence with no role or authorship constraint; `DataSourceService.update` freely accepts `host`/`port`/`database`/`username`/`sslEnabled` while leaving the stored encrypted `password` untouched, and `createClient` then does `password: decrypt(ds.password)` with `ssl: { rejectUnauthorized: false }`. So any workspace member can re-point another member's datasource at a host they control and trigger a connect, at which point node-pg will hand over the decrypted password (cleartext on `AuthenticationCleartextPassword`) — the exfiltration chain the claim describes is real and nothing in the module performs an ownership check. Caveat on scope rather than correctness: this backend code is untouched by the diff (the PR only adds `sheets/datasources.md`, whose "the connection belongs to the person who created it" line is what surfaced the issue), so the defect is pre-existing; I rate it major rather than critical because an attacker must already be a workspace member who can run the same queries through the app, but harvesting the raw credential escalates beyond the app's read-only SQL guard.
+  [4/5] REAL  · minor · high · ges/backend/src/datasource/datasource.service.ts
+      The quoted code is present verbatim in the supplied packages/backend/src/datasource/datasource.service.ts (`createClient`: `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false`), so enabling the toggle yields encrypted-but-unauthenticated TLS; since `password: decrypt(ds.password)` is sent in the startup handshake, an active on-path attacker can harvest it and tamper with rows. The new doc page's "**SSL** — toggle on if your database requires it" bullet (datasources.md, Connect a database step 2) does not qualify this, so the documentation-misrepresentation angle also holds. Bounding the severity: the line is pre-existing and untouched by this docs-only diff, the toggle still stops passive sniffing, and exploitation needs a network position between the backend and a user-chosen DB host. I could not confirm the exact line number 204, only that the code sits at the end of `createClient`.
+  [5/5] REAL  · minor · medium · packages/backend/src/datasource/sql-validator.ts
+      Verified against the supplied sources: sql-validator.ts:1-13 and 38-58 implement only a first-token SELECT/WITH check plus a fixed keyword denylist, and datasource.service.ts `executeQuery` wraps the raw `dto.query` in `SELECT * FROM (...) AS _q LIMIT`. Nothing blocks side-effecting or SSRF-capable function calls reachable from a SELECT (`pg_read_file`, `lo_import`, `dblink`, `pg_terminate_backend`, `setval`, `pg_sleep`), and COPY/DO/CALL/MERGE are indeed absent from the denylist — so the core technical claim is correct about the code as written. The claim's secondary "validator/executor text divergence" argument is overstated: the comment/string stripping makes the validator see *more* text (false positives), and I could not derive a bypass from it. Impact is bounded — every path goes through `assertMember`, and the credentials are ones a workspace member entered for their own DB, so this is member-vs-member privilege reach rather than an open hole, and the docs line at datasources.md:37 reads more like a UI statement ("can't edit, sort, or filter the cells in place") than a security guarantee; sql-validator.ts is also untouched by this PR.
+
+5 judged · 5 real · 0 not real · 0 failed
+  cost: 5 session(s) logged
+wrote 5 of 5 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-429-k2.json
+--plan tier1-plan-sonnet-ctl-20260825__k1.json: 1 of 27 finding(s) selected for pr-465 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-465: 1 planned of 27 finding(s), 0 already answered, 1 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-V5tUze (empty — claim text only)
+  review commit 49f4fc822
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-465-k1.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 49f4fc822 · 1 finding(s) · diff shown · 13 cited file(s), 4 unresolved · single session, uncached
+  [1/1] REAL  · minor · high · packages/backend/src/main.ts
+      Verified against packages/backend/src/main.ts (verify hook: `req.url?.split('?',1)[0] === '/internal/yorkie/events'`) and packages/backend/src/document/yorkie-signature.guard.ts:49 (`if (!header || !rawBody) throw new UnauthorizedException('Missing webhook signature')`). Express's default non-strict, case-insensitive routing does route `/internal/yorkie/events/` to the controller while the byte-exact comparison skips rawBody capture, so the guard 401s with a misleading "missing signature" message and the feature is silently inert — the claim's mechanism is correct. Caveats: there is no `setGlobalPrefix` in main.ts so the "proxy prefix" variant needs an external rewrite, and Yorkie retries are backoff-limited rather than infinite per the PR's own docs; neither undercuts the defect. It is triggered only by an operator typing a variant URL (the documented URL works), so I rate it a robustness/minor issue rather than a happy-path break.
+
+1 judged · 1 real · 0 not real · 0 failed
+  cost: 1 session(s) logged
+wrote 1 of 1 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-465-k1.json
+--plan tier1-plan-sonnet-ctl-20260825__k2.json: 4 of 29 finding(s) selected for pr-465 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-465: 4 planned of 29 finding(s), 0 already answered, 4 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-uPnyw1 (empty — claim text only)
+  review commit 49f4fc822
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-465-k2.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 49f4fc822 · 4 finding(s) · diff shown · 13 cited file(s), 4 unresolved · 1 warm-up then 2 at a time
+  [1/4] REAL  · major · low · s/backend/src/document/yorkie-signature.guard.ts
+      I verified the in-repo half: yorkie-signature.guard.ts:48-59 reads `req.header('x-signature-256')` and does a strict length+timingSafeEqual against `sha256=<hex>`, throwing 401 with no accept-path logging, and yorkie-signature.guard.spec.ts signs using the same convention as the code under test, so the suite cannot detect a wrong external contract — the claim is accurate about all of that, and about the consequence (silent 401s, updatedAt never advancing from edits). The decisive fact — Yorkie v0.7.12's actual header name — is not in this repository (the Go client is not vendored; only the PR's own docs/design/documents-last-modified.md:47 asserts it), so I could not check it with the tools available. My recollection of Yorkie's webhook client is that the header constant is the Yorkie-specific `X-Signature-Y256` rather than `X-Signature-256`, which would make this a real defect, but that is memory rather than verification, hence low confidence. Note the claim's casing worry is moot — Express's `req.header()` is case-insensitive — so only a literal name/prefix difference matters.
+  [2/4] REAL  · minor · high · end/src/document/yorkie-event.controller.spec.ts
+      Verified against the supplied sources: in `yorkie-event.controller.ts` the handler resolves `key = body.attributes?.key` → `undefined`, so `parsed` is `null` and it returns `{ ok: true }` at the `!parsed` guard — the spec case at `yorkie-event.controller.spec.ts:66` posts exactly `{ type: 'DocumentRootChanged' }` with no `attributes`, so it never reaches `touchUpdatedAt`. The controller also has no try/catch around `await this.documentService.touchUpdatedAt(...)`, and no spec case makes the mock reject, so the claimed "always 200, never retry" property is indeed untested for the failure path; the test's title over-promises relative to what it exercises. Note the other specs do drive the `touchUpdatedAt` path (with a resolving mock), so coverage of the happy path exists — the genuine gap is only the rejection case. Impact is limited: a 500 on a DB outage causes Yorkie to retry, which is arguably the desired behaviour rather than a data-correctness bug, so this is a test-naming/coverage gap rather than a functional defect.
+  [3/4] REAL  · minor · high · ive/20260710-docs-list-updatedat-webhook-todo.md
+      The task file's Verification block (docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md, "## Verification": "e2e: signed webhook advances `updatedAt`; unsigned/bad-sig rejected") asserts e2e coverage, but the diff adds only three unit specs — yorkie-event.controller.spec.ts, yorkie-signature.guard.spec.ts, document.service.spec.ts — each constructing the class directly with a mocked DocumentService/PrismaService; no new file appears under packages/backend/test/, and the supplied directory listing of that folder at this commit (14 entries) contains no yorkie/webhook e2e spec. So nothing exercises the route through Nest's HTTP stack: the `bodyParser.json({ verify })` raw-body capture in packages/backend/src/main.ts (whose `req.url === '/internal/yorkie/events'` match is exactly the kind of wiring only an HTTP-level test catches), the guard registration in document.module.ts, and the monotonic `updateMany` SQL in touchUpdatedAt are all untested end to end. The Tasks section itself concedes "DB-backed e2e for the advance-only path deferred", which contradicts the Verification claim rather than satisfying it. Impact is limited to documentation accuracy plus a coverage gap on a security-relevant guard, not a user-visible defect.
+  [4/4] REAL  · nit · high · docs/design/documents-last-modified.md
+      The policy quote is verbatim accurate: docs/design/README.md's "Obsolete docs" section says the durable design "lives in its canonical subsystem doc above, regardless of whether it shipped as a single PR. Fold a single-PR note into the relevant doc as a concise subsection rather than keeping it as a standalone file." The diff instead adds a standalone docs/design/documents-last-modified.md plus a Common-section README row, and never touches docs/design/backend.md, whose Document ER entry still lists only id/title/authorID/createdAt and whose API reference has no /internal/yorkie/events endpoint — so backend.md's schema/API description is left divergent. Two caveats reduce weight: the Common section already contains many arguably single-feature standalone docs (comments-mentions.md, rest-api.md, context-menu.md), so the convention is loosely enforced in practice, and backend.md was already stale before this PR (it omits Document.workspaceId/type and the workspace-scoped routes), so this PR only adds one more divergence rather than newly invalidating it. Documentation-organization only; no user-facing or correctness impact.
+
+4 judged · 4 real · 0 not real · 0 failed
+  cost: 4 session(s) logged
+wrote 4 of 4 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-465-k2.json
+--plan tier1-plan-sonnet-ctl-20260825__k3.json: 1 of 27 finding(s) selected for pr-465 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-465: 1 planned of 27 finding(s), 0 already answered, 1 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-s7BR3j (empty — claim text only)
+  review commit 49f4fc822
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-465-k3.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 49f4fc822 · 1 finding(s) · diff shown · 13 cited file(s), 4 unresolved · single session, uncached
+  [1/1] REAL  · minor · medium · /backend/src/document/yorkie-event.controller.ts
+      In yorkie-event.controller.ts the guard is `Number.isNaN(issuedMs) ? now : Math.min(issuedMs, now)`, so only unparseable values fall back to now(); a parseable zero/pre-epoch time (Go zero `0001-01-01T00:00:00Z`, or protojson zero Timestamp `1970-01-01T00:00:00Z`) passes through as a negative/zero ms. Combined with `touchUpdatedAt`'s `where: { updatedAt: { lt: at } }` in document.service.ts and the migration backfilling `updatedAt = createdAt`, such an event matches zero rows and is silently swallowed (`count` ignored, `{ ok: true }` returned, no log) — exactly as claimed. The sibling `parseTimestamp` in yorkie-admin.service.ts does guard `ms <= 0` as "Yorkie's unset", supporting that the codebase treats epoch-zero as a real Yorkie input; the new controller dropped that guard, and the tests only cover missing and future-skewed values. I could not inspect Yorkie's event_webhook.go to confirm a fired DocumentRootChanged ever carries an unset issuedAt, so the trigger is plausible rather than proven, which is why the impact is limited to one doc's ordering staleness.
+
+1 judged · 1 real · 0 not real · 0 failed
+  cost: 1 session(s) logged
+wrote 1 of 1 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-465-k3.json
+--plan tier1-plan-sonnet-ctl-20260825__k1.json: 1 of 13 finding(s) selected for pr-471 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-471: 1 planned of 13 finding(s), 0 already answered, 1 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-LUQw9M (empty — claim text only)
+  review commit 42d17c8d8
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-471-k1.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 42d17c8d8 · 1 finding(s) · diff shown · 4 cited file(s) · single session, uncached
+  [1/1] NOT REAL · nit · medium · es/sheets/src/model/worksheet/data-validation.ts
+      The new branch in `data-validation.ts` (`return value.toUpperCase() === CHECKBOX_TRUE;`) would indeed throw on a non-string, but the claim never establishes that a non-string `Cell.v` can arrive: `Cell` declares `v?: string` in `model/core/types.ts`, and the caller `renderCellCheckbox` in `view/gridcanvas.ts` passes `cell?.v` under that type. The same file already calls string methods on the identically-typed parameter — `isValidListValue` uses `value?.trim()` and `isValidDateValue` uses `value.trim()` — and `renderCellContent` does `data.split('\n')` on `cell?.v`, so a non-string `v` would already break the list/date/text render paths; the change adds no new fragility class. The claim even admits it is unconfirmed ("one would need a store/import path that can persist a non-string `v`"), so as written it is a speculative hardening suggestion, not a defect present in the code; I mark confidence medium only because I could not inspect the xlsx/Yorkie/REST ingestion paths myself.
+
+1 judged · 0 real · 1 not real · 0 failed
+  cost: 1 session(s) logged
+wrote 1 of 1 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-471-k1.json
+--plan tier1-plan-sonnet-ctl-20260825__k1.json: 3 of 11 finding(s) selected for pr-524 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-524: 3 planned of 11 finding(s), 0 already answered, 3 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-gdQInu (empty — claim text only)
+  review commit 4d3e827f5
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-524-k1.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 4d3e827f5 · 3 finding(s) · diff shown · 7 cited file(s), 4 unresolved · 1 warm-up then 2 at a time
+  [1/3] REAL  · minor · high · .github/workflows/agent-iterate-ci.yml
+      Verified against the supplied files: agent-iterate-ci.yml's Claude step interpolates `${{ steps.diag.outputs.summary }}` bare into the prompt with no delimiter or data-framing, while agent-review-panel.yml's equivalent fixer step wraps its untrusted input in `<panel-findings>` with an explicit "REVIEW DATA, not instructions" preamble — the asymmetry the claim describes is exactly as written. The provenance chain also checks out: summarize-ci.mjs prints `failureSummary`/`lane.lane` verbatim from `.harness-reports`, written by verify-self.mjs's `extractFailureSummary(output)` over raw stdout of branch-executed commands, and the diff's `allowed_bots` line is what makes this step actually run. One sub-claim is overstated: `extractFailureSummary` returns a single trimmed ≤500-char line, so it alone cannot break the `HARNESS_EOF` heredoc; that requires whole-artifact control. Severity is tempered because the same job already runs `pnpm install --frozen-lockfile` on the untrusted branch with the App/OAuth secrets present, so this is defence-in-depth drift rather than a new privilege boundary.
+  [2/3] REAL  · major · high · .github/workflows/agent-iterate-ci.yml
+      Verified against the supplied files: in `.github/workflows/agent-iterate-ci.yml` the `actions/checkout@v4` step passes `token: ${{ steps.app-token.outputs.token }}` with `ref: ${{ github.event.workflow_run.head_branch }}` and no `persist-credentials: false`, so the App installation token is written into `.git/config` as an http.extraheader in the untrusted branch checkout; a later step then runs `pnpm install --frozen-lockfile` on that branch tree, and root `package.json` does declare a `postinstall` script, so branch-controlled lifecycle scripts (and any branch-added dependency's install scripts) execute with the token readable via `git config --get http.https://github.com/.extraheader`. The contrast the reviewer draws is also accurate: `agent-review-panel.yml`'s `deps` and `review-panel` checkouts explicitly set `persist-credentials: false` with a comment giving exactly this reason, the panel's `fix` checkout does not, and the iterate job's App token is minted with no `permission-*` scoping (unlike the panel's contents/PR/issues-scoped token). Mitigating context (base-repo `agent/` branches only, `AGENT_PIPELINE_ENABLED`, `environment: agent`, and the fact that claude-code-action later receives the same token anyway) reduces but does not eliminate the exposure — it widens the leak to third-party install scripts and violates the repo's own stated rule; note this is pre-existing code, not introduced by the diff under review.
+  [3/3] REAL  · minor · medium · .github/workflows/agent-review-panel.yml
+      I read the supplied `.github/workflows/agent-review-panel.yml` (the "Gather failing lens findings" step, and the identical `mine = (r) => NAMES.has(r.name) && r.app && r.app.slug === 'github-actions'` predicate in the round-bound guard). The claim's reading of the code is accurate: `github-actions` is the app slug for every GITHUB_TOKEN/workflow-created check run in the repository, so the filter proves only "some workflow in this repo made it", not "our trusted review-panel job made it", and the resulting `output.summary` is spliced verbatim into the fixer prompt for a Bash/Write-enabled agent — so the comment's assurance holds only against the narrower "another installed App" threat it names. The exploit path the reviewer describes is however gated in practice, as the reviewer itself concedes: adding/modifying a file under `.github/workflows` requires `workflows: write`, and the fix job's token is explicitly scoped to contents/pull-requests/issues, so today this is a latent defence-in-depth gap rather than a live injection channel (I could not check the installation's permission set — `docs/tasks/active/20260720-autonomous-issue-to-pr-pipeline-todo.md` was withheld). Note also that the flagged lines are pre-existing code, untouched by this diff, which only adds `allowed_bots` and the `fix` dependency for `stalled`.
+
+3 judged · 3 real · 0 not real · 0 failed
+  cost: 3 session(s) logged
+wrote 3 of 3 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-524-k1.json
+--plan tier1-plan-sonnet-ctl-20260825__k2.json: 2 of 9 finding(s) selected for pr-524 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-524: 2 planned of 9 finding(s), 0 already answered, 2 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-yVmA4l (empty — claim text only)
+  review commit 4d3e827f5
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-524-k2.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 4d3e827f5 · 2 finding(s) · diff shown · 7 cited file(s), 4 unresolved · 1 warm-up then 1 at a time
+  [1/2] REAL  · minor · medium · .github/workflows/agent-review-panel.yml
+      In the supplied workflows the App identity is only ever supplied through secrets (`secrets.AGENT_APP_ID` / `AGENT_APP_PRIVATE_KEY` in agent-review-panel.yml's "Generate GitHub App token" step and agent-iterate-ci.yml's equivalent), so nothing in the repo pins or validates the bot login; the new `allowed_bots: "yorkie-agent[bot],yorkie-agent"` at agent-review-panel.yml:413 and agent-iterate-ci.yml:160 is indeed an undocumented literal whose correctness depends on which App a deployer installed. The claim is therefore accurate about the code as written, and the suggested `steps.app-token.outputs.app-slug` derivation is a real output of actions/create-github-app-token@v1. It is a conditional/fragility defect rather than a demonstrated failure — the claim does not (and I cannot) show the actual installed slug differs, and the failure mode is fail-safe (the fix job reds and the newly-widened `stalled` job pages a human rather than silently doing nothing). I could not grep the repo (empty working directory), so I am relying on the supplied files and cannot independently confirm the reviewer's "no other occurrence of yorkie-agent" grep or the exact matching semantics of claude-code-action's `allowed_bots`.
+  [2/2] REAL  · minor · medium · .github/workflows/agent-iterate-ci.yml
+      The step at agent-iterate-ci.yml ("Summarize the failure") does write `summary<<HARNESS_EOF` / script stdout / `HARNESS_EOF` into $GITHUB_OUTPUT with a fixed, guessable delimiter, and the stdout embeds report-derived strings (`detail.failureSummary`, `lane.lane`) parsed from the downloaded `harness-reports` artifact, which is produced by branch code (scripts/verify-self.mjs runs from the PR branch in CI). So a crafted/modified report can emit a bare `HARNESS_EOF` at column 0 and then re-assign `summary=` or other outputs — the classic GitHub "use a random delimiter" issue; the claim's mechanism is technically correct. One nuance the claim glosses over: as the repo's own producer is written, extractFailureSummary (verify-self.mjs) returns a single `split("\n")` line truncated to 500 chars, so under the honest path no newline can appear — exploitation requires the branch to alter verify-self.mjs or the artifact, i.e. it presumes an untrusted branch. Marginal impact is small because that same job already checks out the branch, runs `pnpm install --frozen-lockfile` (lifecycle scripts) and gives the agent Bash with the App token in scope, so a branch-controlling attacker already has execution there; and the failureSummary text reaches the prompt anyway. Real but hardening-grade.
+
+2 judged · 2 real · 0 not real · 0 failed
+  cost: 2 session(s) logged
+wrote 2 of 2 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-524-k2.json
+--plan tier1-plan-sonnet-ctl-20260825__k3.json: 1 of 10 finding(s) selected for pr-524 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-524: 1 planned of 10 finding(s), 0 already answered, 1 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-EVd7oS (empty — claim text only)
+  review commit 4d3e827f5
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-524-k3.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 4d3e827f5 · 1 finding(s) · diff shown · 7 cited file(s), 4 unresolved · single session, uncached
+  [1/1] REAL  · major · high · .github/workflows/agent-iterate-ci.yml
+      The supplied agent-iterate-ci.yml "Generate GitHub App token" step (create-github-app-token@v1) passes only app-id and private-key — no `permission-*` inputs — so the minted token inherits the App installation's full permission set; it is then handed to actions/checkout (which persists it into .git/config by default, no `persist-credentials: false`) and to claude-code-action as `github_token`, in a job that runs `pnpm install --frozen-lockfile` on the branch and allows the Bash tool. The contrast the reviewer draws is accurate: the fix job in agent-review-panel.yml explicitly sets permission-contents/pull-requests/issues with the comment "this token is used in a job that checks out and executes untrusted branch code", and agent-implement.yml's branch-protection step notes the App needs Administration: read, so the installation is indeed broader than contents/PRs. Caveat: this token step is pre-existing code untouched by the diff under review (the diff only adds `allowed_bots` and the `fix` dependency in the stalled job), so it is a pre-existing hardening gap rather than a regression; the mitigating factors (fork rejection, base-repo agent/ branches only, AGENT_PIPELINE_ENABLED gate) limit but do not eliminate the exposure.
+
+1 judged · 1 real · 0 not real · 0 failed
+  cost: 1 session(s) logged
+wrote 1 of 1 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-524-k3.json
+--plan tier1-plan-sonnet-ctl-20260825__k1.json: 1 of 16 finding(s) selected for pr-549 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-549: 1 planned of 16 finding(s), 0 already answered, 1 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-SEpdeh (empty — claim text only)
+  review commit 158c6faaf
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-549-k1.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 158c6faaf · 1 finding(s) · diff shown · 4 cited file(s) · single session, uncached
+  [1/1] REAL  · minor · high · kages/notes/src/view/list-empty-bullet-plugin.ts
+      Verified at list-empty-bullet-plugin.ts:19-23 (the regex) and its call site in the setext branch (`asciiTrim(state.getLines(...))`). The alternative `[\x09\x0a\x0b\x0c\x0d\x20]+$` is unanchored at the start, so a global `replace` retries the greedy run at every offset of an interior whitespace run and backtracks one char per failed `$` check — O(n^2), the same shape as the published trim-newlines ReDoS (CVE-2021-33623), and upstream markdown-it's lheading uses linear `.trim()` instead. The path is reachable (needs a long interior whitespace run in a paragraph followed by a `===`/`---` underline, then re-rendered on every doc change), so a collaborator can persist content that freezes viewers' preview render. I rate it minor rather than higher because it requires deliberately crafted content from an already-authorized workspace member and the blast radius is a hung browser tab, not server/data impact; I could not execute the regex to measure actual timings.
+
+1 judged · 1 real · 0 not real · 0 failed
+  cost: 1 session(s) logged
+wrote 1 of 1 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-549-k1.json
+--plan tier1-plan-sonnet-ctl-20260825__k2.json: 2 of 20 finding(s) selected for pr-549 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-549: 2 planned of 20 finding(s), 0 already answered, 2 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-tccrlV (empty — claim text only)
+  review commit 158c6faaf
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-549-k2.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 158c6faaf · 2 finding(s) · diff shown · 4 cited file(s) · 1 warm-up then 1 at a time
+  [1/2] REAL  · minor · high · packages/notes/src/view/preview.test.ts
+      The `isLoneDash` guard in list-empty-bullet-plugin.ts (~lines 100-112) is unconditional on nesting, so a top-level `Heading\n-` — which markdown-it previously rendered as `<h2>` — now falls through to paragraph + empty list, a real user-visible deviation. The only setext test added, preview.test.ts:181-186, renders `Heading\n---` (runLength 3), which takes the guard's false branch and therefore never pins the lone-dash outcome; no other test in the full file exercises a `=` or single-`-` underline outside a list. The PR's own todo doc even lists "top-level lone dash" as an intended test case with the unit-test step left unchecked, corroborating the gap. This is a coverage gap for a deliberate deviation rather than a functional defect, hence minor.
+  [2/2] REAL  · major · high · kages/notes/src/view/list-empty-bullet-plugin.ts
+      Verified at packages/notes/src/view/list-empty-bullet-plugin.ts:19-23: the global regex `/^[\x09...\x20]+|[\x09...\x20]+$/g` has an unanchored trailing alternative, so `String.replace` retries `[ws]+$` at every offset and backtracks the whole run each time — the textbook quadratic trim (trim-newlines / CVE-2021-33623 shape); `^` without `m` makes the first alternative cheap, so it offers no protection. It is applied to `state.getLines(...)` in the lheading heading branch (reached by any `Text\n===`/`---` paragraph), and preview.ts's `md.render` is synchronous and re-run from editor.ts's `docChanged` updateListener, so a note containing a long internal whitespace run followed by non-whitespace freezes the tab on every edit or remote patch. I could not execute the code or inspect the installed markdown-it to confirm the secondary claim that upstream `lheading` uses native `.trim()`, but the quadratic pattern exists in this file as written. Severity is major rather than critical: it is a crafted-input, availability-only DoS requiring a very large whitespace run from a collaborator, not a data or integrity compromise.
+
+2 judged · 2 real · 0 not real · 0 failed
+  cost: 2 session(s) logged
+wrote 2 of 2 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-549-k2.json
+--plan tier1-plan-sonnet-ctl-20260825__k3.json: 2 of 21 finding(s) selected for pr-549 (seed census:tier1-differential (control confirmed-high blocking defects with no matchable variant finding))
+pr-549: 2 planned of 21 finding(s), 0 already answered, 2 to judge
+  model claude-opus-5 · effort high · tools Read,Grep,Glob
+  working dir /var/folders/r6/yyjns9f92c18nd1fc64cw7v40000gn/T/fable-adjudicate-notree-Kml3lp (empty — claim text only)
+  review commit 158c6faaf
+  context pack /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/context-packs-model-arm
+  labels WILL BE WRITTEN incrementally
+  journal /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-549-k3.jsonl
+  credential /Users/mac_al02451456/.claude-tokens/tok-1 (this process only)
+
+── round 158c6faaf · 2 finding(s) · diff shown · 4 cited file(s) · 1 warm-up then 1 at a time
+  [1/2] REAL  · minor · high · kages/notes/src/view/list-empty-bullet-plugin.ts
+      list-empty-bullet-plugin.ts:68-150 is a near-verbatim copy of markdown-it 14.x `rules_block/lheading.mjs` (same indent guard, parentType swap, terminator loop, and the three token pushes with identical map arithmetic) plus a re-created `asciiTrim` at lines 17-22, differing only by the `isLoneDash` guard at lines 100-106; it is installed via `md.block.ruler.at('lheading', lheadingRule)` at line 168, so upstream is fully replaced and frozen with no test to detect drift on a markdown-it upgrade. The claim's factual description of the code is correct, and the contrast with the `getRuleFn` delegation used for `list` (lines 170-186) is accurate. Its one weak point is the assertion that delegation was easy: upstream `lheading` ignores `silent` and pushes tokens unconditionally, so a wrapper would have to run it and roll back `state.tokens`/`state.line` — awkward, though still possible. Impact is maintainability only, since the shipped behavior is exercised by preview.test.ts:151-196, so I rate it minor rather than a correctness bug.
+  [2/2] REAL  · minor · high · packages/notes/src/view/preview.test.ts
+      The supplied `preview.test.ts` at this commit contains exactly five new markdown-structure tests (`- 1\n -`, `- 1\n - `, `- 1\n\n - `, `Heading\n---`, `- 1\n - 2`); there is no case for a top-level `Heading\n-`. The rewritten `lheadingRule` in list-empty-bullet-plugin.ts (the `isLoneDash` guard, ~line 105) is registered globally via `md.block.ruler.at('lheading', ...)`, so it changes behavior outside lists too: a lone `-` after a top-level paragraph no longer forms an `<h2>` and instead terminates the paragraph (the wrapped `list` rule returns true in silent mode), yielding a paragraph plus an empty list. The project's own TODO doc even listed "top-level lone dash" as an intended test case, and it was not added, so the claim is factually correct about the code and the test file. Impact is limited to test coverage of a deliberate deviation, so I rate it minor.
+
+2 judged · 2 real · 0 not real · 0 failed
+  cost: 2 session(s) logged
+wrote 2 of 2 silver label(s) under /Users/mac_al02451456/yorkieProject/wafflebase-agent-eval (incrementally, as each was judged)
+wrote /Users/mac_al02451456/yorkieProject/benchmark-handoff/reference/tier1-out/pr-549-k3.json

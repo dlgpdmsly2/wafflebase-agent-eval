@@ -1,0 +1,112 @@
+{
+  "item_id": "pr-429",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "repo": null,
+  "review_commit": "c35d715b177647e0443266d21c326f43a5d34705",
+  "results": [
+    {
+      "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::a single failing image fetch aborts the whole pptx export (pdf path degrades gracefully instead)",
+      "file": "packages/frontend/src/app/slides/pptx-actions.ts",
+      "line": 93,
+      "lens": "correctness",
+      "round_commit": null,
+      "verdict": {
+        "reasoning": "Verified against the supplied sources: in `packages/frontend/src/app/slides/pptx-actions.ts` the `fetchImage` callback calls `docsImageFetcher(src)` with no try/catch, and `docsImageFetcher` (packages/frontend/src/app/docs/export-utils.ts) throws `Image fetch failed: ...` on any non-ok response. `exportPptx` (packages/slides/src/export/pptx/index.ts, Step 2 pre-scan loop) awaits `opts.fetchImage(src)` un-guarded, so the rejection propagates and the whole export fails — the button handler in slides-export-button.tsx then shows only \"Export failed\". The contrast with the PDF path is also correct: `resolveDeckImages` in packages/slides/src/export/pdf.ts wraps `await fetcher(src)` in try/catch and substitutes `BLANK_PNG`. So the claim is accurate; the only nuance is that failing loudly is a defensible design choice (a missing image would otherwise silently vanish from the deck), which keeps the impact moderate rather than severe.",
+        "confidence": "high",
+        "severity": "minor",
+        "is_real": true
+      },
+      "num_turns": 2,
+      "cost_usd": 0.5696209000000001,
+      "saw_cited_files": 12,
+      "cited_unresolved": 2,
+      "saw_diff": true,
+      "cached_prefix": false
+    }
+  ],
+  "session_log": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 18182,
+      "duration_api_ms": 18690,
+      "ttft_ms": 13749,
+      "ttft_stream_ms": 2361,
+      "time_to_request_ms": 347,
+      "num_turns": 2,
+      "result": "{\"reasoning\":\"Verified against the supplied sources: in `packages/frontend/src/app/slides/pptx-actions.ts` the `fetchImage` callback calls `docsImageFetcher(src)` with no try/catch, and `docsImageFetcher` (packages/frontend/src/app/docs/export-utils.ts) throws `Image fetch failed: ...` on any non-ok response. `exportPptx` (packages/slides/src/export/pptx/index.ts, Step 2 pre-scan loop) awaits `opts.fetchImage(src)` un-guarded, so the rejection propagates and the whole export fails — the button handler in slides-export-button.tsx then shows only \\\"Export failed\\\". The contrast with the PDF path is also correct: `resolveDeckImages` in packages/slides/src/export/pdf.ts wraps `await fetcher(src)` in try/catch and substitutes `BLANK_PNG`. So the claim is accurate; the only nuance is that failing loudly is a defensible design choice (a missing image would otherwise silently vanish from the deck), which keeps the impact moderate rather than severe.\",\"confidence\":\"high\",\"severity\":\"minor\",\"is_real\":true}",
+      "stop_reason": "tool_use",
+      "session_id": "0404a160-b071-4627-b1eb-7dfd536f33e2",
+      "total_cost_usd": 0.5696209000000001,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 91491,
+        "cache_read_input_tokens": 2853,
+        "output_tokens": 1260,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 91491,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1260,
+            "cache_read_input_tokens": 2853,
+            "cache_creation_input_tokens": 91491,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 91491
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 823,
+          "outputTokens": 18,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000913,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 1260,
+          "cacheReadInputTokens": 2853,
+          "cacheCreationInputTokens": 91491,
+          "webSearchRequests": 0,
+          "costUSD": 0.5687079,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "reasoning": "Verified against the supplied sources: in `packages/frontend/src/app/slides/pptx-actions.ts` the `fetchImage` callback calls `docsImageFetcher(src)` with no try/catch, and `docsImageFetcher` (packages/frontend/src/app/docs/export-utils.ts) throws `Image fetch failed: ...` on any non-ok response. `exportPptx` (packages/slides/src/export/pptx/index.ts, Step 2 pre-scan loop) awaits `opts.fetchImage(src)` un-guarded, so the rejection propagates and the whole export fails — the button handler in slides-export-button.tsx then shows only \"Export failed\". The contrast with the PDF path is also correct: `resolveDeckImages` in packages/slides/src/export/pdf.ts wraps `await fetcher(src)` in try/catch and substitutes `BLANK_PNG`. So the claim is accurate; the only nuance is that failing loudly is a defensible design choice (a missing image would otherwise silently vanish from the deck), which keeps the impact moderate rather than severe.",
+        "confidence": "high",
+        "severity": "minor",
+        "is_real": true
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "ed178da4-8b61-4e4b-9009-dd86762e80f0",
+      "attribution": {
+        "lens": "correctness",
+        "role": "adjudicator"
+      }
+    }
+  ]
+}

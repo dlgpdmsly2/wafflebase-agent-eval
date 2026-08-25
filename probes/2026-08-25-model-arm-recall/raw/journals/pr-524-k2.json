@@ -1,0 +1,213 @@
+{
+  "item_id": "pr-524",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "repo": null,
+  "review_commit": "4d3e827f5edb1ca16b0958a77e85ff6b3af66bf9",
+  "results": [
+    {
+      "finding_key": ".github/workflows/agent-review-panel.yml::`allowed_bots` hardcodes the bot login \"yorkie-agent[bot]\", which is nowhere derived from or documented for the configured app — if the installed app's slug differs, the allow-list never matches and the fix step still fails",
+      "file": ".github/workflows/agent-review-panel.yml",
+      "line": 413,
+      "lens": "correctness",
+      "round_commit": null,
+      "verdict": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium",
+        "reasoning": "In the supplied workflows the App identity is only ever supplied through secrets (`secrets.AGENT_APP_ID` / `AGENT_APP_PRIVATE_KEY` in agent-review-panel.yml's \"Generate GitHub App token\" step and agent-iterate-ci.yml's equivalent), so nothing in the repo pins or validates the bot login; the new `allowed_bots: \"yorkie-agent[bot],yorkie-agent\"` at agent-review-panel.yml:413 and agent-iterate-ci.yml:160 is indeed an undocumented literal whose correctness depends on which App a deployer installed. The claim is therefore accurate about the code as written, and the suggested `steps.app-token.outputs.app-slug` derivation is a real output of actions/create-github-app-token@v1. It is a conditional/fragility defect rather than a demonstrated failure — the claim does not (and I cannot) show the actual installed slug differs, and the failure mode is fail-safe (the fix job reds and the newly-widened `stalled` job pages a human rather than silently doing nothing). I could not grep the repo (empty working directory), so I am relying on the supplied files and cannot independently confirm the reviewer's \"no other occurrence of yorkie-agent\" grep or the exact matching semantics of claude-code-action's `allowed_bots`."
+      },
+      "num_turns": 4,
+      "cost_usd": 0.078571,
+      "saw_cited_files": 7,
+      "cited_unresolved": 4,
+      "saw_diff": true,
+      "cached_prefix": true
+    },
+    {
+      "finding_key": ".github/workflows/agent-iterate-ci.yml::$github_output heredoc uses a fixed, guessable delimiter around attacker-influenceable text (output injection)",
+      "file": ".github/workflows/agent-iterate-ci.yml",
+      "line": 142,
+      "lens": "security",
+      "round_commit": null,
+      "verdict": {
+        "reasoning": "The step at agent-iterate-ci.yml (\"Summarize the failure\") does write `summary<<HARNESS_EOF` / script stdout / `HARNESS_EOF` into $GITHUB_OUTPUT with a fixed, guessable delimiter, and the stdout embeds report-derived strings (`detail.failureSummary`, `lane.lane`) parsed from the downloaded `harness-reports` artifact, which is produced by branch code (scripts/verify-self.mjs runs from the PR branch in CI). So a crafted/modified report can emit a bare `HARNESS_EOF` at column 0 and then re-assign `summary=` or other outputs — the classic GitHub \"use a random delimiter\" issue; the claim's mechanism is technically correct. One nuance the claim glosses over: as the repo's own producer is written, extractFailureSummary (verify-self.mjs) returns a single `split(\"\\n\")` line truncated to 500 chars, so under the honest path no newline can appear — exploitation requires the branch to alter verify-self.mjs or the artifact, i.e. it presumes an untrusted branch. Marginal impact is small because that same job already checks out the branch, runs `pnpm install --frozen-lockfile` (lifecycle scripts) and gives the agent Bash with the App token in scope, so a branch-controlling attacker already has execution there; and the failureSummary text reaches the prompt anyway. Real but hardening-grade.",
+        "severity": "minor",
+        "confidence": "medium",
+        "is_real": true
+      },
+      "num_turns": 2,
+      "cost_usd": 0.06310199999999999,
+      "saw_cited_files": 7,
+      "cited_unresolved": 4,
+      "saw_diff": true,
+      "cached_prefix": true
+    }
+  ],
+  "session_log": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 35243,
+      "duration_api_ms": 35827,
+      "ttft_ms": 22184,
+      "ttft_stream_ms": 2275,
+      "time_to_request_ms": 523,
+      "num_turns": 4,
+      "result": "{\"is_real\":true,\"severity\":\"minor\",\"confidence\":\"medium\",\"reasoning\":\"In the supplied workflows the App identity is only ever supplied through secrets (`secrets.AGENT_APP_ID` / `AGENT_APP_PRIVATE_KEY` in agent-review-panel.yml's \\\"Generate GitHub App token\\\" step and agent-iterate-ci.yml's equivalent), so nothing in the repo pins or validates the bot login; the new `allowed_bots: \\\"yorkie-agent[bot],yorkie-agent\\\"` at agent-review-panel.yml:413 and agent-iterate-ci.yml:160 is indeed an undocumented literal whose correctness depends on which App a deployer installed. The claim is therefore accurate about the code as written, and the suggested `steps.app-token.outputs.app-slug` derivation is a real output of actions/create-github-app-token@v1. It is a conditional/fragility defect rather than a demonstrated failure — the claim does not (and I cannot) show the actual installed slug differs, and the failure mode is fail-safe (the fix job reds and the newly-widened `stalled` job pages a human rather than silently doing nothing). I could not grep the repo (empty working directory), so I am relying on the supplied files and cannot independently confirm the reviewer's \\\"no other occurrence of yorkie-agent\\\" grep or the exact matching semantics of claude-code-action's `allowed_bots`.\"}",
+      "stop_reason": "tool_use",
+      "session_id": "0a1f4469-9b4c-4209-bf55-27a6430863c6",
+      "total_cost_usd": 0.078571,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 2373,
+        "cache_read_input_tokens": 89240,
+        "output_tokens": 2436,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 2373,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 866,
+            "cache_read_input_tokens": 44990,
+            "cache_creation_input_tokens": 1633,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1633
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 924,
+          "outputTokens": 17,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001009,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 4,
+          "outputTokens": 2436,
+          "cacheReadInputTokens": 89240,
+          "cacheCreationInputTokens": 2373,
+          "webSearchRequests": 0,
+          "costUSD": 0.077562,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "is_real": true,
+        "severity": "minor",
+        "confidence": "medium",
+        "reasoning": "In the supplied workflows the App identity is only ever supplied through secrets (`secrets.AGENT_APP_ID` / `AGENT_APP_PRIVATE_KEY` in agent-review-panel.yml's \"Generate GitHub App token\" step and agent-iterate-ci.yml's equivalent), so nothing in the repo pins or validates the bot login; the new `allowed_bots: \"yorkie-agent[bot],yorkie-agent\"` at agent-review-panel.yml:413 and agent-iterate-ci.yml:160 is indeed an undocumented literal whose correctness depends on which App a deployer installed. The claim is therefore accurate about the code as written, and the suggested `steps.app-token.outputs.app-slug` derivation is a real output of actions/create-github-app-token@v1. It is a conditional/fragility defect rather than a demonstrated failure — the claim does not (and I cannot) show the actual installed slug differs, and the failure mode is fail-safe (the fix job reds and the newly-widened `stalled` job pages a human rather than silently doing nothing). I could not grep the repo (empty working directory), so I am relying on the supplied files and cannot independently confirm the reviewer's \"no other occurrence of yorkie-agent\" grep or the exact matching semantics of claude-code-action's `allowed_bots`."
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "63ce5cb8-6ff0-4fd3-8398-72a383e3d104",
+      "attribution": {
+        "lens": "correctness",
+        "role": "adjudicator"
+      }
+    },
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 42735,
+      "duration_api_ms": 50139,
+      "ttft_ms": 36414,
+      "ttft_stream_ms": 2424,
+      "time_to_request_ms": 365,
+      "num_turns": 2,
+      "result": "{\"reasoning\":\"The step at agent-iterate-ci.yml (\\\"Summarize the failure\\\") does write `summary<<HARNESS_EOF` / script stdout / `HARNESS_EOF` into $GITHUB_OUTPUT with a fixed, guessable delimiter, and the stdout embeds report-derived strings (`detail.failureSummary`, `lane.lane`) parsed from the downloaded `harness-reports` artifact, which is produced by branch code (scripts/verify-self.mjs runs from the PR branch in CI). So a crafted/modified report can emit a bare `HARNESS_EOF` at column 0 and then re-assign `summary=` or other outputs — the classic GitHub \\\"use a random delimiter\\\" issue; the claim's mechanism is technically correct. One nuance the claim glosses over: as the repo's own producer is written, extractFailureSummary (verify-self.mjs) returns a single `split(\\\"\\\\n\\\")` line truncated to 500 chars, so under the honest path no newline can appear — exploitation requires the branch to alter verify-self.mjs or the artifact, i.e. it presumes an untrusted branch. Marginal impact is small because that same job already checks out the branch, runs `pnpm install --frozen-lockfile` (lifecycle scripts) and gives the agent Bash with the App token in scope, so a branch-controlling attacker already has execution there; and the failureSummary text reaches the prompt anyway. Real but hardening-grade.\",\"severity\":\"minor\",\"confidence\":\"medium\",\"is_real\":true}",
+      "stop_reason": "tool_use",
+      "session_id": "c9c19f09-5158-4b5c-a56b-2a7f4c0f6a66",
+      "total_cost_usd": 0.06310199999999999,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 647,
+        "cache_read_input_tokens": 44250,
+        "output_tokens": 3002,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 647,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 3002,
+            "cache_read_input_tokens": 44250,
+            "cache_creation_input_tokens": 647,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 647
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 834,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000909,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 3002,
+          "cacheReadInputTokens": 44250,
+          "cacheCreationInputTokens": 647,
+          "webSearchRequests": 0,
+          "costUSD": 0.062193,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "structured_output": {
+        "reasoning": "The step at agent-iterate-ci.yml (\"Summarize the failure\") does write `summary<<HARNESS_EOF` / script stdout / `HARNESS_EOF` into $GITHUB_OUTPUT with a fixed, guessable delimiter, and the stdout embeds report-derived strings (`detail.failureSummary`, `lane.lane`) parsed from the downloaded `harness-reports` artifact, which is produced by branch code (scripts/verify-self.mjs runs from the PR branch in CI). So a crafted/modified report can emit a bare `HARNESS_EOF` at column 0 and then re-assign `summary=` or other outputs — the classic GitHub \"use a random delimiter\" issue; the claim's mechanism is technically correct. One nuance the claim glosses over: as the repo's own producer is written, extractFailureSummary (verify-self.mjs) returns a single `split(\"\\n\")` line truncated to 500 chars, so under the honest path no newline can appear — exploitation requires the branch to alter verify-self.mjs or the artifact, i.e. it presumes an untrusted branch. Marginal impact is small because that same job already checks out the branch, runs `pnpm install --frozen-lockfile` (lifecycle scripts) and gives the agent Bash with the App token in scope, so a branch-controlling attacker already has execution there; and the failureSummary text reaches the prompt anyway. Real but hardening-grade.",
+        "severity": "minor",
+        "confidence": "medium",
+        "is_real": true
+      },
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "a14f3952-ba20-40b2-9cd3-0af7c81836a2",
+      "attribution": {
+        "lens": "security",
+        "role": "adjudicator"
+      }
+    }
+  ]
+}
