@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::github app installation token is persisted into .git/config of the untrusted branch checkout, then branch-controlled install scripts are executed",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: in `.github/workflows/agent-iterate-ci.yml` the `actions/checkout@v4` step passes `token: ${{ steps.app-token.outputs.token }}` with `ref: ${{ github.event.workflow_run.head_branch }}` and no `persist-credentials: false`, so the App installation token is written into `.git/config` as an http.extraheader in the untrusted branch checkout; a later step then runs `pnpm install --frozen-lockfile` on that branch tree, and root `package.json` does declare a `postinstall` script, so branch-controlled lifecycle scripts (and any branch-added dependency's install scripts) execute with the token readable via `git config --get http.https://github.com/.extraheader`. The contrast the reviewer draws is also accurate: `agent-review-panel.yml`'s `deps` and `review-panel` checkouts explicitly set `persist-credentials: false` with a comment giving exactly this reason, the panel's `fix` checkout does not, and the iterate job's App token is minted with no `permission-*` scoping (unlike the panel's contents/PR/issues-scoped token). Mitigating context (base-repo `agent/` branches only, `AGENT_PIPELINE_ENABLED`, `environment: agent`, and the fact that claude-code-action later receives the same token anyway) reduces but does not eliminate the exposure — it widens the leak to third-party install scripts and violates the repo's own stated rule; note this is pre-existing code, not introduced by the diff under review.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

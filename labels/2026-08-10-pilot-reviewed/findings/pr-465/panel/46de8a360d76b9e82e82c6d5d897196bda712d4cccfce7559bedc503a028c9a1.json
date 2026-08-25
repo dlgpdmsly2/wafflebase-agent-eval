@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/main.ts::raw-body capture keys off an exact `req.url` match, so any path variation (trailing slash, proxy prefix) silently yields 401 + infinite yorkie retries",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:13",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against packages/backend/src/main.ts (verify hook: `req.url?.split('?',1)[0] === '/internal/yorkie/events'`) and packages/backend/src/document/yorkie-signature.guard.ts:49 (`if (!header || !rawBody) throw new UnauthorizedException('Missing webhook signature')`). Express's default non-strict, case-insensitive routing does route `/internal/yorkie/events/` to the controller while the byte-exact comparison skips rawBody capture, so the guard 401s with a misleading \"missing signature\" message and the feature is silently inert — the claim's mechanism is correct. Caveats: there is no `setGlobalPrefix` in main.ts so the \"proxy prefix\" variant needs an external rewrite, and Yorkie retries are backoff-limited rather than infinite per the PR's own docs; neither undercuts the defect. It is triggered only by an operator typing a variant URL (the documented URL works), so I rate it a robustness/minor issue rather than a happy-path break.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

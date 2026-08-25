@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "docs/design/documents-last-modified.md::new standalone top-level design doc instead of folding into the canonical backend doc, contrary to the repo's stated doc-filing policy",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "nit",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:13",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The policy quote is verbatim accurate: docs/design/README.md's \"Obsolete docs\" section says the durable design \"lives in its canonical subsystem doc above, regardless of whether it shipped as a single PR. Fold a single-PR note into the relevant doc as a concise subsection rather than keeping it as a standalone file.\" The diff instead adds a standalone docs/design/documents-last-modified.md plus a Common-section README row, and never touches docs/design/backend.md, whose Document ER entry still lists only id/title/authorID/createdAt and whose API reference has no /internal/yorkie/events endpoint — so backend.md's schema/API description is left divergent. Two caveats reduce weight: the Common section already contains many arguably single-feature standalone docs (comments-mentions.md, rest-api.md, context-menu.md), so the convention is loosely enforced in practice, and backend.md was already stale before this PR (it omits Document.workspaceId/type and the workspace-scoped routes), so this PR only adds one more divergence rather than newly invalidating it. Documentation-organization only; no user-facing or correctness impact.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

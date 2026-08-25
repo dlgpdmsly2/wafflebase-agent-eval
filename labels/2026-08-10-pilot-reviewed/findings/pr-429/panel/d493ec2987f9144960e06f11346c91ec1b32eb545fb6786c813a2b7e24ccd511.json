@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::a single failing image fetch aborts the whole pptx export (pdf path degrades gracefully instead)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:12"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied sources: in `packages/frontend/src/app/slides/pptx-actions.ts` the `fetchImage` callback calls `docsImageFetcher(src)` with no try/catch, and `docsImageFetcher` (packages/frontend/src/app/docs/export-utils.ts) throws `Image fetch failed: ...` on any non-ok response. `exportPptx` (packages/slides/src/export/pptx/index.ts, Step 2 pre-scan loop) awaits `opts.fetchImage(src)` un-guarded, so the rejection propagates and the whole export fails — the button handler in slides-export-button.tsx then shows only \"Export failed\". The contrast with the PDF path is also correct: `resolveDeckImages` in packages/slides/src/export/pdf.ts wraps `await fetcher(src)` in try/catch and substitutes `BLANK_PNG`. So the claim is accurate; the only nuance is that failing loudly is a defensible design choice (a missing image would otherwise silently vanish from the deck), which keeps the impact moderate rather than severe.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

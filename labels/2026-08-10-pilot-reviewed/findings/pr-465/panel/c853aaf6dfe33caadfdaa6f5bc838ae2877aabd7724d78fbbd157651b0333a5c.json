@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::the originating task's verification criterion for an e2e test of the webhook path is not met",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:13",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The task file's Verification block (docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md, \"## Verification\": \"e2e: signed webhook advances `updatedAt`; unsigned/bad-sig rejected\") asserts e2e coverage, but the diff adds only three unit specs — yorkie-event.controller.spec.ts, yorkie-signature.guard.spec.ts, document.service.spec.ts — each constructing the class directly with a mocked DocumentService/PrismaService; no new file appears under packages/backend/test/, and the supplied directory listing of that folder at this commit (14 entries) contains no yorkie/webhook e2e spec. So nothing exercises the route through Nest's HTTP stack: the `bodyParser.json({ verify })` raw-body capture in packages/backend/src/main.ts (whose `req.url === '/internal/yorkie/events'` match is exactly the kind of wiring only an HTTP-level test catches), the guard registration in document.module.ts, and the monotonic `updateMany` SQL in touchUpdatedAt are all untested end to end. The Tasks section itself concedes \"DB-backed e2e for the advance-only path deferred\", which contradicts the Verification claim rather than satisfying it. Impact is limited to documentation accuracy plus a coverage gap on a security-relevant guard, not a user-visible defect.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

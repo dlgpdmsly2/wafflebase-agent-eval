@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::raw-text oid guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "RAW_TEXT_OIDS at packages/backend/src/datasource/datasource.service.ts:20-24 lists only the scalar 1082/1114/1184 OIDs, and datasourceTypeParser (lines 34-37) sends every other OID to the pg-types default, which registers parseDateArray for 1115 (_timestamp), 1182 (_date) and 1185 (_timestamptz) — so array date/time columns still come back as JS Date built from the Node runtime timezone, and `SET TimeZone = 'UTC'` only changes server-side text rendering, not the offset-less client-side parse. Those arrays hit the object branch of toCell (packages/sheets/src/store/readonly.ts:31-35) and JSON.stringify serializes the Dates as shifted ISO strings, and the new type matrix in packages/backend/test/database.e2e-spec.ts covers scalars only, so nothing catches it. The claim overreaches on ranges: pg-types registers no parser for tsrange/tstzrange (3908/3910), so those stay raw strings and are unaffected — but the array gap, which is the substance of the finding, is real. Severity is minor because only array-typed date/time result columns are affected; confidence is medium since no checkout was mounted to pin the installed pg-types parser table.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

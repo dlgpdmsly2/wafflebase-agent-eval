@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-review-panel.yml::`allowed_bots` hardcodes the bot login \"yorkie-agent[bot]\", which is nowhere derived from or documented for the configured app — if the installed app's slug differs, the allow-list never matches and the fix step still fails",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "In the supplied workflows the App identity is only ever supplied through secrets (`secrets.AGENT_APP_ID` / `AGENT_APP_PRIVATE_KEY` in agent-review-panel.yml's \"Generate GitHub App token\" step and agent-iterate-ci.yml's equivalent), so nothing in the repo pins or validates the bot login; the new `allowed_bots: \"yorkie-agent[bot],yorkie-agent\"` at agent-review-panel.yml:413 and agent-iterate-ci.yml:160 is indeed an undocumented literal whose correctness depends on which App a deployer installed. The claim is therefore accurate about the code as written, and the suggested `steps.app-token.outputs.app-slug` derivation is a real output of actions/create-github-app-token@v1. It is a conditional/fragility defect rather than a demonstrated failure — the claim does not (and I cannot) show the actual installed slug differs, and the failure mode is fail-safe (the fix job reds and the newly-widened `stalled` job pages a human rather than silently doing nothing). I could not grep the repo (empty working directory), so I am relying on the supplied files and cannot independently confirm the reviewer's \"no other occurrence of yorkie-agent\" grep or the exact matching semantics of claude-code-action's `allowed_bots`.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

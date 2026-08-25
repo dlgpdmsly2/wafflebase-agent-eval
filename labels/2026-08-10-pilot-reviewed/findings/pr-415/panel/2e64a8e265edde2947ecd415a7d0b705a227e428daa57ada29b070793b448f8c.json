@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::partial/inconsistent fix for value fidelity: only date/timestamp/timestamptz are pinned to raw postgres text, while other pg types that the default parser turns into js objects still flow through and end up json-stringified into sheet cells. the change's own e2e expectations enshrine this: bytea renders as `{\"type\":\"buffer\",\"data\":[222,173,190,239]}`, interval as `{\"years\":1,\"months\":2,\"days\":3}`, circle as `{\"x\":1,\"y\":2,\"radius\":3}`. if the intent is \"cells show the value the database shows\", these are user-visible wrong values left unaddressed; if the intent is only the timezone shift, the accepted json-blob rendering should be a stated decision (in the design doc) rather than an incidental test expectation.",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified in datasource.service.ts:20-24 that RAW_TEXT_OIDS covers only DATE/TIMESTAMP/TIMESTAMPTZ, and datasourceTypeParser delegates all other OIDs to the default pg parser, so BYTEA/INTERVAL/CIRCLE/JSON/array values still arrive as JS objects. readonly.ts:32-36 (toCell) JSON-stringifies any non-null object and loadQueryResults writes that into the cell, so those types render as JSON blobs rather than the Postgres text representation; the new e2e table in database.e2e-spec.ts encodes exactly those expectations ('{\"type\":\"Buffer\",...}', '{\"years\":1,...}', '{\"x\":1,\"y\":2,\"radius\":3}'), confirming the claim's reading. It is therefore a genuine, if partial, fidelity gap rather than a misreading. I rate it minor because toCell is still an improvement over the previous String(val) ([object Object]) and the affected types are uncommon in typical query results; the \"should be documented in the design doc\" portion I could not verify.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

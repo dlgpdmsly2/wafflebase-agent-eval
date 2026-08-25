@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::iterate job mints an unscoped github app installation token and hands it to a bash-enabled agent running untrusted branch code",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied agent-iterate-ci.yml \"Generate GitHub App token\" step (create-github-app-token@v1) passes only app-id and private-key — no `permission-*` inputs — so the minted token inherits the App installation's full permission set; it is then handed to actions/checkout (which persists it into .git/config by default, no `persist-credentials: false`) and to claude-code-action as `github_token`, in a job that runs `pnpm install --frozen-lockfile` on the branch and allows the Bash tool. The contrast the reviewer draws is accurate: the fix job in agent-review-panel.yml explicitly sets permission-contents/pull-requests/issues with the comment \"this token is used in a job that checks out and executes untrusted branch code\", and agent-implement.yml's branch-protection step notes the App needs Administration: read, so the installation is indeed broader than contents/PRs. Caveat: this token step is pre-existing code untouched by the diff under review (the diff only adds `allowed_bots` and the `fix` dependency in the stalled job), so it is a pre-existing hardening gap rather than a regression; the mitigating factors (fork rejection, base-repo agent/ branches only, AGENT_PIPELINE_ENABLED gate) limit but do not eliminate the exposure.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

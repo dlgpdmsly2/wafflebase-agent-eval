@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "list-empty-bullet-plugin.ts:68-150 is a near-verbatim copy of markdown-it 14.x `rules_block/lheading.mjs` (same indent guard, parentType swap, terminator loop, and the three token pushes with identical map arithmetic) plus a re-created `asciiTrim` at lines 17-22, differing only by the `isLoneDash` guard at lines 100-106; it is installed via `md.block.ruler.at('lheading', lheadingRule)` at line 168, so upstream is fully replaced and frozen with no test to detect drift on a markdown-it upgrade. The claim's factual description of the code is correct, and the contrast with the `getRuleFn` delegation used for `list` (lines 170-186) is accurate. Its one weak point is the assertion that delegation was easy: upstream `lheading` ignores `silent` and pushes tokens unconditionally, so a wrapper would have to run it and roll back `state.tokens`/`state.line` — awkward, though still possible. Impact is maintainability only, since the shipped behavior is exercised by preview.test.ts:151-196, so I rate it minor rather than a correctness bug.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

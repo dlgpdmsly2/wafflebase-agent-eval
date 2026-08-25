@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/preview.test.ts::no test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The supplied `preview.test.ts` at this commit contains exactly five new markdown-structure tests (`- 1\\n  -`, `- 1\\n  - `, `- 1\\n\\n  - `, `Heading\\n---`, `- 1\\n  - 2`); there is no case for a top-level `Heading\\n-`. The rewritten `lheadingRule` in list-empty-bullet-plugin.ts (the `isLoneDash` guard, ~line 105) is registered globally via `md.block.ruler.at('lheading', ...)`, so it changes behavior outside lists too: a lone `-` after a top-level paragraph no longer forms an `<h2>` and instead terminates the paragraph (the wrapped `list` rule returns true in silent mode), yielding a paragraph plus an empty list. The project's own TODO doc even listed \"top-level lone dash\" as an intended test case, and it was not added, so the claim is factually correct about the code and the test file. Impact is limited to test coverage of a deliberate deviation, so I rate it minor.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::$github_output heredoc uses a fixed, guessable delimiter around attacker-influenceable text (output injection)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The step at agent-iterate-ci.yml (\"Summarize the failure\") does write `summary<<HARNESS_EOF` / script stdout / `HARNESS_EOF` into $GITHUB_OUTPUT with a fixed, guessable delimiter, and the stdout embeds report-derived strings (`detail.failureSummary`, `lane.lane`) parsed from the downloaded `harness-reports` artifact, which is produced by branch code (scripts/verify-self.mjs runs from the PR branch in CI). So a crafted/modified report can emit a bare `HARNESS_EOF` at column 0 and then re-assign `summary=` or other outputs — the classic GitHub \"use a random delimiter\" issue; the claim's mechanism is technically correct. One nuance the claim glosses over: as the repo's own producer is written, extractFailureSummary (verify-self.mjs) returns a single `split(\"\\n\")` line truncated to 500 chars, so under the honest path no newline can appear — exploitation requires the branch to alter verify-self.mjs or the artifact, i.e. it presumes an untrusted branch. Marginal impact is small because that same job already checks out the branch, runs `pnpm install --frozen-lockfile` (lifecycle scripts) and gives the agent Bash with the App token in scope, so a branch-controlling attacker already has execution there; and the failureSummary text reaches the prompt anyway. Real but hardening-grade.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

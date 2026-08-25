@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-549",
+  "arm": "panel",
+  "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` uses a quadratic backtracking trim regex on attacker-controllable note content (redos → preview/tab hang)",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified at packages/notes/src/view/list-empty-bullet-plugin.ts:19-23: the global regex `/^[\\x09...\\x20]+|[\\x09...\\x20]+$/g` has an unanchored trailing alternative, so `String.replace` retries `[ws]+$` at every offset and backtracks the whole run each time — the textbook quadratic trim (trim-newlines / CVE-2021-33623 shape); `^` without `m` makes the first alternative cheap, so it offers no protection. It is applied to `state.getLines(...)` in the lheading heading branch (reached by any `Text\\n===`/`---` paragraph), and preview.ts's `md.render` is synchronous and re-run from editor.ts's `docChanged` updateListener, so a note containing a long internal whitespace run followed by non-whitespace freezes the tab on every edit or remote patch. I could not execute the code or inspect the installed markdown-it to confirm the secondary claim that upstream `lheading` uses native `.trim()`, but the quadratic pattern exists in this file as written. Severity is major rather than critical: it is a crafted-input, availability-only DoS requiring a very large whitespace run from a collaborator, not a data or integrity compromise.",
+  "notes": null,
+  "diff_sha256": "sha256:46488ec11aac9ea5d72353e80c3b9e9e464c3a9a3bbf2022dc1977aa28e43fc5",
+  "class_id": null,
+  "class_members": null
+}

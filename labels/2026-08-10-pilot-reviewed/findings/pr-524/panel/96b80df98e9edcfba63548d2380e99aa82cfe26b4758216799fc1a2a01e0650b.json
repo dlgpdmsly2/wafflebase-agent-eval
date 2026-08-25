@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-review-panel.yml::the \"only our panel's checks\" filter on the fix prompt is app-slug based, and every workflow in the repo — including one added on the untrusted branch — produces app slug `github-actions`",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "I read the supplied `.github/workflows/agent-review-panel.yml` (the \"Gather failing lens findings\" step, and the identical `mine = (r) => NAMES.has(r.name) && r.app && r.app.slug === 'github-actions'` predicate in the round-bound guard). The claim's reading of the code is accurate: `github-actions` is the app slug for every GITHUB_TOKEN/workflow-created check run in the repository, so the filter proves only \"some workflow in this repo made it\", not \"our trusted review-panel job made it\", and the resulting `output.summary` is spliced verbatim into the fixer prompt for a Bash/Write-enabled agent — so the comment's assurance holds only against the narrower \"another installed App\" threat it names. The exploit path the reviewer describes is however gated in practice, as the reviewer itself concedes: adding/modifying a file under `.github/workflows` requires `workflows: write`, and the fix job's token is explicitly scoped to contents/pull-requests/issues, so today this is a latent defence-in-depth gap rather than a live injection channel (I could not check the installation's permission set — `docs/tasks/active/20260720-autonomous-issue-to-pr-pipeline-todo.md` was withheld). Note also that the flagged lines are pre-existing code, untouched by this diff, which only adds `allowed_bots` and the `fix` dependency for `stalled`.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

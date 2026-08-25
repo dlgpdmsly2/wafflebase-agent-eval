@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::ssrf / internal port scanning: user-supplied host+port are connected to with no allowlist, and raw driver errors are returned to the caller, making the backend an oracle for the internal network",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: CreateDataSourceDto only length/range-validates host and port with no address denylist, and createClient (datasource.service.ts, the `new Client({ host: ds.host, port: ds.port, ... })` block the diff touches to add `types`) dials whatever the user supplies. testConnection returns `{ success: false, error: (error as Error).message }` and executeQuery rethrows `pgError.message` in a BadRequestException, so raw driver errors (ECONNREFUSED vs. timeout vs. protocol error) do reach the authenticated caller — a working internal port-scan oracle, exactly as claimed. The claim misreads nothing; my only qualifications are that the routes are gated by JwtAuthGuard plus workspaceService.assertMember (so it is not unauthenticated), and that this is entirely pre-existing and inherent to a user-configured Postgres connector, with the leak limited to connection-level signals rather than response bodies. Hence real, but I rate it minor.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

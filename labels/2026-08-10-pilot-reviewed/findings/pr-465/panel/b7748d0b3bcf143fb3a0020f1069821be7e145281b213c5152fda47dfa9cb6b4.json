@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/yorkie-signature.guard.ts::webhook signature header name/format is an unverified assumption; a mismatch silently 401s every event and `updatedat` never advances",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:13",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "low",
+  "evidence": "I verified the in-repo half: yorkie-signature.guard.ts:48-59 reads `req.header('x-signature-256')` and does a strict length+timingSafeEqual against `sha256=<hex>`, throwing 401 with no accept-path logging, and yorkie-signature.guard.spec.ts signs using the same convention as the code under test, so the suite cannot detect a wrong external contract — the claim is accurate about all of that, and about the consequence (silent 401s, updatedAt never advancing from edits). The decisive fact — Yorkie v0.7.12's actual header name — is not in this repository (the Go client is not vendored; only the PR's own docs/design/documents-last-modified.md:47 asserts it), so I could not check it with the tools available. My recollection of Yorkie's webhook client is that the header constant is the Yorkie-specific `X-Signature-Y256` rather than `X-Signature-256`, which would make this a real defect, but that is memory rather than verification, hence low confidence. Note the claim's casing worry is moot — Express's `req.header()` is case-insensitive — so only a literal name/prefix difference matters.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

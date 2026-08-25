@@ -1,0 +1,48 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-465",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/document/yorkie-event.controller.spec.ts::test titled 'always answers ok so yorkie does not retry' only exercises the trivial early-return path",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:13",
+      "task-doc-subject-inlined"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied sources: in `yorkie-event.controller.ts` the handler resolves `key = body.attributes?.key` → `undefined`, so `parsed` is `null` and it returns `{ ok: true }` at the `!parsed` guard — the spec case at `yorkie-event.controller.spec.ts:66` posts exactly `{ type: 'DocumentRootChanged' }` with no `attributes`, so it never reaches `touchUpdatedAt`. The controller also has no try/catch around `await this.documentService.touchUpdatedAt(...)`, and no spec case makes the mock reject, so the claimed \"always 200, never retry\" property is indeed untested for the failure path; the test's title over-promises relative to what it exercises. Note the other specs do drive the `touchUpdatedAt` path (with a resolving mock), so coverage of the happy path exists — the genuine gap is only the rejection case. Impact is limited: a 500 on a DB outage causes Yorkie to retry, which is arguably the desired behaviour rather than a data-correctness bug, so this is a test-naming/coverage gap rather than a functional defect.",
+  "notes": null,
+  "diff_sha256": "sha256:dcb7a7c6e4b92da973ecd61dcd33b4edacf8cad4dc94a8152fe9d95438c16558",
+  "class_id": null,
+  "class_members": null
+}

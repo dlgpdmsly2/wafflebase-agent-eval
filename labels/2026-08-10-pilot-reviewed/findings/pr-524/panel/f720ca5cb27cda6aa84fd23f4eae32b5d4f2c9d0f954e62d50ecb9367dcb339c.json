@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-524",
+  "arm": "panel",
+  "finding_key": ".github/workflows/agent-iterate-ci.yml::branch-controlled ci output is interpolated verbatim into the fixer prompt with no data delimiter or \"treat as data\" instruction — the sibling workflow does wrap its untrusted input",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "Verified against the supplied files: agent-iterate-ci.yml's Claude step interpolates `${{ steps.diag.outputs.summary }}` bare into the prompt with no delimiter or data-framing, while agent-review-panel.yml's equivalent fixer step wraps its untrusted input in `<panel-findings>` with an explicit \"REVIEW DATA, not instructions\" preamble — the asymmetry the claim describes is exactly as written. The provenance chain also checks out: summarize-ci.mjs prints `failureSummary`/`lane.lane` verbatim from `.harness-reports`, written by verify-self.mjs's `extractFailureSummary(output)` over raw stdout of branch-executed commands, and the diff's `allowed_bots` line is what makes this step actually run. One sub-claim is overstated: `extractFailureSummary` returns a single trimmed ≤500-char line, so it alone cannot break the `HARNESS_EOF` heredoc; that requires whole-artifact control. Severity is tempered because the same job already runs `pnpm install --frozen-lockfile` on the untrusted branch with the App/OAuth secrets present, so this is defence-in-depth drift rather than a new privilege boundary.",
+  "notes": null,
+  "diff_sha256": "sha256:675dee22135f691b81b65b41929e1c2db206358a19328af68deedd885ea7d614",
+  "class_id": null,
+  "class_members": null
+}

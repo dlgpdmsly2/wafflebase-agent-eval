@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-471",
+  "arm": "panel",
+  "finding_key": "packages/sheets/src/model/worksheet/data-validation.ts::`value.touppercase()` is now called on a value that was only ever compared with `===` before — any non-string `cell.v` reaching the render path throws instead of rendering unchecked",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": false,
+  "should_verifier_keep": false,
+  "severity": "nit",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:4"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "medium",
+  "evidence": "The new branch in `data-validation.ts` (`return value.toUpperCase() === CHECKBOX_TRUE;`) would indeed throw on a non-string, but the claim never establishes that a non-string `Cell.v` can arrive: `Cell` declares `v?: string` in `model/core/types.ts`, and the caller `renderCellCheckbox` in `view/gridcanvas.ts` passes `cell?.v` under that type. The same file already calls string methods on the identically-typed parameter — `isValidListValue` uses `value?.trim()` and `isValidDateValue` uses `value.trim()` — and `renderCellContent` does `data.split('\\n')` on `cell?.v`, so a non-string `v` would already break the list/date/text render paths; the change adds no new fragility class. The claim even admits it is unconfirmed (\"one would need a store/import path that can persist a non-string `v`\"), so as written it is a speculative hardening suggestion, not a defect present in the code; I mark confidence medium only because I could not inspect the xlsx/Yorkie/REST ingestion paths myself.",
+  "notes": null,
+  "diff_sha256": "sha256:6d875f999c40e43aefb3f3ce3987dcda2b565bfbfffec056aaf2152b16eacf1f",
+  "class_id": null,
+  "class_members": null
+}

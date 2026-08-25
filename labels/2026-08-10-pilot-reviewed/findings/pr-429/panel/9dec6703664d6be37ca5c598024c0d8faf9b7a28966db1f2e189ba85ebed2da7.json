@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-429",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::datasource ssl uses rejectunauthorized:false, so the documented \"ssl\" toggle gives no mitm protection",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "minor",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:12"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "The quoted code is present verbatim in the supplied packages/backend/src/datasource/datasource.service.ts (`createClient`: `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false`), so enabling the toggle yields encrypted-but-unauthenticated TLS; since `password: decrypt(ds.password)` is sent in the startup handshake, an active on-path attacker can harvest it and tamper with rows. The new doc page's \"**SSL** — toggle on if your database requires it\" bullet (datasources.md, Connect a database step 2) does not qualify this, so the documentation-misrepresentation angle also holds. Bounding the severity: the line is pre-existing and untouched by this docs-only diff, the toggle still stops passive sniffing, and exploitation needs a network position between the backend and a user-chosen DB host. I could not confirm the exact line number 204, only that the code sits at the end of `createClient`.",
+  "notes": null,
+  "diff_sha256": "sha256:29727fad241a9a9b7d2465030740e71af40a1f8c309c216196829d1045a70693",
+  "class_id": null,
+  "class_members": null
+}

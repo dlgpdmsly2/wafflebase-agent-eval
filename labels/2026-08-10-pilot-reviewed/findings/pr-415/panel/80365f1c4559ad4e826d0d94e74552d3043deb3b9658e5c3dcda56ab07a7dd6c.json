@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::sql statement injection: validateselectquery validates a comment-stripped copy of the query, but executequery interpolates the original string into a simple-protocol query, so ddl/dml can be smuggled past the read-only guard",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "critical",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "I traced the payload through both files as supplied. sql-validator.ts strips `--...` to end-of-line with a regex that is unaware of double-quoted identifiers, and every subsequent check (first token, FORBIDDEN_KEYWORDS loop, `;` split) runs only on that stripped copy, while datasource.service.ts:148 interpolates the untouched `dto.query` into `SELECT * FROM (${dto.query}) AS _q LIMIT 10001`. For `SELECT 1 AS \"x--\" ) AS q; DROP TABLE users; SELECT * FROM (SELECT 1`, the validator sees only `SELECT 1 AS \"x` (passes all checks), whereas Postgres treats `--` inside the double-quoted identifier as literal text and receives three complete statements; node-postgres sends a value-less string via the simple query protocol, which does execute multiple `;`-separated statements. The claim also correctly notes this is pre-existing and untested (sql-validator.spec.ts only covers the naive `SELECT 1; DROP TABLE users` case), and nothing in this diff closes it.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}

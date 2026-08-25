@@ -1,0 +1,47 @@
+{
+  "schema": "finding-label",
+  "schema_version": 1,
+  "corpus_version": "2026-08-10-pilot-reviewed",
+  "item_id": "pr-415",
+  "arm": "panel",
+  "finding_key": "packages/backend/src/datasource/datasource.service.ts::tls certificate verification permanently disabled for datasource connections (`rejectunauthorized: false`), so \"ssl enabled\" gives no mitm protection for credentials or query data",
+  "key_basis": "finding-key",
+  "parser_vintage": null,
+  "is_real": true,
+  "should_verifier_keep": true,
+  "severity": "major",
+  "kind": null,
+  "label_source": "silver",
+  "annotators": [
+    "claude-opus-5"
+  ],
+  "adjudication": {
+    "mode": "model",
+    "suggestion_outcome": "not-shown",
+    "presented_fields": [
+      "item",
+      "file",
+      "line",
+      "claim",
+      "reviewer-prose",
+      "kind-suggestion",
+      "tool-grant:Read+Grep+Glob(empty-working-dir)",
+      "diff-on-request",
+      "cited-files-at-round:7"
+    ],
+    "withheld_fields": [
+      "panel-severity",
+      "verifier-verdict",
+      "gate-outcome",
+      "other-arm-agreement",
+      "arm",
+      "run_id"
+    ]
+  },
+  "confidence": "high",
+  "evidence": "In packages/backend/src/datasource/datasource.service.ts, `createClient` builds the pg Client with `ssl: ds.sslEnabled ? { rejectUnauthorized: false } : false` (the same object literal the diff modifies by adding `types`), and the decrypted password is passed in the adjacent `password: decrypt(ds.password)` line. With `rejectUnauthorized: false` and no CA/servername configured, node-postgres/TLS accepts any certificate, so enabling SSL yields encryption without server authentication — a MITM can present a self-signed cert and capture credentials and query results. The claim is accurate about the code as written; I could not run the repo-wide grep (no checkout is mounted) to confirm there is no CA-pinning path elsewhere, but nothing in the supplied datasource files provides one. Note the weakness is pre-existing rather than introduced by this diff, which only adds the `types` parser option.",
+  "notes": null,
+  "diff_sha256": "sha256:bac655f0f919effde6aaf92a9dc3c3d1cee3b0dee511b7900867d4b51b72dc05",
+  "class_id": null,
+  "class_members": null
+}
