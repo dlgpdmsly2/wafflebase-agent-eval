@@ -31,32 +31,32 @@
     "basis": "the content hash of the module whose output a CodeRabbit finding_key hashes"
   },
   "labels": {
-    "total": 97,
+    "total": 126,
     "unreadable": [],
     "unreadable_count": 0,
     "census": {
-      "n": 97,
+      "n": 126,
       "schema": {
         "item-label": 0,
-        "finding-label": 97
+        "finding-label": 126
       },
       "label_source": {
         "gold": 0,
-        "silver": 97,
+        "silver": 126,
         "distant": 0
       },
       "arm": {
-        "panel": 97,
+        "panel": 126,
         "coderabbit": 0
       },
       "confidence": {
-        "high": 64,
-        "medium": 30,
-        "low": 3
+        "high": 84,
+        "medium": 38,
+        "low": 4
       },
       "is_real": {
-        "true": 87,
-        "false": 10
+        "true": 115,
+        "false": 11
       },
       "verdict_label": {
         "block": 0,
@@ -65,11 +65,11 @@
       },
       "mode": {
         "human": 0,
-        "model": 97
+        "model": 126
       },
-      "items": 6,
+      "items": 7,
       "bundled": 0,
-      "readings": 97
+      "readings": 126
     }
   },
   "metrics": [
@@ -200,23 +200,140 @@
           "stated-severity-varies": 0
         }
       },
-      "labels": 97,
+      "labels": 126,
       "join": {
         "counts": {
           "joined": 97,
-          "unmatched": 0,
+          "unmatched": 29,
           "stale-parse": 0,
           "parse-vintage-unknown": 0,
           "claims-not-supplied": 0
         },
-        "unmatched_keys": [],
+        "unmatched_keys": [
+          {
+            "item_id": "pr-415",
+            "finding_key": "packages/backend/src/datasource/datasource.service.ts::tls certificate verification permanently disabled for datasource connections (`rejectunauthorized: false`), so \"ssl enabled\" gives no mitm protection for credentials or query data"
+          },
+          {
+            "item_id": "pr-415",
+            "finding_key": "packages/backend/src/datasource/datasource.service.ts::partial/inconsistent fix for value fidelity: only date/timestamp/timestamptz are pinned to raw postgres text, while other pg types that the default parser turns into js objects still flow through and end up json-stringified into sheet cells. the change's own e2e expectations enshrine this: bytea renders as `{\"type\":\"buffer\",\"data\":[222,173,190,239]}`, interval as `{\"years\":1,\"months\":2,\"days\":3}`, circle as `{\"x\":1,\"y\":2,\"radius\":3}`. if the intent is \"cells show the value the database shows\", these are user-visible wrong values left unaddressed; if the intent is only the timezone shift, the accepted json-blob rendering should be a stated decision (in the design doc) rather than an incidental test expectation."
+          },
+          {
+            "item_id": "pr-415",
+            "finding_key": "packages/backend/src/datasource/datasource.service.ts::sql statement injection: validateselectquery validates a comment-stripped copy of the query, but executequery interpolates the original string into a simple-protocol query, so ddl/dml can be smuggled past the read-only guard"
+          },
+          {
+            "item_id": "pr-415",
+            "finding_key": "packages/backend/src/datasource/datasource.service.ts::raw-text oid guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange`"
+          },
+          {
+            "item_id": "pr-415",
+            "finding_key": "packages/backend/src/datasource/datasource.service.ts::ssrf / internal port scanning: user-supplied host+port are connected to with no allowlist, and raw driver errors are returned to the caller, making the backend an oracle for the internal network"
+          },
+          {
+            "item_id": "pr-429",
+            "finding_key": "packages/documentation/guide/collaboration.md::collaboration doc scopes the comments side panel to documents only, but sheets also has one"
+          },
+          {
+            "item_id": "pr-429",
+            "finding_key": "packages/documentation/sheets/datasources.md::new docs page misstates the datasource access model: collaborators can execute queries with the owner's stored credentials"
+          },
+          {
+            "item_id": "pr-429",
+            "finding_key": "packages/backend/src/datasource/datasource.controller.ts::any workspace member can steal another member's stored db password by re-pointing a datasource's host and hitting /test"
+          },
+          {
+            "item_id": "pr-429",
+            "finding_key": "packages/backend/src/datasource/datasource.service.ts::datasource ssl uses rejectunauthorized:false, so the documented \"ssl\" toggle gives no mitm protection"
+          },
+          {
+            "item_id": "pr-429",
+            "finding_key": "packages/backend/src/datasource/sql-validator.ts::\"read-only\" guarantee advertised by the new docs page rests on a bypassable sql keyword denylist"
+          },
+          {
+            "item_id": "pr-429",
+            "finding_key": "packages/frontend/src/app/slides/pptx-actions.ts::a single failing image fetch aborts the whole pptx export (pdf path degrades gracefully instead)"
+          },
+          {
+            "item_id": "pr-465",
+            "finding_key": "docs/design/documents-last-modified.md::new standalone top-level design doc instead of folding into the canonical backend doc, contrary to the repo's stated doc-filing policy"
+          },
+          {
+            "item_id": "pr-465",
+            "finding_key": "packages/backend/src/main.ts::raw-body capture keys off an exact `req.url` match, so any path variation (trailing slash, proxy prefix) silently yields 401 + infinite yorkie retries"
+          },
+          {
+            "item_id": "pr-465",
+            "finding_key": "packages/backend/src/document/yorkie-event.controller.spec.ts::test titled 'always answers ok so yorkie does not retry' only exercises the trivial early-return path"
+          },
+          {
+            "item_id": "pr-465",
+            "finding_key": "packages/backend/src/document/yorkie-event.controller.ts::non-nan but non-positive `issuedat` (go zero time / pre-epoch) silently disables the touch instead of falling back to now()"
+          },
+          {
+            "item_id": "pr-465",
+            "finding_key": "packages/backend/src/document/yorkie-signature.guard.ts::webhook signature header name/format is an unverified assumption; a mismatch silently 401s every event and `updatedat` never advances"
+          },
+          {
+            "item_id": "pr-465",
+            "finding_key": "docs/tasks/active/20260710-docs-list-updatedat-webhook-todo.md::the originating task's verification criterion for an e2e test of the webhook path is not met"
+          },
+          {
+            "item_id": "pr-471",
+            "finding_key": "packages/sheets/src/model/worksheet/data-validation.ts::`value.touppercase()` is now called on a value that was only ever compared with `===` before — any non-string `cell.v` reaching the render path throws instead of rendering unchecked"
+          },
+          {
+            "item_id": "pr-524",
+            "finding_key": ".github/workflows/agent-iterate-ci.yml::iterate job mints an unscoped github app installation token and hands it to a bash-enabled agent running untrusted branch code"
+          },
+          {
+            "item_id": "pr-524",
+            "finding_key": ".github/workflows/agent-iterate-ci.yml::github app installation token is persisted into .git/config of the untrusted branch checkout, then branch-controlled install scripts are executed"
+          },
+          {
+            "item_id": "pr-524",
+            "finding_key": ".github/workflows/agent-review-panel.yml::`allowed_bots` hardcodes the bot login \"yorkie-agent[bot]\", which is nowhere derived from or documented for the configured app — if the installed app's slug differs, the allow-list never matches and the fix step still fails"
+          },
+          {
+            "item_id": "pr-524",
+            "finding_key": ".github/workflows/agent-review-panel.yml::the \"only our panel's checks\" filter on the fix prompt is app-slug based, and every workflow in the repo — including one added on the untrusted branch — produces app slug `github-actions`"
+          },
+          {
+            "item_id": "pr-524",
+            "finding_key": ".github/workflows/agent-iterate-ci.yml::$github_output heredoc uses a fixed, guessable delimiter around attacker-influenceable text (output injection)"
+          },
+          {
+            "item_id": "pr-524",
+            "finding_key": ".github/workflows/agent-iterate-ci.yml::branch-controlled ci output is interpolated verbatim into the fixer prompt with no data delimiter or \"treat as data\" instruction — the sibling workflow does wrap its untrusted input"
+          },
+          {
+            "item_id": "pr-549",
+            "finding_key": "packages/notes/src/view/preview.test.ts::no test for the top-level `paragraph\\n-` case, the most visible behavior change of the lheading rewrite"
+          },
+          {
+            "item_id": "pr-549",
+            "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` regex has quadratic (redos-style) worst case on attacker-supplied note content, replacing upstream's linear `string.prototype.trim()`"
+          },
+          {
+            "item_id": "pr-549",
+            "finding_key": "packages/notes/src/view/preview.test.ts::the intentional commonmark deviation for a top-level `heading\\n-` (single-dash setext h1... h2) is untested"
+          },
+          {
+            "item_id": "pr-549",
+            "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::hand-rolled `asciitrim` uses a quadratic backtracking trim regex on attacker-controllable note content (redos → preview/tab hang)"
+          },
+          {
+            "item_id": "pr-549",
+            "finding_key": "packages/notes/src/view/list-empty-bullet-plugin.ts::upstream markdown-it `lheading` rule is copy-forked wholesale instead of reused/wrapped"
+          }
+        ],
         "stale_parse_keys": []
       },
       "claim_population": "pending",
       "unlabelled_claims": 329,
       "label_sources": {
         "gold": 0,
-        "silver": 97,
+        "silver": 126,
         "distant": 0
       },
       "tiers_scored": [
@@ -690,6 +807,7 @@
     "verdict": "partial",
     "reasons": [
       "coderabbit: 30 of 30 distinct claim(s) carry no label, so every zero-denominator cell on this arm is not-computed rather than not-measurable",
+      "panel: 29 label(s) match no claim in the population supplied (packages/backend/src/datasource/datasource.service.ts::tls certificate verification permanently disabled for datasource connections (`rejectunauthorized: false`), so \"ssl enabled\" gives no mitm protection for credentials or query data · packages/backend/src/datasource/datasource.service.ts::partial/inconsistent fix for value fidelity: only date/timestamp/timestamptz are pinned to raw postgres text, while other pg types that the default parser turns into js objects still flow through and end up json-stringified into sheet cells. the change's own e2e expectations enshrine this: bytea renders as `{\"type\":\"buffer\",\"data\":[222,173,190,239]}`, interval as `{\"years\":1,\"months\":2,\"days\":3}`, circle as `{\"x\":1,\"y\":2,\"radius\":3}`. if the intent is \"cells show the value the database shows\", these are user-visible wrong values left unaddressed; if the intent is only the timezone shift, the accepted json-blob rendering should be a stated decision (in the design doc) rather than an incidental test expectation. · packages/backend/src/datasource/datasource.service.ts::sql statement injection: validateselectquery validates a comment-stripped copy of the query, but executequery interpolates the original string into a simple-protocol query, so ddl/dml can be smuggled past the read-only guard · packages/backend/src/datasource/datasource.service.ts::raw-text oid guard is bypassed for array/range date-time types, so the timezone-shift bug it fixes still occurs for `timestamp[]`, `date[]`, `timestamptz[]`, `tsrange`, `tstzrange` · packages/backend/src/datasource/datasource.service.ts::ssrf / internal port scanning: user-supplied host+port are connected to with no allowlist, and raw driver errors are returned to the caller, making the backend an oracle for the internal network · …) — either a different replicate set or a reviewer's wording moved",
       "panel: 329 of 426 distinct claim(s) carry no label, so every zero-denominator cell on this arm is not-computed rather than not-measurable"
     ]
   },
